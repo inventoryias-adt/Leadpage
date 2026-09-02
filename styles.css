@@ -192,11 +192,6 @@ a:hover { color: var(--color-accent-800); }
 .checklist-item svg { width: 22px; height: 22px; flex: none; margin-top: 2px; }
 .checklist-item p { font-size: 15.5px; margin: 0; }
 
-/* — depoimentos — */
-.testimonial-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
-.testimonial-card { padding: 22px; border: 1px dashed var(--color-divider); background: transparent; }
-.testimonial-card .card-body { font-style: italic; margin-bottom: 10px; }
-
 /* — oferta — */
 .offer-box {
   background: var(--color-accent-2-100); border-radius: calc(var(--radius-lg) * 1.4);
@@ -208,8 +203,7 @@ a:hover { color: var(--color-accent-800); }
 .offer-features { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
 .offer-features p { font-size: 15px; margin: 0; }
 .offer-card { background: var(--color-bg); border-radius: var(--radius-lg); padding: 28px; text-align: center; box-shadow: var(--shadow-md); }
-.offer-price-old { margin: 0; font-size: 14px; text-decoration: line-through; opacity: 0.5; }
-.offer-price { margin: 6px 0 0; font-family: var(--font-heading); font-size: 44px; color: var(--color-accent-700); }
+.offer-price { margin: 0; font-family: var(--font-heading); font-size: 44px; color: var(--color-accent-700); }
 .offer-price-note { margin: 4px 0 20px; font-size: 13px; color: color-mix(in srgb, var(--color-text) 65%, transparent); }
 .offer-card .btn { font-size: 15px; padding: 16px; }
 .offer-guarantee { margin: 16px 0 0; font-size: 12.5px; color: color-mix(in srgb, var(--color-text) 60%, transparent); }
