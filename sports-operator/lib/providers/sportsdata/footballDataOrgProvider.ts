@@ -4,17 +4,37 @@ import { OddsProviderError } from '../odds/errors';
 const BASE_URL = 'https://api.football-data.org/v4';
 const REQUEST_TIMEOUT_MS = 12000;
 
-// Maps our internal league labels (shared with the odds provider) to
-// football-data.org competition codes. Free tier does NOT include the
-// Brazilian Série A — documented limitation, not a bug.
+// Maps league labels to football-data.org competition codes. Two odds
+// providers feed this app and they label leagues differently for the SAME
+// competition: DemoOddsProvider uses friendly Portuguese names
+// ('Premier League', 'Serie A (Itália)', ...), while The Odds API's real
+// `sport_title` field uses its own strings ('EPL', 'Serie A - Italy', ...).
+// Both variants are mapped here so the historical-data lookup works
+// regardless of which odds provider is active. Free tier does NOT include
+// the Brazilian Série A ("Brasileirão Série A" / "Brazil Série A") —
+// documented limitation, not a bug.
 const LEAGUE_CODE_MAP: Record<string, string> = {
+  // DemoOddsProvider labels
   'Premier League': 'PL',
   'La Liga': 'PD',
   'Serie A (Itália)': 'SA',
   Bundesliga: 'BL1',
   'Ligue 1': 'FL1',
-  'Champions League': 'CL'
+  'Champions League': 'CL',
+  // The Odds API `sport_title` labels
+  EPL: 'PL',
+  'La Liga - Spain': 'PD',
+  'Serie A - Italy': 'SA',
+  'Bundesliga - Germany': 'BL1',
+  'Ligue 1 - France': 'FL1',
+  'UEFA Champions League': 'CL'
 };
+
+// Exported so tests can assert both odds providers' league labels resolve
+// to a competition code without needing to mock fetch.
+export function resolveCompetitionCode(league: string): string | null {
+  return LEAGUE_CODE_MAP[league] ?? null;
+}
 
 interface RawTeam {
   name?: unknown;
