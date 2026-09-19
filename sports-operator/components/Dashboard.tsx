@@ -35,6 +35,7 @@ export default function Dashboard() {
   const [noBets, setNoBets] = useState<NoBetReport[]>([]);
   const [modelDataSynthetic, setModelDataSynthetic] = useState<boolean | null>(null);
   const [modelDataProvider, setModelDataProvider] = useState('');
+  const [calibration, setCalibration] = useState<{ sampleCount: number; minRequired: number; proven: boolean } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>('todos');
@@ -69,6 +70,7 @@ export default function Dashboard() {
       setNoBets(oppsJson.noBets ?? []);
       setModelDataSynthetic(typeof oppsJson.modelDataSynthetic === 'boolean' ? oppsJson.modelDataSynthetic : null);
       setModelDataProvider(oppsJson.modelDataProvider ?? '');
+      setCalibration(oppsJson.calibration ?? null);
 
       const errorCode = gamesJson.errorCode ?? oppsJson.errorCode;
       const rawError = gamesJson.error ?? oppsJson.error;
@@ -196,6 +198,12 @@ export default function Dashboard() {
           <span className="text-xs text-muted">
             Odds: {providerName || '—'} {demo && '(dados fictícios)'} · Modelo: {modelDataProvider || '—'}
             {modelDataSynthetic && ' (histórico sintético — não usar como evidência de performance)'}
+            {calibration && (
+              <>
+                {' '}· Calibração: {calibration.sampleCount}/{calibration.minRequired} amostras reais
+                {calibration.proven ? ' (suficiente)' : ' (ainda insuficiente — confiança "alta" fica bloqueada até aqui)'}
+              </>
+            )}
           </span>
         </div>
 
