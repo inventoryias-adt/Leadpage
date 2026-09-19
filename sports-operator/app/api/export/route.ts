@@ -10,7 +10,14 @@ function csvEscape(value: unknown): string {
 }
 
 export async function GET() {
-  const entries = listEntries();
+  let entries;
+  try {
+    entries = await listEntries();
+  } catch (err) {
+    console.error('[api/export] error:', err);
+    return NextResponse.json({ error: 'Erro ao ler histórico do banco para exportação.' }, { status: 500 });
+  }
+
   const headers = [
     'id',
     'createdAt',

@@ -18,16 +18,25 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     return NextResponse.json({ error: 'Status deve ser win, loss ou void.' }, { status: 400 });
   }
 
-  const updated = updateEntryStatus(params.id, status as 'win' | 'loss' | 'void');
-  if (!updated) {
-    return NextResponse.json({ error: 'Entrada não encontrada.' }, { status: 404 });
+  try {
+    const updated = await updateEntryStatus(params.id, status as 'win' | 'loss' | 'void');
+    if (!updated) {
+      return NextResponse.json({ error: 'Entrada não encontrada.' }, { status: 404 });
+    }
+    return NextResponse.json(updated);
+  } catch (err) {
+    console.error('[api/entries/id] PATCH error:', err);
+    return NextResponse.json({ error: 'Erro ao atualizar entrada no banco.' }, { status: 500 });
   }
-
-  return NextResponse.json(updated);
 }
 
 export async function DELETE(_request: Request, { params }: { params: { id: string } }) {
-  const ok = deleteEntry(params.id);
-  if (!ok) return NextResponse.json({ error: 'Entrada não encontrada.' }, { status: 404 });
-  return NextResponse.json({ ok: true });
+  try {
+    const ok = await deleteEntry(params.id);
+    if (!ok) return NextResponse.json({ error: 'Entrada não encontrada.' }, { status: 404 });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error('[api/entries/id] DELETE error:', err);
+    return NextResponse.json({ error: 'Erro ao excluir entrada no banco.' }, { status: 500 });
+  }
 }

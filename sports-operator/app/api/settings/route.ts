@@ -5,7 +5,12 @@ import type { UserSettings } from '../../../lib/types';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  return NextResponse.json(getSettings());
+  try {
+    return NextResponse.json(await getSettings());
+  } catch (err) {
+    console.error('[api/settings] GET error:', err);
+    return NextResponse.json({ error: 'Erro ao ler configurações do banco.' }, { status: 500 });
+  }
 }
 
 function isPositiveNumber(v: unknown): v is number {
@@ -56,6 +61,11 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
 
-  const saved = saveSettings(result.value);
-  return NextResponse.json(saved);
+  try {
+    const saved = await saveSettings(result.value);
+    return NextResponse.json(saved);
+  } catch (err) {
+    console.error('[api/settings] PUT error:', err);
+    return NextResponse.json({ error: 'Erro ao gravar configurações no banco.' }, { status: 500 });
+  }
 }

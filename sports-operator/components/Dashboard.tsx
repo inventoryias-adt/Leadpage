@@ -15,13 +15,22 @@ function money(v: number): string {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+const ERROR_MESSAGES: Record<string, string> = {
+  invalid_key: 'Chave da The Odds API inválida ou não autorizada. Verifique THE_ODDS_API_KEY.',
+  rate_limited: 'Limite de requisições da The Odds API atingido. Tente novamente mais tarde.',
+  timeout: 'A The Odds API não respondeu a tempo.',
+  network: 'Falha de rede ao consultar a The Odds API.',
+  invalid_response: 'A The Odds API retornou uma resposta em formato inesperado.',
+  unavailable: 'A The Odds API está indisponível no momento.'
+};
+
 export default function Dashboard() {
   const [tab, setTab] = useState<Tab>('jogos');
   const [games, setGames] = useState<Game[]>([]);
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [entries, setEntries] = useState<EntryRecord[]>([]);
-  const [demo, setDemo] = useState(false);
+  const [demo, setDemo] = useState<boolean | null>(null);
   const [providerName, setProviderName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,8 +64,11 @@ export default function Dashboard() {
       setProviderName(gamesJson.provider ?? '');
       setOpportunities(oppsJson.opportunities ?? []);
 
-      if (gamesJson.error) setError(gamesJson.error);
-      else if (oppsJson.error) setError(oppsJson.error);
+      const errorCode = gamesJson.errorCode ?? oppsJson.errorCode;
+      const rawError = gamesJson.error ?? oppsJson.error;
+      if (rawError) {
+        setError(errorCode && ERROR_MESSAGES[errorCode] ? ERROR_MESSAGES[errorCode] : rawError);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erro ao carregar dados.');
     } finally {
@@ -138,9 +150,14 @@ export default function Dashboard() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">SPORTS OPERATOR</h1>
           <div className="flex items-center gap-2">
-            {demo && (
+            {demo === true && (
               <span className="text-xs font-semibold px-2 py-1 rounded bg-warn/20 text-warn border border-warn/40">
                 MODO DEMO
+              </span>
+            )}
+            {demo === false && (
+              <span className="text-xs font-semibold px-2 py-1 rounded bg-accent/20 text-accent border border-accent/40">
+                DADOS REAIS
               </span>
             )}
             <button

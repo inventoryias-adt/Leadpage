@@ -6,7 +6,12 @@ import { randomUUID } from 'crypto';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  return NextResponse.json(listEntries());
+  try {
+    return NextResponse.json(await listEntries());
+  } catch (err) {
+    console.error('[api/entries] GET error:', err);
+    return NextResponse.json({ error: 'Erro ao ler histórico do banco.' }, { status: 500 });
+  }
 }
 
 function isValidOpportunity(v: unknown): v is Opportunity {
@@ -67,6 +72,11 @@ export async function POST(request: Request) {
     raw: JSON.stringify(opportunity)
   };
 
-  createEntry(entry);
-  return NextResponse.json(entry, { status: 201 });
+  try {
+    await createEntry(entry);
+    return NextResponse.json(entry, { status: 201 });
+  } catch (err) {
+    console.error('[api/entries] POST error:', err);
+    return NextResponse.json({ error: 'Erro ao gravar entrada no banco.' }, { status: 500 });
+  }
 }
