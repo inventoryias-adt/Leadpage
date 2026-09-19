@@ -3,6 +3,17 @@
 Operador pessoal de análise esportiva focado em futebol. Aplicação de uso
 individual, sem multi-tenant, sem login complexo.
 
+## Demo pública (temporária)
+
+**https://sports-operator-demo.vercel.app**
+
+Deploy de demonstração rodando em modo DEMO (dados fictícios), só para
+visualizar a interface e os cálculos. **Não use para registrar seu
+histórico real de entradas**: o banco (`better-sqlite3`) grava em disco, e
+o filesystem da Vercel é somente leitura exceto `/tmp`, que é efêmero —
+o histórico registrado nesse deploy pode ser perdido a qualquer momento.
+Para uso real e persistente, rode localmente (seção abaixo).
+
 ## 1. Instalação
 
 ```bash
