@@ -86,6 +86,33 @@ export function isBttsNo(outcomeName: string): boolean {
   return /^n[ãa]o$|^no$/i.test(outcomeName.trim());
 }
 
+// Turns a raw outcome name ("Le Havre", "Over", "Draw", "Sim") into a
+// full, unambiguous sentence fragment for display ("Vitória do Le Havre",
+// "Mais de 2.5 gols", "Empate", "Ambas equipes marcam: Sim"). The raw names
+// are correct for matching/math but meaningless on their own to someone who
+// doesn't already know the market convention.
+export function buildClearOutcomeLabel(
+  marketKey: MarketKey,
+  outcomeName: string,
+  homeTeam: string,
+  awayTeam: string
+): string {
+  if (marketKey === 'h2h') {
+    if (outcomeName === homeTeam) return `Vitória do ${homeTeam}`;
+    if (outcomeName === awayTeam) return `Vitória do ${awayTeam}`;
+    if (/empate|draw/i.test(outcomeName)) return 'Empate';
+    return outcomeName;
+  }
+  if (marketKey === 'btts') {
+    if (isBttsYes(outcomeName)) return 'Ambas equipes marcam: Sim';
+    if (isBttsNo(outcomeName)) return 'Ambas equipes marcam: Não';
+    return outcomeName;
+  }
+  // over_under_2_5: outcome names are already built as clear Portuguese
+  // sentences ("Mais de 2.5 gols") by the providers, so pass through as-is.
+  return outcomeName;
+}
+
 export function modelProbabilityFor(
   matrix: ScoreMatrix,
   marketKey: MarketKey,

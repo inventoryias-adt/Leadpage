@@ -100,6 +100,19 @@ function parseEvent(raw: unknown): Game | null {
           if (typeof o !== 'object' || o === null) return null;
           const out = o as RawOutcome;
           if (!isNonEmptyString(out.name) || !isFiniteNumber(out.price) || out.price <= 1) return null;
+          // For the "totals" market The Odds API returns bare "Over"/"Under" in
+          // `name` and puts the actual goal line in `point` — if we don't fold
+          // the line into the name, extractLine() in markets.ts has no digit to
+          // read and silently falls back to a default of 2.5 for every line,
+          // and the UI shows an unexplained "Over"/"Under" with no number at
+          // all. Building the clear Portuguese label here keeps both the model
+          // math and the on-screen text correct for any line (0.5, 1.5, ...).
+          if (market.key === 'totals' && isFiniteNumber(out.point)) {
+            const lineLabel = out.point === 0.5 ? 'gol' : 'gols';
+            const clearName =
+              out.name === 'Over' ? `Mais de ${out.point} ${lineLabel}` : `Menos de ${out.point} ${lineLabel}`;
+            return { name: clearName, price: out.price };
+          }
           return { name: out.name, price: out.price };
         })
         .filter((o): o is { name: string; price: number } => o !== null);

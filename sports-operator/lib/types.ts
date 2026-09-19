@@ -48,6 +48,7 @@ export interface AnalyzedSelection {
   commenceTime: string;
   homeTeam: string;
   awayTeam: string;
+  marketKey: MarketKey;
   marketLabel: string;
   outcomeName: string;
   bookmaker: string;

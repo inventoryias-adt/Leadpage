@@ -1,6 +1,7 @@
 'use client';
 
 import type { Opportunity } from '../lib/types';
+import { buildClearOutcomeLabel } from '../lib/analysis/markets';
 
 function pct(v: number): string {
   return `${(v * 100).toFixed(2)}%`;
@@ -31,8 +32,8 @@ export default function AnalysisModal({
           <ol className="text-sm text-slate-200 list-decimal list-inside space-y-1">
             {opportunity.selections.map((s, i) => (
               <li key={i}>
-                Aposte na seleção <strong>&quot;{s.outcomeName}&quot;</strong> do mercado {s.marketLabel} no jogo{' '}
-                {s.homeTeam} x {s.awayTeam}, na casa <strong>{s.bookmaker}</strong>, odd {s.odd.toFixed(2)}.
+                Aposte em <strong>{buildClearOutcomeLabel(s.marketKey, s.outcomeName, s.homeTeam, s.awayTeam)}</strong>{' '}
+                no jogo {s.homeTeam} x {s.awayTeam}, na casa <strong>{s.bookmaker}</strong>, odd {s.odd.toFixed(2)}.
               </li>
             ))}
             <li>
@@ -66,7 +67,8 @@ export default function AnalysisModal({
               {s.homeTeam} x {s.awayTeam}
             </div>
             <div className="text-sm mb-2">
-              Mercado: {s.marketLabel} — Seleção: <strong>{s.outcomeName}</strong> — Casa: {s.bookmaker}
+              Seleção: <strong>{buildClearOutcomeLabel(s.marketKey, s.outcomeName, s.homeTeam, s.awayTeam)}</strong> —
+              Casa: {s.bookmaker}
             </div>
             <dl className="grid grid-cols-2 gap-2 text-sm">
               <Row label="Odd" value={s.odd.toFixed(2)} />

@@ -1,6 +1,7 @@
 'use client';
 
 import type { Opportunity } from '../lib/types';
+import { buildClearOutcomeLabel } from '../lib/analysis/markets';
 
 function pct(v: number): string {
   return `${(v * 100).toFixed(1)}%`;
@@ -27,7 +28,10 @@ const confidenceColor: Record<Opportunity['confidence'], string> = {
 // and always shown: this is never framed as a guarantee.
 function buildActionText(opportunity: Opportunity): string {
   const legs = opportunity.selections
-    .map((s) => `"${s.outcomeName}" em ${s.homeTeam} x ${s.awayTeam} (${s.marketLabel}, casa ${s.bookmaker})`)
+    .map((s) => {
+      const clearOutcome = buildClearOutcomeLabel(s.marketKey, s.outcomeName, s.homeTeam, s.awayTeam);
+      return `${clearOutcome} (${s.homeTeam} x ${s.awayTeam}, casa ${s.bookmaker})`;
+    })
     .join(' + ');
 
   const stakeMoney = opportunity.suggestedStake.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -72,7 +76,9 @@ export default function OpportunityCard({
         <div className="text-lg font-semibold">{title}</div>
         {opportunity.selections.map((s, i) => (
           <div key={i} className="text-sm text-slate-300">
-            {s.marketLabel}: <span className="font-medium">{s.outcomeName}</span>{' '}
+            <span className="font-medium">
+              {buildClearOutcomeLabel(s.marketKey, s.outcomeName, s.homeTeam, s.awayTeam)}
+            </span>{' '}
             <span className="text-muted">@ {s.odd.toFixed(2)} ({s.bookmaker})</span>
           </div>
         ))}

@@ -61,8 +61,8 @@ function buildGame(
         marketLabel: 'Mais/Menos 2.5 Gols',
         bookmaker: 'DemoBet',
         outcomes: [
-          { name: 'Mais de 2.5', price: overOdd },
-          { name: 'Menos de 2.5', price: underOdd }
+          { name: 'Mais de 2.5 gols', price: overOdd },
+          { name: 'Menos de 2.5 gols', price: underOdd }
         ]
       },
       {

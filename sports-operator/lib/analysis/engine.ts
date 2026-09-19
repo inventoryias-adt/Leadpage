@@ -120,6 +120,7 @@ function analyzeGame(
         commenceTime: game.commenceTime,
         homeTeam: game.homeTeam,
         awayTeam: game.awayTeam,
+        marketKey: key,
         marketLabel: reference.marketLabel,
         outcomeName,
         bookmaker: bestBookmaker,

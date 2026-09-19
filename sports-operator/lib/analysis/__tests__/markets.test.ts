@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeStake, impliedProbability, devig, normalizeTeamName, findRatingKey } from '../markets';
+import { computeStake, impliedProbability, devig, normalizeTeamName, findRatingKey, extractLine, buildClearOutcomeLabel } from '../markets';
 import type { UserSettings } from '../../types';
 import type { LeagueRatings } from '../models/footballV1';
 
@@ -92,5 +92,34 @@ describe('normalizeTeamName / findRatingKey (cross-provider name matching)', () 
     expect(findRatingKey(ratings, 'Inter de Milão')).toBe('FC Internazionale Milano');
     expect(findRatingKey(ratings, 'Roma')).toBe('AS Roma');
     expect(findRatingKey(ratings, 'Totally Unknown FC')).toBeNull();
+  });
+});
+
+describe('extractLine (real-provider outcome names must carry the actual goal line)', () => {
+  it('reads the line from a real-looking name, not a hardcoded default', () => {
+    expect(extractLine('Mais/Menos Gols', 'Mais de 0.5 gol')).toBe(0.5);
+    expect(extractLine('Mais/Menos Gols', 'Menos de 1.5 gols')).toBe(1.5);
+    expect(extractLine('Mais/Menos Gols', 'Mais de 3.5 gols')).toBe(3.5);
+  });
+
+  it('falls back to 2.5 only when no line is present in either field (should not normally happen)', () => {
+    expect(extractLine('Mais/Menos Gols', 'Over')).toBe(2.5);
+  });
+});
+
+describe('buildClearOutcomeLabel (unambiguous UI text for raw provider outcome names)', () => {
+  it('turns a bare team name into an explicit victory sentence for h2h', () => {
+    expect(buildClearOutcomeLabel('h2h', 'Le Havre', 'PSG', 'Le Havre')).toBe('Vitória do Le Havre');
+    expect(buildClearOutcomeLabel('h2h', 'PSG', 'PSG', 'Le Havre')).toBe('Vitória do PSG');
+    expect(buildClearOutcomeLabel('h2h', 'Draw', 'PSG', 'Le Havre')).toBe('Empate');
+  });
+
+  it('turns Sim/Não into an explicit both-teams-to-score sentence', () => {
+    expect(buildClearOutcomeLabel('btts', 'Sim', 'A', 'B')).toBe('Ambas equipes marcam: Sim');
+    expect(buildClearOutcomeLabel('btts', 'Não', 'A', 'B')).toBe('Ambas equipes marcam: Não');
+  });
+
+  it('passes through an already-clear totals outcome name unchanged', () => {
+    expect(buildClearOutcomeLabel('over_under_2_5', 'Mais de 0.5 gol', 'A', 'B')).toBe('Mais de 0.5 gol');
   });
 });
