@@ -61,7 +61,7 @@ export default function OpportunityCard({
 
       <div className="grid grid-cols-3 gap-2 text-xs bg-panel2 rounded p-2 border border-border">
         <Metric label="Odd" value={opportunity.combinedOdd.toFixed(2)} />
-        <Metric label="Prob. implícita" value={pct(opportunity.impliedProbability)} />
+        <Metric label="Prob. mercado" value={pct(opportunity.marketProbability)} />
         <Metric label="Prob. modelo" value={pct(opportunity.modelProbability)} />
         <Metric label="Edge" value={pct(opportunity.edge)} highlight={opportunity.edge > 0} />
         <Metric label="Valor esperado" value={opportunity.expectedValue.toFixed(3)} highlight={opportunity.expectedValue > 0} />
@@ -76,7 +76,7 @@ export default function OpportunityCard({
 
       <div className="flex items-center justify-between pt-1">
         <span className={`text-xs font-semibold uppercase ${confidenceColor[opportunity.confidence]}`}>
-          Confiança {opportunity.confidence}
+          Confiança {opportunity.confidence} · {opportunity.modelVersion}
         </span>
         <div className="flex gap-2">
           <button

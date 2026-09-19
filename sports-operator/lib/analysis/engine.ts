@@ -1,79 +1,102 @@
-import type {
-  AnalyzedSelection,
-  Game,
-  MarketKey,
-  Opportunity,
-  OddsMarket,
-  SelectionType,
-  UserSettings
-} from '../types';
+import type { AnalyzedSelection, DataQuality, Game, MarketKey, NoBetReport, Opportunity, UserSettings } from '../types';
+import type { SportsDataProvider, HistoricalMatch } from '../providers/sportsdata/types';
+import { getSportsDataProvider } from '../providers/sportsdata';
+import { computeLeagueRatings, predictMatch, MODEL_VERSION, type LeagueRatings, type ScoreMatrix } from './models/footballV1';
+import { computeScore, computeConfidence } from './scoring/score';
+import type { CalibrationSample } from './calibration/calibration';
+import { devig, findRatingKey, impliedProbability, modelProbabilityFor, computeStake } from './markets';
 
-// Configurable analysis engine. Model probability here is a transparent,
-// odds-derived heuristic (de-vigged implied probability adjusted by a small
-// league/market confidence factor) — NOT a black-box ML prediction. It is
-// explicitly labeled "MODEL" everywhere in the UI, distinct from the
-// bookmaker's implied probability. TODO (V2): plug in a real statistical
-// model (Poisson/xG based) behind this same interface.
+// How far back to pull historical results when building team ratings.
+// ~8 months gives roughly a season's worth of matches for major European
+// leagues without over-weighting stale form.
+const LOOKBACK_DAYS = 240;
 
-function impliedProbability(odd: number): number {
-  return 1 / odd;
+interface EngineDeps {
+  sportsDataProvider?: SportsDataProvider;
+  calibrationSamples?: CalibrationSample[];
+  asOf?: Date;
 }
 
-// Remove bookmaker margin (overround) from a full market's outcomes so the
-// probabilities sum to 1 — this is the "fair" implied probability.
-function devig(outcomes: { price: number }[]): number[] {
-  const raw = outcomes.map((o) => impliedProbability(o.price));
-  const sum = raw.reduce((a, b) => a + b, 0);
-  return raw.map((p) => p / sum);
+async function loadRatingsByLeague(
+  games: Game[],
+  provider: SportsDataProvider,
+  asOf: Date
+): Promise<Map<string, LeagueRatings | null>> {
+  const leagues = Array.from(new Set(games.map((g) => g.league)));
+  const entries = await Promise.all(
+    leagues.map(async (league) => {
+      try {
+        const matches: HistoricalMatch[] = await provider.fetchHistoricalMatches(league, asOf, LOOKBACK_DAYS);
+        return [league, computeLeagueRatings(matches, asOf, league)] as const;
+      } catch (err) {
+        console.warn(`[engine] failed to load historical data for league "${league}":`, err);
+        return [league, null] as const;
+      }
+    })
+  );
+  return new Map(entries);
 }
 
-interface ModelConfig {
-  // Confidence pull toward the de-vigged market probability (0-1).
-  // 1 = trust market fully. Lower values shrink toward a neutral prior,
-  // simulating a cautious independent model instead of just echoing odds.
-  marketTrust: number;
+function buildDataQuality(matrix: ScoreMatrix | null, synthetic: boolean): DataQuality {
+  return {
+    modelVersion: MODEL_VERSION,
+    sufficientSample: matrix?.dataQuality.sufficientSample ?? false,
+    homeMatchesUsed: matrix?.dataQuality.homeMatchesUsed ?? 0,
+    awayMatchesUsed: matrix?.dataQuality.awayMatchesUsed ?? 0,
+    synthetic
+  };
 }
 
-const DEFAULT_MODEL_CONFIG: ModelConfig = { marketTrust: 0.92 };
+function analyzeGame(
+  game: Game,
+  ratings: LeagueRatings | null,
+  synthetic: boolean,
+  calibrationSamples: CalibrationSample[]
+): { selections: AnalyzedSelection[]; noBetReasons: string[] } {
+  const noBetReasons: string[] = [];
 
-function estimateModelProbability(fairProb: number, config: ModelConfig = DEFAULT_MODEL_CONFIG): number {
-  const neutral = 1 / 3; // conservative neutral prior for a 3-way-ish market
-  const blended = fairProb * config.marketTrust + neutral * (1 - config.marketTrust);
-  return Math.min(0.98, Math.max(0.02, blended));
-}
+  if (!ratings) {
+    return { selections: [], noBetReasons: [`Sem histórico suficiente para a liga "${game.league}".`] };
+  }
 
-function scoreOf(edge: number, modelProbability: number, expectedValue: number): number {
-  // Weighted composite: rewards positive EV and edge, penalizes very low
-  // probability picks (higher variance) even if EV looks attractive.
-  const evComponent = Math.max(0, expectedValue) * 40;
-  const edgeComponent = Math.max(0, edge) * 100;
-  const probComponent = modelProbability * 20;
-  return +(evComponent + edgeComponent + probComponent).toFixed(2);
-}
+  const homeKey = findRatingKey(ratings, game.homeTeam);
+  const awayKey = findRatingKey(ratings, game.awayTeam);
+  if (!homeKey || !awayKey) {
+    return {
+      selections: [],
+      noBetReasons: [`Não foi possível casar "${game.homeTeam}" x "${game.awayTeam}" com o histórico da liga.`]
+    };
+  }
 
-function bestMarketsByOutcome(markets: OddsMarket[], marketKey: MarketKey): OddsMarket[] {
-  return markets.filter((m) => m.marketKey === marketKey);
-}
+  const matrix = predictMatch(ratings, homeKey, awayKey);
+  if (!matrix) {
+    return { selections: [], noBetReasons: ['Falha ao gerar a matriz de placares do modelo.'] };
+  }
 
-export function analyzeGame(game: Game): AnalyzedSelection[] {
+  if (!matrix.dataQuality.sufficientSample) {
+    noBetReasons.push(
+      `Amostra insuficiente (mandante: ${matrix.dataQuality.homeMatchesUsed} jogos, visitante: ${matrix.dataQuality.awayMatchesUsed} jogos).`
+    );
+  }
+
+  const dataQuality = buildDataQuality(matrix, synthetic);
   const selections: AnalyzedSelection[] = [];
   const marketKeys: MarketKey[] = ['h2h', 'over_under_2_5', 'btts'];
 
   for (const key of marketKeys) {
-    const marketsOfKind = bestMarketsByOutcome(game.markets, key);
+    const marketsOfKind = game.markets.filter((m) => m.marketKey === key);
     if (marketsOfKind.length === 0) continue;
 
-    // Use the first market instance to define fair probabilities (outcome
-    // structure is shared across bookmakers for the same market key).
     const reference = marketsOfKind[0];
     const fairProbs = devig(reference.outcomes);
 
     for (const outcomeIndex of reference.outcomes.keys()) {
       const outcomeName = reference.outcomes[outcomeIndex].name;
-      const fairProb = fairProbs[outcomeIndex];
-      const modelProbability = estimateModelProbability(fairProb);
+      const marketProbability = fairProbs[outcomeIndex];
 
-      // Pick the best (highest) odd across all bookmakers offering this market+outcome.
+      const modelProbability = modelProbabilityFor(matrix, key, reference.marketLabel, outcomeName, game.homeTeam, game.awayTeam);
+      if (modelProbability === null) continue;
+
       let bestOdd = -Infinity;
       let bestBookmaker = '';
       for (const market of marketsOfKind) {
@@ -89,6 +112,8 @@ export function analyzeGame(game: Game): AnalyzedSelection[] {
       const edge = modelProbability - implied;
       const expectedValue = modelProbability * (bestOdd - 1) - (1 - modelProbability);
 
+      const score = computeScore({ modelProbability, marketProbability, edge, expectedValue, dataQuality, calibrationSamples });
+
       selections.push({
         gameId: game.id,
         league: game.league,
@@ -100,15 +125,18 @@ export function analyzeGame(game: Game): AnalyzedSelection[] {
         bookmaker: bestBookmaker,
         odd: +bestOdd.toFixed(2),
         impliedProbability: +implied.toFixed(4),
+        marketProbability: +marketProbability.toFixed(4),
         modelProbability: +modelProbability.toFixed(4),
         edge: +edge.toFixed(4),
         expectedValue: +expectedValue.toFixed(4),
-        score: scoreOf(edge, modelProbability, expectedValue)
+        score,
+        modelVersion: MODEL_VERSION,
+        dataQuality
       });
     }
   }
 
-  return selections;
+  return { selections, noBetReasons };
 }
 
 function passesFilters(sel: AnalyzedSelection, settings: UserSettings): boolean {
@@ -116,45 +144,43 @@ function passesFilters(sel: AnalyzedSelection, settings: UserSettings): boolean 
     sel.modelProbability >= settings.minProbability &&
     sel.odd >= settings.minOdd &&
     sel.odd <= settings.maxOdd &&
-    sel.edge > 0
+    sel.edge > 0 &&
+    sel.dataQuality.sufficientSample
   );
 }
 
-function computeStake(settings: UserSettings, odd: number): {
-  stake: number;
-  potentialReturn: number;
-  potentialProfit: number;
-} {
-  const rawStake = (settings.bankroll * settings.stakePercent) / 100;
-  const stake = +Math.min(rawStake, settings.maxStake).toFixed(2);
-  const potentialReturn = +(stake * odd).toFixed(2);
-  const potentialProfit = +(potentialReturn - stake).toFixed(2);
-  return { stake, potentialReturn, potentialProfit };
+function combinedDataQuality(selections: AnalyzedSelection[]): DataQuality {
+  return {
+    modelVersion: MODEL_VERSION,
+    sufficientSample: selections.every((s) => s.dataQuality.sufficientSample),
+    homeMatchesUsed: Math.min(...selections.map((s) => s.dataQuality.homeMatchesUsed)),
+    awayMatchesUsed: Math.min(...selections.map((s) => s.dataQuality.awayMatchesUsed)),
+    synthetic: selections.some((s) => s.dataQuality.synthetic)
+  };
 }
 
-function confidenceOf(modelProbability: number, edge: number): 'alta' | 'media' | 'baixa' {
-  if (modelProbability >= 0.65 && edge >= 0.05) return 'alta';
-  if (modelProbability >= 0.5 && edge >= 0.02) return 'media';
-  return 'baixa';
-}
-
-// Correlation guard: selections from the SAME game are correlated by
-// definition (e.g. "Home wins" and "Over 2.5" share the same match outcome
-// space). We refuse to build a multiple from legs sharing a gameId, since
-// naive probability multiplication would misprice it.
 function hasCorrelatedLegs(selections: AnalyzedSelection[]): boolean {
   const gameIds = new Set(selections.map((s) => s.gameId));
   return gameIds.size !== selections.length;
 }
 
-function buildSimpleOpportunity(sel: AnalyzedSelection, settings: UserSettings): Opportunity {
+function buildSimpleOpportunity(sel: AnalyzedSelection, settings: UserSettings, calibrationSamples: CalibrationSample[]): Opportunity {
   const { stake, potentialReturn, potentialProfit } = computeStake(settings, sel.odd);
+  const confidence = computeConfidence({
+    modelProbability: sel.modelProbability,
+    edge: sel.edge,
+    dataQuality: sel.dataQuality,
+    calibrationSamples,
+    marketProbability: sel.marketProbability
+  });
+
   return {
     id: `simple-${sel.gameId}-${sel.marketLabel}-${sel.outcomeName}`.replace(/\s+/g, '_'),
     type: 'simple',
     selections: [sel],
     combinedOdd: sel.odd,
     impliedProbability: sel.impliedProbability,
+    marketProbability: sel.marketProbability,
     modelProbability: sel.modelProbability,
     edge: sel.edge,
     expectedValue: sel.expectedValue,
@@ -162,28 +188,29 @@ function buildSimpleOpportunity(sel: AnalyzedSelection, settings: UserSettings):
     suggestedStake: stake,
     potentialReturn,
     potentialProfit,
-    confidence: confidenceOf(sel.modelProbability, sel.edge)
+    confidence,
+    modelVersion: MODEL_VERSION
   };
 }
 
-function buildMultiple(
-  legs: AnalyzedSelection[],
-  settings: UserSettings
-): Opportunity | null {
+function buildMultiple(legs: AnalyzedSelection[], settings: UserSettings, calibrationSamples: CalibrationSample[]): Opportunity | null {
   if (legs.length < 2) return null;
   if (hasCorrelatedLegs(legs)) return null; // never recommend a mispriced correlated multiple
 
   const combinedOdd = legs.reduce((acc, l) => acc * l.odd, 1);
   const combinedImplied = legs.reduce((acc, l) => acc * l.impliedProbability, 1);
+  const combinedMarket = legs.reduce((acc, l) => acc * l.marketProbability, 1);
   // Independence assumption is only valid because legs come from different
-  // games (enforced above). Still treated conservatively via modelTrust.
+  // games (enforced above by hasCorrelatedLegs).
   const combinedModel = legs.reduce((acc, l) => acc * l.modelProbability, 1);
   const edge = combinedModel - combinedImplied;
   const expectedValue = combinedModel * (combinedOdd - 1) - (1 - combinedModel);
 
   if (edge <= 0) return null; // don't recommend negative-edge multiples
 
-  const score = scoreOf(edge, combinedModel, expectedValue);
+  const dataQuality = combinedDataQuality(legs);
+  const score = computeScore({ modelProbability: combinedModel, marketProbability: combinedMarket, edge, expectedValue, dataQuality, calibrationSamples });
+  const confidence = computeConfidence({ modelProbability: combinedModel, edge, dataQuality, calibrationSamples, marketProbability: combinedMarket });
   const { stake, potentialReturn, potentialProfit } = computeStake(settings, combinedOdd);
 
   return {
@@ -192,6 +219,7 @@ function buildMultiple(
     selections: legs,
     combinedOdd: +combinedOdd.toFixed(2),
     impliedProbability: +combinedImplied.toFixed(4),
+    marketProbability: +combinedMarket.toFixed(4),
     modelProbability: +combinedModel.toFixed(4),
     edge: +edge.toFixed(4),
     expectedValue: +expectedValue.toFixed(4),
@@ -199,24 +227,63 @@ function buildMultiple(
     suggestedStake: stake,
     potentialReturn,
     potentialProfit,
-    confidence: confidenceOf(combinedModel, edge)
+    confidence,
+    modelVersion: MODEL_VERSION
   };
 }
 
-export function buildOpportunities(games: Game[], settings: UserSettings): Opportunity[] {
-  const allSelections = games.flatMap(analyzeGame);
-  const qualifying = allSelections.filter((s) => passesFilters(s, settings));
+export interface EngineResult {
+  opportunities: Opportunity[];
+  noBets: NoBetReport[];
+}
+
+export async function buildOpportunities(games: Game[], settings: UserSettings, deps: EngineDeps = {}): Promise<EngineResult> {
+  const provider = deps.sportsDataProvider ?? getSportsDataProvider();
+  const calibrationSamples = deps.calibrationSamples ?? [];
+  const asOf = deps.asOf ?? new Date();
+
+  const ratingsByLeague = await loadRatingsByLeague(games, provider, asOf);
+
+  const allSelections: AnalyzedSelection[] = [];
+  const noBets: NoBetReport[] = [];
+
+  for (const game of games) {
+    const ratings = ratingsByLeague.get(game.league) ?? null;
+    const { selections, noBetReasons } = analyzeGame(game, ratings, provider.synthetic, calibrationSamples);
+
+    const qualifying = selections.filter((s) => passesFilters(s, settings));
+    allSelections.push(...qualifying);
+
+    const rejectedReasons = [
+      ...noBetReasons,
+      ...selections
+        .filter((s) => !passesFilters(s, settings))
+        .map((s) => {
+          if (s.edge <= 0) return `${s.marketLabel} (${s.outcomeName}): edge não positivo.`;
+          if (!s.dataQuality.sufficientSample) return `${s.marketLabel} (${s.outcomeName}): amostra insuficiente.`;
+          if (s.odd < settings.minOdd || s.odd > settings.maxOdd) return `${s.marketLabel} (${s.outcomeName}): odd fora da faixa configurada.`;
+          return `${s.marketLabel} (${s.outcomeName}): abaixo da probabilidade mínima configurada.`;
+        })
+    ];
+
+    if (qualifying.length === 0) {
+      noBets.push({
+        gameId: game.id,
+        league: game.league,
+        homeTeam: game.homeTeam,
+        awayTeam: game.awayTeam,
+        reasons: rejectedReasons.length > 0 ? rejectedReasons : ['Nenhuma seleção qualificada.']
+      });
+    }
+  }
 
   const opportunities: Opportunity[] = [];
 
-  // Simple entries: one per qualifying selection.
-  for (const sel of qualifying) {
-    opportunities.push(buildSimpleOpportunity(sel, settings));
+  for (const sel of allSelections) {
+    opportunities.push(buildSimpleOpportunity(sel, settings, calibrationSamples));
   }
 
-  // Multiples: only from top-scoring qualifying selections, different games,
-  // capped at settings.maxLegsMultiple (2 or 3), never mixing correlated legs.
-  const sortedByScore = [...qualifying].sort((a, b) => b.score - a.score);
+  const sortedByScore = [...allSelections].sort((a, b) => b.score - a.score);
   const legCounts = settings.maxLegsMultiple >= 3 ? [2, 3] : [2];
 
   for (const legCount of legCounts) {
@@ -228,13 +295,11 @@ export function buildOpportunities(games: Game[], settings: UserSettings): Oppor
       usedGameIds.add(sel.gameId);
       if (candidateLegs.length === legCount) break;
     }
-    const multi = buildMultiple(candidateLegs, settings);
+    const multi = buildMultiple(candidateLegs, settings, calibrationSamples);
     if (multi) opportunities.push(multi);
   }
 
-  return opportunities.sort((a, b) => b.score - a.score);
-}
+  opportunities.sort((a, b) => b.score - a.score);
 
-export function classifyType(op: Opportunity): SelectionType {
-  return op.type;
+  return { opportunities, noBets };
 }

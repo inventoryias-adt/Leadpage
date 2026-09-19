@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import type { EntryRecord, Game, Opportunity, UserSettings } from '../lib/types';
+import type { EntryRecord, Game, NoBetReport, Opportunity, UserSettings } from '../lib/types';
 import { computeStats } from '../lib/stats';
 import OpportunityCard from './OpportunityCard';
 import AnalysisModal from './AnalysisModal';
@@ -32,6 +32,9 @@ export default function Dashboard() {
   const [entries, setEntries] = useState<EntryRecord[]>([]);
   const [demo, setDemo] = useState<boolean | null>(null);
   const [providerName, setProviderName] = useState('');
+  const [noBets, setNoBets] = useState<NoBetReport[]>([]);
+  const [modelDataSynthetic, setModelDataSynthetic] = useState<boolean | null>(null);
+  const [modelDataProvider, setModelDataProvider] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>('todos');
@@ -63,6 +66,9 @@ export default function Dashboard() {
       setDemo(Boolean(gamesJson.demo));
       setProviderName(gamesJson.provider ?? '');
       setOpportunities(oppsJson.opportunities ?? []);
+      setNoBets(oppsJson.noBets ?? []);
+      setModelDataSynthetic(typeof oppsJson.modelDataSynthetic === 'boolean' ? oppsJson.modelDataSynthetic : null);
+      setModelDataProvider(oppsJson.modelDataProvider ?? '');
 
       const errorCode = gamesJson.errorCode ?? oppsJson.errorCode;
       const rawError = gamesJson.error ?? oppsJson.error;
@@ -84,11 +90,6 @@ export default function Dashboard() {
   }, []);
 
   const stats = useMemo(() => computeStats(entries), [entries]);
-
-  const gamesWithoutOpportunity = useMemo(() => {
-    const coveredGameIds = new Set(opportunities.flatMap((o) => o.selections.map((s) => s.gameId)));
-    return games.filter((g) => !coveredGameIds.has(g.id));
-  }, [games, opportunities]);
 
   const filteredOpportunities = useMemo(() => {
     switch (filter) {
@@ -160,6 +161,11 @@ export default function Dashboard() {
                 DADOS REAIS
               </span>
             )}
+            {modelDataSynthetic === true && (
+              <span className="text-xs font-semibold px-2 py-1 rounded bg-warn/20 text-warn border border-warn/40">
+                MODELO: HISTÓRICO SINTÉTICO
+              </span>
+            )}
             <button
               onClick={() => setShowSettings(true)}
               className="text-sm px-3 py-1.5 rounded border border-border hover:bg-panel2"
@@ -188,7 +194,8 @@ export default function Dashboard() {
             {loading ? 'ATUALIZANDO…' : 'ATUALIZAR JOGOS'}
           </button>
           <span className="text-xs text-muted">
-            Provider: {providerName || '—'} {demo && '(dados fictícios)'}
+            Odds: {providerName || '—'} {demo && '(dados fictícios)'} · Modelo: {modelDataProvider || '—'}
+            {modelDataSynthetic && ' (histórico sintético — não usar como evidência de performance)'}
           </span>
         </div>
 
@@ -216,14 +223,19 @@ export default function Dashboard() {
 
           {filter === 'no_bet' ? (
             <div className="flex flex-col gap-3">
-              {gamesWithoutOpportunity.length === 0 && (
+              {noBets.length === 0 && (
                 <p className="text-muted text-sm">Todos os jogos do dia tiveram alguma oportunidade qualificada.</p>
               )}
-              {gamesWithoutOpportunity.map((g) => (
-                <div key={g.id} className="rounded-lg border border-border bg-panel p-4">
-                  <div className="text-xs uppercase text-muted mb-1">{g.league}</div>
-                  <div className="font-semibold">{g.homeTeam} x {g.awayTeam}</div>
-                  <div className="text-xs text-warn font-semibold mt-2">NO BET — nenhuma seleção atende aos parâmetros configurados (probabilidade mínima, faixa de odd ou edge positivo).</div>
+              {noBets.map((nb) => (
+                <div key={nb.gameId} className="rounded-lg border border-border bg-panel p-4">
+                  <div className="text-xs uppercase text-muted mb-1">{nb.league}</div>
+                  <div className="font-semibold">{nb.homeTeam} x {nb.awayTeam}</div>
+                  <div className="text-xs text-warn font-semibold mt-2 mb-1">NO BET</div>
+                  <ul className="text-xs text-muted list-disc list-inside">
+                    {nb.reasons.map((r, i) => (
+                      <li key={i}>{r}</li>
+                    ))}
+                  </ul>
                 </div>
               ))}
             </div>

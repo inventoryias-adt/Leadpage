@@ -42,11 +42,17 @@ export default function AnalysisModal({
             </div>
             <dl className="grid grid-cols-2 gap-2 text-sm">
               <Row label="Odd" value={s.odd.toFixed(2)} />
-              <Row label="Probabilidade implícita (odd)" value={pct(s.impliedProbability)} />
-              <Row label="Probabilidade estimada (modelo)" value={pct(s.modelProbability)} />
-              <Row label="Edge (modelo - implícita)" value={pct(s.edge)} />
+              <Row label="Probabilidade de mercado (de-vigada, benchmark)" value={pct(s.marketProbability)} />
+              <Row label="Probabilidade do modelo (independente)" value={pct(s.modelProbability)} />
+              <Row label="Edge (modelo - implícita da odd)" value={pct(s.edge)} />
               <Row label="Valor esperado (por 1 unidade)" value={s.expectedValue.toFixed(4)} />
               <Row label="Score" value={s.score.toFixed(2)} />
+              <Row label="Versão do modelo" value={s.modelVersion} />
+              <Row
+                label="Amostra usada (mandante / visitante)"
+                value={`${s.dataQuality.homeMatchesUsed} / ${s.dataQuality.awayMatchesUsed} jogos`}
+              />
+              <Row label="Dados sintéticos?" value={s.dataQuality.synthetic ? 'Sim — não usar como evidência' : 'Não'} />
             </dl>
           </div>
         ))}
@@ -55,11 +61,12 @@ export default function AnalysisModal({
           <h3 className="font-semibold mb-2">Combinação</h3>
           <dl className="grid grid-cols-2 gap-2 text-sm">
             <Row label="Odd combinada" value={opportunity.combinedOdd.toFixed(2)} />
-            <Row label="Probabilidade implícita combinada" value={pct(opportunity.impliedProbability)} />
-            <Row label="Probabilidade estimada combinada" value={pct(opportunity.modelProbability)} />
+            <Row label="Probabilidade de mercado combinada" value={pct(opportunity.marketProbability)} />
+            <Row label="Probabilidade do modelo combinada" value={pct(opportunity.modelProbability)} />
             <Row label="Edge combinado" value={pct(opportunity.edge)} />
             <Row label="Valor esperado combinado" value={opportunity.expectedValue.toFixed(4)} />
             <Row label="Score final" value={opportunity.score.toFixed(2)} />
+            <Row label="Versão do modelo" value={opportunity.modelVersion} />
           </dl>
         </div>
 

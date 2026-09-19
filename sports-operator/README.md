@@ -134,6 +134,8 @@ deploy.
 | `ODDS_REGION`       | não         | Região de bookmakers (`eu`, `uk`, `us`, `au`)          |
 | `DATABASE_PATH`     | não         | Caminho do arquivo SQLite local (padrão `./data/sports-operator.db`), usado quando `DATABASE_URL` não está definida |
 | `DATABASE_URL`      | só em produção | Connection string Postgres/Supabase. Quando definida, substitui o SQLite |
+| `SPORTS_DATA_PROVIDER` | não | `demo` (padrão, histórico sintético) ou `footballdata` |
+| `FOOTBALL_DATA_API_KEY` | só p/ dados reais | Chave da football-data.org (necessária para `SPORTS_DATA_PROVIDER=footballdata`) |
 
 ## 5. Execução (desenvolvimento)
 
@@ -190,17 +192,117 @@ sports-operator/
   data/                       Banco SQLite local (gitignored)
 ```
 
+## Motor quantitativo (`football-v1`)
+
+A partir desta etapa, o sistema **não usa mais `1/odd` como probabilidade
+própria**. O motor de análise (`lib/analysis/`) é organizado assim:
+
+```
+lib/analysis/
+  models/footballV1.ts   Modelo Dixon-Coles (Poisson ajustado)
+  markets.ts              Resolução de mercado -> probabilidade (compartilhado com o backtest)
+  scoring/score.ts         Fórmula de score e de confiança, documentadas
+  calibration/calibration.ts  Brier score, log loss, accuracy, curva de calibração
+  backtest/backtest.ts     Backtest walk-forward, sem data leakage
+  engine.ts                Orquestra tudo: gera Opportunity[] e NoBetReport[]
+lib/providers/sportsdata/  Adapter de dados históricos (demo sintético + football-data.org)
+```
+
+**Modelo:** Dixon-Coles (Poisson ajustado). Estima força de ataque/defesa de
+cada time (mandante e visitante separadamente) a partir de gols marcados e
+sofridos em partidas históricas, com peso decrescente por tempo (meia-vida
+de 60 dias, para capturar forma recente). Sobre isso, aplica a correção
+Dixon-Coles para o viés conhecido do Poisson puro em placares baixos
+(0-0, 1-0, 0-1, 1-1). A partir da matriz de probabilidades de placar,
+deriva-se 1X2, Over/Under e Ambas Marcam.
+
+**Por que Dixon-Coles e não outra abordagem:** ao contrário de Elo (só dá
+vitória/empate/derrota) ou regressão logística (exigiria um dataset grande
+e rotulado que não temos), Dixon-Coles modela gols diretamente — cobrindo
+os três mercados da V1 — com um método de estimação simples e explicável.
+
+**Simplificação assumida (limitação documentada):** a força de ataque/defesa
+é estimada por médias ponderadas (não por máxima verossimilhança completa),
+e o parâmetro de correlação de placares baixos (ρ) é fixo, não ajustado aos
+seus dados. Ambos são pontos de evolução natural para `football-v2`.
+
+**Probabilidade de mercado vs. probabilidade do modelo:** toda oportunidade
+guarda os dois valores separadamente (`marketProbability` = odd de-vigada,
+usada só como benchmark; `modelProbability` = saída independente do
+Dixon-Coles), além de `edge`, `expectedValue`, `confidence` e `modelVersion`.
+Nenhuma delas é apresentada como garantia de resultado.
+
+**Confiança** nunca é "alta" automaticamente por uma probabilidade alta —
+exige amostra suficiente, dados não-sintéticos, edge real e evidência de
+calibração (ver `lib/analysis/scoring/score.ts` para a lógica exata).
+
+**NO BET:** quando nenhuma seleção de um jogo passa nos filtros (edge,
+probabilidade mínima, faixa de odd, amostra insuficiente), o motor retorna
+um `NoBetReport` com os motivos específicos por mercado — nunca força uma
+recomendação.
+
+### Dados históricos: o que falta
+
+A API de odds (The Odds API) só fornece jogos futuros + preços atuais —
+**não fornece placares históricos**, que são o insumo do modelo. Por isso:
+
+- **Modo demo (padrão):** `lib/providers/sportsdata/demoSportsDataProvider.ts`
+  gera histórico **sintético** (determinístico, mesmas equipes do modo demo
+  de odds). Serve só para validar o pipeline — **nunca é evidência de
+  performance real**, e a UI mostra isso claramente ("MODELO: HISTÓRICO
+  SINTÉTICO").
+- **Dados reais:** `lib/providers/sportsdata/footballDataOrgProvider.ts`
+  integra de verdade com [football-data.org](https://football-data.org)
+  (grátis, 10 req/min, cobre PL/La Liga/Bundesliga/Serie A/Ligue 1/Champions
+  League — **não cobre o Brasileirão no tier free**). Ative com:
+  ```
+  SPORTS_DATA_PROVIDER=footballdata
+  FOOTBALL_DATA_API_KEY=sua_chave_aqui
+  ```
+  Alternativas avaliadas e não implementadas: API-Football (RapidAPI, free
+  100 req/dia, cobre Brasileirão) e SportMonks (pago, cobertura completa).
+
+### Backtesting
+
+```bash
+npm run backtest:demo
+```
+
+Roda o pipeline completo (ratings walk-forward → predição → calibração →
+simulação de stake) contra o histórico **sintético**, e imprime Brier
+score, log loss, accuracy, ROI e a curva de calibração. Serve para validar
+que o código funciona e não vaza dados futuros — **os números não
+representam desempenho real** (dataset é fictício).
+
+Para rodar com dados reais, forneça matches históricos reais (via
+`footballDataOrgProvider`) e cotações históricas reais de odds — este
+projeto **não tem hoje** uma fonte de odds históricas (a API atual só dá
+preços correntes); isso é um TODO explícito, não uma funcionalidade oculta.
+
+### Testes
+
+```bash
+npm test
+```
+
+Cobre: matriz de probabilidades do Dixon-Coles, edge/EV/stake (incluindo o
+exemplo exato do enunciado: banca R$5, stake 100%, odd 1,5 → lucro R$2,50),
+a regra "nunca alta confiança automática", e o guard anti-data-leakage do
+backtest (dado um jogo "envenenado" no futuro, os registros de jogos
+anteriores não podem mudar).
+
 ## Sobre a probabilidade
 
 O sistema sempre mostra **duas probabilidades separadas**:
 
-- **Probabilidade implícita**: derivada diretamente da odd (`1 / odd`,
-  removendo a margem da casa quando há mercado completo disponível).
-- **Probabilidade estimada pelo modelo**: estimativa do motor de análise
-  configurável. Não é uma predição de ML treinada nesta V1 — é uma
-  heurística transparente baseada nas odds "justas" do mercado, ajustada
-  por um fator de confiança configurável. **Nunca é exibida como garantia
-  de resultado.**
+- **Probabilidade de mercado**: de-vigada a partir da odd (remove a margem
+  da casa), usada como **benchmark/feature**, nunca como a estimativa
+  própria do modelo.
+- **Probabilidade estimada pelo modelo**: saída do Dixon-Coles
+  (`football-v1`), calculada inteiramente a partir de histórico de gols —
+  estruturalmente incapaz de ser `1/odd` disfarçado (as funções do modelo
+  nem recebem a odd como parâmetro). **Nunca é exibida como garantia de
+  resultado.**
 
 ## Múltiplas
 
@@ -231,16 +333,25 @@ probabilidades seria matematicamente incorreta.
 
 ## Limitações / V2 (TODO)
 
-- Modelo de probabilidade continua heurístico (odds-based) nesta etapa,
-  **inalterado** — não é um modelo estatístico treinado (Poisson/xG).
-  Ponto de extensão isolado em `lib/analysis/engine.ts`.
-- Sem gráficos ainda (evolução de banca, curva de drawdown visual).
+- **Estimador não é MLE completo**: força de ataque/defesa vem de médias
+  ponderadas, e ρ (correlação de placar baixo) é fixo — não ajustado aos
+  seus dados. `football-v2` deveria reestimar isso via otimização numérica
+  quando houver histórico real suficiente.
+- **Sem fonte de odds históricas**: o backtest só simula ROI/EV contra
+  odds sintéticas (modo demo). Para medir performance real, é preciso
+  integrar um provedor de odds históricas (não avaliado nesta etapa).
+- **Brasileirão sem cobertura real**: football-data.org (grátis) não inclui
+  o Brasileirão; precisaria de API-Football ou SportMonks (pagos/limitados).
+- **Casamento de nomes de times** entre provedores é best-effort
+  (normalização simples) — pode falhar silenciosamente para grafias muito
+  diferentes, resultando em NO BET por "não foi possível casar times"
+  (comportamento seguro, mas não é 100% robusto).
+- **Calibração ainda sem evidência real**: `MIN_SAMPLES_FOR_CALIBRATION_CLAIM = 100`
+  amostras reais não foi atingido nesta etapa — por isso a confiança nunca
+  chega a "alta" fora de testes sintéticos controlados.
+- Sem gráficos ainda (evolução de banca, curva de calibração visual).
 - Sem suporte a múltiplos esportes (V1 é só futebol).
-- A lista de campeonatos consultados na The Odds API é curada manualmente
-  (`FOOTBALL_LEAGUE_KEYS` em `theOddsApiProvider.ts`) — não há descoberta
-  automática de todas as ligas de futebol disponíveis na API.
 - Filtros avançados (por campeonato, por horário) ficam para V2.
-- Conexão real do adapter Postgres com o Supabase provisionado ainda
-  **não foi testada de ponta a ponta** nesta sessão (a senha do banco não
-  é exposta por ferramentas de automação, por segurança) — teste local
-  com sua `DATABASE_URL` antes de confiar em produção.
+- Conexão real do adapter Postgres com o Supabase provisionado foi
+  validada nesta sessão via sandbox de teste (CRUD completo funcionando em
+  produção) — ver histórico do projeto para detalhes.

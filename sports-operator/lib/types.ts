@@ -31,6 +31,17 @@ export interface GamesResponse {
 
 export type SelectionType = 'simple' | 'multiple' | 'no_bet';
 
+// Data-quality signals the model attaches to every prediction, used by
+// scoring/confidence and by NO BET gating. Never inferred after the fact —
+// computed alongside the prediction itself so it can't silently drift.
+export interface DataQuality {
+  modelVersion: string;
+  sufficientSample: boolean;
+  homeMatchesUsed: number;
+  awayMatchesUsed: number;
+  synthetic: boolean; // true when backed by DEMO/synthetic historical data — never evidence of real performance
+}
+
 export interface AnalyzedSelection {
   gameId: string;
   league: string;
@@ -41,11 +52,17 @@ export interface AnalyzedSelection {
   outcomeName: string;
   bookmaker: string;
   odd: number;
+  /** @deprecated kept for backward-compat storage; equals impliedProbability (raw 1/odd, with vig) */
   impliedProbability: number;
+  /** De-vigged "fair" market probability — used as benchmark/feature, never as the model's own estimate. */
+  marketProbability: number;
+  /** The model's own, independently computed probability (see lib/analysis/models/). */
   modelProbability: number;
   edge: number;
   expectedValue: number; // per 1 unit staked
   score: number;
+  modelVersion: string;
+  dataQuality: DataQuality;
 }
 
 export interface Opportunity {
@@ -54,6 +71,7 @@ export interface Opportunity {
   selections: AnalyzedSelection[];
   combinedOdd: number;
   impliedProbability: number;
+  marketProbability: number;
   modelProbability: number;
   edge: number;
   expectedValue: number;
@@ -62,7 +80,16 @@ export interface Opportunity {
   potentialReturn: number;
   potentialProfit: number;
   confidence: 'alta' | 'media' | 'baixa';
+  modelVersion: string;
   reasonsRejected?: string[];
+}
+
+export interface NoBetReport {
+  gameId: string;
+  league: string;
+  homeTeam: string;
+  awayTeam: string;
+  reasons: string[];
 }
 
 export interface UserSettings {

@@ -7,7 +7,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run",
+    "backtest:demo": "tsx scripts/backtest-demo.ts"
   },
   "dependencies": {
     "better-sqlite3": "^11.3.0",
@@ -27,6 +29,8 @@
     "eslint-config-next": "14.2.35",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.4",
-    "typescript": "^5.5.2"
+    "tsx": "^4.19.2",
+    "typescript": "^5.5.2",
+    "vitest": "^3.2.7"
   }
 }
