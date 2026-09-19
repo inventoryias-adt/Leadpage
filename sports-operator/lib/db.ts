@@ -67,7 +67,7 @@ function migrate(db: Database.Database) {
   if (row.c === 0) {
     db.prepare(
       `INSERT INTO settings (id, bankroll, stake_percent, max_stake, profit_target, min_probability, min_odd, max_odd, max_legs_multiple)
-       VALUES (1, 100, 2, 20, 10, 0.55, 1.30, 5.0, 3)`
+       VALUES (1, 100, 2, 20, 10, 0.40, 1.30, 6.0, 3)`
     ).run();
   }
 }

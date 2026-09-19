@@ -22,7 +22,12 @@ function buildGame(
   overOdd: number,
   underOdd: number,
   bttsYes: number,
-  bttsNo: number
+  bttsNo: number,
+  // Optional line-shopping override: a second bookmaker occasionally prices
+  // an outcome noticeably better than the reference book. This mirrors real
+  // markets, where odds vary enough across books that genuine value appears
+  // without any single book being "wrong" about the fair probability.
+  fairPlayOverride?: { home?: number; draw?: number; away?: number }
 ): Game {
   return {
     id,
@@ -46,9 +51,9 @@ function buildGame(
         marketLabel: 'Resultado Final (1X2)',
         bookmaker: 'FairPlay Odds',
         outcomes: [
-          { name: home, price: +(homeOdd * 0.98).toFixed(2) },
-          { name: 'Empate', price: +(drawOdd * 1.02).toFixed(2) },
-          { name: away, price: +(awayOdd * 0.99).toFixed(2) }
+          { name: home, price: fairPlayOverride?.home ?? +(homeOdd * 0.98).toFixed(2) },
+          { name: 'Empate', price: fairPlayOverride?.draw ?? +(drawOdd * 1.02).toFixed(2) },
+          { name: away, price: fairPlayOverride?.away ?? +(awayOdd * 0.99).toFixed(2) }
         ]
       },
       {
@@ -81,10 +86,10 @@ export class DemoOddsProvider implements OddsProvider {
     return [
       buildGame('demo-1', 'Brasileirão Série A', 16, 0, 'Flamengo', 'Palmeiras', 2.1, 3.3, 3.4, 1.85, 1.95, 1.7, 2.05),
       buildGame('demo-2', 'Brasileirão Série A', 18, 30, 'Corinthians', 'São Paulo', 2.6, 3.1, 2.8, 1.9, 1.9, 1.85, 1.95),
-      buildGame('demo-3', 'La Liga', 13, 0, 'Real Madrid', 'Sevilla', 1.45, 4.5, 6.5, 1.7, 2.1, 2.0, 1.75),
+      buildGame('demo-3', 'La Liga', 13, 0, 'Real Madrid', 'Sevilla', 1.45, 4.5, 6.5, 1.7, 2.1, 2.0, 1.75, { home: 1.65 }),
       buildGame('demo-4', 'Premier League', 11, 30, 'Manchester City', 'Everton', 1.3, 5.5, 9.0, 1.55, 2.4, 2.1, 1.68),
       buildGame('demo-5', 'Serie A (Itália)', 15, 45, 'Inter de Milão', 'Roma', 1.9, 3.4, 3.9, 1.95, 1.85, 1.9, 1.85),
-      buildGame('demo-6', 'Bundesliga', 12, 30, 'Bayern de Munique', 'Stuttgart', 1.35, 5.2, 8.0, 1.5, 2.5, 1.75, 2.0)
+      buildGame('demo-6', 'Bundesliga', 12, 30, 'Bayern de Munique', 'Stuttgart', 1.35, 5.2, 8.0, 1.5, 2.5, 1.75, 2.0, { home: 1.75 })
     ];
   }
 }
