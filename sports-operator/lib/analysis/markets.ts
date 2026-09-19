@@ -25,12 +25,36 @@ export function devig(outcomes: { price: number }[]): number[] {
   return raw.map((p) => p / sum);
 }
 
+// Club-type words/particles commonly present in one provider's naming but
+// absent in another's (e.g. odds providers often drop "FC"/"AS"/"VfB",
+// official football-data.org names keep them). Stripped as whole words so
+// we never eat into a real name (e.g. "Sporting CP" keeps "Sporting").
+const CLUB_AFFIXES = /\b(fc|cf|sc|ac|afc|cfc|ssc|ssd|as|ud|cd|sd|vfb|vfl|tsg|sv|sg|calcio|clube|futebol|futbol|club|de|do|da)\b/g;
+
+function stripDiacritics(s: string): string {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+// Known translation aliases: a handful of clubs are commonly referred to by
+// a nickname or a translated city name in Portuguese-language sources (as
+// used by this app's DEMO odds data) that differs from the official name
+// football-data.org returns. This is a small, explicit, documented list —
+// not a general translation engine — scoped to cases actually observed.
+const TEAM_ALIASES: Record<string, string> = {
+  intermilao: 'intermilan',
+  internazionalemilano: 'intermilan',
+  intermilan: 'intermilan',
+  bayernmunique: 'bayernmunich',
+  bayernmunchen: 'bayernmunich',
+  bayernmunich: 'bayernmunich'
+};
+
 export function normalizeTeamName(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/\b(fc|cf|sc|ac|afc|cfc)\b/g, '')
+  const base = stripDiacritics(name.toLowerCase())
+    .replace(CLUB_AFFIXES, '')
     .replace(/[^a-z0-9]/g, '')
     .trim();
+  return TEAM_ALIASES[base] ?? base;
 }
 
 // Best-effort match between an odds-provider team name and a sportsdata

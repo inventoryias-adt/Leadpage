@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { computeStake, impliedProbability, devig } from '../markets';
+import { computeStake, impliedProbability, devig, normalizeTeamName, findRatingKey } from '../markets';
 import type { UserSettings } from '../../types';
+import type { LeagueRatings } from '../models/footballV1';
 
 describe('computeStake', () => {
   it('matches the spec example exactly: bankroll 5, stake 100%, odd 1.5 -> stake 5, return 7.5, profit 2.5', () => {
@@ -62,5 +63,34 @@ describe('edge and expected value math', () => {
     expect(evFor(0.6, 2.0)).toBeGreaterThan(0);
     // Lower true probability than break-even -> negative EV.
     expect(evFor(0.4, 2.0)).toBeLessThan(0);
+  });
+});
+
+describe('normalizeTeamName / findRatingKey (cross-provider name matching)', () => {
+  it('matches names differing only by a club affix (FC, AS, VfB, ...)', () => {
+    expect(normalizeTeamName('Roma')).toBe(normalizeTeamName('AS Roma'));
+    expect(normalizeTeamName('Stuttgart')).toBe(normalizeTeamName('VfB Stuttgart'));
+    expect(normalizeTeamName('Everton')).toBe(normalizeTeamName('Everton FC'));
+  });
+
+  it('matches known Portuguese-translated nicknames to their official name', () => {
+    expect(normalizeTeamName('Inter de Milão')).toBe(normalizeTeamName('FC Internazionale Milano'));
+    expect(normalizeTeamName('Bayern de Munique')).toBe(normalizeTeamName('FC Bayern München'));
+  });
+
+  it('findRatingKey resolves the odds-provider name to the sportsdata-provider key', () => {
+    const ratings: LeagueRatings = {
+      league: 'Serie A (Itália)',
+      asOf: new Date().toISOString(),
+      avgHomeGoals: 1.4,
+      avgAwayGoals: 1.1,
+      teams: {
+        'FC Internazionale Milano': { attackHome: 1, defenseHome: 1, attackAway: 1, defenseAway: 1, matchesUsed: 20 },
+        'AS Roma': { attackHome: 1, defenseHome: 1, attackAway: 1, defenseAway: 1, matchesUsed: 20 }
+      }
+    };
+    expect(findRatingKey(ratings, 'Inter de Milão')).toBe('FC Internazionale Milano');
+    expect(findRatingKey(ratings, 'Roma')).toBe('AS Roma');
+    expect(findRatingKey(ratings, 'Totally Unknown FC')).toBeNull();
   });
 });
