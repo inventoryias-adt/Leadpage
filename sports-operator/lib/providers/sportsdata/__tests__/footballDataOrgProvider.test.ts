@@ -15,7 +15,8 @@ describe('resolveCompetitionCode', () => {
       ['Serie A (Itália)', 'Serie A - Italy'],
       ['Bundesliga', 'Bundesliga - Germany'],
       ['Ligue 1', 'Ligue 1 - France'],
-      ['Champions League', 'UEFA Champions League']
+      ['Champions League', 'UEFA Champions League'],
+      ['Europa League', 'UEFA Europa League']
     ];
 
     for (const [demoLabel, realLabel] of pairs) {

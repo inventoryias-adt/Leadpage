@@ -22,6 +22,25 @@ const confidenceColor: Record<Opportunity['confidence'], string> = {
   baixa: 'text-muted'
 };
 
+// A single, plain-language sentence telling the user exactly what to do —
+// no jargon, no numbers to interpret themselves. The disclaimer is fixed
+// and always shown: this is never framed as a guarantee.
+function buildActionText(opportunity: Opportunity): string {
+  const legs = opportunity.selections
+    .map((s) => `"${s.outcomeName}" em ${s.homeTeam} x ${s.awayTeam} (${s.marketLabel}, casa ${s.bookmaker})`)
+    .join(' + ');
+
+  const stakeMoney = opportunity.suggestedStake.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const returnMoney = opportunity.potentialReturn.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const profitMoney = opportunity.potentialProfit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  const kind = opportunity.type === 'multiple' ? 'Múltipla' : 'Aposta simples';
+
+  return `${kind}: aposte ${stakeMoney} em ${legs}, na odd combinada ${opportunity.combinedOdd.toFixed(
+    2
+  )}. Se vencer, retorno de ${returnMoney} (lucro de ${profitMoney}).`;
+}
+
 export default function OpportunityCard({
   opportunity,
   onView,
@@ -57,6 +76,14 @@ export default function OpportunityCard({
             <span className="text-muted">@ {s.odd.toFixed(2)} ({s.bookmaker})</span>
           </div>
         ))}
+      </div>
+
+      <div className="rounded border border-accent/40 bg-accent/10 p-2">
+        <div className="text-xs font-semibold uppercase text-accent mb-1">O que fazer</div>
+        <p className="text-sm text-slate-200">{buildActionText(opportunity)}</p>
+        <p className="text-xs text-muted mt-1">
+          Estimativa do modelo, não é garantia de resultado. Confira a análise completa antes de apostar.
+        </p>
       </div>
 
       <div className="grid grid-cols-3 gap-2 text-xs bg-panel2 rounded p-2 border border-border">

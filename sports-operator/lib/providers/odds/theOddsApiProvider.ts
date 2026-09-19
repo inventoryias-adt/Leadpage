@@ -18,7 +18,8 @@ const FOOTBALL_LEAGUE_KEYS = [
   'soccer_germany_bundesliga',
   'soccer_france_ligue_one',
   'soccer_brazil_campeonato',
-  'soccer_uefa_champs_league'
+  'soccer_uefa_champs_league',
+  'soccer_uefa_europa_league'
 ];
 
 // Minimal shape validation for data coming from an external API.

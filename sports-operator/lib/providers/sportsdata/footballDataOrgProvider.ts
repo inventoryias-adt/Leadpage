@@ -11,8 +11,13 @@ const REQUEST_TIMEOUT_MS = 12000;
 // `sport_title` field uses its own strings ('EPL', 'Serie A - Italy', ...).
 // Both variants are mapped here so the historical-data lookup works
 // regardless of which odds provider is active. Free tier does NOT include
-// the Brazilian Série A ("Brasileirão Série A" / "Brazil Série A") —
-// documented limitation, not a bug.
+// the Brazilian Série A ("Brasileirão Série A" / "Brazil Série A") — and
+// the UEFA Europa League competition code ('EL') is NOT available on
+// football-data.org's free tier either (as of writing; confirmed by the
+// API returning 403 for free-tier keys on /competitions/EL/...). Both are
+// documented limitations, not bugs: an uncovered league resolves to null
+// here and the caller (engine.ts) turns that into a clear NO BET reason
+// instead of crashing or guessing.
 const LEAGUE_CODE_MAP: Record<string, string> = {
   // DemoOddsProvider labels
   'Premier League': 'PL',
@@ -21,13 +26,15 @@ const LEAGUE_CODE_MAP: Record<string, string> = {
   Bundesliga: 'BL1',
   'Ligue 1': 'FL1',
   'Champions League': 'CL',
+  'Europa League': 'EL',
   // The Odds API `sport_title` labels
   EPL: 'PL',
   'La Liga - Spain': 'PD',
   'Serie A - Italy': 'SA',
   'Bundesliga - Germany': 'BL1',
   'Ligue 1 - France': 'FL1',
-  'UEFA Champions League': 'CL'
+  'UEFA Champions League': 'CL',
+  'UEFA Europa League': 'EL'
 };
 
 // Exported so tests can assert both odds providers' league labels resolve

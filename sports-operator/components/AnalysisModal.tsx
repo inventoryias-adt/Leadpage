@@ -26,6 +26,34 @@ export default function AnalysisModal({
           </button>
         </div>
 
+        <div className="rounded border border-accent/40 bg-accent/10 p-3 mb-4">
+          <div className="text-xs font-semibold uppercase text-accent mb-1">O que fazer</div>
+          <ol className="text-sm text-slate-200 list-decimal list-inside space-y-1">
+            {opportunity.selections.map((s, i) => (
+              <li key={i}>
+                Aposte na seleção <strong>&quot;{s.outcomeName}&quot;</strong> do mercado {s.marketLabel} no jogo{' '}
+                {s.homeTeam} x {s.awayTeam}, na casa <strong>{s.bookmaker}</strong>, odd {s.odd.toFixed(2)}.
+              </li>
+            ))}
+            <li>
+              Valor a apostar: <strong>{opportunity.suggestedStake.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>{' '}
+              {opportunity.selections.length > 1 && 'no total da múltipla '}
+              na odd combinada {opportunity.combinedOdd.toFixed(2)}.
+            </li>
+            <li>
+              Se vencer: retorno de{' '}
+              <strong>{opportunity.potentialReturn.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>{' '}
+              (lucro de {opportunity.potentialProfit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}).
+              Se perder: prejuízo limitado ao valor apostado.
+            </li>
+          </ol>
+          <p className="text-xs text-muted mt-2">
+            Isso é a saída do motor de análise, com base na sua configuração atual de banca, stake e filtros —{' '}
+            <strong>não é uma garantia de resultado</strong>. A probabilidade do modelo é uma estimativa, sujeita ao
+            erro do modelo e à qualidade dos dados usados (ver detalhes abaixo).
+          </p>
+        </div>
+
         <p className="text-sm text-muted mb-4">
           Dados que fundamentaram a aprovação desta oportunidade pelo motor de análise configurado.
           A probabilidade do modelo é uma <strong>estimativa</strong>, não uma garantia de resultado.

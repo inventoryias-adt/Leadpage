@@ -15,6 +15,28 @@ function money(v: number): string {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+// Canonical league display names, each mapped to every label variant that
+// can show up in `league` fields across providers (DemoOddsProvider vs.
+// The Odds API use different strings for the same competition — see
+// lib/providers/sportsdata/footballDataOrgProvider.ts for the backend side
+// of this same mapping). Always shown as tabs, even with zero games today,
+// per explicit request to always have Champions League / Europa League
+// tabs available.
+const CANONICAL_LEAGUES: { label: string; match: string[] }[] = [
+  { label: 'Premier League', match: ['Premier League', 'EPL'] },
+  { label: 'La Liga', match: ['La Liga', 'La Liga - Spain'] },
+  { label: 'Serie A (Itália)', match: ['Serie A (Itália)', 'Serie A - Italy'] },
+  { label: 'Bundesliga', match: ['Bundesliga', 'Bundesliga - Germany'] },
+  { label: 'Ligue 1', match: ['Ligue 1', 'Ligue 1 - France'] },
+  { label: 'Brasileirão Série A', match: ['Brasileirão Série A', 'Brazil Série A'] },
+  { label: 'Champions League', match: ['Champions League', 'UEFA Champions League'] },
+  { label: 'Europa League', match: ['Europa League', 'UEFA Europa League'] }
+];
+
+function canonicalLeagueLabel(raw: string): string {
+  return CANONICAL_LEAGUES.find((c) => c.match.includes(raw))?.label ?? raw;
+}
+
 const ERROR_MESSAGES: Record<string, string> = {
   invalid_key: 'Chave da The Odds API inválida ou não autorizada. Verifique THE_ODDS_API_KEY.',
   rate_limited: 'Limite de requisições da The Odds API atingido. Tente novamente mais tarde.',
@@ -39,6 +61,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>('todos');
+  const [leagueFilter, setLeagueFilter] = useState<string>('todos');
   const [selected, setSelected] = useState<Opportunity | null>(null);
   const [showSettings, setShowSettings] = useState(false);
 
@@ -93,20 +116,42 @@ export default function Dashboard() {
 
   const stats = useMemo(() => computeStats(entries), [entries]);
 
+  // Championship tabs are built dynamically from whatever leagues actually
+  // show up today (in opportunities AND no-bet games) — never a hardcoded
+  // list. Hardcoding league names caused a real bug before (The Odds API
+  // and football-data.org label the same league differently), so the tab
+  // list always reflects the real league strings the engine is using.
+  const leagues = useMemo(() => {
+    const set = new Set<string>(CANONICAL_LEAGUES.map((c) => c.label));
+    opportunities.forEach((o) => set.add(canonicalLeagueLabel(o.selections[0].league)));
+    noBets.forEach((nb) => set.add(canonicalLeagueLabel(nb.league)));
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  }, [opportunities, noBets]);
+
+  const opportunitiesByLeague = useMemo(() => {
+    if (leagueFilter === 'todos') return opportunities;
+    return opportunities.filter((o) => canonicalLeagueLabel(o.selections[0].league) === leagueFilter);
+  }, [opportunities, leagueFilter]);
+
+  const noBetsByLeague = useMemo(() => {
+    if (leagueFilter === 'todos') return noBets;
+    return noBets.filter((nb) => canonicalLeagueLabel(nb.league) === leagueFilter);
+  }, [noBets, leagueFilter]);
+
   const filteredOpportunities = useMemo(() => {
     switch (filter) {
       case 'alta':
-        return opportunities.filter((o) => o.confidence === 'alta');
+        return opportunitiesByLeague.filter((o) => o.confidence === 'alta');
       case 'simple':
-        return opportunities.filter((o) => o.type === 'simple');
+        return opportunitiesByLeague.filter((o) => o.type === 'simple');
       case 'multiple':
-        return opportunities.filter((o) => o.type === 'multiple');
+        return opportunitiesByLeague.filter((o) => o.type === 'multiple');
       case 'no_bet':
         return [];
       default:
-        return opportunities;
+        return opportunitiesByLeague;
     }
-  }, [opportunities, filter]);
+  }, [opportunitiesByLeague, filter]);
 
   async function handleSaveSettings(s: UserSettings) {
     const res = await fetch('/api/settings', {
@@ -221,6 +266,17 @@ export default function Dashboard() {
 
       {tab === 'jogos' && (
         <section className="flex flex-col gap-4">
+          <div className="flex flex-wrap gap-2 border-b border-border pb-3">
+            <LeagueTabButton active={leagueFilter === 'todos'} onClick={() => setLeagueFilter('todos')}>
+              Todos os campeonatos
+            </LeagueTabButton>
+            {leagues.map((league) => (
+              <LeagueTabButton key={league} active={leagueFilter === league} onClick={() => setLeagueFilter(league)}>
+                {league}
+              </LeagueTabButton>
+            ))}
+          </div>
+
           <div className="flex flex-wrap gap-2">
             <FilterButton active={filter === 'todos'} onClick={() => setFilter('todos')}>Todos</FilterButton>
             <FilterButton active={filter === 'alta'} onClick={() => setFilter('alta')}>Alta confiança</FilterButton>
@@ -231,10 +287,14 @@ export default function Dashboard() {
 
           {filter === 'no_bet' ? (
             <div className="flex flex-col gap-3">
-              {noBets.length === 0 && (
-                <p className="text-muted text-sm">Todos os jogos do dia tiveram alguma oportunidade qualificada.</p>
+              {noBetsByLeague.length === 0 && (
+                <p className="text-muted text-sm">
+                  {leagueFilter === 'todos'
+                    ? 'Todos os jogos do dia tiveram alguma oportunidade qualificada.'
+                    : 'Nenhum jogo desse campeonato hoje, ou todos tiveram oportunidade qualificada.'}
+                </p>
               )}
-              {noBets.map((nb) => (
+              {noBetsByLeague.map((nb) => (
                 <div key={nb.gameId} className="rounded-lg border border-border bg-panel p-4">
                   <div className="text-xs uppercase text-muted mb-1">{nb.league}</div>
                   <div className="font-semibold">{nb.homeTeam} x {nb.awayTeam}</div>
@@ -283,6 +343,19 @@ function TabButton({ active, onClick, children }: { active: boolean; onClick: ()
       onClick={onClick}
       className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-px ${
         active ? 'border-accent text-accent' : 'border-transparent text-muted hover:text-slate-200'
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function LeagueTabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`text-sm px-3 py-1.5 rounded-t border-b-2 -mb-px whitespace-nowrap ${
+        active ? 'border-accent text-accent font-semibold' : 'border-transparent text-muted hover:text-slate-200'
       }`}
     >
       {children}
