@@ -35,7 +35,7 @@ export async function GET() {
   }
 
   try {
-    const games = await oddsProvider.fetchTodayGames();
+    const games = await oddsProvider.fetchUpcomingGames();
     const { opportunities, noBets } = await buildOpportunities(games, settings, { sportsDataProvider, calibrationSamples });
     return NextResponse.json({
       demo: oddsProvider.isDemo,

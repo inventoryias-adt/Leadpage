@@ -259,7 +259,7 @@ export default function Dashboard() {
         )}
 
         <nav className="flex gap-2 border-b border-border">
-          <TabButton active={tab === 'jogos'} onClick={() => setTab('jogos')}>JOGOS DE HOJE</TabButton>
+          <TabButton active={tab === 'jogos'} onClick={() => setTab('jogos')}>JOGOS DA RODADA</TabButton>
           <TabButton active={tab === 'historico'} onClick={() => setTab('historico')}>HISTÓRICO / GESTÃO DE BANCA</TabButton>
         </nav>
       </header>
@@ -290,8 +290,8 @@ export default function Dashboard() {
               {noBetsByLeague.length === 0 && (
                 <p className="text-muted text-sm">
                   {leagueFilter === 'todos'
-                    ? 'Todos os jogos do dia tiveram alguma oportunidade qualificada.'
-                    : 'Nenhum jogo desse campeonato hoje, ou todos tiveram oportunidade qualificada.'}
+                    ? 'Todos os jogos da rodada tiveram alguma oportunidade qualificada.'
+                    : 'Nenhum jogo desse campeonato na rodada atual, ou todos tiveram oportunidade qualificada.'}
                 </p>
               )}
               {noBetsByLeague.map((nb) => (

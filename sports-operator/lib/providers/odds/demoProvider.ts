@@ -82,7 +82,7 @@ export class DemoOddsProvider implements OddsProvider {
   name = 'demo';
   isDemo = true;
 
-  async fetchTodayGames(): Promise<Game[]> {
+  async fetchUpcomingGames(): Promise<Game[]> {
     return [
       buildGame('demo-1', 'Brasileirão Série A', 16, 0, 'Flamengo', 'Palmeiras', 2.1, 3.3, 3.4, 1.85, 1.95, 1.7, 2.05),
       buildGame('demo-2', 'Brasileirão Série A', 18, 30, 'Corinthians', 'São Paulo', 2.6, 3.1, 2.8, 1.9, 1.9, 1.85, 1.95),

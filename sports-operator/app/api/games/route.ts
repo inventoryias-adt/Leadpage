@@ -9,7 +9,7 @@ export async function GET() {
   const provider = getOddsProvider();
 
   try {
-    const games = await provider.fetchTodayGames();
+    const games = await provider.fetchUpcomingGames();
     const body: GamesResponse = {
       demo: provider.isDemo,
       provider: provider.name,

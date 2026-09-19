@@ -210,7 +210,7 @@ export class TheOddsApiProvider implements OddsProvider {
     return { ok: true, league: leagueKey, games };
   }
 
-  async fetchTodayGames(): Promise<Game[]> {
+  async fetchUpcomingGames(): Promise<Game[]> {
     const results = await Promise.all(FOOTBALL_LEAGUE_KEYS.map((key) => this.fetchLeague(key)));
 
     const succeeded = results.filter((r): r is Extract<LeagueResult, { ok: true }> => r.ok);
@@ -235,18 +235,23 @@ export class TheOddsApiProvider implements OddsProvider {
     }
 
     const now = Date.now();
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
+    // A league round is not "today": domestic rounds commonly run Friday
+    // through Monday and cup rounds (Champions/Europa League) fall
+    // midweek. Limiting the window to the calendar day was silently
+    // dropping most of the round's games. A 7-day forward window covers
+    // any single round for every league this app queries, while the
+    // small backward slack keeps a match that just kicked off visible.
+    const ROUND_WINDOW_MS = 1000 * 60 * 60 * 24 * 7;
 
     const games = succeeded
       .flatMap((r) => r.games)
       .filter((g) => {
         const t = new Date(g.commenceTime).getTime();
-        return Number.isFinite(t) && t >= now - 1000 * 60 * 60 * 3 && t <= endOfDay.getTime();
+        return Number.isFinite(t) && t >= now - 1000 * 60 * 60 * 3 && t <= now + ROUND_WINDOW_MS;
       });
 
-    // Empty result (no games found today across all leagues) is a valid,
-    // non-error outcome — the caller/UI shows "nenhum jogo hoje", not an error.
+    // Empty result (no games found in the window across all leagues) is a
+    // valid, non-error outcome — the caller/UI shows "nenhum jogo", not an error.
     return games;
   }
 }
