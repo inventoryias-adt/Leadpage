@@ -21,7 +21,7 @@ images:
   allowed_licenses: ["public domain", "pd", "cc0", "cc by"]
   min_width: 1000
   max_card_ratio: 0.15         # acima disso (cenas sem imagem) o upload é cancelado
-  ai_fallback: true            # usa MuAPI se não achar imagem livre (precisa de MUAPI_API_KEY)
+  ai_fallback: false           # true usa MuAPI (pago) quando não há imagem livre; precisa de MUAPI_API_KEY
   ai_model: flux-schnell
   ai_style: "vintage engraving illustration, muted colors, dramatic lighting, detailed, no text"
 
