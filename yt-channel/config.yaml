@@ -1,0 +1,44 @@
+channel_name: "Meu Canal de História"      # troque pelo nome do canal
+language: pt-BR
+wikipedia_lang: pt
+
+# Roteiro --------------------------------------------------------------------
+target_minutes: 8
+words_per_minute: 150
+words_per_scene: 35
+model_script: claude-sonnet-5-5
+model_verify: claude-sonnet-5-5
+source_max_chars: 14000
+
+# Voz ------------------------------------------------------------------------
+voice:
+  name: pt-BR-AntonioNeural
+  rate: "-4%"
+
+# Imagens --------------------------------------------------------------------
+images:
+  # só licenças que permitem reuso com atribuição (sem SA/NC/ND)
+  allowed_licenses: ["public domain", "pd", "cc0", "cc by"]
+  min_width: 1000
+  ai_fallback: true            # usa MuAPI se não achar imagem livre (precisa de MUAPI_API_KEY)
+  ai_model: flux-schnell
+  ai_style: "vintage engraving illustration, muted colors, dramatic lighting, detailed, no text"
+
+# Vídeo ----------------------------------------------------------------------
+video:
+  width: 1920
+  height: 1080
+  fps: 24
+  burn_subtitles: true
+  music_volume: 0.08           # músicas ficam em assets/music/ (só royalty-free!)
+
+# YouTube --------------------------------------------------------------------
+youtube:
+  privacy: private             # revise no YouTube Studio antes de publicar
+  category_id: "27"            # Educação
+  made_for_kids: false
+  disclose_synthetic: true     # marca "conteúdo alterado/sintético" (voz/ilustrações de IA)
+  description_footer: "Inscreva-se para mais histórias e curiosidades."
+
+output_dir: output
+published_path: data/published.json

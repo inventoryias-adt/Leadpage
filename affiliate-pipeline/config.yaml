@@ -1,0 +1,50 @@
+# Filtros de seleção -----------------------------------------------------------
+min_commission_rate: 0.20     # 20% de comissão ou mais (obrigatório)
+min_rating: 4.5               # nota mínima do produto
+min_sales: 200                # vendas mínimas (prova social)
+min_price: 20.0               # R$
+max_price: 400.0              # R$
+daily_limit: 3                # quantos pacotes gerar por execução
+
+# Fontes -----------------------------------------------------------------------
+shopee:
+  endpoint: https://open-api.affiliate.shopee.com.br/graphql
+  keywords: ["fone bluetooth", "organizador", "luminaria led", "garrafa termica", "cozinha utilidades"]
+  pages_per_keyword: 2
+  page_size: 40
+  sub_id: leadpage          # aparece nos relatórios de cliques da Shopee
+
+tiktok_shop:
+  # A TikTok Shop não tem API pública de afiliados. Exporte/anote os produtos do
+  # Affiliate Center (Marketplace de Produtos) neste CSV; o mesmo filtro de 20% vale.
+  csv_path: data/tiktok_products.csv
+
+# Geração ----------------------------------------------------------------------
+copy:
+  model: claude-haiku-4-5-20251001
+  disclosure: "#publi Link de afiliado"   # divulgação exigida pelas plataformas
+  niche_hashtags: ["#achadinhos", "#shopee", "#tiktokshop", "#comprinhas"]
+
+# Clipe de abertura gerado por IA via MuAPI (a API do open-generative-ai). Serviço PAGO por crédito.
+ai_video:
+  enabled: false              # ou use --ai-video na linha de comando
+  model: kling-v2.5-turbo-std-i2v
+  duration: 5
+  max_per_run: 2              # teto de clipes por execução (controle de custo)
+  # Só movimento de câmera: nunca alterar o produto (evita propaganda enganosa).
+  prompt: "Slow smooth camera push-in on the product, soft studio lighting, subtle natural motion. Do not change the shape, color, text or details of the product."
+
+voice:
+  enabled: true
+  name: pt-BR-FranciscaNeural
+  rate: "+8%"
+
+video:
+  width: 1080
+  height: 1920
+  fps: 30
+  min_seconds: 12
+  accent_color: "#FF5A1F"
+
+output_dir: output/queue
+db_path: output/state.sqlite

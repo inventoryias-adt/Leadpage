@@ -1,0 +1,32 @@
+# Cada tema: título do vídeo (livre) e "wiki" = título do artigo da Wikipédia usado como fonte.
+# Se omitir "wiki", usa o próprio título.
+- title: A Queda de Constantinopla
+  wiki: Queda de Constantinopla
+- title: O Mistério da Colônia Perdida de Roanoke
+  wiki: Colônia de Roanoke
+- title: A Biblioteca de Alexandria
+  wiki: Biblioteca de Alexandria
+- title: A Erupção do Vesúvio e o Fim de Pompeia
+  wiki: Erupção do Vesúvio em 79
+- title: A Grande Praga de Londres
+  wiki: Grande Praga de Londres
+- title: O Naufrágio do Titanic
+  wiki: RMS Titanic
+- title: A Revolta dos Malês
+  wiki: Revolta dos Malês
+- title: A Guerra de Canudos
+  wiki: Guerra de Canudos
+- title: A Peste Negra
+  wiki: Peste Negra
+- title: O Desastre de Chernobyl
+  wiki: Acidente nuclear de Chernobil
+- title: A Lenda de Atlântida
+  wiki: Atlântida
+- title: A Queda do Império Romano do Ocidente
+  wiki: Queda do Império Romano do Ocidente
+- title: O Incêndio de Roma no Ano 64
+  wiki: Grande Incêndio de Roma
+- title: A Conquista do Império Asteca
+  wiki: Conquista espanhola do México
+- title: A Expedição Perdida de Franklin
+  wiki: Expedição Franklin
