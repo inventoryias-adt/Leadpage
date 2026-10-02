@@ -1,0 +1,59 @@
+name: affiliate-pipeline
+
+on:
+  schedule:
+    - cron: "0 11 * * *"      # todo dia 08:00 (Brasília)
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Quantos pacotes gerar (vazio = config.yaml)"
+        required: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: affiliate-pipeline
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: affiliate-pipeline/requirements.txt
+
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
+        working-directory: .
+
+      - run: pip install -r requirements.txt
+
+      - run: python -m pytest -q tests
+
+      # estado (produtos já usados) persiste entre execuções
+      - uses: actions/cache@v4
+        with:
+          path: affiliate-pipeline/output/state.sqlite
+          key: affiliate-state-${{ github.run_id }}
+          restore-keys: affiliate-state-
+
+      - name: Gerar pacotes
+        env:
+          SHOPEE_APP_ID: ${{ secrets.SHOPEE_APP_ID }}
+          SHOPEE_SECRET: ${{ secrets.SHOPEE_SECRET }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          ARGS=""
+          if [ -n "${{ github.event.inputs.limit }}" ]; then ARGS="--limit ${{ github.event.inputs.limit }}"; fi
+          python -m pipeline.run --source all $ARGS
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fila-${{ github.run_id }}
+          path: |
+            affiliate-pipeline/output/queue
+          retention-days: 14
