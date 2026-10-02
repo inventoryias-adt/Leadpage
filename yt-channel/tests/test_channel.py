@@ -196,6 +196,7 @@ def test_scene_image_reuses_real_image_and_disables_ai_without_credit(tmp_path):
     from PIL import Image
     cfg = load_config()
     cfg["video"].update(width=64, height=36)
+    cfg["images"]["ai_fallback"] = True          # o padrão é desligado; aqui testamos o caminho com IA
     real = tmp_path / "real.jpg"
     Image.new("RGB", (64, 36), (9, 9, 9)).save(real)
     calls = []
