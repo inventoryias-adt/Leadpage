@@ -64,7 +64,12 @@ def render_slide(img: Image.Image, text: str, w: int, h: int, accent: str, price
     y = int(h * 0.28)
     bg.paste(fg, (x, y))
 
-    d = ImageDraw.Draw(bg)
+    draw_caption(bg, text, w, h, accent, price)
+    return bg
+
+
+def draw_caption(img: Image.Image, text: str, w: int, h: int, accent: str, price: bool) -> None:
+    d = ImageDraw.Draw(img)
     size = 76 if not price else 70
     font = _font(size)
     lines = _wrap(d, text, font, int(w * 0.86))
@@ -78,7 +83,13 @@ def render_slide(img: Image.Image, text: str, w: int, h: int, accent: str, price
         tw = d.textlength(line, font=font)
         d.text(((w - tw) / 2, top + 30 + i * line_h), line, font=font, fill="white",
                stroke_width=3, stroke_fill=(0, 0, 0))
-    return bg
+
+
+def render_overlay(text: str, w: int, h: int, accent: str, price: bool) -> Image.Image:
+    """Faixa de texto sobre fundo transparente (para por cima de um clipe de vídeo)."""
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    draw_caption(img, text, w, h, accent, price)
+    return img
 
 
 def allocate(segments: list[dict], total: float, min_each: float = 2.5) -> list[float]:
@@ -106,14 +117,36 @@ def _segment_video(png: Path, out: Path, secs: float, w: int, h: int, fps: int, 
     )
 
 
-def build_video(slides: list[Path], durations: list[float], audio: Path | None, out: Path, vcfg: dict) -> None:
+def _segment_from_clip(clip: Path, overlay: Path, out: Path, secs: float, w: int, h: int, fps: int) -> None:
+    """Clipe de IA (qualquer proporção) sobre fundo desfocado 9:16 + faixa de texto."""
+    fg_w = int(w * 0.88) // 2 * 2
+    fc = (
+        f"[0:v]split[a][b];"
+        f"[a]scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},boxblur=30:3,eq=brightness=-0.3[bg];"
+        f"[b]scale={fg_w}:-2[fg];"
+        f"[bg][fg]overlay=(W-w)/2:{int(h * 0.28)}[v1];"
+        f"[v1][1:v]overlay=0:0:shortest=1,fps={fps},format=yuv420p[v]"
+    )
+    subprocess.run(
+        ["ffmpeg", "-y", "-loglevel", "error", "-stream_loop", "-1", "-i", str(clip),
+         "-loop", "1", "-i", str(overlay), "-filter_complex", fc, "-map", "[v]", "-an",
+         "-t", f"{secs:.2f}", "-c:v", "libx264", "-preset", "veryfast", "-crf", "23", str(out)],
+        check=True,
+    )
+
+
+def build_video(slides: list[Path], durations: list[float], audio: Path | None, out: Path, vcfg: dict,
+                first_clip: Path | None = None, first_overlay: Path | None = None) -> None:
     w, h, fps = vcfg["width"], vcfg["height"], vcfg["fps"]
     tmp = out.parent / "_tmp"
     tmp.mkdir(exist_ok=True)
     parts = []
     for i, (png, secs) in enumerate(zip(slides, durations)):
         part = tmp / f"seg{i}.mp4"
-        _segment_video(png, part, secs, w, h, fps, i)
+        if i == 0 and first_clip and first_overlay:
+            _segment_from_clip(first_clip, first_overlay, part, secs, w, h, fps)
+        else:
+            _segment_video(png, part, secs, w, h, fps, i)
         parts.append(part)
     listing = tmp / "list.txt"
     listing.write_text("".join(f"file '{p.resolve()}'\n" for p in parts))

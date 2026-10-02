@@ -38,6 +38,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--source", choices=["all", "shopee", "tiktok", "mock"], default="all")
     ap.add_argument("--limit", type=int, help="sobrescreve daily_limit")
     ap.add_argument("--no-voice", action="store_true")
+    ap.add_argument("--ai-video", action="store_true", help="anima a foto do produto via MuAPI (precisa de MUAPI_API_KEY)")
     ap.add_argument("--discover-only", action="store_true")
     ap.add_argument("--config")
     args = ap.parse_args(argv)
@@ -55,13 +56,20 @@ def main(argv: list[str] | None = None) -> int:
     if shopee_picks and not args.discover_only and args.source != "mock":
         shopee.attach_short_links(shopee_picks, cfg)
 
+    ai_left = cfg["ai_video"]["max_per_run"] if (args.ai_video or cfg["ai_video"]["enabled"]) else 0
+    if ai_left and not os.environ.get("MUAPI_API_KEY"):
+        print("! MUAPI_API_KEY não definido: clipes de IA desligados")
+        ai_left = 0
+
     for p in chosen:
         print(f"- [{p.platform}] {p.title[:60]} | R$ {p.price:.2f} | {p.commission_rate:.0%} "
               f"(≈ R$ {p.commission_value:.2f}/venda)")
         if args.discover_only:
             continue
         try:
-            folder = package.build_package(p, cfg, Path(cfg["output_dir"]), use_voice=not args.no_voice)
+            use_ai = ai_left > 0
+            ai_left -= 1 if use_ai else 0  # limita o custo por execução
+            folder = package.build_package(p, cfg, Path(cfg["output_dir"]), use_voice=not args.no_voice, ai_video=use_ai)
         except Exception as e:  # um produto ruim não derruba o lote
             print(f"  ! falhou: {e}")
             continue

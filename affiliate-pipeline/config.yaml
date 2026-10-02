@@ -25,6 +25,15 @@ copy:
   disclosure: "#publi Link de afiliado"   # divulgação exigida pelas plataformas
   niche_hashtags: ["#achadinhos", "#shopee", "#tiktokshop", "#comprinhas"]
 
+# Clipe de abertura gerado por IA via MuAPI (a API do open-generative-ai). Serviço PAGO por crédito.
+ai_video:
+  enabled: false              # ou use --ai-video na linha de comando
+  model: kling-v2.5-turbo-std-i2v
+  duration: 5
+  max_per_run: 2              # teto de clipes por execução (controle de custo)
+  # Só movimento de câmera: nunca alterar o produto (evita propaganda enganosa).
+  prompt: "Slow smooth camera push-in on the product, soft studio lighting, subtle natural motion. Do not change the shape, color, text or details of the product."
+
 voice:
   enabled: true
   name: pt-BR-FranciscaNeural
