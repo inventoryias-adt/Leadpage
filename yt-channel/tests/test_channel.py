@@ -9,6 +9,12 @@ from channel.config import load_config
 from channel.run import build, slug
 
 
+@pytest.fixture(autouse=True)
+def _no_wait(monkeypatch):
+    monkeypatch.setattr(images, "MIN_GAP", 0)
+    monkeypatch.setattr(images.time, "sleep", lambda s: None)
+
+
 class Resp:
     def __init__(self, data=None, status=200, content=b"", headers=None):
         self._d, self.status_code, self.content, self.headers = data or {}, status, content, headers or {}
@@ -173,3 +179,50 @@ def test_build_end_to_end_offline(tmp_path, monkeypatch):
     assert saved["privacy"] == "private" and "Fonte principal" in saved["description"]
     assert "0:00 Introdução" in saved["description"]
     assert (md["dir"] / "subtitles.srt").exists()
+
+
+# ---------- limite de taxa / reaproveitamento ----------
+def test_polite_get_retries_on_429():
+    seq = [Resp({}, status=429, headers={"Retry-After": "1"}), Resp({}, status=429), Resp({"ok": 1})]
+
+    class Http:
+        def get(self, *a, **k):
+            return seq.pop(0)
+    r = images.polite_get(Http(), "u")
+    assert r.status_code == 200 and not seq
+
+
+def test_scene_image_reuses_real_image_and_disables_ai_without_credit(tmp_path):
+    from PIL import Image
+    cfg = load_config()
+    cfg["video"].update(width=64, height=36)
+    real = tmp_path / "real.jpg"
+    Image.new("RGB", (64, 36), (9, 9, 9)).save(real)
+    calls = []
+
+    class Broken:
+        def text_to_image(self, *a, **k):
+            calls.append(1)
+            raise RuntimeError("402 INSUFFICIENT_CREDITS")
+
+    class NoHit:
+        def get(self, *a, **k):
+            return Resp({"query": {"pages": {}}})
+    ctx = {"used": set(), "pool": [{"path": real, "kind": "commons", "credit": "c"}], "ai_ok": True}
+    sc = {"commons_query": "x", "ai_prompt": "y"}
+    a = images.scene_image(sc, 1, cfg, tmp_path, ctx, Broken(), NoHit())
+    b = images.scene_image(sc, 2, cfg, tmp_path, ctx, Broken(), NoHit())
+    assert a["kind"] == b["kind"] == "reuse" and a["credit"] is None
+    assert len(calls) == 1 and ctx["ai_ok"] is False        # a IA só é tentada uma vez sem crédito
+
+
+def test_scene_image_card_when_nothing_available(tmp_path):
+    cfg = load_config()
+    cfg["video"].update(width=64, height=36)
+    cfg["images"]["ai_fallback"] = False
+
+    class NoHit:
+        def get(self, *a, **k):
+            return Resp({"query": {"pages": {}}})
+    ctx = {"used": set(), "pool": [], "ai_ok": True}
+    assert images.scene_image({"commons_query": "x", "ai_prompt": "y"}, 0, cfg, tmp_path, ctx, None, NoHit())["kind"] == "card"
