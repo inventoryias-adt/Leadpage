@@ -8,6 +8,12 @@ on:
       limit:
         description: "Quantos pacotes gerar (vazio = config.yaml)"
         required: false
+      source:
+        description: "Fonte dos produtos (mock = teste com produto fictício)"
+        required: false
+        default: all
+        type: choice
+        options: [all, shopee, tiktok, mock]
 
 jobs:
   generate:
@@ -51,7 +57,7 @@ jobs:
           ARGS=""
           if [ -n "${{ github.event.inputs.limit }}" ]; then ARGS="--limit ${{ github.event.inputs.limit }}"; fi
           if [ -n "$MUAPI_API_KEY" ]; then ARGS="$ARGS --ai-video"; fi
-          python -m pipeline.run --source all $ARGS
+          python -m pipeline.run --source "${{ github.event.inputs.source || 'all' }}" $ARGS
 
       - uses: actions/upload-artifact@v4
         with:
