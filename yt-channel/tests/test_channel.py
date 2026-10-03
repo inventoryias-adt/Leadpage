@@ -91,6 +91,7 @@ def test_license_ok(lic, ok):
 
 def test_commons_search_filters_and_credits():
     cfg = load_config()
+    cfg["images"]["allowed_licenses"] = ["public domain", "pd", "cc0", "cc by"]
     page = lambda t, idx, w, lic: {"title": t, "index": idx, "imageinfo": [{
         "mime": "image/jpeg", "width": w, "height": 900, "url": "u", "thumburl": "thumb", "descriptionurl": "d",
         "extmetadata": {"LicenseShortName": {"value": lic}, "Artist": {"value": "<a>Fulano</a>"}}}]}
@@ -351,3 +352,206 @@ def test_main_reads_workflow_env_vars(monkeypatch, tmp_path):
     with pytest.raises(SystemExit, match="para aqui"):
         run.main([])
     assert captured["topic"] == {"title": 'O "Êxodo" do Egito', "wiki": "Livro do Êxodo", "note": "Seja respeitoso."}
+
+
+# ---------- ritmo da voz ----------
+def test_pauses_depend_on_punctuation():
+    from channel import voice
+    assert voice.split_sentences("Um. Dois? Três... Quatro!") == ["Um.", "Dois?", "Três...", "Quatro!"]
+    assert [voice.pause_after(s) for s in ["a.", "a?", "a!", "a...", "a…"]] == [0.35, 0.45, 0.40, 0.55, 0.55]
+    assert voice.pause_after("a.", {"sentence": 0.9}) == 0.9
+
+
+def test_synthesize_paced_joins_sentences_with_pauses(tmp_path, monkeypatch):
+    from channel import voice
+
+    def fake_save(sentences, paths, voice_name, rate, pitch):
+        for s, p in zip(sentences, paths):          # 1 s de silêncio por frase
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono",
+                            "-t", "1", "-c:a", "libmp3lame", str(p)], check=True)
+    monkeypatch.setattr(voice, "_save_sentences", fake_save)
+    out = tmp_path / "v.mp3"
+    secs = voice.synthesize_paced("Um. Dois? Três!", out, "v", "+0%", pauses={"sentence": 0.5, "question": 1.0})
+    assert 3.0 + 0.5 + 1.0 - 0.3 < secs < 3.0 + 0.5 + 1.0 + 0.3      # 3 frases + pausa após "." e "?" (sem pausa no fim)
+    assert not list(tmp_path.glob("v_s*.mp3"))                        # temporários removidos
+
+
+# ---------- movimento ----------
+def test_shot_frames_split_scene_exactly():
+    from channel import render
+    assert sum(render.shot_frames(11.0, 12, 5.0)) == 132 and len(render.shot_frames(11.0, 12, 5.0)) == 2
+    assert len(render.shot_frames(3.0, 12, 5.0)) == 1
+    assert len(render.shot_frames(60, 12, 5.0)) == 4                  # limite de 4 planos
+
+
+def test_scene_clip_multishot_with_chapter_card(tmp_path):
+    from PIL import Image
+    from channel import render
+    Image.new("RGB", (800, 500), (120, 80, 40)).save(tmp_path / "i.jpg")
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-t", "11",
+                    "-c:a", "libmp3lame", str(tmp_path / "a.mp3")], check=True)
+    card = render.chapter_card("O cerco", 640, 360, tmp_path / "c.png")
+    render.scene_clip(tmp_path / "i.jpg", tmp_path / "a.mp3", 10.65, 2, tmp_path / "o.mp4", 640, 360, 12,
+                      {"shots": True, "shot_seconds": 5.0, "grain": True}, card)
+    out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v", "-show_entries", "stream=width,height,nb_frames",
+                          "-of", "csv=p=0", str(tmp_path / "o.mp4")], capture_output=True, text=True).stdout.strip()
+    assert out == "640,360,132"
+
+
+# ---------- re-renderizar sem chamar o Claude ----------
+def test_rerender_uses_saved_script_and_never_calls_llm(tmp_path, monkeypatch):
+    from channel import run
+    cfg = load_config()
+    cfg["output_dir"] = str(tmp_path / "out")
+    cfg["published_path"] = str(tmp_path / "pub.json")
+    d = _make_package(tmp_path, "O Êxodo do Egito")
+    meta_file = d / "metadata.json"
+    md = json.loads(meta_file.read_text(encoding="utf-8"))
+    md.update(topic="O Êxodo do Egito", source="https://pt.wikipedia.org/wiki/Livro_do_%C3%8Axodo")
+    meta_file.write_text(json.dumps(md, ensure_ascii=False), encoding="utf-8")
+    (d / "script.json").write_text(json.dumps(fake_script(9), ensure_ascii=False), encoding="utf-8")
+    seen = {}
+
+    def fake_build(topic, cfg, **k):
+        seen.update(topic=topic, script=k.get("script"))
+        return {"video": d / "video.mp4", "seconds": 600, "dir": d, "title": "T"}
+    monkeypatch.setattr(run, "build", fake_build)
+    monkeypatch.setattr(llm, "complete", lambda *a, **k: (_ for _ in ()).throw(AssertionError("não deveria chamar o Claude")))
+    import argparse
+    assert run.rerender(cfg, argparse.Namespace(topic=None, no_upload=True)) == 0
+    assert seen["topic"]["wiki"] == "Livro do Êxodo" and seen["topic"]["title"] == "O Êxodo do Egito"
+    assert len(seen["script"]["scenes"]) == 9
+
+
+# ---------- acervo do tema / variedade de imagens ----------
+def _png_bytes(color=(10, 20, 30)):
+    import io
+    from PIL import Image
+    buf = io.BytesIO()
+    Image.new("RGB", (64, 36), color).save(buf, format="PNG")
+    return buf.getvalue()
+
+
+def _info_page(title, lic="Public domain", w=2000, h=1200, cats="", idx=1):
+    return {"title": title, "index": idx, "imageinfo": [{
+        "mime": "image/jpeg", "width": w, "height": h, "url": f"https://up/{title}", "thumburl": f"https://up/{title}",
+        "descriptionurl": f"https://c/{title}",
+        "extmetadata": {"LicenseShortName": {"value": lic}, "Artist": {"value": "Doré"},
+                        "Categories": {"value": cats}, "ObjectName": {"value": title}}}]}
+
+
+class Router:
+    """Simula Wikipédia + Commons + download de imagens."""
+    def __init__(self):
+        self.searches = []
+
+    def get(self, url, **kw):
+        p = kw.get("params", {})
+        if url.startswith("https://up/"):
+            return Resp(content=_png_bytes())
+        if "wikipedia.org" in url and p.get("prop") == "langlinks":
+            return Resp({"query": {"pages": {"1": {"langlinks": [{"lang": "en", "*": "The Exodus"}]}}}})
+        if "wikipedia.org" in url and p.get("prop") == "images":
+            names = ["Ficheiro:Moses Dore.jpg", "Ficheiro:Flag of Egypt.png", "Ficheiro:Red Sea map.png", "Ficheiro:Logo.svg"]
+            return Resp({"query": {"pages": {"1": {"images": [{"title": n} for n in names]}}}})
+        if "commons" in url and p.get("titles"):
+            pages = {}
+            for i, t in enumerate(p["titles"].split("|")):
+                lic = "CC BY-SA 4.0" if "map" in t.lower() else "Public domain"
+                cats = {"File:Moses Dore.jpg": "Moses|Exodus", "File:Red Sea map.png": "Red Sea"}.get(t, "")
+                pages[str(i)] = _info_page(t, lic=lic, cats=cats, idx=i)
+            return Resp({"query": {"pages": pages}})
+        if "commons" in url and p.get("generator") == "search":
+            self.searches.append(p["gsrsearch"])
+            if "Pharaoh" in p["gsrsearch"]:
+                return Resp({"query": {"pages": {"9": _info_page("File:Pharaoh Ramesses.jpg", cats="Pharaoh")}}})
+            return Resp({"query": {"pages": {}}})
+        raise AssertionError(f"chamada inesperada {url} {p}")
+
+
+def test_fallback_queries_and_tokens():
+    assert images.fallback_queries("Mehmed II young sultan") == ["Mehmed II young sultan", "Mehmed II young", "Mehmed II"]
+    assert images.fallback_queries("Exodus") == ["Exodus"]
+    assert {"exodus", "israelites", "moises"} <= images.tokens("The Exodus of the Israelites, Moisés")
+
+
+def test_build_pool_collects_article_images_filters_and_counts(monkeypatch):
+    cfg = load_config()
+    cfg["images"]["allowed_licenses"] = ["public domain", "pd", "cc0", "cc by"]
+    pool, stats = images.build_pool("Livro do Êxodo", "O Êxodo do Egito", cfg, Router())
+    titles = {c["title"] for c in pool}
+    assert "File:Moses Dore.jpg" in titles                      # prefixo "Ficheiro:" normalizado para "File:"
+    assert not any("Flag" in t or "Logo" in t for t in titles)  # ícones/bandeiras fora
+    assert "File:Red Sea map.png" not in titles and stats["licenca_sa"] >= 1   # CC BY-SA recusada e contada
+    assert stats["acervo"] == len(pool)
+
+
+def test_scenes_pick_distinct_images_by_affinity_and_never_repeat_first(tmp_path):
+    cfg = load_config()
+    cfg["video"].update(width=64, height=36)
+    cfg["images"]["ai_fallback"] = False
+    names = {"File:Moses Dore.jpg": "Moses Exodus staff", "File:Red Sea crossing.jpg": "Red Sea crossing waters",
+             "File:Pharaoh Ramesses.jpg": "Pharaoh Egypt court"}
+    cands = [{"title": t, "url": f"https://up/{t}", "author": "A", "license": "PD", "page": "p", "tokens": images.tokens(d)}
+             for t, d in names.items()]
+    ctx = {"used": set(), "pool": [], "ai_ok": True, "candidates": cands}
+    scenes = [{"commons_queries": ["Red Sea crossing"], "narration": "Eles atravessam o mar"},
+              {"commons_queries": ["Pharaoh Egypt"], "narration": "O faraó"},
+              {"commons_queries": ["Moses staff"], "narration": "Moisés ergue o cajado"}]
+    got = [images.scene_image(s, i, cfg, tmp_path, ctx, None, Router()) for i, s in enumerate(scenes)]
+    assert [g["kind"] for g in got] == ["commons"] * 3
+    assert [g["credit"].split(" — ")[0] for g in got] == ["Red Sea crossing.jpg", "Pharaoh Ramesses.jpg", "Moses Dore.jpg"]
+
+
+def test_progressive_search_finds_with_shorter_query(tmp_path):
+    cfg = load_config()
+    cfg["video"].update(width=64, height=36)
+    cfg["images"]["ai_fallback"] = False
+    router = Router()
+    ctx = {"used": set(), "pool": [], "ai_ok": True, "candidates": []}
+    info = images.scene_image({"commons_queries": ["Pharaoh Ramesses chariot battle"], "narration": "x"}, 0, cfg, tmp_path,
+                              ctx, None, router)
+    assert info["kind"] == "commons" and "Pharaoh" in info["credit"]
+    assert len(router.searches) == 1                       # a primeira consulta já achou (contém 'Pharaoh')
+
+
+def test_reuse_rotates_least_used_instead_of_repeating_same_images(tmp_path):
+    from PIL import Image
+    cfg = load_config()
+    cfg["video"].update(width=64, height=36)
+    cfg["images"]["ai_fallback"] = False
+    pool = []
+    for k in range(3):
+        p = tmp_path / f"real{k}.jpg"
+        Image.new("RGB", (64, 36), (k, k, k)).save(p)
+        pool.append({"path": p, "kind": "commons", "credit": f"c{k}"})
+    ctx = {"used": set(), "pool": pool, "ai_ok": True, "candidates": [], "uses": {str(p["path"]): 1 for p in pool},
+           "last": {str(p["path"]): i for i, p in enumerate(pool)}}
+
+    class NoHit:
+        def get(self, *a, **k):
+            return Resp({"query": {"pages": {}}})
+    srcs = []
+    for i in range(6):
+        info = images.scene_image({"commons_queries": ["zzz"], "narration": "x"}, 10 + i, cfg, tmp_path, ctx, None, NoHit())
+        assert info["kind"] == "reuse"
+        srcs.append(max(ctx["last"], key=ctx["last"].get))
+    assert len(set(srcs)) == 3 and srcs[:3] == srcs[3:]    # gira entre as 3, sem martelar sempre as mesmas
+
+
+def test_validate_builds_commons_queries():
+    s = scriptmod.validate(fake_script(9))
+    assert s["scenes"][0]["commons_queries"] == ["Constantinople 1453"] and s["scenes"][0]["commons_query"] == "Constantinople 1453"
+    raw = fake_script(9)
+    raw["scenes"][1]["commons_queries"] = ["specific one", "", "general"]
+    assert scriptmod.validate(raw)["scenes"][1]["commons_queries"] == ["specific one", "general"]
+
+
+def test_default_config_accepts_by_sa_and_pool_includes_it():
+    cfg = load_config()
+    assert "cc by-sa" in cfg["images"]["allowed_licenses"]
+    pool, stats = images.build_pool("Livro do Êxodo", "O Êxodo do Egito", cfg, Router())
+    assert "File:Red Sea map.png" in {c["title"] for c in pool}          # CC BY-SA agora entra
+    assert "licenca_sa" not in stats
+    assert images.license_ok("CC BY-NC-SA 4.0", cfg["images"]["allowed_licenses"]) is False   # NC continua fora
+    assert images.license_ok("CC BY-ND 2.0", cfg["images"]["allowed_licenses"]) is False       # ND continua fora

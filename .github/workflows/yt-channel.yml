@@ -21,6 +21,14 @@ on:
       reuse_run_id:
         description: "ID de uma execução anterior: sobe o vídeo dela, sem gerar nada novo (não gasta API)"
         required: false
+      voice_samples:
+        description: "Só gera amostras de todas as vozes pt-BR para você ouvir e escolher (não gera vídeo, não gasta API)"
+        type: boolean
+        default: false
+      rerender:
+        description: "Com reuse_run_id: refaz voz/imagens/vídeo a partir do roteiro dela, sem chamar o Claude (não gasta API da Anthropic)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write              # para commitar data/published.json
@@ -51,8 +59,12 @@ jobs:
 
       - run: python -m pytest -q tests
 
+      - name: Amostras de voz
+        if: ${{ github.event.inputs.voice_samples == 'true' }}
+        run: python -m channel.samples
+
       - name: Baixar vídeo de uma execução anterior
-        if: ${{ github.event.inputs.reuse_run_id != '' }}
+        if: ${{ github.event.inputs.reuse_run_id != '' && github.event.inputs.voice_samples != 'true' }}
         uses: actions/download-artifact@v4
         with:
           name: video-${{ github.event.inputs.reuse_run_id }}
@@ -61,6 +73,7 @@ jobs:
           github-token: ${{ github.token }}
 
       - name: Gerar vídeo
+        if: ${{ github.event.inputs.voice_samples != 'true' }}
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           MUAPI_API_KEY: ${{ secrets.MUAPI_API_KEY }}
@@ -73,9 +86,11 @@ jobs:
           CH_NOTE: ${{ github.event.inputs.note }}
           CH_UPLOAD: ${{ github.event.inputs.upload }}
           CH_REUSE: ${{ github.event.inputs.reuse_run_id }}
+          CH_RERENDER: ${{ github.event.inputs.rerender }}
         run: python -m channel.run
 
       - name: Registrar tema usado
+        if: ${{ github.event.inputs.voice_samples != 'true' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

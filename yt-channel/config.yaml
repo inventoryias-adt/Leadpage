@@ -13,13 +13,18 @@ min_source_chars: 1500        # fonte menor que isso = não gera (evita roteiro 
 
 # Voz ------------------------------------------------------------------------
 voice:
-  name: pt-BR-AntonioNeural
+  name: pt-BR-ThalitaMultilingualNeural   # escolhida de ouvido entre as 3 vozes pt-BR (Antonio, Francisca, Thalita)
   rate: "-4%"
+  pitch: "+0Hz"
+  paced: true                   # frase a frase, com pausas conforme a pontuação
+  pauses: {sentence: 0.35, question: 0.45, exclaim: 0.40, ellipsis: 0.55}
 
 # Imagens --------------------------------------------------------------------
 images:
-  # só licenças que permitem reuso com atribuição (sem SA/NC/ND)
-  allowed_licenses: ["public domain", "pd", "cc0", "cc by"]
+  # Licenças aceitas (sem NC/ND). CC BY-SA está incluída por decisão do dono do canal: exige crédito (vai na descrição, com
+  # autor, licença e link) e há zona cinzenta jurídica sobre vídeo como obra derivada. Para voltar ao modo conservador,
+  # tire "cc by-sa" da lista.
+  allowed_licenses: ["public domain", "pd", "cc0", "cc by", "cc by-sa"]
   min_width: 1000
   max_card_ratio: 0.15         # acima disso (cenas sem imagem) o upload é cancelado
   ai_fallback: false           # true usa MuAPI (pago) quando não há imagem livre; precisa de MUAPI_API_KEY
@@ -32,6 +37,12 @@ video:
   height: 1080
   fps: 24
   burn_subtitles: true
+  motion:                      # movimento sem custo para reter o público
+    shots: true                # cenas longas viram 2-4 planos com enquadramentos diferentes
+    shot_seconds: 5.0
+    grain: true                # vinheta e grão de filme sutis (grão engorda o arquivo: quanto maior, mais pesado)
+    grain_strength: 3
+    chapter_cards: true        # título do capítulo aparece por ~3 s
   music_volume: 0.08           # músicas ficam em assets/music/ (só royalty-free!)
 
 # YouTube --------------------------------------------------------------------
