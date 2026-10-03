@@ -11,6 +11,9 @@ on:
       wiki:
         description: "Título do artigo da Wikipédia para o tema avulso"
         required: false
+      note:
+        description: "Orientação de abordagem para o roteiro (ex.: tom e cuidados do tema)"
+        required: false
       upload:
         description: "Enviar ao YouTube (privado)?"
         type: boolean
@@ -65,17 +68,12 @@ jobs:
           YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
           YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
           WIKI_CONTACT: ${{ secrets.WIKI_CONTACT || format('https://github.com/{0}', github.repository) }}
-          TOPIC: ${{ github.event.inputs.topic }}
-          WIKI: ${{ github.event.inputs.wiki }}
-          UPLOAD: ${{ github.event.inputs.upload }}
-          REUSE: ${{ github.event.inputs.reuse_run_id }}
-        run: |
-          ARGS=""
-          if [ -n "$REUSE" ]; then ARGS="--upload-only"; fi
-          if [ -n "$TOPIC" ]; then ARGS="$ARGS --topic \"$TOPIC\""; fi
-          if [ -n "$WIKI" ]; then ARGS="$ARGS --wiki \"$WIKI\""; fi
-          if [ "$UPLOAD" = "false" ]; then ARGS="$ARGS --no-upload"; fi
-          eval python -m channel.run $ARGS
+          CH_TOPIC: ${{ github.event.inputs.topic }}
+          CH_WIKI: ${{ github.event.inputs.wiki }}
+          CH_NOTE: ${{ github.event.inputs.note }}
+          CH_UPLOAD: ${{ github.event.inputs.upload }}
+          CH_REUSE: ${{ github.event.inputs.reuse_run_id }}
+        run: python -m channel.run
 
       - name: Registrar tema usado
         run: |
