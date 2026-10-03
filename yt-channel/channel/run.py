@@ -12,6 +12,7 @@ import os
 import re
 import tempfile
 import unicodedata
+import urllib.parse
 from pathlib import Path
 
 from . import images, meta, muapi, render, research, script as scriptmod, state, thumb, voice
@@ -115,6 +116,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--no-upload", action="store_true")
     ap.add_argument("--upload-only", action="store_true",
                     help="não gera nada: sobe o pacote já existente em output/ (use --topic se houver mais de um)")
+    ap.add_argument("--rerender", action="store_true",
+                    help="refaz voz/imagens/vídeo de um pacote existente a partir do script.json, sem chamar o Claude")
     ap.add_argument("--config")
     args = ap.parse_args(argv)
 
@@ -124,9 +127,12 @@ def main(argv: list[str] | None = None) -> int:
     args.wiki = args.wiki or env.get("CH_WIKI") or None
     args.note = args.note or env.get("CH_NOTE") or None
     args.no_upload = args.no_upload or env.get("CH_UPLOAD") == "false"
-    args.upload_only = args.upload_only or bool(env.get("CH_REUSE"))
+    args.rerender = args.rerender or env.get("CH_RERENDER") == "true"
+    args.upload_only = args.upload_only or (bool(env.get("CH_REUSE")) and not args.rerender)
 
     cfg = load_config(args.config)
+    if args.rerender:
+        return rerender(cfg, args)
     if args.upload_only:
         return upload_only(cfg, args)
     published = state.load_published(cfg["published_path"])
@@ -150,6 +156,10 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Vídeo pronto: {md['video']} (~{md['seconds'] // 60} min)")
     if args.no_upload:
         return 0
+    return publish(md, cfg, topic["title"], yt)
+
+
+def publish(md: dict, cfg: dict, topic_title: str, yt: YouTube | None = None) -> int:
     cards = md["image_kinds"]["card"]
     if cards / max(sum(md["image_kinds"].values()), 1) > cfg["images"]["max_card_ratio"]:
         print(f"Upload cancelado: {cards} cenas ficaram só com cartão de cor (sem imagem). "
@@ -161,9 +171,22 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     video_id = (yt or YouTube()).upload(md["video"], md, md["thumbnail"])
     print(f"Enviado como {md['privacy']}: https://studio.youtube.com/video/{video_id}/edit")
-    state.mark_published(cfg["published_path"], {"topic": topic["title"], "youtube_id": video_id,
-                                                 "title": md["title"]})
+    state.mark_published(cfg["published_path"], {"topic": topic_title, "youtube_id": video_id, "title": md["title"]})
     return 0
+
+
+def rerender(cfg: dict, args) -> int:
+    """Refaz voz, imagens e vídeo de um pacote existente usando o script.json dele (sem chamar o Claude)."""
+    md = load_package(cfg, args.topic)
+    script = json.loads((md["dir"] / "script.json").read_text(encoding="utf-8"))
+    wiki = urllib.parse.unquote(md["source"].rsplit("/", 1)[-1]).replace("_", " ")
+    topic = {"title": md["topic"], "wiki": wiki, "note": ""}
+    print(f"Re-renderizando '{md['title']}' (fonte: {wiki}) sem chamar o Claude")
+    new = build(topic, cfg, script=script)
+    print(f"Vídeo pronto: {new['video']} (~{new['seconds'] // 60} min)")
+    if args.no_upload:
+        return 0
+    return publish(new, cfg, topic["title"])
 
 
 def upload_only(cfg: dict, args) -> int:

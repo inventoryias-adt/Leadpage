@@ -351,3 +351,72 @@ def test_main_reads_workflow_env_vars(monkeypatch, tmp_path):
     with pytest.raises(SystemExit, match="para aqui"):
         run.main([])
     assert captured["topic"] == {"title": 'O "Êxodo" do Egito', "wiki": "Livro do Êxodo", "note": "Seja respeitoso."}
+
+
+# ---------- ritmo da voz ----------
+def test_pauses_depend_on_punctuation():
+    from channel import voice
+    assert voice.split_sentences("Um. Dois? Três... Quatro!") == ["Um.", "Dois?", "Três...", "Quatro!"]
+    assert [voice.pause_after(s) for s in ["a.", "a?", "a!", "a...", "a…"]] == [0.35, 0.45, 0.40, 0.55, 0.55]
+    assert voice.pause_after("a.", {"sentence": 0.9}) == 0.9
+
+
+def test_synthesize_paced_joins_sentences_with_pauses(tmp_path, monkeypatch):
+    from channel import voice
+
+    def fake_save(sentences, paths, voice_name, rate, pitch):
+        for s, p in zip(sentences, paths):          # 1 s de silêncio por frase
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono",
+                            "-t", "1", "-c:a", "libmp3lame", str(p)], check=True)
+    monkeypatch.setattr(voice, "_save_sentences", fake_save)
+    out = tmp_path / "v.mp3"
+    secs = voice.synthesize_paced("Um. Dois? Três!", out, "v", "+0%", pauses={"sentence": 0.5, "question": 1.0})
+    assert 3.0 + 0.5 + 1.0 - 0.3 < secs < 3.0 + 0.5 + 1.0 + 0.3      # 3 frases + pausa após "." e "?" (sem pausa no fim)
+    assert not list(tmp_path.glob("v_s*.mp3"))                        # temporários removidos
+
+
+# ---------- movimento ----------
+def test_shot_frames_split_scene_exactly():
+    from channel import render
+    assert sum(render.shot_frames(11.0, 12, 5.0)) == 132 and len(render.shot_frames(11.0, 12, 5.0)) == 2
+    assert len(render.shot_frames(3.0, 12, 5.0)) == 1
+    assert len(render.shot_frames(60, 12, 5.0)) == 4                  # limite de 4 planos
+
+
+def test_scene_clip_multishot_with_chapter_card(tmp_path):
+    from PIL import Image
+    from channel import render
+    Image.new("RGB", (800, 500), (120, 80, 40)).save(tmp_path / "i.jpg")
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-t", "11",
+                    "-c:a", "libmp3lame", str(tmp_path / "a.mp3")], check=True)
+    card = render.chapter_card("O cerco", 640, 360, tmp_path / "c.png")
+    render.scene_clip(tmp_path / "i.jpg", tmp_path / "a.mp3", 10.65, 2, tmp_path / "o.mp4", 640, 360, 12,
+                      {"shots": True, "shot_seconds": 5.0, "grain": True}, card)
+    out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v", "-show_entries", "stream=width,height,nb_frames",
+                          "-of", "csv=p=0", str(tmp_path / "o.mp4")], capture_output=True, text=True).stdout.strip()
+    assert out == "640,360,132"
+
+
+# ---------- re-renderizar sem chamar o Claude ----------
+def test_rerender_uses_saved_script_and_never_calls_llm(tmp_path, monkeypatch):
+    from channel import run
+    cfg = load_config()
+    cfg["output_dir"] = str(tmp_path / "out")
+    cfg["published_path"] = str(tmp_path / "pub.json")
+    d = _make_package(tmp_path, "O Êxodo do Egito")
+    meta_file = d / "metadata.json"
+    md = json.loads(meta_file.read_text(encoding="utf-8"))
+    md.update(topic="O Êxodo do Egito", source="https://pt.wikipedia.org/wiki/Livro_do_%C3%8Axodo")
+    meta_file.write_text(json.dumps(md, ensure_ascii=False), encoding="utf-8")
+    (d / "script.json").write_text(json.dumps(fake_script(9), ensure_ascii=False), encoding="utf-8")
+    seen = {}
+
+    def fake_build(topic, cfg, **k):
+        seen.update(topic=topic, script=k.get("script"))
+        return {"video": d / "video.mp4", "seconds": 600, "dir": d, "title": "T"}
+    monkeypatch.setattr(run, "build", fake_build)
+    monkeypatch.setattr(llm, "complete", lambda *a, **k: (_ for _ in ()).throw(AssertionError("não deveria chamar o Claude")))
+    import argparse
+    assert run.rerender(cfg, argparse.Namespace(topic=None, no_upload=True)) == 0
+    assert seen["topic"]["wiki"] == "Livro do Êxodo" and seen["topic"]["title"] == "O Êxodo do Egito"
+    assert len(seen["script"]["scenes"]) == 9
