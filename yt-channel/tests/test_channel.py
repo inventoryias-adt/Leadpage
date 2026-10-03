@@ -91,6 +91,7 @@ def test_license_ok(lic, ok):
 
 def test_commons_search_filters_and_credits():
     cfg = load_config()
+    cfg["images"]["allowed_licenses"] = ["public domain", "pd", "cc0", "cc by"]
     page = lambda t, idx, w, lic: {"title": t, "index": idx, "imageinfo": [{
         "mime": "image/jpeg", "width": w, "height": 900, "url": "u", "thumburl": "thumb", "descriptionurl": "d",
         "extmetadata": {"LicenseShortName": {"value": lic}, "Artist": {"value": "<a>Fulano</a>"}}}]}
@@ -476,6 +477,7 @@ def test_fallback_queries_and_tokens():
 
 def test_build_pool_collects_article_images_filters_and_counts(monkeypatch):
     cfg = load_config()
+    cfg["images"]["allowed_licenses"] = ["public domain", "pd", "cc0", "cc by"]
     pool, stats = images.build_pool("Livro do Êxodo", "O Êxodo do Egito", cfg, Router())
     titles = {c["title"] for c in pool}
     assert "File:Moses Dore.jpg" in titles                      # prefixo "Ficheiro:" normalizado para "File:"
@@ -543,3 +545,13 @@ def test_validate_builds_commons_queries():
     raw = fake_script(9)
     raw["scenes"][1]["commons_queries"] = ["specific one", "", "general"]
     assert scriptmod.validate(raw)["scenes"][1]["commons_queries"] == ["specific one", "general"]
+
+
+def test_default_config_accepts_by_sa_and_pool_includes_it():
+    cfg = load_config()
+    assert "cc by-sa" in cfg["images"]["allowed_licenses"]
+    pool, stats = images.build_pool("Livro do Êxodo", "O Êxodo do Egito", cfg, Router())
+    assert "File:Red Sea map.png" in {c["title"] for c in pool}          # CC BY-SA agora entra
+    assert "licenca_sa" not in stats
+    assert images.license_ok("CC BY-NC-SA 4.0", cfg["images"]["allowed_licenses"]) is False   # NC continua fora
+    assert images.license_ok("CC BY-ND 2.0", cfg["images"]["allowed_licenses"]) is False       # ND continua fora
