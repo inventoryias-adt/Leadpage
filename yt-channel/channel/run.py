@@ -65,6 +65,7 @@ def build(topic: dict, cfg: dict, offline: bool = False, article: dict | None = 
     credits = [i["credit"] for i in infos if i["credit"]]
     used_ai = any(i["kind"] == "ai" for i in infos)
     md = {
+        "topic": topic["title"],
         "title": script["title"],
         "description": meta.description(script, article, meta.chapters(scenes, durations), credits, cfg, used_ai),
         "tags": script["tags"], "category_id": cfg["youtube"]["category_id"], "language": cfg["language"],
@@ -81,15 +82,41 @@ def build(topic: dict, cfg: dict, offline: bool = False, article: dict | None = 
     return md
 
 
+def load_package(cfg: dict, topic_title: str | None = None) -> dict:
+    """Lê um pacote já gerado em output/<tema>/ (ex.: baixado do artefato de outra execução)."""
+    out = Path(cfg["output_dir"])
+    if topic_title:
+        folder = out / slug(topic_title)
+    else:
+        found = [d for d in out.iterdir() if (d / "metadata.json").exists()] if out.exists() else []
+        if len(found) != 1:
+            raise SystemExit(f"Esperava exatamente 1 pacote em {out}, achei {len(found)}. Use --topic para escolher.")
+        folder = found[0]
+    meta_file = folder / "metadata.json"
+    if not meta_file.exists():
+        raise SystemExit(f"Pacote não encontrado: {meta_file}")
+    md = json.loads(meta_file.read_text(encoding="utf-8"))
+    md.update(video=folder / "video.mp4", thumbnail=folder / "thumbnail.jpg", dir=folder)
+    for f in ("video", "thumbnail"):
+        if not md[f].exists():
+            raise SystemExit(f"Arquivo ausente no pacote: {md[f]}")
+    md.setdefault("topic", topic_title or md["title"])
+    return md
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--topic")
     ap.add_argument("--wiki", help="título do artigo da Wikipédia (padrão: igual ao tema)")
     ap.add_argument("--no-upload", action="store_true")
+    ap.add_argument("--upload-only", action="store_true",
+                    help="não gera nada: sobe o pacote já existente em output/ (use --topic se houver mais de um)")
     ap.add_argument("--config")
     args = ap.parse_args(argv)
 
     cfg = load_config(args.config)
+    if args.upload_only:
+        return upload_only(cfg, args)
     published = state.load_published(cfg["published_path"])
     topic = ({"title": args.topic, "wiki": args.wiki or args.topic} if args.topic
              else state.next_topic(cfg["topics_path"], published))
@@ -124,6 +151,24 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Enviado como {md['privacy']}: https://studio.youtube.com/video/{video_id}/edit")
     state.mark_published(cfg["published_path"], {"topic": topic["title"], "youtube_id": video_id,
                                                  "title": md["title"]})
+    return 0
+
+
+def upload_only(cfg: dict, args) -> int:
+    md = load_package(cfg, args.topic)
+    print(f"Pacote existente: {md['dir']} (~{md['seconds'] // 60} min) — título: {md['title']}")
+    if args.no_upload:
+        print("Modo --no-upload: pacote conferido, nada foi enviado.")
+        return 0
+    missing = [k for k in ("YT_CLIENT_ID", "YT_CLIENT_SECRET", "YT_REFRESH_TOKEN") if not os.environ.get(k)]
+    if missing:
+        raise SystemExit(f"Faltam credenciais: {', '.join(missing)}")
+    yt = YouTube()
+    for problem in yt.format_problems():
+        print(f"! {problem}")
+    video_id = yt.upload(md["video"], md, md["thumbnail"])
+    print(f"Enviado como {md['privacy']}: https://studio.youtube.com/video/{video_id}/edit")
+    state.mark_published(cfg["published_path"], {"topic": md["topic"], "youtube_id": video_id, "title": md["title"]})
     return 0
 
 

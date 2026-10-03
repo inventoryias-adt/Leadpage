@@ -234,3 +234,61 @@ def test_youtube_strips_secrets_and_flags_bad_format():
     assert ok.cid == "abc.apps.googleusercontent.com" and ok.refresh == "1//tok" and ok.format_problems() == []
     bad = youtube.YouTube("123", "****abcd", "ya29.token").format_problems()
     assert len(bad) == 3 and not any("****" in b or "ya29.token" in b for b in bad)   # não vaza valores
+
+
+# ---------- subir pacote existente ----------
+def _make_package(tmp_path, topic="A Queda de Constantinopla"):
+    d = tmp_path / "out" / slug(topic)
+    d.mkdir(parents=True)
+    (d / "video.mp4").write_bytes(b"v")
+    (d / "thumbnail.jpg").write_bytes(b"t")
+    (d / "metadata.json").write_text(json.dumps({
+        "title": "T", "description": "D", "tags": ["a"], "category_id": "27", "language": "pt-BR", "privacy": "private",
+        "made_for_kids": False, "synthetic": True, "seconds": 600}), encoding="utf-8")
+    return d
+
+
+def test_load_package_and_upload_only(tmp_path, monkeypatch):
+    from channel import run
+    cfg = load_config()
+    cfg["output_dir"] = str(tmp_path / "out")
+    cfg["published_path"] = str(tmp_path / "pub.json")
+    _make_package(tmp_path)
+    md = run.load_package(cfg)                              # único pacote: não precisa de --topic
+    assert md["title"] == "T" and md["video"].name == "video.mp4" and md["topic"] == "T"
+
+    seen = {}
+
+    class FakeYT:
+        def __init__(self):
+            pass
+
+        def format_problems(self):
+            return []
+
+        def upload(self, video, meta, thumb):
+            seen["video"] = video.name
+            return "VID9"
+    monkeypatch.setattr(run, "YouTube", FakeYT)
+    for k in ("YT_CLIENT_ID", "YT_CLIENT_SECRET", "YT_REFRESH_TOKEN"):
+        monkeypatch.setenv(k, "x")
+    import argparse
+    assert run.upload_only(cfg, argparse.Namespace(topic=None, no_upload=False)) == 0
+    assert seen["video"] == "video.mp4"
+    assert state.load_published(cfg["published_path"])[0]["youtube_id"] == "VID9"
+
+
+def test_upload_only_no_upload_and_missing(tmp_path):
+    from channel import run
+    import argparse
+    cfg = load_config()
+    cfg["output_dir"] = str(tmp_path / "out")
+    cfg["published_path"] = str(tmp_path / "pub.json")
+    with pytest.raises(SystemExit):                          # nenhuma pasta
+        run.load_package(cfg)
+    d = _make_package(tmp_path)
+    assert run.upload_only(cfg, argparse.Namespace(topic=None, no_upload=True)) == 0
+    assert state.load_published(cfg["published_path"]) == []     # nada registrado
+    (d / "thumbnail.jpg").unlink()
+    with pytest.raises(SystemExit):
+        run.load_package(cfg)
