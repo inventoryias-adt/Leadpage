@@ -45,10 +45,10 @@ def build(topic: dict, cfg: dict, offline: bool = False, article: dict | None = 
     durations = voice.narrate(scenes, work, cfg, offline=offline)
 
     print("[4/6] Imagens")
-    used: set[str] = set()
+    ctx = {"used": set(), "pool": [], "ai_ok": True}
     if ai_client is None and cfg["images"]["ai_fallback"] and os.environ.get("MUAPI_API_KEY"):
         ai_client = muapi.MuapiClient()
-    infos = [images.scene_image(s, i, cfg, work, used, ai_client) if not offline
+    infos = [images.scene_image(s, i, cfg, work, ctx, ai_client) if not offline
              else {"path": images.card(s.get("chapter") or "", cfg["video"]["width"], cfg["video"]["height"],
                                        work / f"img_{i:03d}.jpg", i), "kind": "card", "credit": None}
              for i, s in enumerate(scenes)]
@@ -71,7 +71,7 @@ def build(topic: dict, cfg: dict, offline: bool = False, article: dict | None = 
         "privacy": cfg["youtube"]["privacy"], "made_for_kids": cfg["youtube"]["made_for_kids"],
         "synthetic": bool(cfg["youtube"]["disclose_synthetic"]),
         "seconds": round(sum(durations) + meta.PAD * len(durations)), "source": article["url"],
-        "image_kinds": {k: sum(1 for i in infos if i["kind"] == k) for k in ("commons", "ai", "card")},
+        "image_kinds": {k: sum(1 for i in infos if i["kind"] == k) for k in ("commons", "ai", "reuse", "card")},
     }
     (out_dir / "metadata.json").write_text(json.dumps(md, ensure_ascii=False, indent=2), encoding="utf-8")
     (out_dir / "script.json").write_text(json.dumps(
@@ -102,6 +102,11 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Vídeo pronto: {md['video']} (~{md['seconds'] // 60} min)")
     if args.no_upload:
         return 0
+    cards = md["image_kinds"]["card"]
+    if cards / max(sum(md["image_kinds"].values()), 1) > cfg["images"]["max_card_ratio"]:
+        print(f"Upload cancelado: {cards} cenas ficaram só com cartão de cor (sem imagem). "
+              f"Veja {md['dir']} e tente de novo (limite do Commons ou IA sem crédito).")
+        return 2
     missing = [k for k in ("YT_CLIENT_ID", "YT_CLIENT_SECRET", "YT_REFRESH_TOKEN") if not os.environ.get(k)]
     if missing:
         print(f"Upload pulado (faltam {', '.join(missing)}): baixe o vídeo em {md['dir']} e suba pelo YouTube Studio.")
