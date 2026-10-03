@@ -227,3 +227,10 @@ def test_scene_image_card_when_nothing_available(tmp_path):
             return Resp({"query": {"pages": {}}})
     ctx = {"used": set(), "pool": [], "ai_ok": True}
     assert images.scene_image({"commons_query": "x", "ai_prompt": "y"}, 0, cfg, tmp_path, ctx, None, NoHit())["kind"] == "card"
+
+
+def test_youtube_strips_secrets_and_flags_bad_format():
+    ok = youtube.YouTube(" abc.apps.googleusercontent.com\n", "GOCSPX-" + "x" * 28 + " ", "1//tok\n")
+    assert ok.cid == "abc.apps.googleusercontent.com" and ok.refresh == "1//tok" and ok.format_problems() == []
+    bad = youtube.YouTube("123", "****abcd", "ya29.token").format_problems()
+    assert len(bad) == 3 and not any("****" in b or "ya29.token" in b for b in bad)   # não vaza valores
