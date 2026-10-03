@@ -15,12 +15,25 @@ class YouTubeError(RuntimeError):
     pass
 
 
+def clean_secret(value: str) -> str:
+    """Remove restos de colagem: aspas, espaços/quebras de linha e tudo depois de um '&'
+    (quem copia 'client_secret=XXX&scope=' leva o '&scope=' junto). Esses segredos só usam
+    letras, números, '-', '_', '.', '/' — nunca esses caracteres."""
+    value = value.split("&")[0]
+    return "".join(ch for ch in value if not ch.isspace() and ch not in "\"'")
+
+
 class YouTube:
     def __init__(self, client_id=None, client_secret=None, refresh_token=None, http=requests):
-        # strip(): colar no GitHub costuma deixar espaço ou quebra de linha no fim
-        self.cid = (client_id or os.environ["YT_CLIENT_ID"]).strip()
-        self.secret = (client_secret or os.environ["YT_CLIENT_SECRET"]).strip()
-        self.refresh = (refresh_token or os.environ["YT_REFRESH_TOKEN"]).strip()
+        raw = {
+            "YT_CLIENT_ID": client_id or os.environ["YT_CLIENT_ID"],
+            "YT_CLIENT_SECRET": client_secret or os.environ["YT_CLIENT_SECRET"],
+            "YT_REFRESH_TOKEN": refresh_token or os.environ["YT_REFRESH_TOKEN"],
+        }
+        cleaned = {k: clean_secret(v) for k, v in raw.items()}
+        # avisa QUAL segredo veio sujo (sem mostrar valores)
+        self.cleaned_names = [k for k in raw if cleaned[k] != raw[k].strip()]
+        self.cid, self.secret, self.refresh = (cleaned[k] for k in raw)
         self.http = http
 
     def format_problems(self) -> list[str]:
@@ -34,8 +47,9 @@ class YouTube:
             out.append(f"YT_CLIENT_SECRET parece curto demais ({len(self.secret)} caracteres)")
         if not self.refresh.startswith("1//"):
             out.append("YT_REFRESH_TOKEN deveria começar com 1// (não use o access_token, que começa com ya29.)")
-        if any(c in self.cid + self.secret + self.refresh for c in ' "\'&\n'):
-            out.append("algum segredo contém espaço, aspas, & ou quebra de linha")
+        for name in self.cleaned_names:
+            out.append(f"{name} tinha caracteres sobrando (espaço, aspas, & ou quebra de linha) e foi limpo automaticamente; "
+                       "se o erro continuar, cole o valor de novo")
         return out
 
     def access_token(self) -> str:

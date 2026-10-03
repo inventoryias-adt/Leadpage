@@ -292,3 +292,14 @@ def test_upload_only_no_upload_and_missing(tmp_path):
     (d / "thumbnail.jpg").unlink()
     with pytest.raises(SystemExit):
         run.load_package(cfg)
+
+
+def test_clean_secret_removes_paste_leftovers():
+    assert youtube.clean_secret("GOCSPX-abc_DEF-123&scope=&grant_type=authorization_code") == "GOCSPX-abc_DEF-123"
+    assert youtube.clean_secret('  "1//04-abc\ndef"  ') == "1//04-abcdef"
+    yt = youtube.YouTube("id.apps.googleusercontent.com", "GOCSPX-" + "x" * 28 + "&scope=", "1//tok\nmore")
+    assert yt.secret == "GOCSPX-" + "x" * 28 and yt.refresh == "1//tokmore"
+    problems = yt.format_problems()
+    assert any("YT_CLIENT_SECRET" in p for p in problems) and any("YT_REFRESH_TOKEN" in p for p in problems)
+    assert not any("YT_CLIENT_ID" in p for p in problems)
+    assert not any("xxxx" in p or "tokmore" in p for p in problems)          # não vaza valores
