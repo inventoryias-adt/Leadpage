@@ -98,6 +98,15 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     print(f"Tema: {topic['title']}")
 
+    yt = None
+    if not args.no_upload and all(os.environ.get(k) for k in ("YT_CLIENT_ID", "YT_CLIENT_SECRET", "YT_REFRESH_TOKEN")):
+        # falha cedo: não adianta gastar minutos e créditos gerando um vídeo que não poderá subir
+        yt = YouTube()
+        for problem in yt.format_problems():
+            print(f"! {problem}")
+        yt.access_token()
+        print("Credenciais do YouTube OK.")
+
     md = build(topic, cfg)
     print(f"Vídeo pronto: {md['video']} (~{md['seconds'] // 60} min)")
     if args.no_upload:
@@ -111,7 +120,7 @@ def main(argv: list[str] | None = None) -> int:
     if missing:
         print(f"Upload pulado (faltam {', '.join(missing)}): baixe o vídeo em {md['dir']} e suba pelo YouTube Studio.")
         return 0
-    video_id = YouTube().upload(md["video"], md, md["thumbnail"])
+    video_id = (yt or YouTube()).upload(md["video"], md, md["thumbnail"])
     print(f"Enviado como {md['privacy']}: https://studio.youtube.com/video/{video_id}/edit")
     state.mark_published(cfg["published_path"], {"topic": topic["title"], "youtube_id": video_id,
                                                  "title": md["title"]})
