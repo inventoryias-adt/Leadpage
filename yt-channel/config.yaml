@@ -21,7 +21,9 @@ voice:
 
 # Imagens --------------------------------------------------------------------
 images:
-  # só licenças que permitem reuso com atribuição (sem SA/NC/ND)
+  # só licenças que permitem reuso com atribuição (sem SA/NC/ND).
+  # Para ter MUITO mais fotos (a maioria das fotos modernas do Commons é CC BY-SA), acrescente "cc by-sa" à lista:
+  # exige crédito e há zona cinzenta jurídica sobre vídeo como obra derivada. Decisão do dono do canal.
   allowed_licenses: ["public domain", "pd", "cc0", "cc by"]
   min_width: 1000
   max_card_ratio: 0.15         # acima disso (cenas sem imagem) o upload é cancelado
@@ -38,7 +40,8 @@ video:
   motion:                      # movimento sem custo para reter o público
     shots: true                # cenas longas viram 2-4 planos com enquadramentos diferentes
     shot_seconds: 5.0
-    grain: true                # vinheta e grão de filme sutis
+    grain: true                # vinheta e grão de filme sutis (grão engorda o arquivo: quanto maior, mais pesado)
+    grain_strength: 3
     chapter_cards: true        # título do capítulo aparece por ~3 s
   music_volume: 0.08           # músicas ficam em assets/music/ (só royalty-free!)
 

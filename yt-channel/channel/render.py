@@ -71,7 +71,7 @@ def scene_clip(img: Path, audio: Path, dur: float, i: int, out: Path, w: int, h:
         graph += f"[s{k}]zoompan={_zoompan(variant, frames)}:d={frames}:s={w}x{h}:fps={fps}[v{k}];"
     graph += "".join(f"[v{k}]" for k in range(n)) + f"concat=n={n}:v=1:a=0[vc];"
     post = "vignette=PI/5," if motion.get("grain", True) else ""
-    post += "noise=alls=7:allf=t," if motion.get("grain", True) else ""
+    post += f"noise=alls={int(motion.get('grain_strength', 3))}:allf=t," if motion.get("grain", True) else ""
     post += f"fade=t=in:d=0.3,fade=t=out:st={max(total - 0.3, 0):.2f}:d=0.3,format=yuv420p"
     graph += f"[vc]{post}[vf]"
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-i", str(img), "-i", str(audio)]

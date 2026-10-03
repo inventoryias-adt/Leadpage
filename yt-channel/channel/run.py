@@ -49,13 +49,25 @@ def build(topic: dict, cfg: dict, offline: bool = False, article: dict | None = 
     durations = voice.narrate(scenes, work, cfg, offline=offline)
 
     print("[4/6] Imagens")
-    ctx = {"used": set(), "pool": [], "ai_ok": True}
+    ctx = {"used": set(), "pool": [], "ai_ok": True, "candidates": [], "uses": {}, "last": {}}
+    pool_stats: dict = {}
+    if not offline:
+        ctx["candidates"], pool_stats = images.build_pool(article["title"], topic["title"], cfg)
+        print(f"      acervo do tema: {pool_stats.get('acervo', 0)} imagens livres; descartadas: "
+              + (", ".join(f"{k}={v}" for k, v in pool_stats.items() if k != "acervo") or "nenhuma"))
     if ai_client is None and cfg["images"]["ai_fallback"] and os.environ.get("MUAPI_API_KEY"):
         ai_client = muapi.MuapiClient()
-    infos = [images.scene_image(s, i, cfg, work, ctx, ai_client) if not offline
-             else {"path": images.card(s.get("chapter") or "", cfg["video"]["width"], cfg["video"]["height"],
-                                       work / f"img_{i:03d}.jpg", i), "kind": "card", "credit": None}
-             for i, s in enumerate(scenes)]
+    infos = []
+    for i, sc in enumerate(scenes):
+        if offline:
+            info = {"path": images.card(sc.get("chapter") or "", cfg["video"]["width"], cfg["video"]["height"],
+                                        work / f"img_{i:03d}.jpg", i), "kind": "card", "credit": None, "how": "offline"}
+        else:
+            info = images.scene_image(sc, i, cfg, work, ctx, ai_client)
+        infos.append(info)
+        print(f"      cena {i:02d}: {info['kind']:<7} {info.get('how', '')}")
+    distinct = len({i["credit"] for i in infos if i["credit"]})
+    print(f"      {distinct} imagens distintas em {len(infos)} cenas")
 
     print("[5/6] Montando vídeo")
     srt_text = meta.srt(scenes, durations)
@@ -77,6 +89,7 @@ def build(topic: dict, cfg: dict, offline: bool = False, article: dict | None = 
         "synthetic": bool(cfg["youtube"]["disclose_synthetic"]),
         "seconds": round(sum(durations) + meta.PAD * len(durations)), "source": article["url"],
         "image_kinds": {k: sum(1 for i in infos if i["kind"] == k) for k in ("commons", "ai", "reuse", "card")},
+        "distinct_images": distinct, "pool_stats": pool_stats,
     }
     (out_dir / "metadata.json").write_text(json.dumps(md, ensure_ascii=False, indent=2), encoding="utf-8")
     (out_dir / "script.json").write_text(json.dumps(

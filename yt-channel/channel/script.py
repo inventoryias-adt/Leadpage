@@ -26,7 +26,7 @@ Responda APENAS com JSON:
   "scenes": [
     {{"narration": "texto narrado da cena",
       "chapter": "título curto do capítulo OU null (marque ~5 cenas ao longo do vídeo; a primeira cena deve ter capítulo)",
-      "commons_query": "2 a 4 palavras para buscar imagem/gravura/pintura histórica real no Wikimedia Commons",
+      "commons_queries": ["3 consultas EM INGLÊS para buscar imagem/gravura/pintura histórica real no Wikimedia Commons, da mais específica (2-3 palavras) à mais geral (1-2 palavras, o tema amplo da cena). Ex.: ['Moses parting Red Sea Doré', 'Red Sea crossing', 'Exodus']"],
       "ai_prompt": "descrição visual em inglês, estilo gravura ou pintura, sem texto e sem rosto de pessoa real"}}
   ]}}
 
@@ -69,7 +69,9 @@ def validate(script: dict, min_scenes: int = 8) -> dict:
     for i, s in enumerate(script["scenes"]):
         if not s.get("narration", "").strip():
             raise ValueError(f"cena {i} sem narração")
-        s.setdefault("commons_query", script["title"])
+        queries = s.get("commons_queries") or ([s["commons_query"]] if s.get("commons_query") else [script["title"]])
+        s["commons_queries"] = [q.strip() for q in queries if isinstance(q, str) and q.strip()] or [script["title"]]
+        s["commons_query"] = s["commons_queries"][0]
         s.setdefault("ai_prompt", s["commons_query"])
         s["chapter"] = s.get("chapter") or None
     script["scenes"][0]["chapter"] = script["scenes"][0]["chapter"] or "Introdução"
