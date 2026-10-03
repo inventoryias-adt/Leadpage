@@ -33,10 +33,13 @@ def build(topic: dict, cfg: dict, offline: bool = False, article: dict | None = 
 
     print(f"[1/6] Pesquisando: {topic['wiki']}")
     article = article or research.fetch_article(topic["wiki"], cfg["wikipedia_lang"], cfg["source_max_chars"])
+    if len(article["text"]) < cfg["min_source_chars"]:
+        raise SystemExit(f"Fonte curta demais ({len(article['text'])} caracteres) em '{article['title']}': "
+                         "a Wikipédia não tem material suficiente. Escolha outro artigo com --wiki.")
 
     print("[2/6] Roteiro + verificação de fatos")
     if script is None:
-        script = scriptmod.generate(topic["title"], article, cfg)
+        script = scriptmod.generate(topic["title"], article, cfg, note=topic.get("note", ""))
         script, issues = scriptmod.verify_and_fix(script, article, cfg)
         print(f"      {len(script['scenes'])} cenas; {len(issues)} trechos corrigidos pela checagem")
     scenes = script["scenes"]
@@ -108,17 +111,26 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--topic")
     ap.add_argument("--wiki", help="título do artigo da Wikipédia (padrão: igual ao tema)")
+    ap.add_argument("--note", help="orientação de abordagem para o roteiro deste tema")
     ap.add_argument("--no-upload", action="store_true")
     ap.add_argument("--upload-only", action="store_true",
                     help="não gera nada: sobe o pacote já existente em output/ (use --topic se houver mais de um)")
     ap.add_argument("--config")
     args = ap.parse_args(argv)
 
+    # o workflow passa os dados por variáveis de ambiente (nada de montar comandos de shell com texto digitado)
+    env = os.environ
+    args.topic = args.topic or env.get("CH_TOPIC") or None
+    args.wiki = args.wiki or env.get("CH_WIKI") or None
+    args.note = args.note or env.get("CH_NOTE") or None
+    args.no_upload = args.no_upload or env.get("CH_UPLOAD") == "false"
+    args.upload_only = args.upload_only or bool(env.get("CH_REUSE"))
+
     cfg = load_config(args.config)
     if args.upload_only:
         return upload_only(cfg, args)
     published = state.load_published(cfg["published_path"])
-    topic = ({"title": args.topic, "wiki": args.wiki or args.topic} if args.topic
+    topic = ({"title": args.topic, "wiki": args.wiki or args.topic, "note": args.note or ""} if args.topic
              else state.next_topic(cfg["topics_path"], published))
     if not topic:
         print("Sem temas novos em data/topics.yaml — adicione mais.")

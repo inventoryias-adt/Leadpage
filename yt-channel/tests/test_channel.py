@@ -168,7 +168,7 @@ def test_build_end_to_end_offline(tmp_path, monkeypatch):
     cfg["output_dir"] = str(tmp_path / "out")
     cfg["video"].update(width=640, height=360, fps=12)
     cfg["music_dir"] = str(tmp_path / "nomusic")
-    art = {"title": "Fonte", "url": "https://pt.wikipedia.org/wiki/Fonte", "text": "texto"}
+    art = {"title": "Fonte", "url": "https://pt.wikipedia.org/wiki/Fonte", "text": "texto de teste. " * 200}
     md = build({"title": "A Queda de Constantinopla", "wiki": "x"}, cfg, offline=True, article=art,
                script=scriptmod.validate(fake_script(9)))
     probe = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "stream=codec_type,width,height", "-of", "csv=p=0",
@@ -303,3 +303,51 @@ def test_clean_secret_removes_paste_leftovers():
     assert any("YT_CLIENT_SECRET" in p for p in problems) and any("YT_REFRESH_TOKEN" in p for p in problems)
     assert not any("YT_CLIENT_ID" in p for p in problems)
     assert not any("xxxx" in p or "tokmore" in p for p in problems)          # não vaza valores
+
+
+# ---------- orientação por tema / fonte curta / variáveis de ambiente ----------
+def test_note_goes_into_the_prompt(monkeypatch):
+    seen = {}
+    monkeypatch.setattr(llm, "complete_json", lambda prompt, *a, **k: seen.setdefault("p", prompt) and fake_script(12))
+    cfg = load_config()
+    scriptmod.generate("O Êxodo do Egito", {"title": "Livro do Êxodo", "text": "texto"}, cfg, note="Atribua ao texto bíblico.")
+    assert "ORIENTAÇÃO DO CANAL" in seen["p"] and "Atribua ao texto bíblico." in seen["p"]
+    seen.clear()
+    scriptmod.generate("X", {"title": "t", "text": "texto"}, cfg)
+    assert "ORIENTAÇÃO DO CANAL" not in seen["p"]
+
+
+def test_topics_yaml_biblical_topics_carry_the_note():
+    cfg = load_config()
+    first = state.next_topic(cfg["topics_path"], [])
+    assert first["title"] == "O Êxodo do Egito" and first["wiki"] == "Livro do Êxodo"
+    assert "atribuindo" in first["note"] and "Não invente" in first["note"]
+    ordered = [t["title"] for t in __import__("yaml").safe_load(open(cfg["topics_path"], encoding="utf-8"))]
+    assert "A Queda de Constantinopla" in ordered and len(set(ordered)) == len(ordered)
+
+
+def test_short_source_is_refused(tmp_path):
+    cfg = load_config()
+    cfg["output_dir"] = str(tmp_path / "out")
+    with pytest.raises(SystemExit, match="Fonte curta demais"):
+        build({"title": "T", "wiki": "x"}, cfg, offline=True, article={"title": "A", "url": "u", "text": "curto"},
+              script=scriptmod.validate(fake_script(9)))
+
+
+def test_main_reads_workflow_env_vars(monkeypatch, tmp_path):
+    from channel import run
+    captured = {}
+
+    def fake_build(topic, cfg, **k):
+        captured["topic"] = topic
+        raise SystemExit("para aqui")
+    monkeypatch.setattr(run, "build", fake_build)
+    monkeypatch.setenv("CH_TOPIC", 'O "Êxodo" do Egito')               # aspas não quebram nada (sem shell)
+    monkeypatch.setenv("CH_WIKI", "Livro do Êxodo")
+    monkeypatch.setenv("CH_NOTE", "Seja respeitoso.")
+    monkeypatch.setenv("CH_UPLOAD", "false")
+    for k in ("YT_CLIENT_ID", "YT_CLIENT_SECRET", "YT_REFRESH_TOKEN"):
+        monkeypatch.delenv(k, raising=False)
+    with pytest.raises(SystemExit, match="para aqui"):
+        run.main([])
+    assert captured["topic"] == {"title": 'O "Êxodo" do Egito', "wiki": "Livro do Êxodo", "note": "Seja respeitoso."}

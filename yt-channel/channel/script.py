@@ -13,7 +13,7 @@ REGRAS DE FATOS (inegociáveis)
 - Onde a fonte indicar incerteza ou disputa entre historiadores, diga isso ("segundo ...", "há quem defenda ...").
 - Título honesto: nada que o vídeo não entregue. Sem sensacionalismo falso.
 
-ESTILO
+{note_block}ESTILO
 - Narração fluida e envolvente, frases curtas, tom de suspense moderado. Gancho nos primeiros 15 segundos.
 - Termine com um fechamento curto e um convite natural para se inscrever no canal.
 - Cerca de {n_scenes} cenas de ~{wps} palavras. Cada cena = um trecho de narração + uma imagem.
@@ -78,10 +78,11 @@ def validate(script: dict, min_scenes: int = 8) -> dict:
     return script
 
 
-def generate(topic: str, source: dict, cfg: dict, min_scenes: int = 8) -> dict:
+def generate(topic: str, source: dict, cfg: dict, min_scenes: int = 8, note: str = "") -> dict:
     words = cfg["target_minutes"] * cfg["words_per_minute"]
+    note_block = f"ORIENTAÇÃO DO CANAL PARA ESTE TEMA (siga junto com as regras de fatos):\n{note.strip()}\n\n" if note else ""
     raw = llm.complete_json(
-        PROMPT.format(minutes=cfg["target_minutes"], words=words, topic=topic,
+        PROMPT.format(minutes=cfg["target_minutes"], words=words, topic=topic, note_block=note_block,
                       n_scenes=max(words // cfg["words_per_scene"], 1), wps=cfg["words_per_scene"],
                       source_title=source["title"], source=source["text"]),
         cfg["model_script"], max_tokens=14000)

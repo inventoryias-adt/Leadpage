@@ -1,5 +1,34 @@
 # Cada tema: título do vídeo (livre) e "wiki" = título do artigo da Wikipédia usado como fonte.
 # Se omitir "wiki", usa o próprio título.
+# --- História bíblica: o roteiro atribui o relato ao texto e separa o que diz a pesquisa histórica ---
+- title: O Êxodo do Egito
+  wiki: Livro do Êxodo
+  note: &nota_biblica >-
+    Conte o relato bíblico com respeito, sempre atribuindo ao texto ("segundo o Livro do Êxodo...").
+    Quando a fonte trouxer o que historiadores e arqueólogos dizem, apresente em trechos separados,
+    com expressões como "segundo a pesquisa histórica...", sem afirmar nem negar a fé e sem ridicularizar
+    nenhuma posição. Não trate o relato como fato histórico comprovado nem como falso: descreva o que o texto
+    narra e o que a evidência mostra ou deixa em aberto. Não invente falas, números ou detalhes de cenas.
+- title: A Torre de Babel
+  wiki: Torre de Babel
+  note: *nota_biblica
+- title: O Dilúvio e a Arca de Noé
+  wiki: Arca de Noé
+  note: *nota_biblica
+- title: Sodoma e Gomorra
+  wiki: Sodoma e Gomorra
+  note: *nota_biblica
+- title: Davi e Golias
+  wiki: Davi
+  note: *nota_biblica
+- title: A Rainha de Sabá
+  wiki: Rainha de Sabá
+  note: *nota_biblica
+- title: O Exílio da Babilônia
+  wiki: Cativeiro babilónico
+  note: *nota_biblica
+
+# --- História geral ---
 - title: A Queda de Constantinopla
   wiki: Queda de Constantinopla
 - title: O Mistério da Colônia Perdida de Roanoke
