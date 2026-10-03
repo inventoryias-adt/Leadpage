@@ -13,7 +13,7 @@ min_source_chars: 1500        # fonte menor que isso = não gera (evita roteiro 
 
 # Voz ------------------------------------------------------------------------
 voice:
-  name: pt-BR-AntonioNeural     # rode o workflow "voice-samples" para ouvir todas e escolher
+  name: pt-BR-ThalitaMultilingualNeural   # escolhida de ouvido entre as 3 vozes pt-BR (Antonio, Francisca, Thalita)
   rate: "-4%"
   pitch: "+0Hz"
   paced: true                   # frase a frase, com pausas conforme a pontuação
