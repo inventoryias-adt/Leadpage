@@ -4,10 +4,14 @@ module.exports = {
   theme: {
     extend: {
       screens: { wide: '1600px' },
+      fontFamily: {
+        sans: ['"Inter Variable"', 'system-ui', 'sans-serif'],
+        display: ['"DM Sans Variable"', '"Inter Variable"', 'system-ui', 'sans-serif'],
+      },
       colors: {
         glassBlue: 'rgba(37, 99, 235, 0.1)',
         glassWhite: 'rgba(255, 255, 255, 0.15)',
-        primary: '#1E3A8A', // azul forte para textos/títulos
+        primary: '#14275E', // azul-marinho profundo para títulos
         electric: {
           400: '#38BDF8',
           500: '#2F6BFF',

@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { RegisterSW } from '@/components/RegisterSW';
+import '@fontsource-variable/inter';
+import '@fontsource-variable/dm-sans';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -12,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#F6F8FC',
+  themeColor: '#ffffff',
   width: 'device-width',
   initialScale: 1,
 };
