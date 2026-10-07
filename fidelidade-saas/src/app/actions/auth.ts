@@ -8,6 +8,7 @@ import { normalizePhone } from '@/lib/br';
 import { createCheckoutUrl } from '@/lib/payments';
 import { endRestaurantSession, requireRestaurant, startRestaurantSession } from '@/lib/session';
 import { fail, type FormState } from '@/lib/form';
+import { TOO_MANY, allow, clientIp } from '@/lib/rate-limit';
 
 const signupSchema = z.object({
   name: z.string().trim().min(2, 'Informe o nome do estabelecimento.').max(80),
@@ -23,6 +24,8 @@ export async function signup(_: FormState, formData: FormData): Promise<FormStat
   const parsed = signupSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return fail(parsed.error.issues[0].message, formData);
   const { name, email, phone, password } = parsed.data;
+
+  if (!(await allow(`signup:${await clientIp()}`, 10, 3600))) return fail(TOO_MANY, formData);
 
   if (await prisma.restaurant.findUnique({ where: { email } })) {
     return fail('Este e-mail já está cadastrado. Entre na sua conta.', formData);
@@ -51,6 +54,12 @@ export async function signup(_: FormState, formData: FormData): Promise<FormStat
 export async function login(_: FormState, formData: FormData): Promise<FormState> {
   const email = String(formData.get('email') ?? '').trim().toLowerCase();
   const password = String(formData.get('password') ?? '');
+
+  // Limita por IP e por e-mail (a conta alvo), para barrar força bruta e credential stuffing.
+  const ip = await clientIp();
+  if (!(await allow(`login:ip:${ip}`, 30, 900)) || !(await allow(`login:email:${email}`, 8, 900))) {
+    return fail(TOO_MANY, formData);
+  }
 
   const restaurant = await prisma.restaurant.findUnique({ where: { email } });
   const ok = await bcrypt.compare(password, restaurant?.passwordHash ?? DUMMY_HASH);

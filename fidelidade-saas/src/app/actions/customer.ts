@@ -8,6 +8,7 @@ import { isValidCpf, normalizePhone, onlyDigits } from '@/lib/br';
 import { BusinessError, creditClaim, redeemReward } from '@/lib/claims';
 import { endCustomerSession, getCustomer, startCustomerSession } from '@/lib/session';
 import { fail, safeNext, type FormState } from '@/lib/form';
+import { TOO_MANY, allow, clientIp } from '@/lib/rate-limit';
 
 const authSchema = z.object({
   cpf: z.string().refine(isValidCpf, 'CPF inválido.'),
@@ -29,6 +30,12 @@ export async function customerAuth(_: FormState, formData: FormData): Promise<Fo
 
   const cpf = onlyDigits(parsed.data.cpf);
   const phone = normalizePhone(parsed.data.phone)!;
+
+  // CPF + telefone é uma credencial fraca: limita por IP e por CPF alvo.
+  const ip = await clientIp();
+  if (!(await allow(`cust:ip:${ip}`, 30, 900)) || !(await allow(`cust:cpf:${cpf}`, 8, 900))) {
+    return fail(TOO_MANY, formData);
+  }
 
   let customer = await prisma.customer.findUnique({ where: { cpf } });
   if (customer) {

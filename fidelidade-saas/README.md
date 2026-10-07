@@ -36,8 +36,13 @@ webhook para `/api/webhooks/stripe` (eventos `checkout.session.completed`,
 - QR de **uso único** (update condicional atômico) e validade de 24h. A página `/r/[token]` apenas lê; o crédito é um POST explícito, para que pré-visualizadores de link não consumam o QR.
 - Resgate trava a carteira (`SELECT … FOR UPDATE`) e verifica saldo e limite mensal por CPF (mês em America/Sao_Paulo) na mesma transação.
 - Senhas com bcrypt; sessões em cookie `httpOnly` assinado (JWT HS256).
-- ⚠️ Login do cliente por **CPF + telefone** é fraco como autenticação (quem sabe os dois acessa a carteira). Foi mantido por exigência do produto; antes de produção considere um OTP por WhatsApp/SMS e rate limit nas rotas de login.
+- **Rate limit** (tabela `RateLimit`, sem infraestrutura extra): login do restaurante (30/15min por IP, 8/15min por e-mail), login do cliente (30/15min por IP, 8/15min por CPF) e cadastro (10/h por IP).
+- ⚠️ Login do cliente por **CPF + telefone** é fraco como autenticação (quem sabe os dois acessa a carteira). Foi mantido por exigência do produto; o rate limit reduz o risco de força bruta, mas antes de produção considere um OTP por WhatsApp/SMS.
+
+## PWA
+
+Manifesto, ícones PNG (`public/`) e service worker (`public/sw.js`, registrado só em produção). O service worker não faz cache de páginas — só mostra uma tela offline —, para o saldo nunca ficar desatualizado.
 
 ## Próximos passos sugeridos
 
-Service worker/ícones PNG para instalação PWA completa, rate limit, e-mail de recuperação de senha, relatórios por período e notificação ao cliente via WhatsApp API.
+OTP por WhatsApp/SMS no login do cliente, e-mail de recuperação de senha, relatórios por período e notificação ao cliente via WhatsApp API.

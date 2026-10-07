@@ -174,3 +174,10 @@ model Redemption {
   @@unique([restaurantId, code])
   @@index([customerId, restaurantId, createdAt])
 }
+
+/// Contador de tentativas por chave (ex.: "login:ip:1.2.3.4") para limitar força bruta.
+model RateLimit {
+  key     String   @id
+  count   Int
+  resetAt DateTime
+}
