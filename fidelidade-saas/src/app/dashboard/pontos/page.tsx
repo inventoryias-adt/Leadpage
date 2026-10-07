@@ -60,6 +60,7 @@ export default async function PontosPage({ searchParams }: { searchParams: Promi
     <div className="mx-auto max-w-5xl space-y-5 lg:grid lg:grid-cols-5 lg:items-start lg:gap-6 lg:space-y-0">
       <section className="glass-panel space-y-4 p-5 sm:p-7 lg:col-span-2">
         <MonthNav range={range} basePath="/dashboard/pontos" />
+        <a href="/dashboard/exportar/lancamentos" className="link-inline block text-sm" download>Baixar lançamentos do último ano (CSV)</a>
         <div className="grid grid-cols-2 gap-3">
           <div className="glass-inset p-3">
             <p className="text-2xl font-extrabold text-primary">{formatPoints(sum._sum.points ?? 0)}</p>

@@ -12,15 +12,15 @@ export function SignupForm() {
     <form action={action} className="space-y-4">
       <div>
         <label className="glass-label" htmlFor="name">Nome do estabelecimento</label>
-        <input id="name" name="name" defaultValue={state.values?.name} className="glass-input" placeholder="Ex.: Burger do Zé" autoComplete="organization" required />
+        <input id="name" name="name" defaultValue={state.values?.name} className="glass-input" placeholder="Ex.: Burger do Zé" autoComplete="off" required />
       </div>
       <div>
         <label className="glass-label" htmlFor="email">E-mail profissional</label>
-        <input id="email" name="email" type="email" defaultValue={state.values?.email} className="glass-input" placeholder="contato@restaurante.com" autoComplete="email" required />
+        <input id="email" name="email" type="email" defaultValue={state.values?.email} className="glass-input" placeholder="contato@restaurante.com" autoComplete="off" required />
       </div>
       <div>
         <label className="glass-label" htmlFor="phone">Telefone / WhatsApp</label>
-        <MaskedInput mask="phone" id="phone" name="phone" type="tel" defaultValue={state.values?.phone} placeholder="(11) 91234-5678" autoComplete="tel" required />
+        <MaskedInput mask="phone" id="phone" name="phone" type="tel" defaultValue={state.values?.phone} placeholder="(11) 91234-5678" autoComplete="off" required />
       </div>
       <div>
         <label className="glass-label" htmlFor="password">Senha</label>
@@ -41,7 +41,7 @@ export function LoginForm() {
     <form action={action} className="space-y-4">
       <div>
         <label className="glass-label" htmlFor="email">E-mail</label>
-        <input id="email" name="email" type="email" defaultValue={state.values?.email} className="glass-input" autoComplete="email" required />
+        <input id="email" name="email" type="email" defaultValue={state.values?.email} className="glass-input" autoComplete="username" required />
       </div>
       <div>
         <label className="glass-label" htmlFor="password">Senha</label>
@@ -82,13 +82,13 @@ export function CustomerAuthForm({
       </div>
       <div>
         <label className="glass-label" htmlFor="phone">Telefone</label>
-        <MaskedInput mask="phone" id="phone" name="phone" type="tel" defaultValue={state.values?.phone} placeholder="(11) 91234-5678" autoComplete="tel" required />
+        <MaskedInput mask="phone" id="phone" name="phone" type="tel" defaultValue={state.values?.phone} placeholder="(11) 91234-5678" autoComplete="off" required />
       </div>
       <div>
         <label className="glass-label" htmlFor="name">
           Nome <span className="font-normal text-slate-500">(só no primeiro acesso)</span>
         </label>
-        <input id="name" name="name" defaultValue={state.values?.name} className="glass-input" placeholder="Como podemos te chamar?" autoComplete="given-name" />
+        <input id="name" name="name" defaultValue={state.values?.name} className="glass-input" placeholder="Como podemos te chamar?" autoComplete="off" />
       </div>
       <FormMessage state={state} />
       <SubmitButton pendingText="Aguarde…">{cta}</SubmitButton>

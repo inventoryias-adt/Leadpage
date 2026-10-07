@@ -108,3 +108,14 @@ as campanhas por público são aplicadas em `creditClaim` (o caixa grava `Claim.
 campanhas multiplicam). Cada campanha aplicada vira uma linha em `PromotionUse`, que alimenta o relatório
 "Campanhas no mês" em **Pontos** (compras, clientes, pontos extras e vendas por campanha). As telas vazias do painel
 usam ilustrações isométricas (`IsoIllustration`, `EmptyState`).
+
+## Painel do estabelecimento e campos sem histórico
+
+O **Início** do painel mostra, para 7/30/90 dias: vendas, ticket médio, pontos emitidos, resgates, clientes novos,
+taxa de retorno e pontos em circulação (com variação sobre o período anterior), vendas por dia, mapa de dias e horários
+de pico, melhores clientes, prêmios mais resgatados, "Quase lá" e "Para reconquistar" (com atalho de WhatsApp) e ideias
+escolhidas pelos números (`src/lib/insights.ts`). **Clientes** tem grupos (Novos, Fiéis, Quase lá, Sumidos) e há
+planilhas CSV de clientes e lançamentos (`/dashboard/exportar/[tipo]`, CPF mascarado).
+
+`NoAutofill` (no layout raiz) desliga o histórico de digitação do navegador em todos os campos, inclusive nos que abrem
+depois; só senha e o e-mail do login ficam com preenchimento para o gerenciador de senhas.

@@ -5,25 +5,34 @@ import { maskCpf, formatPhone, onlyDigits } from '@/lib/br';
 import { prisma } from '@/lib/db';
 import { formatDateTimeBR, formatPoints } from '@/lib/points';
 import { requireActiveRestaurant } from '@/lib/session';
+import { loadCustomerRows } from '@/lib/insights-db';
+import { SEGMENT_HINT, SEGMENT_LABEL, type Segment } from '@/lib/insights';
 
 export const metadata = { title: 'Clientes' };
 export const dynamic = 'force-dynamic';
 
 const LIMIT = 100;
 
-export default async function ClientesPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+export default async function ClientesPage({ searchParams }: { searchParams: Promise<{ q?: string; seg?: string }> }) {
   const restaurant = await requireActiveRestaurant();
-  const q = (await searchParams).q?.trim() ?? '';
+  const sp = await searchParams;
+  const q = sp.q?.trim() ?? '';
+  const seg = (['novos', 'fieis', 'quase', 'sumidos'] as const).find((x) => x === sp.seg) as Segment | undefined;
   const digits = onlyDigits(q);
 
   const customerFilter: Prisma.CustomerWhereInput | undefined = q
     ? { OR: [{ name: { contains: q, mode: 'insensitive' } }, ...(digits ? [{ cpf: { contains: digits } }, { phone: { contains: digits } }] : [])] }
     : undefined;
 
+  const { rows: allRows } = await loadCustomerRows(restaurant.id);
+  const counts: Record<Segment, number> = { novos: 0, fieis: 0, quase: 0, sumidos: 0 };
+  for (const r of allRows) for (const sg of r.segments) counts[sg] += 1;
+  const inSegment = seg ? allRows.filter((r) => r.segments.includes(seg)).map((r) => r.customerId) : null;
+
   const [total, wallets] = await Promise.all([
     prisma.wallet.count({ where: { restaurantId: restaurant.id } }),
     prisma.wallet.findMany({
-      where: { restaurantId: restaurant.id, ...(customerFilter ? { customer: customerFilter } : {}) },
+      where: { restaurantId: restaurant.id, ...(inSegment ? { customerId: { in: inSegment } } : {}), ...(customerFilter ? { customer: customerFilter } : {}) },
       include: { customer: { select: { id: true, name: true, cpf: true, phone: true } } },
       orderBy: { balance: 'desc' },
       take: LIMIT,
@@ -55,9 +64,23 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
       <section className="glass-panel p-5 sm:p-7">
         <h1 className="mb-1 text-xl font-bold text-primary">Clientes</h1>
         <p className="mb-4 text-sm text-slate-500">
-          {formatPoints(total)} {total === 1 ? 'cliente tem' : 'clientes têm'} carteira no seu restaurante. Toque em um cliente para ver todo o histórico.
+          {formatPoints(total)} {total === 1 ? 'cliente tem' : 'clientes têm'} carteira no seu estabelecimento. Toque em um cliente para ver todo o histórico.
+          {' '}
+          <a href="/dashboard/exportar/clientes" className="link-inline" download>Baixar planilha (CSV)</a>
         </p>
+        <nav aria-label="Segmentos" className="chip-row mb-4">
+          <Link href="/dashboard/clientes" aria-current={!seg ? 'true' : undefined} className={`${!seg ? 'glass-button' : 'glass-button-ghost'} shrink-0 !w-auto !px-4 !py-1.5 !text-sm`}>
+            Todos <span className="opacity-70">{total}</span>
+          </Link>
+          {(Object.keys(SEGMENT_LABEL) as Segment[]).map((k) => (
+            <Link key={k} href={`/dashboard/clientes?seg=${k}`} aria-current={seg === k ? 'true' : undefined} title={SEGMENT_HINT[k]} className={`${seg === k ? 'glass-button' : 'glass-button-ghost'} shrink-0 !w-auto !px-4 !py-1.5 !text-sm`}>
+              {SEGMENT_LABEL[k]} <span className="opacity-70">{counts[k]}</span>
+            </Link>
+          ))}
+        </nav>
+        {seg && <p className="mb-3 text-sm text-slate-600">{SEGMENT_HINT[seg]}</p>}
         <form className="flex gap-2" role="search">
+          {seg && <input type="hidden" name="seg" value={seg} />}
           <input name="q" defaultValue={q} className="glass-input" placeholder="Buscar por nome, CPF ou telefone" aria-label="Buscar cliente" />
           <button className="glass-button-ghost !w-auto">Buscar</button>
         </form>
@@ -66,9 +89,9 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
       {wallets.length === 0 ? (
         <EmptyState
           variant="users"
-          title={q ? 'Nenhum cliente encontrado' : 'Ainda não há clientes'}
-          text={q ? 'Confira o nome, o CPF ou o telefone e tente de novo.' : 'Eles aparecem aqui quando leem o primeiro QR Code. Lance uma compra no caixa para começar.'}
-          action={q ? undefined : { href: '/dashboard/caixa', label: 'Abrir o Caixa' }}
+          title={q ? 'Nenhum cliente encontrado' : seg ? 'Ninguém neste grupo por enquanto' : 'Ainda não há clientes'}
+          text={q ? 'Confira o nome, o CPF ou o telefone e tente de novo.' : seg ? 'Os grupos se atualizam sozinhos conforme os clientes compram.' : 'Eles aparecem aqui quando leem o primeiro QR Code. Lance uma compra no caixa para começar.'}
+          action={q || seg ? undefined : { href: '/dashboard/caixa', label: 'Abrir o Caixa' }}
         />
       ) : (
         <ul className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
