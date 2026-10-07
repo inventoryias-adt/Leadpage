@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import { customerLogout } from '@/app/actions/customer';
 import { Brand } from '@/components/Brand';
+import { PointsActivity } from '@/components/PointsActivity';
 import { Icon } from '@/components/Icons';
 import { ShareButtons } from '@/components/ShareButtons';
 import { PlaceAvatar } from '@/components/Visual';
 import { formatPhone, maskCpf } from '@/lib/br';
 import { prisma } from '@/lib/db';
+import { PERIODS, activitySeries, activitySince, type Activity, type Period } from '@/lib/activity';
 import { imageUrl } from '@/lib/images';
 import { appUrl } from '@/lib/payments';
 import { formatDateTimeBR, formatPoints } from '@/lib/points';
@@ -18,7 +20,7 @@ export const dynamic = 'force-dynamic';
 export default async function PerfilPage() {
   const customer = await requireCustomer('/perfil');
 
-  const [wallets, history] = await Promise.all([
+  const [wallets, history, movements] = await Promise.all([
     prisma.wallet.findMany({
       where: { customerId: customer.id },
       include: { restaurant: { select: { id: true, name: true, logoImageId: true, referralPoints: true, subscriptionStatus: true } } },
@@ -30,7 +32,16 @@ export default async function PerfilPage() {
       take: 20,
       include: { wallet: { select: { restaurant: { select: { name: true } } } } },
     }),
+    prisma.transaction.findMany({
+      where: { wallet: { customerId: customer.id }, createdAt: { gte: activitySince() } },
+      select: { createdAt: true, type: true, points: true },
+      orderBy: { createdAt: 'desc' },
+      take: 3000,
+    }),
   ]);
+  const rows = movements.map((m) => ({ at: m.createdAt, type: m.type, points: m.points }));
+  const activity = Object.fromEntries(PERIODS.map((p) => [p, activitySeries(rows, p)])) as Record<Period, Activity>;
+  const balance = wallets.reduce((n, w) => n + w.balance, 0);
 
   let code = customer.referralCode;
   if (!code) {
@@ -57,6 +68,11 @@ export default async function PerfilPage() {
           </div>
         </div>
       </header>
+
+      <section aria-labelledby="atividade" className="lg:col-span-5">
+        <h2 id="atividade" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Seus pontos</h2>
+        <PointsActivity data={activity} balance={balance} places={wallets.length} />
+      </section>
 
       <div className="space-y-6 lg:col-span-2">
       <section aria-labelledby="indique">
