@@ -1,0 +1,23 @@
+import { redirect } from 'next/navigation';
+import { Brand } from '@/components/Brand';
+import { CustomerAuthForm } from '@/components/AuthForms';
+import { safeNext } from '@/lib/form';
+import { getCustomer } from '@/lib/session';
+
+export const metadata = { title: 'Minha carteira' };
+
+export default async function EntrarPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  const next = safeNext((await searchParams).next, '/carteira');
+  if (await getCustomer()) redirect(next);
+
+  return (
+    <main className="flex min-h-screen items-center justify-center p-5">
+      <div className="glass-panel w-full max-w-md p-8">
+        <div className="mb-6"><Brand href="/entrar" /></div>
+        <h1 className="mb-1 text-2xl font-bold text-primary">Minha carteira de pontos</h1>
+        <p className="mb-6 text-sm text-slate-500">Entre com seu CPF e telefone. No primeiro acesso, criamos sua conta na hora.</p>
+        <CustomerAuthForm next={next} cta="Entrar" />
+      </div>
+    </main>
+  );
+}

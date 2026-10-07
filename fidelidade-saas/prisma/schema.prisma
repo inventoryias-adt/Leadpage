@@ -1,0 +1,347 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SubscriptionStatus {
+  PENDING // cadastrou, ainda não pagou
+  ACTIVE // assinatura de R$ 197,00/mês paga e vigente
+  PAST_DUE // cobrança falhou
+  CANCELED
+}
+
+enum TransactionType {
+  EARN
+  REDEEM
+}
+
+enum ChallengeKind {
+  PURCHASES // N compras (opcionalmente com valor mínimo) no período
+  CHECKINS // N check-ins (visitas no local) no período
+}
+
+enum ChallengePeriod {
+  WEEK
+  MONTH
+}
+
+enum ReferralStatus {
+  PENDING // amigo se cadastrou pelo convite, ainda não fez a primeira compra
+  REWARDED // amigo fez a primeira compra e quem indicou recebeu os pontos
+}
+
+enum RedemptionStatus {
+  PENDING // voucher gerado pelo cliente, ainda não entregue pelo balcão
+  USED // balcão validou e entregou o prêmio
+}
+
+/// Restaurante = conta do SaaS (quem paga a assinatura).
+model Restaurant {
+  id           String @id @default(uuid())
+  name         String
+  email        String @unique
+  phone        String
+  passwordHash String
+
+  // Onboarding
+  // address, openingSchedule, latitude, longitude e googleReviewUrl são LEGADO: hoje vivem em Unit (não use mais).
+  address         String?
+  /// Horário por dia da semana: [{ day: 0-6, closed, open: "HH:MM", close: "HH:MM" }] (ver src/lib/hours.ts)
+  openingSchedule Json?
+  onboardedAt     DateTime?
+
+  // Assinatura
+  subscriptionStatus    SubscriptionStatus @default(PENDING)
+  paymentCustomerId     String?
+  paymentSubscriptionId String?
+
+  // Regras de pontuação
+  pointsPerReal      Int @default(10) // R$ 1,00 = 10 pontos
+  maxRedeemsPerMonth Int @default(5) // limite de resgates por CPF por mês
+  checkInPoints      Int @default(1) // pontos por check-in no local (0 desliga)
+  referralPoints     Int @default(100) // pontos para quem indica um amigo que compra (0 desliga)
+
+  // Vitrine pública ("Lugares")
+  listed          Boolean @default(true)
+  category        String?
+  instagram       String?
+  googleReviewUrl String?
+  latitude        Float?
+  longitude       Float?
+  logoImageId     String?
+  coverImageId    String?
+
+  createdAt DateTime @default(now())
+
+  interactionRules InteractionRule[]
+  rewards          Reward[]
+  claims           Claim[]
+  wallets          Wallet[]
+  redemptions      Redemption[]
+  units            Unit[]
+  challenges       Challenge[]
+  checkIns         CheckIn[]
+  referrals        Referral[]
+  images           Image[]
+}
+
+/// Pontuação fixa por interação (foto no Instagram, avaliação 5★ no Google...).
+model InteractionRule {
+  id           String   @id @default(uuid())
+  restaurantId String
+  label        String
+  points       Int
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId])
+}
+
+/// Produto do cardápio elegível para resgate com pontos.
+model Reward {
+  id           String   @id @default(uuid())
+  restaurantId String
+  name         String
+  description  String?
+  pointsCost   Int
+  imageId      String?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  restaurant  Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  redemptions Redemption[]
+
+  @@index([restaurantId])
+}
+
+model Customer {
+  id           String   @id @default(uuid())
+  cpf          String   @unique // somente dígitos
+  phone        String // somente dígitos, sem +55
+  name         String
+  referralCode String?  @unique // código do link "Indique amigos"
+  createdAt    DateTime @default(now())
+
+  wallets           Wallet[]
+  claims            Claim[]
+  redemptions       Redemption[]
+  checkIns          CheckIn[]
+  completions       ChallengeCompletion[]
+  referralsMade     Referral[]            @relation("referrer")
+  referralsReceived Referral[]            @relation("referred")
+  notifications     Notification[]
+}
+
+/// Uma carteira por cliente por restaurante.
+model Wallet {
+  id           String   @id @default(uuid())
+  customerId   String
+  restaurantId String
+  balance      Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  customer     Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  redemptions  Redemption[]
+
+  @@unique([customerId, restaurantId])
+}
+
+/// Pontos gerados pelo caixa e ainda não creditados. O token vai no QR Code / link.
+/// Os pontos são calculados e gravados no servidor — nunca vêm da URL.
+model Claim {
+  id           String    @id @default(uuid())
+  token        String    @unique
+  restaurantId String
+  amountCents  Int
+  points       Int
+  description  String
+  createdAt    DateTime  @default(now())
+  expiresAt    DateTime
+  redeemedAt   DateTime?
+  customerId   String?
+  unitId       String? // unidade onde o caixa lançou a compra
+
+  restaurant  Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  customer    Customer?    @relation(fields: [customerId], references: [id])
+  unit        Unit?        @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  transaction Transaction?
+
+  @@index([restaurantId, createdAt])
+}
+
+model Transaction {
+  id           String          @id @default(uuid())
+  walletId     String
+  type         TransactionType
+  points       Int // sempre positivo; o sinal vem do type
+  description  String
+  claimId      String?         @unique // garante crédito único por QR Code
+  redemptionId String?         @unique
+  createdAt    DateTime        @default(now())
+
+  wallet     Wallet      @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  claim      Claim?      @relation(fields: [claimId], references: [id])
+  redemption Redemption? @relation(fields: [redemptionId], references: [id])
+
+  @@index([walletId, createdAt])
+}
+
+/// Troca de pontos por prêmio. O cliente apresenta o `code` no balcão.
+model Redemption {
+  id           String           @id @default(uuid())
+  restaurantId String
+  customerId   String
+  walletId     String
+  rewardId     String
+  rewardName   String // snapshot, caso o prêmio seja editado depois
+  pointsCost   Int // snapshot
+  code         String
+  status       RedemptionStatus @default(PENDING)
+  createdAt    DateTime         @default(now())
+  usedAt       DateTime?
+  usedUnitId   String? // unidade que entregou o prêmio
+
+  restaurant  Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  usedUnit    Unit?        @relation("delivered", fields: [usedUnitId], references: [id], onDelete: SetNull)
+  customer    Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  wallet      Wallet       @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  reward      Reward       @relation(fields: [rewardId], references: [id])
+  transaction Transaction?
+
+  @@unique([restaurantId, code])
+  @@index([customerId, restaurantId, createdAt])
+}
+
+/// Contador de tentativas por chave (ex.: "login:ip:1.2.3.4") para limitar força bruta.
+model RateLimit {
+  key     String   @id
+  count   Int
+  resetAt DateTime
+}
+
+/// Foto (logo, capa, prêmio) guardada no próprio banco, já reduzida pelo navegador antes do envio.
+model Image {
+  id           String   @id @default(uuid())
+  restaurantId String
+  mime         String
+  data         Bytes
+  createdAt    DateTime @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId])
+}
+
+/// Desafio da casa: bônus de pontos ao cumprir uma meta no período (semana ou mês).
+model Challenge {
+  id             String          @id @default(uuid())
+  restaurantId   String
+  title          String
+  kind           ChallengeKind
+  target         Int // quantidade (compras ou check-ins)
+  minAmountCents Int             @default(0) // valor mínimo por compra (só PURCHASES)
+  period         ChallengePeriod
+  bonusPoints    Int
+  active         Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+
+  restaurant  Restaurant            @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  completions ChallengeCompletion[]
+
+  @@index([restaurantId])
+}
+
+/// Um desafio só premia uma vez por cliente em cada período (periodKey = início da semana ou mês).
+model ChallengeCompletion {
+  id          String   @id @default(uuid())
+  challengeId String
+  customerId  String
+  periodKey   String
+  createdAt   DateTime @default(now())
+
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  customer  Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, customerId, periodKey])
+}
+
+/// Check-in por proximidade: no máximo um por dia por cliente em cada restaurante.
+model CheckIn {
+  id           String   @id @default(uuid())
+  customerId   String
+  restaurantId String
+  dayKey       String // YYYY-MM-DD em Brasília
+  distanceM    Int
+  createdAt    DateTime @default(now())
+
+  customer   Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  unit       Unit?      @relation(fields: [unitId], references: [id])
+  unitId     String?
+
+  @@unique([customerId, restaurantId, dayKey])
+  @@index([restaurantId, createdAt])
+}
+
+model Referral {
+  id           String         @id @default(uuid())
+  restaurantId String
+  referrerId   String
+  referredId   String
+  status       ReferralStatus @default(PENDING)
+  createdAt    DateTime       @default(now())
+  rewardedAt   DateTime?
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  referrer   Customer   @relation("referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  referred   Customer   @relation("referred", fields: [referredId], references: [id], onDelete: Cascade)
+
+  @@unique([restaurantId, referredId])
+  @@index([referrerId])
+}
+
+/// Unidade (filial) de uma marca. Cada unidade tem endereço, horário, localização e link do Google próprios.
+/// Pontos, prêmios, desafios e carteiras são da marca e valem em qualquer unidade.
+model Unit {
+  id              String   @id @default(uuid())
+  restaurantId    String
+  name            String
+  address         String?
+  openingSchedule Json?
+  latitude        Float?
+  longitude       Float?
+  googleReviewUrl String?
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  restaurant Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  claims     Claim[]
+  checkIns   CheckIn[]
+  deliveries Redemption[] @relation("delivered")
+
+  @@index([restaurantId])
+}
+
+/// Avisos dentro do app do cliente (pontos, metas de prêmio, desafios, indicações).
+model Notification {
+  id           String    @id @default(uuid())
+  customerId   String
+  restaurantId String?
+  title        String
+  body         String
+  href         String? // para onde o aviso leva ao tocar
+  readAt       DateTime?
+  createdAt    DateTime  @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, createdAt])
+}
