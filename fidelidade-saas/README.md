@@ -119,3 +119,13 @@ planilhas CSV de clientes e lançamentos (`/dashboard/exportar/[tipo]`, CPF masc
 
 `NoAutofill` (no layout raiz) desliga o histórico de digitação do navegador em todos os campos, inclusive nos que abrem
 depois; só senha e o e-mail do login ficam com preenchimento para o gerenciador de senhas.
+
+## Administração da plataforma (`/admin`)
+
+Perfil de administrador separado dos assinantes e dos clientes (tabelas `AdminUser` e `AdminLog`, migração `0009_admin`,
+sessão própria `ad_session` de 12 h, conferida no banco a cada requisição). Mostra receita e contas por status, lista e
+busca de assinantes, e na ficha de cada um: mudar o status da assinatura (ex.: liberar por Pix ou cortesia), editar dados
+e regras, gerar senha temporária, reabrir o guia, anotação interna e "entrar como este assinante" (suporte, 2 h, com faixa
+de aviso). Toda ação fica em **Registro**. Não existe cadastro público de administrador: cria-se por convite,
+`npm run admin:invite -- email@dominio.com "Nome"` (com `DATABASE_URL` e `APP_URL`), que imprime um link de 48 h e uso
+único (só o hash do token fica no banco).
