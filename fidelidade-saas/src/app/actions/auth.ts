@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { normalizePhone } from '@/lib/br';
-import { createCheckoutUrl } from '@/lib/payments';
+import { createCheckoutUrl, createPortalUrl } from '@/lib/payments';
 import { endRestaurantSession, requireRestaurant, startRestaurantSession } from '@/lib/session';
 import { fail, type FormState } from '@/lib/form';
 import { DEFAULT_UNIT_NAME } from '@/lib/units';
@@ -77,6 +77,12 @@ export async function logout() {
 export async function startCheckout() {
   const restaurant = await requireRestaurant();
   redirect(await createCheckoutUrl(restaurant));
+}
+
+/** Abre o portal do Stripe (cartão, faturas, cancelamento). Sem cobrança real, volta para a conta. */
+export async function openBillingPortal() {
+  const restaurant = await requireRestaurant();
+  redirect((await createPortalUrl(restaurant)) ?? '/dashboard/configuracoes#conta');
 }
 
 const passwordChangeSchema = z.object({
