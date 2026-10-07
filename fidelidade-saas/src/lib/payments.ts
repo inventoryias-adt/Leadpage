@@ -3,7 +3,17 @@ import Stripe from 'stripe';
 
 export const PLAN_PRICE_CENTS = 19700;
 
-export const appUrl = () => (process.env.APP_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+/** URL pública usada nos links/QR Codes: APP_URL, senão o domínio da própria Vercel, senão localhost. */
+export function appUrl() {
+  const e = process.env;
+  const vercel =
+    e.VERCEL_ENV === 'production' && e.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${e.VERCEL_PROJECT_PRODUCTION_URL}`
+      : e.VERCEL_URL
+        ? `https://${e.VERCEL_URL}`
+        : undefined;
+  return (e.APP_URL || vercel || 'http://localhost:3000').replace(/\/$/, '');
+}
 
 /** Pagamento simulado só em desenvolvimento local ou em *previews* da Vercel — nunca em produção. */
 export const mockPaymentsAllowed = () => process.env.NODE_ENV !== 'production' || process.env.VERCEL_ENV === 'preview';
