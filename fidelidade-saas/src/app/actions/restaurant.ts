@@ -177,8 +177,7 @@ export async function createClaim(_: CaixaState, formData: FormData): Promise<Ca
   await prisma.claim.create({
     data: { token, restaurantId: restaurant.id, amountCents, points, description, expiresAt },
   });
-  revalidatePath('/dashboard/caixa');
-
+  // Sem revalidatePath aqui: o QR Code aparece na hora e a lista de lançamentos atualiza em segundo plano (router.refresh no cliente).
   return {
     claim: {
       url: `${appUrl()}/r/${token}`,

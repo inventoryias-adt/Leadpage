@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { customerLogout } from '@/app/actions/customer';
+import { Brand } from '@/components/Brand';
 import { prisma } from '@/lib/db';
 import { formatPoints } from '@/lib/points';
 import { requireCustomer } from '@/lib/session';
@@ -19,9 +20,13 @@ export default async function CarteiraPage() {
 
   return (
     <main className="safe-bottom mx-auto min-h-screen max-w-md p-4 sm:p-6">
-      <header className="mb-8 flex items-center justify-between">
+      <header className="mb-8">
+        <div className="mb-5 flex items-center justify-between">
+          <Brand href="/carteira" />
+          <form action={customerLogout}><button className="glass-button-ghost btn-sm">Sair</button></form>
+        </div>
         <h1 className="text-xl font-bold text-primary">Olá, {customer.name.split(' ')[0]} 👋</h1>
-        <form action={customerLogout}><button className="glass-button-ghost btn-sm">Sair</button></form>
+        <p className="text-sm text-slate-500">Suas carteiras de pontos</p>
       </header>
 
       {wallets.length === 0 ? (

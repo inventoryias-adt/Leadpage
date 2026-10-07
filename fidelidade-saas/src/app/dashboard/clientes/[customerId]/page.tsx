@@ -12,18 +12,18 @@ export default async function ClienteDetalhe({ params }: { params: Promise<{ cus
   const restaurant = await requireActiveRestaurant();
   const { customerId } = await params;
 
-  // Só mostra clientes que têm carteira neste restaurante.
-  const wallet = await prisma.wallet.findUnique({
-    where: { customerId_restaurantId: { customerId, restaurantId: restaurant.id } },
-    include: { customer: true },
-  });
-  if (!wallet) notFound();
-
-  const [transactions, redemptions, totals] = await Promise.all([
-    prisma.transaction.findMany({ where: { walletId: wallet.id }, orderBy: { createdAt: 'desc' }, take: 200 }),
-    prisma.redemption.findMany({ where: { walletId: wallet.id }, orderBy: { createdAt: 'desc' }, take: 100 }),
-    prisma.transaction.groupBy({ by: ['type'], where: { walletId: wallet.id }, _sum: { points: true }, _count: true }),
+  // Uma única rodada em paralelo. Só mostra clientes que têm carteira neste restaurante.
+  const ofWallet = { customerId, restaurantId: restaurant.id };
+  const [wallet, transactions, redemptions, totals] = await Promise.all([
+    prisma.wallet.findUnique({
+      where: { customerId_restaurantId: ofWallet },
+      include: { customer: true },
+    }),
+    prisma.transaction.findMany({ where: { wallet: ofWallet }, orderBy: { createdAt: 'desc' }, take: 200 }),
+    prisma.redemption.findMany({ where: ofWallet, orderBy: { createdAt: 'desc' }, take: 100 }),
+    prisma.transaction.groupBy({ by: ['type'], where: { wallet: ofWallet }, _sum: { points: true }, _count: true }),
   ]);
+  if (!wallet) notFound();
   const earn = totals.find((t) => t.type === 'EARN');
   const redeem = totals.find((t) => t.type === 'REDEEM');
   const { customer } = wallet;

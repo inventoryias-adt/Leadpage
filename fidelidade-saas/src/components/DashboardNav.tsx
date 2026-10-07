@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 const items = [
   { href: '/dashboard', label: 'Início', icon: '🏠' },
@@ -13,7 +14,11 @@ const items = [
 
 export function DashboardNav({ variant }: { variant: 'top' | 'bottom' }) {
   const pathname = usePathname();
-  const active = (href: string) => (href === '/dashboard' ? pathname === href : pathname.startsWith(href));
+  // Destaca a aba no mesmo instante do toque (antes da página nova chegar), para a interface responder na hora.
+  const [pending, setPending] = useState<string | null>(null);
+  useEffect(() => setPending(null), [pathname]);
+  const current = pending ?? pathname;
+  const active = (href: string) => (href === '/dashboard' ? current === href : current.startsWith(href));
 
   if (variant === 'top') {
     return (
@@ -22,6 +27,7 @@ export function DashboardNav({ variant }: { variant: 'top' | 'bottom' }) {
           <Link
             key={i.href}
             href={i.href}
+            onClick={() => setPending(i.href)}
             className={`nav-tab ${active(i.href) ? 'nav-tab-active' : ''}`}
           >
             {i.label}
@@ -37,6 +43,7 @@ export function DashboardNav({ variant }: { variant: 'top' | 'bottom' }) {
         <Link
           key={i.href}
           href={i.href}
+          onClick={() => setPending(i.href)}
           className={`nav-tab flex flex-col items-center gap-0.5 !rounded-2xl !px-1 !py-2 !text-[11px] ${active(i.href) ? 'nav-tab-active' : ''}`}
         >
           <span className="text-lg" aria-hidden>{i.icon}</span>

@@ -1,6 +1,6 @@
 'use server';
 
-import bcrypt from 'bcryptjs';
+import { dummyHash, hashPassword, verifyPassword } from '@/lib/password';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
@@ -16,9 +16,6 @@ const signupSchema = z.object({
   phone: z.string().refine((v) => normalizePhone(v) !== null, 'Telefone inválido. Use DDD + número.'),
   password: z.string().min(8, 'A senha precisa ter pelo menos 8 caracteres.').max(72),
 });
-
-// Hash fixo só para gastar o mesmo tempo quando o e-mail não existe (evita enumerar contas pelo tempo de resposta).
-const DUMMY_HASH = '$2b$11$CwTycUXWue0Thq9StjUM0uJ8.7bK0yI9dX5mLQeG4mQ3b7fE9h8hW';
 
 export async function signup(_: FormState, formData: FormData): Promise<FormState> {
   const parsed = signupSchema.safeParse(Object.fromEntries(formData));
@@ -36,7 +33,7 @@ export async function signup(_: FormState, formData: FormData): Promise<FormStat
       name,
       email,
       phone: normalizePhone(phone)!,
-      passwordHash: await bcrypt.hash(password, 11),
+      passwordHash: await hashPassword(password),
       // Sugestões iniciais de interação — o dono ajusta no onboarding.
       interactionRules: {
         create: [
@@ -57,12 +54,11 @@ export async function login(_: FormState, formData: FormData): Promise<FormState
 
   // Limita por IP e por e-mail (a conta alvo), para barrar força bruta e credential stuffing.
   const ip = await clientIp();
-  if (!(await allow(`login:ip:${ip}`, 30, 900)) || !(await allow(`login:email:${email}`, 8, 900))) {
-    return fail(TOO_MANY, formData);
-  }
+  const [okIp, okEmail] = await Promise.all([allow(`login:ip:${ip}`, 30, 900), allow(`login:email:${email}`, 8, 900)]);
+  if (!okIp || !okEmail) return fail(TOO_MANY, formData);
 
   const restaurant = await prisma.restaurant.findUnique({ where: { email } });
-  const ok = await bcrypt.compare(password, restaurant?.passwordHash ?? DUMMY_HASH);
+  const ok = await verifyPassword(password, restaurant?.passwordHash ?? (await dummyHash()));
   if (!restaurant || !ok) return fail('E-mail ou senha incorretos.', formData);
 
   await startRestaurantSession(restaurant.id);

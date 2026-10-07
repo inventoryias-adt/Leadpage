@@ -1,7 +1,8 @@
 'use client';
 
 import { QRCodeSVG } from 'qrcode.react';
-import { useActionState, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useActionState, useEffect, useMemo, useState } from 'react';
 import { createClaim, type CaixaState } from '@/app/actions/restaurant';
 import { calculatePoints, formatPoints, parseMoneyToCents } from '@/lib/points';
 import { normalizePhone } from '@/lib/br';
@@ -24,6 +25,11 @@ export function CaixaForm({ pointsPerReal, rules }: { pointsPerReal: number; rul
 
   const toggle = (id: string) => setChecked((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id]));
   const claim = state.claim;
+  const router = useRouter();
+  // Atualiza "Últimos lançamentos" depois que o QR Code já está na tela.
+  useEffect(() => {
+    if (claim) router.refresh();
+  }, [claim, router]);
 
   const whatsappHref = useMemo(() => {
     if (!claim) return '';

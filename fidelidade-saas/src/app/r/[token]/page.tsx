@@ -1,3 +1,4 @@
+import { Brand } from '@/components/Brand';
 import { claimPoints } from '@/app/actions/customer';
 import { CustomerAuthForm } from '@/components/AuthForms';
 import { prisma } from '@/lib/db';
@@ -14,6 +15,7 @@ function Message({ title, text }: { title: string; text: string }) {
   return (
     <main className="flex min-h-screen items-center justify-center p-5">
       <div className="glass-panel w-full max-w-md p-8 text-center">
+        <div className="mb-5 flex justify-center"><Brand href="/entrar" /></div>
         <h1 className="mb-2 text-xl font-bold text-primary">{title}</h1>
         <p className="text-slate-600">{text}</p>
       </div>
@@ -25,18 +27,21 @@ export default async function ClaimPage({ params }: { params: Promise<{ token: s
   const { token } = await params;
   // Esta página só LÊ. O crédito acontece num POST explícito, para que pré-visualizadores de
   // link (WhatsApp, etc.) não consumam o QR Code antes do cliente.
-  const claim = await prisma.claim.findUnique({ where: { token }, include: { restaurant: { select: { name: true, address: true, openingSchedule: true } } } });
+  const [claim, customer] = await Promise.all([
+    prisma.claim.findUnique({ where: { token }, include: { restaurant: { select: { name: true, address: true, openingSchedule: true } } } }),
+    getCustomer(),
+  ]);
 
   if (!claim) return <Message title="QR Code inválido" text="Confira o link ou peça um novo no balcão." />;
   if (claim.redeemedAt) return <Message title="QR Code já utilizado" text="Esses pontos já foram creditados em uma carteira." />;
   if (claim.expiresAt < new Date()) return <Message title="QR Code expirado" text="Peça um novo no balcão do restaurante." />;
 
-  const customer = await getCustomer();
   const schedule = parseSchedule(claim.restaurant.openingSchedule);
 
   return (
     <main className="flex min-h-screen items-center justify-center p-5">
       <div className="glass-panel w-full max-w-md p-8">
+        <div className="mb-4 flex justify-center"><Brand href="/entrar" /></div>
         <p className="text-center text-sm font-semibold text-slate-500">{claim.restaurant.name}</p>
         <div className="my-4 text-center">
           <p className="text-sm text-slate-600">Você ganhou</p>

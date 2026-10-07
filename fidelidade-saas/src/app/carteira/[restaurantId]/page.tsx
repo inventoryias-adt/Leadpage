@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { customerLogout } from '@/app/actions/customer';
+import { Brand } from '@/components/Brand';
 import { prisma } from '@/lib/db';
 import { formatPoints, startOfMonthBR } from '@/lib/points';
 import { requireCustomer } from '@/lib/session';
@@ -24,34 +25,32 @@ export default async function WalletPage({
   const credited = (await searchParams).credited === '1';
   const customer = await requireCustomer(`/carteira/${restaurantId}`);
 
-  const restaurant = await prisma.restaurant.findUnique({
-    where: { id: restaurantId },
-    select: { id: true, name: true, address: true, maxRedeemsPerMonth: true, openingSchedule: true },
-  });
-  if (!restaurant) notFound();
-
-  const wallet = await prisma.wallet.findUnique({
-    where: { customerId_restaurantId: { customerId: customer.id, restaurantId } },
-  });
-  if (!wallet) notFound(); // só quem já pontuou no restaurante vê a carteira
-
-  const [rewards, history, vouchers, usedThisMonth] = await Promise.all([
+  // Tudo numa única rodada em paralelo (o filtro por carteira dispensa buscar a carteira antes).
+  const ofWallet = { customerId: customer.id, restaurantId };
+  const [restaurant, wallet, rewards, history, vouchers, usedThisMonth] = await Promise.all([
+    prisma.restaurant.findUnique({
+      where: { id: restaurantId },
+      select: { id: true, name: true, address: true, maxRedeemsPerMonth: true, openingSchedule: true },
+    }),
+    prisma.wallet.findUnique({ where: { customerId_restaurantId: ofWallet } }),
     prisma.reward.findMany({ where: { restaurantId, active: true }, orderBy: { pointsCost: 'asc' } }),
-    prisma.transaction.findMany({ where: { walletId: wallet.id }, orderBy: { createdAt: 'desc' }, take: 15 }),
-    prisma.redemption.findMany({ where: { walletId: wallet.id, status: 'PENDING' }, orderBy: { createdAt: 'desc' } }),
-    prisma.redemption.count({ where: { customerId: customer.id, restaurantId, createdAt: { gte: startOfMonthBR() } } }),
+    prisma.transaction.findMany({ where: { wallet: ofWallet }, orderBy: { createdAt: 'desc' }, take: 15 }),
+    prisma.redemption.findMany({ where: { ...ofWallet, status: 'PENDING' }, orderBy: { createdAt: 'desc' } }),
+    prisma.redemption.count({ where: { ...ofWallet, createdAt: { gte: startOfMonthBR() } } }),
   ]);
+  if (!restaurant || !wallet) notFound(); // só quem já pontuou no restaurante vê a carteira
   const schedule = parseSchedule(restaurant.openingSchedule);
   const limitReached = usedThisMonth >= restaurant.maxRedeemsPerMonth;
 
   return (
     <main className="safe-bottom mx-auto min-h-screen max-w-md p-4 sm:p-6">
-      <header className="mb-6 flex items-center justify-between">
-        <div className="min-w-0">
-          <h1 className="text-xl font-bold text-primary">Olá, {customer.name.split(' ')[0]} 👋</h1>
-          <p className="truncate text-sm text-slate-500">{restaurant.name}</p>
+      <header className="mb-6">
+        <div className="mb-5 flex items-center justify-between">
+          <Brand href="/carteira" />
+          <form action={customerLogout}><button className="glass-button-ghost btn-sm">Sair</button></form>
         </div>
-        <form action={customerLogout}><button className="glass-button-ghost btn-sm">Sair</button></form>
+        <h1 className="text-xl font-bold text-primary">Olá, {customer.name.split(' ')[0]} 👋</h1>
+        <p className="truncate text-sm text-slate-500">{restaurant.name}</p>
       </header>
 
       {credited && <p role="status" className="glass-success mb-4 animate-fade-in">Pontos creditados na sua carteira! 🎉</p>}

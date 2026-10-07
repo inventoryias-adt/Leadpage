@@ -33,9 +33,8 @@ export async function customerAuth(_: FormState, formData: FormData): Promise<Fo
 
   // CPF + telefone é uma credencial fraca: limita por IP e por CPF alvo.
   const ip = await clientIp();
-  if (!(await allow(`cust:ip:${ip}`, 30, 900)) || !(await allow(`cust:cpf:${cpf}`, 8, 900))) {
-    return fail(TOO_MANY, formData);
-  }
+  const [okIp, okCpf] = await Promise.all([allow(`cust:ip:${ip}`, 30, 900), allow(`cust:cpf:${cpf}`, 8, 900)]);
+  if (!okIp || !okCpf) return fail(TOO_MANY, formData);
 
   let customer = await prisma.customer.findUnique({ where: { cpf } });
   if (customer) {

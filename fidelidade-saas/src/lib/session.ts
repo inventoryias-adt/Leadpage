@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { SignJWT, jwtVerify } from 'jose';
@@ -54,15 +55,16 @@ export const startCustomerSession = (id: string) => create('customer', id);
 export const endRestaurantSession = () => destroy('restaurant');
 export const endCustomerSession = () => destroy('customer');
 
-export async function getRestaurant() {
+// cache(): layout e página pedem a mesma sessão na mesma requisição — uma única ida ao banco.
+export const getRestaurant = cache(async () => {
   const id = await read('restaurant');
   return id ? prisma.restaurant.findUnique({ where: { id } }) : null;
-}
+});
 
-export async function getCustomer() {
+export const getCustomer = cache(async () => {
   const id = await read('customer');
   return id ? prisma.customer.findUnique({ where: { id } }) : null;
-}
+});
 
 /** Garante restaurante logado; senão manda para o login. */
 export async function requireRestaurant() {
