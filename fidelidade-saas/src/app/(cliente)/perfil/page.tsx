@@ -40,9 +40,9 @@ export default async function PerfilPage() {
   const invites = wallets.filter((w) => w.restaurant.subscriptionStatus === 'ACTIVE' && w.restaurant.referralPoints > 0);
 
   return (
-    <main className="space-y-6 p-4 sm:p-6">
-      <header>
-        <Brand href="/carteira" />
+    <main className="space-y-6 p-4 sm:p-6 md:pt-8 lg:grid lg:grid-cols-5 lg:items-start lg:gap-6 lg:space-y-0">
+      <header className="lg:col-span-5">
+        <div className="md:hidden"><Brand href="/carteira" /></div>
         <div className="mt-5 flex items-center gap-4">
           <span
             className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-2xl font-extrabold text-white"
@@ -58,6 +58,7 @@ export default async function PerfilPage() {
         </div>
       </header>
 
+      <div className="space-y-6 lg:col-span-2">
       <section aria-labelledby="indique">
         <h2 id="indique" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Indique amigos</h2>
         {invites.length === 0 ? (
@@ -82,7 +83,15 @@ export default async function PerfilPage() {
         )}
       </section>
 
-      <section aria-labelledby="historico">
+      <section className="space-y-3">
+        <Link href="/lugares" className="glass-button-ghost"><Icon name="compass" size={18} /> Explorar lugares</Link>
+        <form action={customerLogout}>
+          <button className="btn-danger">Sair da conta</button>
+        </form>
+      </section>
+      </div>
+
+      <section aria-labelledby="historico" className="lg:col-span-3">
         <h2 id="historico" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Histórico de pontos</h2>
         {history.length === 0 ? (
           <p className="glass-panel-sm p-4 text-sm text-slate-600">Ainda não há movimentações. Peça o QR Code no caixa depois de pagar.</p>
@@ -103,12 +112,6 @@ export default async function PerfilPage() {
         )}
       </section>
 
-      <section className="space-y-3">
-        <Link href="/lugares" className="glass-button-ghost"><Icon name="compass" size={18} /> Explorar lugares</Link>
-        <form action={customerLogout}>
-          <button className="btn-danger">Sair da conta</button>
-        </form>
-      </section>
     </main>
   );
 }

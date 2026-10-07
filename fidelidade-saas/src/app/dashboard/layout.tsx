@@ -11,7 +11,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { unit, units } = ready ? await currentUnit(restaurant.id) : { unit: null, units: [] };
 
   return (
-    <div className="mx-auto min-h-screen max-w-5xl px-4 pb-28 pt-4 sm:px-6 md:pb-10">
+    <div className="mx-auto min-h-screen max-w-6xl px-4 pb-28 pt-4 sm:px-6 md:pb-10">
       <header className="glass-panel-sm mb-6 flex items-center justify-between gap-3 px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
           <Brand href="/dashboard" />

@@ -45,15 +45,17 @@ export default async function WalletPage({
   const limitReached = usedThisMonth >= restaurant.maxRedeemsPerMonth;
 
   return (
-    <main className="p-4 sm:p-6">
+    <main className="p-4 sm:p-6 md:pt-8">
       <header className="mb-6">
-        <Brand href="/carteira" />
-        <h1 className="mt-5 text-2xl font-extrabold tracking-tight text-primary">{restaurant.name}</h1>
+        <div className="md:hidden"><Brand href="/carteira" /></div>
+        <h1 className="mt-5 text-2xl font-extrabold md:mt-0 md:text-3xl tracking-tight text-primary">{restaurant.name}</h1>
         <p className="truncate text-sm text-slate-500">Olá, {customer.name.split(' ')[0]}. Sua carteira neste lugar.</p>
       </header>
 
       {credited && <p role="status" className="glass-success mb-4 animate-fade-in">Pontos creditados na sua carteira!</p>}
 
+      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-6">
+      <div>
       {/* Saldo */}
       <section className="glass-panel relative mb-6 overflow-hidden p-6">
         <div aria-hidden className="absolute right-0 top-0 h-32 w-32 -translate-y-10 translate-x-10 rounded-full bg-white/70 blur-2xl" />
@@ -95,6 +97,8 @@ export default async function WalletPage({
         </section>
       )}
 
+      </div>
+      <div>
       {/* Catálogo */}
       <section className="mb-8">
         <h2 className="mb-1 text-lg font-bold text-slate-800">Prêmios disponíveis</h2>
@@ -138,6 +142,8 @@ export default async function WalletPage({
           ))}
         </div>
       </section>
+      </div>
+      </div>
 
       <p className="mt-8 text-center text-sm"><Link href="/carteira" className="link-inline">Todas as carteiras</Link></p>
     </main>

@@ -35,8 +35,8 @@ export default async function PontosPage({ searchParams }: { searchParams: Promi
   ]);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
-      <section className="glass-panel space-y-4 p-5 sm:p-7">
+    <div className="mx-auto max-w-5xl space-y-5 lg:grid lg:grid-cols-5 lg:items-start lg:gap-6 lg:space-y-0">
+      <section className="glass-panel space-y-4 p-5 sm:p-7 lg:col-span-2">
         <MonthNav range={range} basePath="/dashboard/pontos" />
         <div className="grid grid-cols-2 gap-3">
           <div className="glass-inset p-3">
@@ -63,7 +63,7 @@ export default async function PontosPage({ searchParams }: { searchParams: Promi
         )}
       </section>
 
-      <section className="glass-panel p-5 sm:p-7">
+      <section className="glass-panel p-5 sm:p-7 lg:col-span-3">
         <h1 className="mb-3 font-bold text-primary">Quem recebeu pontos</h1>
         {rows.length === 0 ? (
           <p className="text-sm text-slate-500">Nenhum ponto emitido neste mês.</p>

@@ -47,19 +47,19 @@ export default async function CarteiraPage() {
     .slice(0, 8);
 
   return (
-    <main className="space-y-7 p-4 sm:p-6">
+    <main className="space-y-7 p-4 sm:p-6 md:pt-8">
       <IntroSlides />
 
       <header>
-        <Brand href="/carteira" />
-        <h1 className="mt-5 text-2xl font-extrabold tracking-tight text-primary">Olá, {customer.name.split(' ')[0]}</h1>
+        <div className="md:hidden"><Brand href="/carteira" /></div>
+        <h1 className="mt-5 text-2xl font-extrabold md:mt-0 md:text-3xl tracking-tight text-primary">Olá, {customer.name.split(' ')[0]}</h1>
         <p className="text-sm text-slate-600">Seus pontos e prêmios em um só lugar.</p>
       </header>
 
       {vouchers.length > 0 && (
         <section aria-labelledby="retirar">
           <h2 id="retirar" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Prêmios para retirar</h2>
-          <ul className="space-y-3">
+          <ul className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
             {vouchers.map((v) => (
               <li key={v.id}>
                 <Link href={`/carteira/${v.restaurant.id}`} className="glass-panel-sm card-link flex items-center justify-between gap-3 p-4">
@@ -78,9 +78,9 @@ export default async function CarteiraPage() {
       {affordable.length > 0 && (
         <section aria-labelledby="agora">
           <h2 id="agora" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Você pode resgatar agora</h2>
-          <ul className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6">
+          <ul className="card-row">
             {affordable.map((r) => (
-              <li key={r.id} className="w-40 shrink-0">
+              <li key={r.id}>
                 <Link href={`/lugar/${r.place.id}/premios`} className="glass-panel-sm card-link block overflow-hidden">
                   <RewardImage src={imageUrl(r.imageId)} name={r.name} className="h-28 w-full" />
                   <div className="space-y-0.5 p-3">
@@ -107,7 +107,7 @@ export default async function CarteiraPage() {
             <Link href="/lugares" className="glass-button"><Icon name="compass" size={18} /> Explorar lugares</Link>
           </div>
         ) : (
-          <ul className="space-y-3">
+          <ul className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
             {wallets.map((w) => (
               <li key={w.id}>
                 <Link href={`/lugar/${w.restaurantId}`} className="glass-panel card-link flex items-center gap-3.5 p-4">

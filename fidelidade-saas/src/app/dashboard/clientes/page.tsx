@@ -50,7 +50,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
+    <div className="mx-auto max-w-5xl space-y-5">
       <section className="glass-panel p-5 sm:p-7">
         <h1 className="mb-1 text-xl font-bold text-primary">Clientes</h1>
         <p className="mb-4 text-sm text-slate-500">
@@ -67,7 +67,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
           {q ? 'Nenhum cliente encontrado.' : 'Ainda não há clientes. Eles aparecem aqui quando leem o primeiro QR Code.'}
         </p>
       ) : (
-        <ul className="space-y-3">
+        <ul className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
           {wallets.map((w) => {
             const s = byWallet.get(w.id) ?? { earned: 0, redeemed: 0, visits: 0 };
             return (

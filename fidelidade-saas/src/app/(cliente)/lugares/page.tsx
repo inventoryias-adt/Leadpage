@@ -54,10 +54,10 @@ export default async function LugaresPage() {
     }));
 
   return (
-    <main className="p-4 sm:p-6">
+    <main className="p-4 sm:p-6 md:pt-8">
       <header className="mb-5">
-        <Brand href="/carteira" />
-        <h1 className="mt-5 text-2xl font-extrabold tracking-tight text-primary">Lugares</h1>
+        <div className="md:hidden"><Brand href="/carteira" /></div>
+        <h1 className="mt-5 text-2xl font-extrabold md:mt-0 md:text-3xl tracking-tight text-primary">Lugares</h1>
         <p className="text-sm text-slate-600">Encontre onde ganhar pontos e o que você pode resgatar.</p>
       </header>
       <PlacesExplorer places={places} categories={CATEGORIES.map((c) => ({ value: c.value, label: c.label }))} loggedIn={!!customer} />

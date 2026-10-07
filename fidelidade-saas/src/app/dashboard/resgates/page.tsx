@@ -41,7 +41,7 @@ export default async function ResgatesPage({ searchParams }: { searchParams: Pro
   ]);
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6 lg:space-y-0">
       <section className="glass-panel p-5 sm:p-7">
         <h1 className="mb-1 text-xl font-bold text-primary">Prêmios a entregar</h1>
         <p className="mb-4 text-sm text-slate-500">Confira o código mostrado pelo cliente e marque como entregue.</p>

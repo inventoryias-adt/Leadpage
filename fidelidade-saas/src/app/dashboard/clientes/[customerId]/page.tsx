@@ -37,10 +37,10 @@ export default async function ClienteDetalhe({ params }: { params: Promise<{ cus
   ];
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
-      <Link href="/dashboard/clientes" className="text-sm font-semibold text-electric-600">← Todos os clientes</Link>
+    <div className="mx-auto max-w-5xl space-y-5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6 lg:space-y-0">
+      <Link href="/dashboard/clientes" className="text-sm font-semibold text-electric-600 lg:col-span-2">← Todos os clientes</Link>
 
-      <section className="glass-panel p-5 sm:p-7">
+      <section className="glass-panel p-5 sm:p-7 lg:col-span-2">
         <h1 className="text-2xl font-extrabold text-primary">{customer.name}</h1>
         <p className="text-sm text-slate-600">
           CPF {maskCpf(customer.cpf)} · {formatPhone(customer.phone)} · cliente desde {formatDateTimeBR(wallet.createdAt).split(' às ')[0]}

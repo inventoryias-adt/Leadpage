@@ -140,7 +140,7 @@ export function PlacesExplorer({ places, categories, loggedIn }: { places: Place
       )}
 
       {/* Filtros */}
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1" role="tablist" aria-label="Filtros">
+      <div className="chip-row" role="tablist" aria-label="Filtros">
         {FILTERS.filter((f) => loggedIn || f.id !== 'saldo').map((f) => (
           <button
             key={f.id}
@@ -155,7 +155,7 @@ export function PlacesExplorer({ places, categories, loggedIn }: { places: Place
         ))}
       </div>
       {usedCategories.length > 1 && (
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1" aria-label="Categorias">
+        <div className="chip-row" aria-label="Categorias">
           {usedCategories.map((c) => (
             <button
               key={c.value}
@@ -195,7 +195,7 @@ export function PlacesExplorer({ places, categories, loggedIn }: { places: Place
           )}
         </div>
       ) : (
-        <ul className="space-y-3">
+        <ul className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0 lg:grid-cols-3">
           {list.map((p) => (
             <li key={p.id}>
               <Link href={p.units.length > 1 ? `/lugar/${p.id}?unidade=${p.unit.id}` : `/lugar/${p.id}`} className="glass-panel-sm card-link flex items-center gap-3.5 p-3.5">

@@ -97,7 +97,7 @@ export default async function LugarPage({
   return (
     <main>
       {/* Capa */}
-      <div className="relative h-44 w-full overflow-hidden bg-slate-200 sm:rounded-b-3xl">
+      <div className="relative h-44 w-full overflow-hidden bg-slate-200 sm:rounded-b-3xl md:mt-4 md:h-60 md:rounded-3xl">
         {cover ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={cover} alt="" className="h-full w-full object-cover" />
@@ -136,7 +136,7 @@ export default async function LugarPage({
         </section>
 
         {multi && (
-          <nav aria-label="Unidades" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6">
+          <nav aria-label="Unidades" className="chip-row">
             {units.map((u) => {
               const on = u.id === unit?.id;
               return (
@@ -160,6 +160,8 @@ export default async function LugarPage({
           </p>
         )}
 
+        <div className="space-y-6 lg:grid lg:grid-cols-5 lg:items-start lg:gap-6 lg:space-y-0">
+        <div className="space-y-6 lg:col-span-3">
         {/* Saldo / entrar */}
         {customer ? (
           <section className="glass-panel flex items-center justify-between gap-3 p-4">
@@ -255,11 +257,11 @@ export default async function LugarPage({
           {rewards.length === 0 ? (
             <p className="glass-panel-sm p-4 text-sm text-slate-500">Os prêmios deste lugar aparecem aqui em breve.</p>
           ) : (
-            <ul className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6">
+            <ul className="card-row">
               {rewards.slice(0, 8).map((r) => {
                 const missing = r.pointsCost - balance;
                 return (
-                  <li key={r.id} className="w-40 shrink-0">
+                  <li key={r.id}>
                     <Link href={`${here}/premios`} className="glass-panel-sm card-link block overflow-hidden">
                       <RewardImage src={imageUrl(r.imageId)} name={r.name} className="h-28 w-full" />
                       <div className="space-y-1.5 p-3">
@@ -282,6 +284,8 @@ export default async function LugarPage({
           )}
         </section>
 
+        </div>
+        <div className="space-y-6 lg:col-span-2">
         {/* Desafios */}
         <section aria-labelledby="desafios">
           <h2 id="desafios" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Desafios da casa</h2>
@@ -320,6 +324,8 @@ export default async function LugarPage({
             <OpeningHours schedule={schedule} title={multi && unit ? `Quando você pode vir · ${unit.name}` : 'Quando você pode vir'} />
           </section>
         )}
+        </div>
+        </div>
       </div>
     </main>
   );

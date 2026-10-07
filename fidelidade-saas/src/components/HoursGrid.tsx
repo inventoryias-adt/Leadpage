@@ -16,7 +16,7 @@ export function HoursGrid({ days, setDays, idPrefix }: { days: Schedule; setDays
 
   return (
     <div className="space-y-3">
-      <ul className="space-y-3">
+      <ul className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
         {DISPLAY_ORDER.map((dayNumber) => {
           const d = days.find((x) => x.day === dayNumber)!;
           const name = DAY_NAMES[dayNumber];

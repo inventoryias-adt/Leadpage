@@ -57,7 +57,7 @@ export function RewardBag({
 
   if (state.codes?.length) {
     return (
-      <div className="space-y-5">
+      <div className="mx-auto max-w-xl space-y-5">
         <div className="glass-panel p-6 text-center">
           <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
             <Icon name="check" size={28} />
@@ -80,7 +80,8 @@ export function RewardBag({
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 lg:grid lg:grid-cols-3 lg:items-start lg:gap-6 lg:space-y-0">
+      <div className="space-y-5 lg:col-span-2">
       <div className="glass-panel flex items-center justify-between gap-3 p-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Seu saldo aqui</p>
@@ -93,7 +94,7 @@ export function RewardBag({
         </p>
       </div>
 
-      <ul className="space-y-3">
+      <ul className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
         {rewards.map((r) => {
           const q = qty[r.id] ?? 0;
           const canAdd = r.pointsCost <= left && itemsLeft > 0;
@@ -129,13 +130,25 @@ export function RewardBag({
           );
         })}
       </ul>
+      </div>
 
-      {/* Sacola fixa acima da barra de abas */}
-      {count > 0 && (
-        <form action={action} className="fixed inset-x-0 bottom-24 z-20 mx-auto w-full max-w-md px-4">
+      {/* Sacola: celular = fixa acima da barra de abas; computador = painel ao lado da lista */}
+      {(
+        <form
+          action={action}
+          className={`${count > 0 ? 'fixed inset-x-0 bottom-24 z-20 mx-auto w-full max-w-md px-4' : 'hidden'} lg:static lg:top-24 lg:mx-0 lg:block lg:max-w-none lg:px-0 lg:sticky`}
+        >
           <input type="hidden" name="restaurantId" value={restaurantId} />
           <input type="hidden" name="items" value={JSON.stringify(Object.entries(qty).filter(([, n]) => n > 0).map(([rewardId, n]) => ({ rewardId, qty: n })))} />
-          <div className="glass-panel space-y-3 p-4 shadow-2xl">
+          <div className="glass-panel space-y-3 p-4 shadow-2xl lg:shadow-none">
+            {count === 0 ? (
+              <div className="py-4 text-center">
+                <Icon name="bag" size={28} className="mx-auto mb-2 text-slate-400" />
+                <p className="font-bold text-slate-700">Sua sacola está vazia</p>
+                <p className="text-sm text-slate-500">Toque em “Adicionar” nos prêmios que quiser levar.</p>
+              </div>
+            ) : (
+            <>
             <div className="flex items-center justify-between gap-3">
               <p className="flex items-center gap-2 font-bold text-primary">
                 <Icon name="bag" size={20} /> Sua sacola · {count} {count === 1 ? 'item' : 'itens'}
@@ -155,6 +168,8 @@ export function RewardBag({
                   {pending ? 'Resgatando…' : `Confirmar (${formatPoints(total)} pts)`}
                 </button>
               </div>
+            )}
+            </>
             )}
           </div>
         </form>

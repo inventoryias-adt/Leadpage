@@ -70,7 +70,20 @@ export default async function ConfiguracoesPage() {
   const onboarding = !restaurant.onboardedAt;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-5xl lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:items-start lg:gap-8">
+      {/* Computador: menu lateral fixo ao rolar */}
+      <aside className="sticky top-6 hidden lg:block">
+        <nav aria-label="Seções" className="glass-panel-sm flex flex-col gap-0.5 p-2">
+          {SECTIONS.map(([id, label], i) => (
+            <a key={id} href={`#${id}`} className="nav-tab flex items-center gap-2.5 !px-3 !py-2 !text-sm">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-electric-600/10 text-[11px] font-bold text-electric-600">{i + 1}</span>
+              {label}
+            </a>
+          ))}
+        </nav>
+      </aside>
+
+      <div className="min-w-0 max-w-3xl space-y-6">
       {onboarding && (
         <div className="glass-panel p-6 text-center">
           <h1 className="mb-1 text-2xl font-extrabold text-primary">Pagamento confirmado!</h1>
@@ -78,7 +91,7 @@ export default async function ConfiguracoesPage() {
         </div>
       )}
 
-      <nav aria-label="Seções" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+      <nav aria-label="Seções" className="chip-row lg:hidden">
         {SECTIONS.map(([id, label]) => (
           <a key={id} href={`#${id}`} className="chip-link shrink-0">
             {label}
@@ -223,6 +236,7 @@ export default async function ConfiguracoesPage() {
           <FinishOnboardingForm />
         </div>
       )}
+      </div>
     </div>
   );
 }

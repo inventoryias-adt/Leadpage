@@ -30,7 +30,7 @@ export default async function CaixaPage() {
     c.redeemedAt ? `Creditado a ${c.customer?.name ?? 'cliente'}` : c.expiresAt.getTime() < now ? 'Expirado' : 'Aguardando leitura';
 
   return (
-    <div className="mx-auto grid max-w-4xl grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
+    <div className="mx-auto grid max-w-5xl grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
       <div>
         {units.length > 1 && unit && (
           <p className="glass-inset mb-4 flex items-center gap-2 px-4 py-3 text-sm text-slate-700">
