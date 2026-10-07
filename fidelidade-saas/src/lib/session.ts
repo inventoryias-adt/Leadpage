@@ -5,10 +5,10 @@ import { redirect } from 'next/navigation';
 import { SignJWT, jwtVerify } from 'jose';
 import { prisma } from './db';
 
-type Kind = 'restaurant' | 'customer';
+type Kind = 'restaurant' | 'customer' | 'admin';
 
-const COOKIE: Record<Kind, string> = { restaurant: 'rs_session', customer: 'cs_session' };
-const MAX_AGE_S: Record<Kind, number> = { restaurant: 60 * 60 * 24 * 7, customer: 60 * 60 * 24 * 90 };
+const COOKIE: Record<Kind, string> = { restaurant: 'rs_session', customer: 'cs_session', admin: 'ad_session' };
+const MAX_AGE_S: Record<Kind, number> = { restaurant: 60 * 60 * 24 * 7, customer: 60 * 60 * 24 * 90, admin: 60 * 60 * 12 };
 
 function secret() {
   const s = process.env.SESSION_SECRET;
@@ -18,12 +18,12 @@ function secret() {
   return new TextEncoder().encode(s);
 }
 
-async function create(kind: Kind, id: string) {
+async function create(kind: Kind, id: string, maxAge = MAX_AGE_S[kind]) {
   const token = await new SignJWT({ kind })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(id)
     .setIssuedAt()
-    .setExpirationTime(`${MAX_AGE_S[kind]}s`)
+    .setExpirationTime(`${maxAge}s`)
     .sign(secret());
 
   (await cookies()).set(COOKIE[kind], token, {
@@ -31,7 +31,7 @@ async function create(kind: Kind, id: string) {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
-    maxAge: MAX_AGE_S[kind],
+    maxAge,
   });
 }
 
@@ -54,12 +54,30 @@ export const startRestaurantSession = (id: string) => create('restaurant', id);
 export const startCustomerSession = (id: string) => create('customer', id);
 export const endRestaurantSession = () => destroy('restaurant');
 export const endCustomerSession = () => destroy('customer');
+export const startAdminSession = (id: string) => create('admin', id);
+export const endAdminSession = () => destroy('admin');
+/** Suporte: a administração entra como o estabelecimento por no máximo 2 horas. */
+export const startImpersonation = (restaurantId: string) => create('restaurant', restaurantId, 60 * 60 * 2);
 
 // cache(): layout e página pedem a mesma sessão na mesma requisição — uma única ida ao banco.
 export const getRestaurant = cache(async () => {
   const id = await read('restaurant');
   return id ? prisma.restaurant.findUnique({ where: { id } }) : null;
 });
+
+/** Administrador logado e ativo (a sessão é conferida no banco a cada requisição, então desativar corta o acesso na hora). */
+export const getAdmin = cache(async () => {
+  const id = await read('admin');
+  if (!id) return null;
+  const admin = await prisma.adminUser.findUnique({ where: { id } });
+  return admin && admin.active && admin.passwordHash ? admin : null;
+});
+
+export async function requireAdmin() {
+  const admin = await getAdmin();
+  if (!admin) redirect('/admin/entrar');
+  return admin;
+}
 
 export const getCustomer = cache(async () => {
   const id = await read('customer');

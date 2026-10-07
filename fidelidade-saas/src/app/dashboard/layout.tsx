@@ -1,6 +1,8 @@
 import { Brand } from '@/components/Brand';
 import { SideArt } from '@/components/Illustrations';
 import { OwnerGuide } from '@/components/OwnerGuide';
+import { exitImpersonation } from '@/app/actions/admin';
+import { getAdmin } from '@/lib/session';
 import { prisma } from '@/lib/db';
 import { appUrl } from '@/lib/payments';
 import { parseSchedule } from '@/lib/hours';
@@ -13,6 +15,7 @@ import { currentUnit } from '@/lib/units';
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const restaurant = await requireRestaurant();
   const ready = restaurant.subscriptionStatus === 'ACTIVE' && !!restaurant.onboardedAt;
+  const admin = await getAdmin();
   const { unit, units } = ready ? await currentUnit(restaurant.id) : { unit: null, units: [] };
 
   // Passo a passo inicial: só para quem já pagou. O progresso mostra o que já está feito.
@@ -27,6 +30,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="mx-auto min-h-screen max-w-6xl px-4 pb-28 pt-4 sm:px-6 md:pb-10">
+      {admin && (
+        <div role="status" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <span><strong>Modo suporte:</strong> você está vendo o painel de {restaurant.name} como administrador ({admin.email}). Suas ações ficam registradas.</span>
+          <form action={exitImpersonation}>
+            <input type="hidden" name="id" value={restaurant.id} />
+            <button className="glass-button-ghost btn-sm">Voltar ao admin</button>
+          </form>
+        </div>
+      )}
       <SideArt container="72rem" />
       <header className="glass-panel-sm mb-6 flex items-center justify-between gap-3 px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">

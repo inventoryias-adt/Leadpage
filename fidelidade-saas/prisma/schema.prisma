@@ -54,6 +54,7 @@ model Restaurant {
   openingSchedule Json?
   onboardedAt     DateTime?
   guideDoneAt     DateTime? // passo a passo inicial concluído ou dispensado
+  internalNote    String? // anotação interna da administração (o dono não vê)
 
   // Assinatura
   subscriptionStatus    SubscriptionStatus @default(PENDING)
@@ -412,4 +413,36 @@ model PromotionUse {
 
   @@unique([claimId, promotionId])
   @@index([restaurantId, createdAt])
+}
+
+/// Administrador da plataforma (quem gerencia os assinantes). Entra em /admin, com sessão própria.
+model AdminUser {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  name            String
+  passwordHash    String? // vazio até o convite ser aceito
+  inviteTokenHash String?   @unique // sha256 do token do convite (o token em si nunca é guardado)
+  inviteExpiresAt DateTime?
+  active          Boolean   @default(true)
+  lastLoginAt     DateTime?
+  createdAt       DateTime  @default(now())
+
+  logs AdminLog[]
+}
+
+/// Registro de tudo que a administração faz nas contas dos assinantes.
+model AdminLog {
+  id             String   @id @default(uuid())
+  adminId        String?
+  adminEmail     String // cópia: o registro fica mesmo se o administrador for removido
+  action         String
+  restaurantId   String?
+  restaurantName String?
+  detail         String
+  createdAt      DateTime @default(now())
+
+  admin AdminUser? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([restaurantId])
 }
