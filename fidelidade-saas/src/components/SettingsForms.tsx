@@ -456,7 +456,7 @@ export function UnitForm({ unit, uid }: { unit: UnitFormData; uid: string }) {
               name="cep"
               className="glass-input"
               inputMode="numeric"
-              autoComplete="postal-code"
+              autoComplete="off"
               placeholder="00000-000"
               value={addr.cep}
               onChange={(e) => {

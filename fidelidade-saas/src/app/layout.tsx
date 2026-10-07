@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { NoAutofill } from '@/components/NoAutofill';
 import { RegisterSW } from '@/components/RegisterSW';
 import '@fontsource-variable/inter';
 import '@fontsource-variable/dm-sans';
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR">
       <body>
         <RegisterSW />
+        <NoAutofill />
         {children}
       </body>
     </html>
