@@ -4,6 +4,7 @@ import { useActionState, useState } from 'react';
 import {
   addChallenge,
   addInteraction,
+  addPromotion,
   addReward,
   finishOnboarding,
   saveBasics,
@@ -223,6 +224,88 @@ export function AddChallengeForm() {
       )}
       <FormMessage state={state} />
       <SubmitButton variant="ghost" pendingText="Criando…">Criar desafio</SubmitButton>
+    </form>
+  );
+}
+
+const WEEKDAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+/** Nova campanha de pontos: multiplicador ou pontos extras, com período, dias da semana e horário opcionais. */
+export function AddPromotionForm() {
+  const [state, action] = useActionState(addPromotion, {});
+  const [kind, setKind] = useState<'MULTIPLIER' | 'BONUS'>((state.values?.kind as 'MULTIPLIER' | 'BONUS') ?? 'MULTIPLIER');
+  return (
+    <form action={action} className="space-y-4" key={state.ok ?? 'idle'}>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <label className="glass-label" htmlFor="p-title">Nome da campanha</label>
+          <input id="p-title" name="title" className="glass-input" placeholder="Ex.: Terça em dobro" defaultValue={state.values?.title} maxLength={60} required />
+        </div>
+        <div>
+          <label className="glass-label" htmlFor="p-kind">Tipo</label>
+          <select id="p-kind" name="kind" className="glass-input" value={kind} onChange={(e) => setKind(e.target.value as 'MULTIPLIER' | 'BONUS')}>
+            <option value="MULTIPLIER">Multiplicar os pontos da compra</option>
+            <option value="BONUS">Dar pontos extras na compra</option>
+          </select>
+        </div>
+        {kind === 'MULTIPLIER' ? (
+          <div>
+            <label className="glass-label" htmlFor="p-mult">Multiplicador</label>
+            <select id="p-mult" name="multiplier" className="glass-input" defaultValue={state.values?.multiplier ?? '2'}>
+              <option value="1.5">1,5x</option>
+              <option value="2">2x (pontos em dobro)</option>
+              <option value="3">3x (pontos em triplo)</option>
+              <option value="4">4x</option>
+              <option value="5">5x</option>
+            </select>
+          </div>
+        ) : (
+          <div>
+            <label className="glass-label" htmlFor="p-bonus">Pontos extras por compra</label>
+            <input id="p-bonus" name="bonusPoints" type="number" min={1} inputMode="numeric" className="glass-input" placeholder="Ex.: 50" defaultValue={state.values?.bonusPoints} required />
+          </div>
+        )}
+        <div className="sm:col-span-2">
+          <label className="glass-label" htmlFor="p-min">Valor mínimo da compra (R$) <span className="font-normal text-slate-500">— opcional</span></label>
+          <input id="p-min" name="minAmount" inputMode="decimal" className="glass-input" placeholder="Ex.: 40,00" defaultValue={state.values?.minAmount} />
+        </div>
+      </div>
+
+      <fieldset>
+        <legend className="glass-label">Dias da semana <span className="font-normal text-slate-500">— nenhum marcado = todos os dias</span></legend>
+        <div className="flex flex-wrap gap-2">
+          {WEEKDAY_LABELS.map((d, i) => (
+            <label key={d} className="inline-flex items-center gap-2 rounded-full border border-[#d8dceb] bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 has-[:checked]:border-electric-500 has-[:checked]:bg-electric-500 has-[:checked]:text-white">
+              <input type="checkbox" name="weekdays" value={i} className="sr-only" />
+              {d}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label className="glass-label" htmlFor="p-start-time">Horário inicial <span className="font-normal text-slate-500">— opcional</span></label>
+          <input id="p-start-time" name="startTime" type="time" className="glass-input" defaultValue={state.values?.startTime} />
+        </div>
+        <div>
+          <label className="glass-label" htmlFor="p-end-time">Horário final <span className="font-normal text-slate-500">— opcional</span></label>
+          <input id="p-end-time" name="endTime" type="time" className="glass-input" defaultValue={state.values?.endTime} />
+        </div>
+        <div>
+          <label className="glass-label" htmlFor="p-start-date">Começa em <span className="font-normal text-slate-500">— opcional</span></label>
+          <input id="p-start-date" name="startDate" type="date" className="glass-input" defaultValue={state.values?.startDate} />
+        </div>
+        <div>
+          <label className="glass-label" htmlFor="p-end-date">Termina em <span className="font-normal text-slate-500">— opcional</span></label>
+          <input id="p-end-date" name="endDate" type="date" className="glass-input" defaultValue={state.values?.endDate} />
+        </div>
+      </div>
+      <p className="text-xs text-slate-500">
+        A campanha vale no caixa, no horário de Brasília, e já aparece como card na vitrine “Lugares”. Multiplicadores não se somam (vale o maior); pontos extras se somam.
+      </p>
+      <FormMessage state={state} />
+      <SubmitButton variant="ghost" pendingText="Criando…">Criar campanha</SubmitButton>
     </form>
   );
 }

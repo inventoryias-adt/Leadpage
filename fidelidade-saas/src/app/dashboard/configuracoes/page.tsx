@@ -1,6 +1,7 @@
-import { removeChallenge, removeInteraction, removeReward, removeUnit } from '@/app/actions/restaurant';
+import { removeChallenge, removeInteraction, removePromotion, removeReward, removeUnit, togglePromotion } from '@/app/actions/restaurant';
 import {
   AddChallengeForm,
+  AddPromotionForm,
   AddInteractionForm,
   AddRewardForm,
   BasicsForm,
@@ -15,7 +16,8 @@ import { RewardImage } from '@/components/Visual';
 import { describeChallenge } from '@/lib/challenges';
 import { prisma } from '@/lib/db';
 import { imageUrl } from '@/lib/images';
-import { formatPoints } from '@/lib/points';
+import { formatBRL, formatPoints } from '@/lib/points';
+import { promoBadge, promoStatus, promoWhen } from '@/lib/promos';
 import { requirePaidRestaurant } from '@/lib/session';
 
 export const metadata = { title: 'Regras e configurações' };
@@ -55,17 +57,20 @@ const SECTIONS = [
   ['engajamento', 'Check-in e indicação'],
   ['interacoes', 'Interações'],
   ['desafios', 'Desafios'],
+  ['campanhas', 'Campanhas'],
   ['produtos', 'Produtos'],
 ] as const;
 
 export default async function ConfiguracoesPage() {
   const restaurant = await requirePaidRestaurant();
-  const [interactions, rewards, challenges, units] = await Promise.all([
+  const [interactions, rewards, challenges, units, promotions] = await Promise.all([
     prisma.interactionRule.findMany({ where: { restaurantId: restaurant.id, active: true }, orderBy: { createdAt: 'asc' } }),
     prisma.reward.findMany({ where: { restaurantId: restaurant.id, active: true }, orderBy: { pointsCost: 'asc' } }),
     prisma.challenge.findMany({ where: { restaurantId: restaurant.id }, orderBy: { createdAt: 'asc' } }),
     prisma.unit.findMany({ where: { restaurantId: restaurant.id }, orderBy: [{ active: 'desc' }, { createdAt: 'asc' }] }),
+    prisma.promotion.findMany({ where: { restaurantId: restaurant.id }, orderBy: { createdAt: 'desc' } }),
   ]);
+  const nowDate = new Date();
   const activeCount = units.filter((u) => u.active).length;
   const onboarding = !restaurant.onboardedAt;
 
@@ -214,7 +219,41 @@ export default async function ConfiguracoesPage() {
         <AddChallengeForm />
       </Section>
 
-      <Section id="produtos" n={8} title="Produtos resgatáveis" hint="Itens do cardápio que o cliente pode trocar por pontos. Com foto, o resgate vende mais.">
+      <Section id="campanhas" n={8} title="Campanhas de pontos" hint="Pontos em dobro na terça, +50 pontos acima de R$ 40… Valem no caixa e aparecem como card na vitrine dos clientes.">
+        <ul className="mb-4 space-y-3">
+          {promotions.length === 0 && <li className="py-2 text-sm text-slate-500">Nenhuma campanha criada.</li>}
+          {promotions.map((p) => {
+            const status = promoStatus(p, nowDate);
+            const look = { now: ['Valendo agora', 'bg-emerald-100 text-emerald-700'], scheduled: ['Agendada', 'bg-blue-100 text-electric-600'], paused: ['Pausada', 'bg-slate-200 text-slate-600'], ended: ['Encerrada', 'bg-slate-200 text-slate-500'] }[status];
+            return (
+              <li key={p.id} className="glass-inset p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-800">{p.title}</p>
+                    <p className="text-xs text-slate-500">{promoWhen(p, formatBRL)}</p>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-1.5">
+                    <span className="glass-chip">{promoBadge(p)}</span>
+                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${look[1]}`}>{look[0]}</span>
+                  </div>
+                </div>
+                <div className="mt-2 flex gap-2">
+                  {status !== 'ended' && (
+                    <form action={togglePromotion}>
+                      <input type="hidden" name="id" value={p.id} />
+                      <button className="glass-button-ghost btn-sm">{p.active ? 'Pausar' : 'Retomar'}</button>
+                    </form>
+                  )}
+                  <RemoveButton action={removePromotion} id={p.id} label={p.title} />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+        <AddPromotionForm />
+      </Section>
+
+      <Section id="produtos" n={9} title="Produtos resgatáveis" hint="Itens do cardápio que o cliente pode trocar por pontos. Com foto, o resgate vende mais.">
         <ul className="mb-4 space-y-3">
           {rewards.length === 0 && <li className="py-2 text-sm text-slate-500">Cadastre ao menos um produto.</li>}
           {rewards.map((r) => (
@@ -239,7 +278,7 @@ export default async function ConfiguracoesPage() {
       </Section>
 
       {onboarding && (
-        <div className="glass-panel p-5 sm:p-7">
+        <div id="finalizar" className="glass-panel scroll-mt-4 p-5 sm:p-7">
           <FinishOnboardingForm />
         </div>
       )}

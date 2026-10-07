@@ -12,7 +12,8 @@ import { prisma } from '@/lib/db';
 import { isOpenNow, parseSchedule, todayLabel } from '@/lib/hours';
 import { imageUrl } from '@/lib/images';
 import { appUrl } from '@/lib/payments';
-import { formatPoints } from '@/lib/points';
+import { formatBRL, formatPoints } from '@/lib/points';
+import { promoActiveAt, promoBadge, promoStatus, promoWhen } from '@/lib/promos';
 import { getCustomer } from '@/lib/session';
 import { newReferralCode } from '@/lib/tokens';
 
@@ -49,7 +50,7 @@ export default async function LugarPage({
   if (!/^[0-9a-f-]{36}$/.test(restaurantId)) notFound();
 
   const customer = await getCustomer();
-  const [restaurant, rewards, challenges, rules, wallet, completions, units] = await Promise.all([
+  const [restaurant, rewards, challenges, rules, wallet, completions, units, promotions] = await Promise.all([
     prisma.restaurant.findUnique({ where: { id: restaurantId } }),
     prisma.reward.findMany({ where: { restaurantId, active: true }, orderBy: { pointsCost: 'asc' } }),
     prisma.challenge.findMany({ where: { restaurantId, active: true }, orderBy: { createdAt: 'asc' } }),
@@ -57,7 +58,9 @@ export default async function LugarPage({
     customer ? prisma.wallet.findUnique({ where: { customerId_restaurantId: { customerId: customer.id, restaurantId } } }) : null,
     customer ? prisma.challengeCompletion.findMany({ where: { customerId: customer.id, challenge: { restaurantId } } }) : [],
     prisma.unit.findMany({ where: { restaurantId, active: true }, orderBy: { createdAt: 'asc' } }),
+    prisma.promotion.findMany({ where: { restaurantId, active: true, OR: [{ endsAt: null }, { endsAt: { gt: new Date() } }] }, orderBy: { createdAt: 'desc' } }),
   ]);
+  const nowDate = new Date();
   if (!restaurant || restaurant.subscriptionStatus !== 'ACTIVE' || !restaurant.onboardedAt) notFound();
 
   const progress = await Promise.all(
@@ -286,6 +289,24 @@ export default async function LugarPage({
 
         </div>
         <div className="space-y-6 lg:col-span-2">
+        {promotions.length > 0 && (
+          <section aria-labelledby="promocoes">
+            <h2 id="promocoes" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Campanhas de pontos</h2>
+            <ul className="space-y-3">
+              {promotions.filter((p) => promoStatus(p, nowDate) !== 'ended').map((p) => (
+                <li key={p.id} className="glass-panel-sm space-y-1 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="flex items-start gap-3 font-semibold text-slate-800"><Icon name="spark" className="mt-0.5 text-amber-500" /> {p.title}</span>
+                    <span className="glass-chip shrink-0">{promoBadge(p)}</span>
+                  </div>
+                  <p className="text-sm text-slate-600">{promoWhen(p, formatBRL)}</p>
+                  {promoActiveAt(p, nowDate) && <p className="text-xs font-bold text-emerald-600">Valendo agora</p>}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         {/* Desafios */}
         <section aria-labelledby="desafios">
           <h2 id="desafios" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Desafios da casa</h2>

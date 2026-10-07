@@ -15,6 +15,7 @@ import { UFS, cepDigits, composeAddress } from '@/lib/address';
 import { BusinessError } from '@/lib/claims';
 import { saveImageFromDataUrl } from '@/lib/images';
 import { describeChallenge } from '@/lib/challenges';
+import { applyPromos, endOfDayBR, promoBadge, startOfDayBR, parseTime } from '@/lib/promos';
 import { fail, type FormState } from '@/lib/form';
 import { cookies } from 'next/headers';
 import { UNIT_COOKIE, currentUnit } from '@/lib/units';
@@ -375,6 +376,99 @@ export async function removeChallenge(formData: FormData) {
   revalidatePath('/dashboard', 'layout');
 }
 
+// ---------------------------------------------------------------- Campanhas de pontos
+
+const promoSchema = z.object({
+  title: z.string().trim().min(3, 'Dê um nome à campanha (ex.: Terça em dobro).').max(60),
+  kind: z.enum(['MULTIPLIER', 'BONUS']),
+  multiplier: z.string().default(''),
+  bonusPoints: z.string().default(''),
+  minAmount: z.string().default(''),
+  startDate: z.string().default(''),
+  endDate: z.string().default(''),
+  startTime: z.string().default(''),
+  endTime: z.string().default(''),
+});
+
+export async function addPromotion(_: FormState, formData: FormData): Promise<FormState> {
+  const restaurant = await requirePaidRestaurant();
+  const parsed = promoSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return fail(firstIssue(parsed.error), formData);
+  const d = parsed.data;
+
+  let multiplier: number | null = null;
+  let bonusPoints: number | null = null;
+  if (d.kind === 'MULTIPLIER') {
+    multiplier = Number(d.multiplier.replace(',', '.'));
+    if (!Number.isFinite(multiplier) || multiplier < 1.1 || multiplier > 10) return fail('O multiplicador deve ficar entre 1,1x e 10x.', formData);
+    multiplier = Math.round(multiplier * 100) / 100;
+  } else {
+    bonusPoints = Number(d.bonusPoints);
+    if (!Number.isInteger(bonusPoints) || bonusPoints < 1 || bonusPoints > 100_000) return fail('Informe os pontos extras (número inteiro, a partir de 1).', formData);
+  }
+
+  let minAmountCents = 0;
+  if (d.minAmount.trim()) {
+    const cents = parseMoneyToCents(d.minAmount);
+    if (cents === null || cents > MAX_BILL_CENTS) return fail('Valor mínimo inválido. Exemplo: 40,00', formData);
+    minAmountCents = cents;
+  }
+
+  const startsAt = d.startDate ? startOfDayBR(d.startDate) : null;
+  const endsAt = d.endDate ? endOfDayBR(d.endDate) : null;
+  if ((d.startDate && !startsAt) || (d.endDate && !endsAt)) return fail('Data inválida.', formData);
+  if (startsAt && endsAt && endsAt <= startsAt) return fail('A data final precisa ser igual ou depois da inicial.', formData);
+  if (endsAt && endsAt.getTime() <= Date.now()) return fail('A data final já passou.', formData);
+
+  if ((d.startTime && parseTime(d.startTime) == null) || (d.endTime && parseTime(d.endTime) == null)) return fail('Horário inválido.', formData);
+  if (d.startTime && d.endTime && d.startTime === d.endTime) return fail('O horário inicial e o final não podem ser iguais.', formData);
+
+  const weekdays = [...new Set(formData.getAll('weekdays').map(Number).filter((n) => Number.isInteger(n) && n >= 0 && n <= 6))].sort();
+
+  if ((await prisma.promotion.count({ where: { restaurantId: restaurant.id } })) >= 20) return fail('Limite de 20 campanhas atingido. Remova alguma antiga.', formData);
+
+  await prisma.promotion.create({
+    data: {
+      restaurantId: restaurant.id,
+      title: d.title,
+      kind: d.kind,
+      multiplier,
+      bonusPoints,
+      minAmountCents,
+      startsAt,
+      endsAt,
+      weekdays: weekdays.length === 7 ? [] : weekdays,
+      startTime: d.startTime || null,
+      endTime: d.endTime || null,
+    },
+  });
+  revalidatePath('/dashboard', 'layout');
+  return { ok: 'Campanha criada.' };
+}
+
+export async function removePromotion(formData: FormData) {
+  const restaurant = await requirePaidRestaurant();
+  await prisma.promotion.deleteMany({ where: { id: String(formData.get('id')), restaurantId: restaurant.id } });
+  revalidatePath('/dashboard', 'layout');
+}
+
+export async function togglePromotion(formData: FormData) {
+  const restaurant = await requirePaidRestaurant();
+  const promo = await prisma.promotion.findFirst({ where: { id: String(formData.get('id')), restaurantId: restaurant.id } });
+  if (!promo) return;
+  await prisma.promotion.update({ where: { id: promo.id }, data: { active: !promo.active } });
+  revalidatePath('/dashboard', 'layout');
+}
+
+// ---------------------------------------------------------------- Guia inicial
+
+/** Dispensa (ou conclui) o passo a passo inicial: ele para de abrir sozinho. */
+export async function finishGuide() {
+  const restaurant = await requirePaidRestaurant();
+  await prisma.restaurant.update({ where: { id: restaurant.id }, data: { guideDoneAt: new Date() } });
+  revalidatePath('/dashboard', 'layout');
+}
+
 // ---------------------------------------------------------------- Caixa
 
 export type CaixaState = {
@@ -407,10 +501,15 @@ export async function createClaim(_: CaixaState, formData: FormData): Promise<Ca
     : [];
 
   // Os pontos são calculados aqui, com as regras gravadas no banco — nada vem do cliente.
-  const points = calculatePoints(amountCents, restaurant.pointsPerReal, interactions);
+  // Campanhas valendo agora (multiplicador / pontos extras) incidem só sobre a parte da conta, não sobre as interações.
+  const promos = await prisma.promotion.findMany({ where: { restaurantId: restaurant.id, active: true } });
+  const billPoints = calculatePoints(amountCents, restaurant.pointsPerReal);
+  const promoResult = applyPromos(billPoints, amountCents, promos);
+  const points = promoResult.points + interactions.reduce((n, i) => n + i.points, 0);
   if (points <= 0) return { error: 'Informe o valor da conta ou marque ao menos uma interação.' };
 
-  const parts = [amountCents > 0 ? `Compra de ${formatBRL(amountCents)}` : null, ...interactions.map((i) => i.label)];
+  const promoNote = promoResult.applied.length ? ` (${promoResult.applied.map((p) => `${promoBadge(p)} · ${p.title}`).join(' + ')})` : '';
+  const parts = [amountCents > 0 ? `Compra de ${formatBRL(amountCents)}${promoNote}` : null, ...interactions.map((i) => i.label)];
   const description = parts.filter(Boolean).join(' + ');
   const expiresAt = new Date(Date.now() + CLAIM_TTL_HOURS * 60 * 60 * 1000);
   const token = newClaimToken();
