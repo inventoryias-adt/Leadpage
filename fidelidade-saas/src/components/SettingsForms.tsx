@@ -4,7 +4,7 @@ import { useActionState } from 'react';
 import { addInteraction, addReward, finishOnboarding, saveBasics, saveRules } from '@/app/actions/restaurant';
 import { FormMessage, SubmitButton } from './ui';
 
-type Basics = { name: string; address: string; openingHours: string };
+type Basics = { name: string; address: string };
 
 export function BasicsForm({ defaults }: { defaults: Basics }) {
   const [state, action] = useActionState(saveBasics, {});
@@ -17,10 +17,6 @@ export function BasicsForm({ defaults }: { defaults: Basics }) {
       <div>
         <label className="glass-label" htmlFor="b-address">Endereço completo</label>
         <input id="b-address" name="address" className="glass-input" placeholder="Rua, número, bairro, cidade - UF, CEP" defaultValue={state.values?.address ?? defaults.address} required />
-      </div>
-      <div>
-        <label className="glass-label" htmlFor="b-hours">Horário de funcionamento</label>
-        <input id="b-hours" name="openingHours" className="glass-input" placeholder="Seg a Sex 11h–23h · Sáb e Dom 11h–00h" defaultValue={state.values?.openingHours ?? defaults.openingHours} required />
       </div>
       <FormMessage state={state} />
       <SubmitButton pendingText="Salvando…">Salvar dados</SubmitButton>

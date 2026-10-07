@@ -8,6 +8,8 @@ import {
 } from '@/components/SettingsForms';
 import { prisma } from '@/lib/db';
 import { formatPoints } from '@/lib/points';
+import { defaultSchedule, parseSchedule } from '@/lib/hours';
+import { HoursForm } from '@/components/HoursForm';
 import { requirePaidRestaurant } from '@/lib/session';
 
 export const metadata = { title: 'Regras e configurações' };
@@ -52,19 +54,23 @@ export default async function ConfiguracoesPage() {
       {onboarding && (
         <div className="glass-panel p-6 text-center">
           <h1 className="mb-1 text-2xl font-extrabold text-primary">Pagamento confirmado! 🎉</h1>
-          <p className="text-slate-600">Configure seu restaurante em 4 passos rápidos e comece a pontuar.</p>
+          <p className="text-slate-600">Configure seu restaurante em 5 passos rápidos e comece a pontuar.</p>
         </div>
       )}
 
       <Section n={1} title="Dados do estabelecimento">
-        <BasicsForm defaults={{ name: restaurant.name, address: restaurant.address ?? '', openingHours: restaurant.openingHours ?? '' }} />
+        <BasicsForm defaults={{ name: restaurant.name, address: restaurant.address ?? '' }} />
       </Section>
 
-      <Section n={2} title="Conversão e segurança" hint="Quanto cada real vale em pontos e quantos resgates cada CPF pode fazer por mês.">
+      <Section n={2} title="Horário de funcionamento" hint="Aparece para o cliente quando ele resgata pontos: é quando ele pode ir retirar o prêmio.">
+        <HoursForm initial={parseSchedule(restaurant.openingSchedule) ?? defaultSchedule()} />
+      </Section>
+
+      <Section n={3} title="Conversão e segurança" hint="Quanto cada real vale em pontos e quantos resgates cada CPF pode fazer por mês.">
         <RulesForm defaults={{ pointsPerReal: restaurant.pointsPerReal, maxRedeemsPerMonth: restaurant.maxRedeemsPerMonth }} />
       </Section>
 
-      <Section n={3} title="Interações que dão pontos" hint="Pontuação fixa, marcada pelo caixa no lançamento.">
+      <Section n={4} title="Interações que dão pontos" hint="Pontuação fixa, marcada pelo caixa no lançamento.">
         <ul className="mb-4 divide-y divide-white/60">
           {interactions.length === 0 && <li className="py-2 text-sm text-slate-500">Nenhuma interação cadastrada.</li>}
           {interactions.map((i) => (
@@ -80,7 +86,7 @@ export default async function ConfiguracoesPage() {
         <AddInteractionForm />
       </Section>
 
-      <Section n={4} title="Produtos resgatáveis" hint="Itens do cardápio que o cliente pode trocar por pontos.">
+      <Section n={5} title="Produtos resgatáveis" hint="Itens do cardápio que o cliente pode trocar por pontos.">
         <ul className="mb-4 divide-y divide-white/60">
           {rewards.length === 0 && <li className="py-2 text-sm text-slate-500">Cadastre ao menos um produto.</li>}
           {rewards.map((r) => (

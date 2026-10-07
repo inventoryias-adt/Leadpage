@@ -34,7 +34,8 @@ model Restaurant {
 
   // Onboarding
   address      String?
-  openingHours String?
+  /// Horário por dia da semana: [{ day: 0-6, closed, open: "HH:MM", close: "HH:MM" }] (ver src/lib/hours.ts)
+  openingSchedule Json?
   onboardedAt  DateTime?
 
   // Assinatura

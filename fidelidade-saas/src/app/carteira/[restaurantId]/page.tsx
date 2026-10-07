@@ -4,6 +4,8 @@ import { customerLogout } from '@/app/actions/customer';
 import { prisma } from '@/lib/db';
 import { formatPoints, startOfMonthBR } from '@/lib/points';
 import { requireCustomer } from '@/lib/session';
+import { parseSchedule } from '@/lib/hours';
+import { OpeningHours } from '@/components/OpeningHours';
 import { RedeemButton } from './RedeemButton';
 
 export const metadata = { title: 'Meus pontos' };
@@ -24,7 +26,7 @@ export default async function WalletPage({
 
   const restaurant = await prisma.restaurant.findUnique({
     where: { id: restaurantId },
-    select: { id: true, name: true, address: true, maxRedeemsPerMonth: true },
+    select: { id: true, name: true, address: true, maxRedeemsPerMonth: true, openingSchedule: true },
   });
   if (!restaurant) notFound();
 
@@ -39,6 +41,7 @@ export default async function WalletPage({
     prisma.redemption.findMany({ where: { walletId: wallet.id, status: 'PENDING' }, orderBy: { createdAt: 'desc' } }),
     prisma.redemption.count({ where: { customerId: customer.id, restaurantId, createdAt: { gte: startOfMonthBR() } } }),
   ]);
+  const schedule = parseSchedule(restaurant.openingSchedule);
   const limitReached = usedThisMonth >= restaurant.maxRedeemsPerMonth;
 
   return (
@@ -68,6 +71,12 @@ export default async function WalletPage({
       {vouchers.length > 0 && (
         <section className="mb-6">
           <h2 className="mb-3 text-lg font-bold text-slate-800">Prêmios para retirar</h2>
+          {schedule && (
+            <div className="mb-3 space-y-2">
+              <OpeningHours schedule={schedule} />
+              {restaurant.address && <p className="text-center text-xs text-slate-500">📍 {restaurant.address}</p>}
+            </div>
+          )}
           <div className="space-y-3">
             {vouchers.map((v) => (
               <div key={v.id} className="glass-panel-sm flex items-center justify-between gap-3 p-4">
@@ -79,6 +88,14 @@ export default async function WalletPage({
               </div>
             ))}
           </div>
+        </section>
+      )}
+
+      {/* Horário geral (quando ainda não há prêmio para retirar) */}
+      {schedule && vouchers.length === 0 && (
+        <section className="mb-6 space-y-2">
+          <OpeningHours schedule={schedule} title="Horário de funcionamento" />
+          {restaurant.address && <p className="text-center text-xs text-slate-500">📍 {restaurant.address}</p>}
         </section>
       )}
 

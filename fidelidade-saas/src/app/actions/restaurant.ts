@@ -8,6 +8,7 @@ import { appUrl } from '@/lib/payments';
 import { requireActiveRestaurant, requirePaidRestaurant } from '@/lib/session';
 import { MAX_BILL_CENTS, CLAIM_TTL_HOURS, calculatePoints, formatBRL, parseMoneyToCents } from '@/lib/points';
 import { newClaimToken } from '@/lib/tokens';
+import { parseSchedule, scheduleSchema } from '@/lib/hours';
 import { fail, type FormState } from '@/lib/form';
 
 const firstIssue = (e: z.ZodError) => e.issues[0].message;
@@ -17,7 +18,6 @@ const firstIssue = (e: z.ZodError) => e.issues[0].message;
 const basicsSchema = z.object({
   name: z.string().trim().min(2, 'Informe o nome do estabelecimento.').max(80),
   address: z.string().trim().min(8, 'Informe o endereço completo (rua, número, bairro e cidade).').max(200),
-  openingHours: z.string().trim().min(3, 'Informe o horário de funcionamento.').max(200),
 });
 
 export async function saveBasics(_: FormState, formData: FormData): Promise<FormState> {
@@ -28,6 +28,23 @@ export async function saveBasics(_: FormState, formData: FormData): Promise<Form
   await prisma.restaurant.update({ where: { id: restaurant.id }, data: parsed.data });
   revalidatePath('/dashboard', 'layout');
   return { ok: 'Dados salvos.' };
+}
+
+/** Horário de funcionamento por dia da semana (o formulário envia o JSON em `schedule`). */
+export async function saveHours(_: FormState, formData: FormData): Promise<FormState> {
+  const restaurant = await requirePaidRestaurant();
+  let raw: unknown;
+  try {
+    raw = JSON.parse(String(formData.get('schedule') ?? ''));
+  } catch {
+    return { error: 'Horários inválidos. Recarregue a página e tente de novo.' };
+  }
+  const parsed = scheduleSchema.safeParse(raw);
+  if (!parsed.success) return { error: firstIssue(parsed.error) };
+
+  await prisma.restaurant.update({ where: { id: restaurant.id }, data: { openingSchedule: parsed.data } });
+  revalidatePath('/dashboard', 'layout');
+  return { ok: 'Horários salvos.' };
 }
 
 const rulesSchema = z.object({
@@ -104,8 +121,11 @@ export async function removeReward(formData: FormData) {
 
 export async function finishOnboarding(_: FormState, __: FormData): Promise<FormState> {
   const restaurant = await requirePaidRestaurant();
-  if (!restaurant.address || !restaurant.openingHours) {
-    return { error: 'Preencha e salve os dados do estabelecimento (endereço e horário).' };
+  if (!restaurant.address) {
+    return { error: 'Preencha e salve o endereço do estabelecimento.' };
+  }
+  if (!parseSchedule(restaurant.openingSchedule)) {
+    return { error: 'Defina e salve os horários de funcionamento.' };
   }
   if (!(await prisma.reward.count({ where: { restaurantId: restaurant.id, active: true } }))) {
     return { error: 'Cadastre pelo menos um produto resgatável para seus clientes.' };
