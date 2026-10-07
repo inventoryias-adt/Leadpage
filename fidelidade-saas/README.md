@@ -129,3 +129,10 @@ e regras, gerar senha temporária, reabrir o guia, anotação interna e "entrar 
 de aviso). Toda ação fica em **Registro**. Não existe cadastro público de administrador: cria-se por convite,
 `npm run admin:invite -- email@dominio.com "Nome"` (com `DATABASE_URL` e `APP_URL`), que imprime um link de 48 h e uso
 único (só o hash do token fica no banco).
+
+**Novo assinante, cancelar e conta de teste** (migração `0010_conta_teste`): em `/admin/assinantes` o botão
+**+ Novo assinante** cria a conta com uma senha temporária mostrada uma única vez. No topo da ficha ficam os botões
+**Suspender acesso / Cancelar assinatura / Reativar**, cada um com confirmação e motivo no registro. A opção **Conta de
+teste** deixa a conta fora da receita e dos números de assinantes; ela aparece em "Contas de teste" na visão geral, com
+atalho **Entrar**, para validar novidades antes de liberar aos clientes. O dono troca a própria senha em
+Regras → Minha conta.

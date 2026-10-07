@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { adminImpersonate, adminResetGuide } from '@/app/actions/admin';
-import { EditForm, NoteForm, ResetPasswordForm, StatusForm } from '@/components/AdminForms';
+import { EditForm, NoteForm, ResetPasswordForm, StatusActions } from '@/components/AdminForms';
 import { StatusChip } from '@/components/StatusChip';
 import { formatPhone } from '@/lib/br';
 import { prisma } from '@/lib/db';
@@ -49,16 +49,20 @@ export default async function Ficha({ params }: { params: Promise<{ id: string }
         <Link href="/admin/assinantes" className="text-sm font-semibold text-electric-600">← Todos os assinantes</Link>
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="truncate text-2xl font-semibold text-primary">{r.name}</h1>
+            <h1 className="flex items-center gap-2 truncate text-2xl font-semibold text-primary">{r.name}{r.isTest && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">TESTE</span>}</h1>
             <p className="text-sm text-slate-500">{r.email} · {formatPhone(r.phone)}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <StatusChip status={r.subscriptionStatus} />
             <form action={adminImpersonate}>
               <input type="hidden" name="id" value={r.id} />
               <button className="glass-button btn-sm" title="Abre o painel do assinante por 2 horas, com faixa de aviso e registro">Entrar como este assinante</button>
             </form>
           </div>
+        </div>
+        <div className="glass-panel mt-4 flex flex-wrap items-center justify-between gap-3 p-4">
+          <p className="text-sm font-semibold text-slate-700">Assinatura</p>
+          <StatusActions id={r.id} current={r.subscriptionStatus} name={r.name} />
         </div>
       </div>
 
@@ -90,12 +94,8 @@ export default async function Ficha({ params }: { params: Promise<{ id: string }
           </ul>
         </Card>
 
-        <Card title="Assinatura" id="assinatura">
-          <StatusForm id={r.id} current={r.subscriptionStatus} />
-        </Card>
-
         <Card title="Dados e regras" id="dados">
-          <EditForm r={{ id: r.id, name: r.name, phone: r.phone, pointsPerReal: r.pointsPerReal, maxRedeemsPerMonth: r.maxRedeemsPerMonth, checkInPoints: r.checkInPoints, referralPoints: r.referralPoints, listed: r.listed }} />
+          <EditForm r={{ id: r.id, name: r.name, phone: r.phone, pointsPerReal: r.pointsPerReal, maxRedeemsPerMonth: r.maxRedeemsPerMonth, checkInPoints: r.checkInPoints, referralPoints: r.referralPoints, listed: r.listed, isTest: r.isTest }} />
         </Card>
 
         <Card title="Acesso do dono" id="acesso">

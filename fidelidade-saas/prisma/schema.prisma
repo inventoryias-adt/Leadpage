@@ -55,6 +55,7 @@ model Restaurant {
   onboardedAt     DateTime?
   guideDoneAt     DateTime? // passo a passo inicial concluído ou dispensado
   internalNote    String? // anotação interna da administração (o dono não vê)
+  isTest          Boolean @default(false) // conta de teste da administração: fora da receita e dos números de assinantes
 
   // Assinatura
   subscriptionStatus    SubscriptionStatus @default(PENDING)

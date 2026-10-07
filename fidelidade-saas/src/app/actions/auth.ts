@@ -78,3 +78,22 @@ export async function startCheckout() {
   const restaurant = await requireRestaurant();
   redirect(await createCheckoutUrl(restaurant));
 }
+
+const passwordChangeSchema = z.object({
+  current: z.string().min(1, 'Informe a senha atual.'),
+  next: z.string().min(8, 'A nova senha precisa ter pelo menos 8 caracteres.').max(72),
+  confirm: z.string(),
+});
+
+/** O dono troca a própria senha (necessário depois de uma senha temporária da administração). */
+export async function changePassword(_: FormState, formData: FormData): Promise<FormState> {
+  const restaurant = await requireRestaurant();
+  const parsed = passwordChangeSchema.safeParse({ current: formData.get('current') ?? '', next: formData.get('next') ?? '', confirm: formData.get('confirm') ?? '' });
+  if (!parsed.success) return fail(parsed.error.issues[0].message, formData);
+  if (parsed.data.next !== parsed.data.confirm) return fail('As senhas novas não são iguais.', formData);
+  if (!(await allow(`pwchange:${restaurant.id}`, 6, 900))) return fail(TOO_MANY, formData);
+  if (!(await verifyPassword(parsed.data.current, restaurant.passwordHash))) return fail('A senha atual está incorreta.', formData);
+  if (parsed.data.current === parsed.data.next) return fail('A nova senha precisa ser diferente da atual.', formData);
+  await prisma.restaurant.update({ where: { id: restaurant.id }, data: { passwordHash: await hashPassword(parsed.data.next) } });
+  return { ok: 'Senha alterada.' };
+}

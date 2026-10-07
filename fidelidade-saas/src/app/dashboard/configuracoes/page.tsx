@@ -8,6 +8,7 @@ import {
   EngagementForm,
   FinishOnboardingForm,
   IdentityForm,
+  PasswordForm,
   RewardPhotoForm,
   RulesForm,
   UnitForm,
@@ -60,6 +61,7 @@ const SECTIONS = [
   ['desafios', 'Desafios'],
   ['campanhas', 'Campanhas'],
   ['produtos', 'Produtos'],
+  ['conta', 'Minha conta'],
 ] as const;
 
 export default async function ConfiguracoesPage() {
@@ -280,6 +282,10 @@ export default async function ConfiguracoesPage() {
           ))}
         </ul>
         <AddRewardForm />
+      </Section>
+
+      <Section id="conta" n={10} title="Minha conta" hint="Troque a senha de acesso ao painel. Use uma senha que só você conheça.">
+        <PasswordForm />
       </Section>
 
       {onboarding && (

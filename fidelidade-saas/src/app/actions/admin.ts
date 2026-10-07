@@ -9,6 +9,7 @@ import { prisma } from '@/lib/db';
 import { fail, type FormState } from '@/lib/form';
 import { dummyHash, hashPassword, verifyPassword } from '@/lib/password';
 import { TOO_MANY, allow, clientIp } from '@/lib/rate-limit';
+import { DEFAULT_UNIT_NAME } from '@/lib/units';
 import { endAdminSession, endRestaurantSession, requireAdmin, startAdminSession, startImpersonation } from '@/lib/session';
 
 const firstIssue = (e: z.ZodError) => e.issues[0].message;
@@ -108,9 +109,10 @@ export async function adminUpdateRestaurant(_: FormState, formData: FormData): P
   const r = await target(d.id);
   if (!r) return { error: 'Assinante não encontrado.' };
   const listed = formData.get('listed') === 'on';
+  const isTest = formData.get('isTest') === 'on';
 
-  const next = { name: d.name, phone: normalizePhone(d.phone)!, pointsPerReal: d.pointsPerReal, maxRedeemsPerMonth: d.maxRedeemsPerMonth, checkInPoints: d.checkInPoints, referralPoints: d.referralPoints, listed };
-  const LABEL: Record<string, string> = { name: 'Nome', phone: 'Telefone', pointsPerReal: 'Pontos por real', maxRedeemsPerMonth: 'Resgates por CPF/mês', checkInPoints: 'Pontos de check-in', referralPoints: 'Pontos de indicação', listed: 'Na vitrine' };
+  const next = { name: d.name, phone: normalizePhone(d.phone)!, pointsPerReal: d.pointsPerReal, maxRedeemsPerMonth: d.maxRedeemsPerMonth, checkInPoints: d.checkInPoints, referralPoints: d.referralPoints, listed, isTest };
+  const LABEL: Record<string, string> = { name: 'Nome', phone: 'Telefone', pointsPerReal: 'Pontos por real', maxRedeemsPerMonth: 'Resgates por CPF/mês', checkInPoints: 'Pontos de check-in', referralPoints: 'Pontos de indicação', listed: 'Na vitrine', isTest: 'Conta de teste' };
   const show = (v: unknown) => (typeof v === 'boolean' ? (v ? 'sim' : 'não') : String(v));
   const changed = Object.entries(next)
     .filter(([k, v]) => (r as Record<string, unknown>)[k] !== v)
@@ -172,4 +174,44 @@ export async function exitImpersonation(formData: FormData) {
   const id = String(formData.get('id') ?? '');
   await endRestaurantSession();
   redirect(/^[0-9a-f-]{36}$/.test(id) ? `/admin/assinantes/${id}` : '/admin/assinantes');
+}
+
+export type CreateState = { error?: string; created?: { id: string; name: string; email: string; password: string; status: string }; values?: Record<string, string> };
+
+const createSchema = z.object({
+  name: z.string().trim().min(2, 'Informe o nome do estabelecimento.').max(80),
+  email: z.string().trim().toLowerCase().email('E-mail inválido.'),
+  phone: z.string().refine((v) => normalizePhone(v) !== null, 'Telefone inválido. Use DDD + número.'),
+  status: z.enum(['ACTIVE', 'PENDING']),
+});
+
+/** Cria a conta de um assinante (ex.: cliente que pagou por fora). A senha temporária aparece uma única vez. */
+export async function adminCreateRestaurant(_: CreateState, formData: FormData): Promise<CreateState> {
+  const admin = await requireAdmin();
+  const parsed = createSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ...fail(firstIssue(parsed.error), formData) };
+  const d = parsed.data;
+  if (await prisma.restaurant.findUnique({ where: { email: d.email } })) return { ...fail('Já existe uma conta com este e-mail.', formData) };
+
+  const password = tempPassword();
+  const r = await prisma.restaurant.create({
+    data: {
+      name: d.name,
+      email: d.email,
+      phone: normalizePhone(d.phone)!,
+      passwordHash: await hashPassword(password),
+      subscriptionStatus: d.status,
+      isTest: formData.get('isTest') === 'on',
+      units: { create: { name: DEFAULT_UNIT_NAME } },
+      interactionRules: {
+        create: [
+          { label: 'Foto no Instagram marcando o estabelecimento', points: 50 },
+          { label: 'Avaliação 5 estrelas no Google', points: 100 },
+        ],
+      },
+    },
+  });
+  await logAdmin(admin, 'criar', `Conta criada pela administração (${STATUS_LABEL[d.status]}${formData.get('isTest') === 'on' ? ', conta de teste' : ''})`, r);
+  revalidatePath('/admin', 'layout');
+  return { created: { id: r.id, name: r.name, email: r.email, password, status: STATUS_LABEL[d.status] } };
 }
