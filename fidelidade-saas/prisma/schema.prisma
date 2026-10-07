@@ -314,7 +314,14 @@ model Unit {
   id              String   @id @default(uuid())
   restaurantId    String
   name            String
-  address         String?
+  address         String? // texto final (montado de rua, número, complemento...); é o que o cliente vê
+  cep             String? // só dígitos
+  street          String?
+  number          String?
+  complement      String?
+  district        String?
+  city            String?
+  state           String?
   openingSchedule Json?
   latitude        Float?
   longitude       Float?

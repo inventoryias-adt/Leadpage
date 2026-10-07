@@ -11,6 +11,7 @@ import { newClaimToken } from '@/lib/tokens';
 import { parseSchedule, scheduleSchema } from '@/lib/hours';
 import { isCategory } from '@/lib/categories';
 import { validCoords } from '@/lib/geo';
+import { UFS, cepDigits, composeAddress } from '@/lib/address';
 import { BusinessError } from '@/lib/claims';
 import { saveImageFromDataUrl } from '@/lib/images';
 import { describeChallenge } from '@/lib/challenges';
@@ -40,7 +41,13 @@ export async function saveBasics(_: FormState, formData: FormData): Promise<Form
 
 const unitSchema = z.object({
   name: z.string().trim().min(2, 'Dê um nome à unidade (ex.: Centro, Shopping Norte).').max(60),
-  address: z.string().trim().min(8, 'Informe o endereço completo (rua, número, bairro e cidade).').max(200),
+  cep: z.string().trim().default(''),
+  street: z.string().trim().min(3, 'Informe a rua ou avenida.').max(120),
+  number: z.string().trim().min(1, 'Informe o número (ou S/N).').max(15),
+  complement: z.string().trim().max(60).default(''),
+  district: z.string().trim().max(80).default(''),
+  city: z.string().trim().min(2, 'Informe a cidade.').max(80),
+  state: z.string().trim().refine((v) => (UFS as readonly string[]).includes(v), 'Escolha o estado (UF).'),
   googleReviewUrl: z.string().trim().default(''),
   latitude: z.string().trim().default(''),
   longitude: z.string().trim().default(''),
@@ -63,6 +70,9 @@ export async function saveUnit(_: FormState, formData: FormData): Promise<FormSt
   const schedule = scheduleSchema.safeParse(raw);
   if (!schedule.success) return fail(firstIssue(schedule.error), formData);
 
+  const cep = cepDigits(parsed.data.cep);
+  if (parsed.data.cep && cep.length !== 8) return fail('CEP inválido. Use 8 números (ex.: 04204-000).', formData);
+
   const review = normalizeGoogleReview(parsed.data.googleReviewUrl);
   if (review === 'invalid') {
     return fail('Link do Google inválido. Cole o link de avaliação do Google Meu Negócio (ou o Place ID).', formData);
@@ -78,7 +88,14 @@ export async function saveUnit(_: FormState, formData: FormData): Promise<FormSt
 
   const data = {
     name: parsed.data.name,
-    address: parsed.data.address,
+    address: composeAddress(parsed.data),
+    cep: cep || null,
+    street: parsed.data.street,
+    number: parsed.data.number,
+    complement: parsed.data.complement || null,
+    district: parsed.data.district || null,
+    city: parsed.data.city,
+    state: parsed.data.state,
     openingSchedule: schedule.data,
     googleReviewUrl: review,
     latitude,
