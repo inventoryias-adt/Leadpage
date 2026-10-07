@@ -3,6 +3,7 @@ module.exports = {
   content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     extend: {
+      screens: { wide: '1600px' },
       colors: {
         glassBlue: 'rgba(37, 99, 235, 0.1)',
         glassWhite: 'rgba(255, 255, 255, 0.15)',

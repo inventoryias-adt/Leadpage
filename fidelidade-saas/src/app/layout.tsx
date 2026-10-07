@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import { RegisterSW } from '@/components/RegisterSW';
-import { LiquidBackground } from '@/components/ui';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -13,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#eaf3ff',
+  themeColor: '#F6F8FC',
   width: 'device-width',
   initialScale: 1,
 };
@@ -22,7 +21,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR">
       <body>
-        <LiquidBackground />
         <RegisterSW />
         {children}
       </body>

@@ -1,4 +1,5 @@
 import { Brand } from '@/components/Brand';
+import { SideArt } from '@/components/Illustrations';
 import { logout } from '@/app/actions/auth';
 import { DashboardNav } from '@/components/DashboardNav';
 import { requireRestaurant } from '@/lib/session';
@@ -12,6 +13,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="mx-auto min-h-screen max-w-6xl px-4 pb-28 pt-4 sm:px-6 md:pb-10">
+      <SideArt container="72rem" />
       <header className="glass-panel-sm mb-6 flex items-center justify-between gap-3 px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
           <Brand href="/dashboard" />

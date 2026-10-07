@@ -4,3 +4,6 @@ node_modules
 .env.local
 *.tsbuildinfo
 next-env.d.ts
+
+# capturas de tela soltas na raiz (as de public/ ficam)
+/*.png
