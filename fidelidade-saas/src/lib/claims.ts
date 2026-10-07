@@ -7,6 +7,7 @@ import { nearestUnit } from './units';
 import { startOfMonthBR } from './points';
 import { newVoucherCode } from './tokens';
 import { notify, notifyPoints } from './notifications';
+import { applyPromos, promoBadge, qualifiesForAudience } from './promos';
 
 /** Erro de regra de negócio, seguro para exibir ao usuário. */
 export class BusinessError extends Error {}
@@ -91,7 +92,40 @@ export async function creditClaim(token: string, customerId: string) {
     });
     if (marked.count !== 1) throw new BusinessError('Este QR Code já foi utilizado.');
 
-    await creditWallet(tx, customerId, claim.restaurantId, claim.points, claim.description, { claimId: claim.id });
+    // Campanhas: as de todos já entraram nos pontos do QR; aqui entram as de público específico (primeira compra,
+    // quem sumiu) e registramos cada campanha aplicada para o relatório.
+    let points = claim.points;
+    let description = claim.description;
+    if (claim.amountCents > 0 && claim.billPoints != null) {
+      const promos = await tx.promotion.findMany({ where: { restaurantId: claim.restaurantId } });
+      const at = claim.createdAt;
+      const prior = await tx.claim.aggregate({
+        where: { customerId, restaurantId: claim.restaurantId, redeemedAt: { not: null }, amountCents: { gt: 0 }, id: { not: claim.id } },
+        _count: true,
+        _max: { redeemedAt: true },
+      });
+      const history = { purchases: prior._count, lastPurchaseAt: prior._max.redeemedAt };
+      const everyone = promos.filter((p) => p.audience === 'ALL');
+      const eligible = promos.filter((p) => p.audience === 'ALL' || qualifiesForAudience(p, history, at));
+      const before = applyPromos(claim.billPoints, claim.amountCents, everyone, at);
+      const after = applyPromos(claim.billPoints, claim.amountCents, eligible, at);
+      const delta = after.points - before.points;
+      if (delta > 0) {
+        points += delta;
+        const extra = after.applied.filter((p) => p.audience !== 'ALL').map((p) => `${promoBadge(p)} · ${p.title}`);
+        description = extra.length ? `${description} + ${extra.join(' + ')}` : description;
+        await tx.claim.update({ where: { id: claim.id }, data: { points, description } });
+      }
+      const uses = after.parts.filter((x) => x.points > 0);
+      if (uses.length) {
+        await tx.promotionUse.createMany({
+          data: uses.map((x) => ({ promotionId: x.promo.id, restaurantId: claim.restaurantId, title: x.promo.title, claimId: claim.id, customerId, points: x.points, amountCents: claim.amountCents })),
+          skipDuplicates: true,
+        });
+      }
+    }
+
+    await creditWallet(tx, customerId, claim.restaurantId, points, description, { claimId: claim.id });
 
     // Primeira compra de verdade neste restaurante? Então quem indicou o cliente é premiado.
     if (claim.amountCents > 0) {
@@ -102,7 +136,7 @@ export async function creditClaim(token: string, customerId: string) {
     }
 
     const bonuses = await awardChallenges(tx, customerId, claim.restaurantId, 'PURCHASES', now);
-    return { restaurantId: claim.restaurantId, points: claim.points, bonuses };
+    return { restaurantId: claim.restaurantId, points, bonuses };
   });
 }
 

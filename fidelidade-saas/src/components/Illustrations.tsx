@@ -235,3 +235,110 @@ export function SideArt({ container }: { container: '64rem' | '72rem' }) {
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Ilustrações isométricas (estilo 3D suave) para telas vazias do painel.
+// ---------------------------------------------------------------------------
+type IsoVariant = 'coin' | 'shield' | 'gift' | 'users' | 'chart';
+
+const PALE = '#EEF1FA';
+const PALE2 = '#DCE2F3';
+const LIGHT = '#8FB4FF';
+
+/** Bloco isométrico: `a` = meia-largura projetada, `h` = altura. (cx, cy) = centro da base. */
+function Cuboid({ cx, cy, a, h, top, left, right }: { cx: number; cy: number; a: number; h: number; top: string; left: string; right: string }) {
+  const t = cy - h;
+  return (
+    <g>
+      <path d={`M${cx - a} ${t}L${cx} ${t + a / 2}V${cy + a / 2}L${cx - a} ${cy}Z`} fill={left} />
+      <path d={`M${cx} ${t + a / 2}L${cx + a} ${t}V${cy}L${cx} ${cy + a / 2}Z`} fill={right} />
+      <path d={`M${cx} ${t - a / 2}L${cx + a} ${t}L${cx} ${t + a / 2}L${cx - a} ${t}Z`} fill={top} />
+    </g>
+  );
+}
+
+function Coin({ cx, cy, rx = 42, ry = 15, thick = 11, star }: { cx: number; cy: number; rx?: number; ry?: number; thick?: number; star?: boolean }) {
+  return (
+    <g>
+      <path d={`M${cx - rx} ${cy}v${thick}a${rx} ${ry} 0 0 0 ${rx * 2} 0v${-thick}Z`} fill={DEEP} />
+      <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill={BLUE} />
+      <ellipse cx={cx} cy={cy} rx={rx * 0.74} ry={ry * 0.74} fill="url(#iso-coin)" stroke="#fff" strokeOpacity=".55" strokeWidth="2" />
+      {star && <path transform={`translate(${cx} ${cy}) scale(1.1 .62)`} fill="#fff" d="M0-9 2.6-2.6 9 0 2.6 2.6 0 9-2.6 2.6-9 0-2.6-2.6Z" />}
+    </g>
+  );
+}
+
+export function IsoIllustration({ variant, size = 200 }: { variant: IsoVariant; size?: number }) {
+  return (
+    <svg width={size} height={size * 0.82} viewBox="0 0 220 180" role="img" aria-hidden fill="none">
+      <defs>
+        <linearGradient id="iso-coin" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#CFE0FF" />
+          <stop offset="1" stopColor="#4F8FFF" />
+        </linearGradient>
+        <linearGradient id="iso-shield" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#DDE9FF" />
+          <stop offset="1" stopColor="#3B78FF" />
+        </linearGradient>
+      </defs>
+      {/* plataforma */}
+      <ellipse cx="110" cy="150" rx="86" ry="27" fill={PALE2} />
+      <ellipse cx="110" cy="144" rx="86" ry="27" fill={PALE} stroke="#fff" strokeWidth="3" />
+      <ellipse cx="110" cy="144" rx="62" ry="18" fill="#fff" opacity=".65" />
+
+      {variant === 'coin' && (
+        <g>
+          <Coin cx={110} cy={128} star />
+          <Coin cx={110} cy={108} />
+          <Coin cx={110} cy={88} star />
+          <path transform="translate(168 52)" fill={GOLD} d="M0-10 2.8-2.8 10 0 2.8 2.8 0 10-2.8 2.8-10 0-2.8-2.8Z" />
+          <path transform="translate(54 78) scale(.7)" fill={LIGHT} d="M0-10 2.8-2.8 10 0 2.8 2.8 0 10-2.8 2.8-10 0-2.8-2.8Z" />
+        </g>
+      )}
+
+      {variant === 'shield' && (
+        <g>
+          <path d="M116 34 160 48V92c0 28-18 44-44 56-26-12-44-28-44-56V48l44-14Z" fill={PALE2} transform="translate(8 8)" />
+          <path d="M108 26 152 40V84c0 28-18 44-44 56-26-12-44-28-44-56V40l44-14Z" fill="url(#iso-shield)" stroke="#fff" strokeWidth="4" strokeLinejoin="round" />
+          <path d="m88 80 15 15 28-30" stroke="#fff" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
+          <path transform="translate(168 48)" fill={GOLD} d="M0-10 2.8-2.8 10 0 2.8 2.8 0 10-2.8 2.8-10 0-2.8-2.8Z" />
+        </g>
+      )}
+
+      {variant === 'gift' && (
+        <g>
+          <Cuboid cx={110} cy={138} a={46} h={52} top="#B9D0FF" left={BLUE} right={DEEP} />
+          {/* fita */}
+          <path d="M110 64L124 71V143L110 150Z" fill={GOLD} opacity=".95" />
+          <path d="M96 71L110 64V150L96 143Z" fill="#FFD36B" />
+          <path d="M110 59c-6-16-26-16-26-6 0 8 16 9 26 6Zm0 0c6-16 26-16 26-6 0 8-16 9-26 6Z" fill={GOLD} stroke="#fff" strokeWidth="2" />
+          <path transform="translate(172 54)" fill={GOLD} d="M0-10 2.8-2.8 10 0 2.8 2.8 0 10-2.8 2.8-10 0-2.8-2.8Z" />
+        </g>
+      )}
+
+      {variant === 'users' && (
+        <g>
+          {[{ x: 74, c: LIGHT, s: 0.82 }, { x: 146, c: '#5C93FF', s: 0.82 }, { x: 110, c: BLUE, s: 1 }].map((u, i) => (
+            <g key={i} transform={`translate(${u.x} 0) scale(${u.s}) translate(${-u.x} 0)`} style={{ transformOrigin: `${u.x}px 140px` }}>
+              <ellipse cx={u.x} cy={140} rx="26" ry="9" fill={PALE2} opacity={i === 2 ? 0 : 1} />
+              <path d={`M${u.x - 24} ${u.s < 1 ? 138 : 134}c0-24 14-34 24-34s24 10 24 34c0 10-48 10-48 0Z`} fill={u.c} stroke="#fff" strokeWidth="3" />
+              <circle cx={u.x} cy={u.s < 1 ? 84 : 78} r="17" fill="#fff" />
+              <circle cx={u.x} cy={u.s < 1 ? 84 : 78} r="14" fill="url(#iso-coin)" />
+            </g>
+          ))}
+          <path transform="translate(176 46)" fill={GOLD} d="M0-10 2.8-2.8 10 0 2.8 2.8 0 10-2.8 2.8-10 0-2.8-2.8Z" />
+        </g>
+      )}
+
+      {variant === 'chart' && (
+        <g>
+          <Cuboid cx={70} cy={138} a={22} h={30} top="#CFE0FF" left={LIGHT} right="#5C93FF" />
+          <Cuboid cx={110} cy={148} a={22} h={56} top="#B9D0FF" left="#5C93FF" right={BLUE} />
+          <Cuboid cx={150} cy={138} a={22} h={84} top="#9DBEFF" left={BLUE} right={DEEP} />
+          <path d="m60 82 40-22 30 12 36-30" stroke={GOLD} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="166" cy="42" r="6" fill={GOLD} stroke="#fff" strokeWidth="2" />
+        </g>
+      )}
+    </svg>
+  );
+}

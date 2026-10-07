@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { EmptyState } from '@/components/EmptyState';
 import type { Prisma } from '@prisma/client';
 import { maskCpf, formatPhone, onlyDigits } from '@/lib/br';
 import { prisma } from '@/lib/db';
@@ -63,9 +64,12 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
       </section>
 
       {wallets.length === 0 ? (
-        <p className="glass-panel p-6 text-center text-sm text-slate-600">
-          {q ? 'Nenhum cliente encontrado.' : 'Ainda não há clientes. Eles aparecem aqui quando leem o primeiro QR Code.'}
-        </p>
+        <EmptyState
+          variant="users"
+          title={q ? 'Nenhum cliente encontrado' : 'Ainda não há clientes'}
+          text={q ? 'Confira o nome, o CPF ou o telefone e tente de novo.' : 'Eles aparecem aqui quando leem o primeiro QR Code. Lance uma compra no caixa para começar.'}
+          action={q ? undefined : { href: '/dashboard/caixa', label: 'Abrir o Caixa' }}
+        />
       ) : (
         <ul className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
           {wallets.map((w) => {

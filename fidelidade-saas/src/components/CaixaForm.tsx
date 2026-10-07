@@ -22,11 +22,13 @@ export function CaixaForm({ pointsPerReal, rules, promos = [] }: { pointsPerReal
 
   // Prévia apenas visual — o servidor recalcula os pontos com as regras do banco.
   const promoList = useMemo(() => promos.map((p) => ({ ...p, startsAt: p.startsAt ? new Date(p.startsAt) : null, endsAt: p.endsAt ? new Date(p.endsAt) : null })), [promos]);
-  const livePromos = promoList.filter((p) => promoActiveAt(p));
+  const liveAll = promoList.filter((p) => promoActiveAt(p));
+  const livePromos = liveAll.filter((p) => p.audience === 'ALL');
+  const liveAudience = liveAll.filter((p) => p.audience !== 'ALL');
   const preview = useMemo(() => {
     const cents = amount.trim() ? parseMoneyToCents(amount) ?? 0 : 0;
     const extras = rules.filter((r) => checked.includes(r.id)).reduce((n, r) => n + r.points, 0);
-    return applyPromos(calculatePoints(cents, pointsPerReal), cents, promoList).points + extras;
+    return applyPromos(calculatePoints(cents, pointsPerReal), cents, promoList.filter((p) => p.audience === 'ALL')).points + extras;
   }, [amount, checked, pointsPerReal, rules, promoList]);
 
   const toggle = (id: string) => setChecked((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id]));
@@ -58,6 +60,11 @@ export function CaixaForm({ pointsPerReal, rules, promos = [] }: { pointsPerReal
   return (
     <div className="glass-panel p-6 sm:p-8">
       <h1 className="mb-6 text-center text-2xl font-bold text-primary">Gerar pontos</h1>
+      {liveAudience.length > 0 && (
+        <p className="mb-5 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-900" role="status">
+          <strong>Campanha por público:</strong> {liveAudience.map((p) => `${p.title} (${promoBadge(p)})`).join(' · ')}. O bônus entra sozinho quando o cliente ler o QR, se ele fizer parte do público.
+        </p>
+      )}
       {livePromos.length > 0 && (
         <p className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900" role="status">
           <strong>Campanha valendo agora:</strong> {livePromos.map((p) => `${p.title} (${promoBadge(p)}${p.minAmountCents > 0 ? `, a partir de R$ ${(p.minAmountCents / 100).toFixed(2).replace('.', ',')}` : ''})`).join(' · ')}. Os pontos já saem com a campanha aplicada.
