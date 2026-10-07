@@ -6,6 +6,7 @@ import { distanceMeters, formatDistance } from '@/lib/geo';
 import { formatPoints } from '@/lib/points';
 import type { CampaignItem } from '@/lib/campaigns';
 import { CampaignCards } from './CampaignCards';
+import { Carousel } from './Carousel';
 import { CategoryArt } from './CategoryArt';
 import { Icon } from './Icons';
 import { Illustration } from './Illustrations';
@@ -44,6 +45,7 @@ export function PlacesExplorer({ places, categories, loggedIn }: { places: Place
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
   const [category, setCategory] = useState<string | null>(null);
+  const [allOpen, setAllOpen] = useState(false);
   const [pos, setPos] = useState<Pos | null>(null);
   const [geo, setGeo] = useState<'idle' | 'loading' | 'denied' | 'error'>('idle');
 
@@ -67,6 +69,13 @@ export function PlacesExplorer({ places, categories, loggedIn }: { places: Place
   useEffect(() => {
     navigator.permissions?.query({ name: 'geolocation' }).then((r) => r.state === 'granted' && locate()).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!allOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setAllOpen(false);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [allOpen]);
 
   const list = useMemo(() => {
     const q = norm(query.trim());
@@ -161,26 +170,85 @@ export function PlacesExplorer({ places, categories, loggedIn }: { places: Place
         items={list.flatMap((p) => p.campaigns.map((c) => ({ ...c, placeId: p.id, placeName: p.name, logoUrl: p.logoUrl })))}
       />
 
-      {/* Categorias: ícone redondo com o nome embaixo. Sem barra de rolagem no celular; quebra de linha no computador. */}
-      <div className="chip-row !items-start !gap-3.5" role="group" aria-label="Categorias">
-        {[{ value: '', label: 'Todos', icon: 'todos' }, ...categories.map((c) => ({ ...c, icon: c.value }))].map((c) => {
-          const on = (category ?? '') === c.value;
+      {/* Categorias em carrossel. "Todos" abre a lista completa. */}
+      <Carousel label="Categorias">
+        <li className="shrink-0 snap-start">
+          <button type="button" onClick={() => setAllOpen(true)} aria-haspopup="dialog" className="group flex w-[4.5rem] flex-col items-center gap-1.5 !bg-transparent !p-0 !shadow-none">
+            <span className="rounded-[1.25rem] p-0.5 transition-all group-hover:-translate-y-0.5">
+              <CategoryArt name="todos" size={60} />
+            </span>
+            <span className="text-center text-[11px] font-semibold leading-tight text-slate-700">Todos</span>
+          </button>
+        </li>
+        {categories.map((c) => {
+          const on = category === c.value;
           return (
-            <button
-              key={c.value || 'todos'}
-              type="button"
-              aria-pressed={on}
-              onClick={() => setCategory(c.value === '' || on ? null : c.value)}
-              className="group flex w-[4.5rem] shrink-0 flex-col items-center gap-1.5 !bg-transparent !p-0 !shadow-none"
-            >
-              <span className={`rounded-[1.25rem] p-0.5 transition-all group-hover:-translate-y-0.5 ${on ? 'bg-electric-600 shadow-md shadow-blue-900/25' : ''}`}>
-                <CategoryArt name={c.icon} size={60} />
-              </span>
-              <span className={`text-center text-[11px] font-semibold leading-tight ${on ? 'text-electric-600' : 'text-slate-700'}`}>{c.label}</span>
-            </button>
+            <li key={c.value} className="shrink-0 snap-start">
+              <button
+                type="button"
+                aria-pressed={on}
+                onClick={() => setCategory(on ? null : c.value)}
+                className="group flex w-[4.5rem] flex-col items-center gap-1.5 !bg-transparent !p-0 !shadow-none"
+              >
+                <span className={`rounded-[1.25rem] p-0.5 transition-all group-hover:-translate-y-0.5 ${on ? 'bg-electric-600 shadow-md shadow-blue-900/25' : ''}`}>
+                  <CategoryArt name={c.value} size={60} />
+                </span>
+                <span className={`text-center text-[11px] font-semibold leading-tight ${on ? 'text-electric-600' : 'text-slate-700'}`}>{c.label}</span>
+              </button>
+            </li>
           );
         })}
-      </div>
+      </Carousel>
+
+      {category && (
+        <button type="button" onClick={() => setCategory(null)} className="glass-button-ghost btn-sm" aria-label="Limpar categoria">
+          Categoria: {categories.find((c) => c.value === category)?.label} ✕
+        </button>
+      )}
+
+      {allOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 md:items-center md:p-6" onClick={() => setAllOpen(false)}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="todas-categorias"
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-[85vh] w-full max-w-2xl animate-fade-in overflow-y-auto rounded-t-3xl bg-white p-5 shadow-2xl md:rounded-3xl"
+          >
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 id="todas-categorias" className="text-lg font-extrabold text-primary">Todas as categorias</h2>
+              <button type="button" onClick={() => setAllOpen(false)} className="glass-button-ghost btn-sm !px-3" aria-label="Fechar">✕</button>
+            </div>
+            <ul className="grid grid-cols-4 gap-x-2 gap-y-4 sm:grid-cols-5 md:grid-cols-6">
+              {categories.map((c) => {
+                const on = category === c.value;
+                return (
+                  <li key={c.value} className="flex justify-center">
+                    <button
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => {
+                        setCategory(on ? null : c.value);
+                        setAllOpen(false);
+                      }}
+                      className="group flex w-[4.5rem] flex-col items-center gap-1.5 !bg-transparent !p-0 !shadow-none"
+                    >
+                      <span className={`rounded-[1.25rem] p-0.5 transition-all group-hover:-translate-y-0.5 ${on ? 'bg-electric-600 shadow-md shadow-blue-900/25' : ''}`}>
+                        <CategoryArt name={c.value} size={60} />
+                      </span>
+                      <span className={`text-center text-[11px] font-semibold leading-tight ${on ? 'text-electric-600' : 'text-slate-700'}`}>{c.label}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button type="button" className="glass-button-ghost btn-sm" onClick={() => { setCategory(null); setAllOpen(false); }}>Mostrar todos os lugares</button>
+              <button type="button" className="glass-button-ghost btn-sm" onClick={() => setAllOpen(false)}>Fechar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center justify-between">
         <h2 className="font-bold text-slate-800">{pos ? 'Lugares por perto' : 'Todos os lugares'}</h2>

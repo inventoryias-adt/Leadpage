@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import type { CampaignItem } from '@/lib/campaigns';
 import { formatPoints } from '@/lib/points';
+import { Carousel } from './Carousel';
 import { Icon, type IconName } from './Icons';
 import { PlaceAvatar } from './Visual';
 
@@ -38,11 +39,11 @@ export function CampaignCards({ items, loggedIn }: { items: CampaignView[]; logg
         <span className="text-sm text-slate-500">{items.length} {items.length === 1 ? 'campanha' : 'campanhas'}</span>
       </div>
 
-      <ul className="campaign-row">
+      <Carousel label="Campanhas">
         {shown.map((c) => {
           const look = LOOK[c.kind];
           return (
-            <li key={`${c.placeId}-${c.id}`}>
+            <li key={`${c.placeId}-${c.id}`} className="w-[15.5rem] shrink-0 snap-start">
               <button
                 type="button"
                 onClick={() => setOpen(c)}
@@ -66,7 +67,7 @@ export function CampaignCards({ items, loggedIn }: { items: CampaignView[]; logg
             </li>
           );
         })}
-      </ul>
+      </Carousel>
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 p-0 md:items-center md:p-6" onClick={() => setOpen(null)}>
