@@ -1,4 +1,5 @@
 import { Brand } from '@/components/Brand';
+import { Icon } from '@/components/Icons';
 import { claimPoints } from '@/app/actions/customer';
 import { CustomerAuthForm } from '@/components/AuthForms';
 import { prisma } from '@/lib/db';
@@ -54,7 +55,7 @@ export default async function ClaimPage({ params }: { params: Promise<{ token: s
         {schedule && (
           <div className="mb-5 space-y-2">
             <OpeningHours schedule={schedule} title="Quando você pode vir resgatar" />
-            {claim.restaurant.address && <p className="text-center text-xs text-slate-500">📍 {claim.restaurant.address}</p>}
+            {claim.restaurant.address && <p className="flex items-center justify-center gap-1 text-center text-xs text-slate-500"><Icon name="pin" size={13} /> {claim.restaurant.address}</p>}
           </div>
         )}
 

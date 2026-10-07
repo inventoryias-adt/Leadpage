@@ -95,3 +95,11 @@ export function isOpenNow(schedule: Schedule, now: Date = new Date()): boolean {
   }
   return false;
 }
+
+/** "Hoje: 9h às 23h" ou "Hoje: fechado" (dia da semana em Brasília). */
+export function todayLabel(schedule: Schedule, now: Date = new Date()): string {
+  const day = new Date(now.getTime() - 3 * 60 * 60 * 1000).getUTCDay();
+  const d = schedule.find((x) => x.day === day);
+  if (!d || d.closed) return 'Hoje: fechado';
+  return `Hoje: ${fmtTime(d.open)} às ${fmtTime(d.close)}`;
+}

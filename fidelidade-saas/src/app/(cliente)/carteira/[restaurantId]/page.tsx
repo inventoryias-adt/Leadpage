@@ -1,6 +1,6 @@
 import Link from 'next/link';
+import { Icon } from '@/components/Icons';
 import { notFound } from 'next/navigation';
-import { customerLogout } from '@/app/actions/customer';
 import { Brand } from '@/components/Brand';
 import { prisma } from '@/lib/db';
 import { formatPoints, startOfMonthBR } from '@/lib/points';
@@ -43,17 +43,14 @@ export default async function WalletPage({
   const limitReached = usedThisMonth >= restaurant.maxRedeemsPerMonth;
 
   return (
-    <main className="safe-bottom mx-auto min-h-screen max-w-md p-4 sm:p-6">
+    <main className="p-4 sm:p-6">
       <header className="mb-6">
-        <div className="mb-5 flex items-center justify-between">
-          <Brand href="/carteira" />
-          <form action={customerLogout}><button className="glass-button-ghost btn-sm">Sair</button></form>
-        </div>
-        <h1 className="text-xl font-bold text-primary">Olá, {customer.name.split(' ')[0]} 👋</h1>
-        <p className="truncate text-sm text-slate-500">{restaurant.name}</p>
+        <Brand href="/carteira" />
+        <h1 className="mt-5 text-2xl font-extrabold tracking-tight text-primary">{restaurant.name}</h1>
+        <p className="truncate text-sm text-slate-500">Olá, {customer.name.split(' ')[0]}. Sua carteira neste lugar.</p>
       </header>
 
-      {credited && <p role="status" className="glass-success mb-4 animate-fade-in">Pontos creditados na sua carteira! 🎉</p>}
+      {credited && <p role="status" className="glass-success mb-4 animate-fade-in">Pontos creditados na sua carteira!</p>}
 
       {/* Saldo */}
       <section className="glass-panel relative mb-6 overflow-hidden p-6">
@@ -64,6 +61,10 @@ export default async function WalletPage({
           <span className="mb-1 text-lg font-semibold text-electric-600">pts</span>
         </p>
         <p className="mt-3 text-xs text-slate-500">Para ganhar mais, escaneie o QR Code que o caixa gerar na sua próxima conta.</p>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <Link href={`/lugar/${restaurantId}/premios`} className="glass-button btn-sm !w-full">Montar sacola</Link>
+          <Link href={`/lugar/${restaurantId}`} className="glass-button-ghost btn-sm !w-full">Ver o lugar</Link>
+        </div>
       </section>
 
       {/* Vouchers aguardando entrega */}
@@ -73,7 +74,7 @@ export default async function WalletPage({
           {schedule && (
             <div className="mb-3 space-y-2">
               <OpeningHours schedule={schedule} />
-              {restaurant.address && <p className="text-center text-xs text-slate-500">📍 {restaurant.address}</p>}
+              {restaurant.address && <p className="flex items-center justify-center gap-1 text-center text-xs text-slate-500"><Icon name="pin" size={13} /> {restaurant.address}</p>}
             </div>
           )}
           <div className="space-y-3">
@@ -94,7 +95,7 @@ export default async function WalletPage({
       {schedule && vouchers.length === 0 && (
         <section className="mb-6 space-y-2">
           <OpeningHours schedule={schedule} title="Horário de funcionamento" />
-          {restaurant.address && <p className="text-center text-xs text-slate-500">📍 {restaurant.address}</p>}
+          {restaurant.address && <p className="flex items-center justify-center gap-1 text-center text-xs text-slate-500"><Icon name="pin" size={13} /> {restaurant.address}</p>}
         </section>
       )}
 

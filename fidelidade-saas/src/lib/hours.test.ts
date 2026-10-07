@@ -57,3 +57,10 @@ test('dia fechado', () => {
   const s = week({ 3: { closed: true } });
   assert.equal(isOpenNow(s, new Date('2026-10-07T15:00:00Z')), false);
 });
+
+import { todayLabel } from './hours';
+test('rótulo de hoje', () => {
+  const s = week({ 3: { open: '11:30', close: '22:00' }, 4: { closed: true } });
+  assert.equal(todayLabel(s, new Date('2026-10-07T15:00:00Z')), 'Hoje: 11h30 às 22h'); // quarta
+  assert.equal(todayLabel(s, new Date('2026-10-08T15:00:00Z')), 'Hoje: fechado'); // quinta
+});

@@ -9,6 +9,11 @@ import { requireActiveRestaurant, requirePaidRestaurant } from '@/lib/session';
 import { MAX_BILL_CENTS, CLAIM_TTL_HOURS, calculatePoints, formatBRL, parseMoneyToCents } from '@/lib/points';
 import { newClaimToken } from '@/lib/tokens';
 import { parseSchedule, scheduleSchema } from '@/lib/hours';
+import { isCategory } from '@/lib/categories';
+import { validCoords } from '@/lib/geo';
+import { BusinessError } from '@/lib/claims';
+import { saveImageFromDataUrl } from '@/lib/images';
+import { describeChallenge } from '@/lib/challenges';
 import { fail, type FormState } from '@/lib/form';
 
 const firstIssue = (e: z.ZodError) => e.issues[0].message;
@@ -90,8 +95,15 @@ export async function removeInteraction(formData: FormData) {
 
 const rewardSchema = z.object({
   name: z.string().trim().min(2, 'Informe o nome do produto.').max(80),
+  description: z.string().trim().max(160).optional().default(''),
   pointsCost: z.coerce.number().int('Use um número inteiro.').min(1, 'Mínimo de 1 ponto.').max(10_000_000),
 });
+
+/** Aceita só data URL de imagem; campo vazio = sem foto nova. */
+const imageField = (formData: FormData, key: string) => {
+  const v = String(formData.get(key) ?? '');
+  return v.startsWith('data:image/') ? v : null;
+};
 
 export async function addReward(_: FormState, formData: FormData): Promise<FormState> {
   const restaurant = await requirePaidRestaurant();
@@ -101,9 +113,36 @@ export async function addReward(_: FormState, formData: FormData): Promise<FormS
     return fail('Limite de 100 produtos atingido.', formData);
   }
 
-  await prisma.reward.create({ data: { ...parsed.data, restaurantId: restaurant.id } });
+  try {
+    const photo = imageField(formData, 'imageData');
+    const imageId = photo ? await saveImageFromDataUrl(restaurant.id, photo) : null;
+    await prisma.reward.create({
+      data: { name: parsed.data.name, description: parsed.data.description || null, pointsCost: parsed.data.pointsCost, imageId, restaurantId: restaurant.id },
+    });
+  } catch (e) {
+    if (e instanceof BusinessError) return fail(e.message, formData);
+    throw e;
+  }
   revalidatePath('/dashboard', 'layout');
   return { ok: 'Produto adicionado.' };
+}
+
+/** Troca a foto de um prêmio já cadastrado. */
+export async function setRewardImage(_: FormState, formData: FormData): Promise<FormState> {
+  const restaurant = await requirePaidRestaurant();
+  const id = String(formData.get('id') ?? '');
+  const reward = await prisma.reward.findFirst({ where: { id, restaurantId: restaurant.id } });
+  const photo = imageField(formData, 'imageData');
+  if (!reward || !photo) return { error: 'Escolha uma foto.' };
+  try {
+    const imageId = await saveImageFromDataUrl(restaurant.id, photo, reward.imageId);
+    await prisma.reward.update({ where: { id }, data: { imageId } });
+  } catch (e) {
+    if (e instanceof BusinessError) return { error: e.message };
+    throw e;
+  }
+  revalidatePath('/dashboard', 'layout');
+  return { ok: 'Foto atualizada.' };
 }
 
 /** Prêmios já resgatados não podem ser apagados (histórico) — apenas desativados. */
@@ -132,6 +171,133 @@ export async function finishOnboarding(_: FormState, __: FormData): Promise<Form
   }
   await prisma.restaurant.update({ where: { id: restaurant.id }, data: { onboardedAt: new Date() } });
   redirect('/dashboard/caixa');
+}
+
+// ---------------------------------------------------------------- Identidade, localização e vitrine
+
+const identitySchema = z.object({
+  category: z.string().trim().default(''),
+  instagram: z.string().trim().default(''),
+  googleReviewUrl: z.string().trim().default(''),
+  latitude: z.string().trim().default(''),
+  longitude: z.string().trim().default(''),
+});
+
+/** Aceita o link de avaliação do Google ou só o Place ID (ChIJ…), e devolve o link final. */
+function normalizeGoogleReview(input: string): string | null | 'invalid' {
+  if (!input) return null;
+  if (/^ChIJ[\w-]{10,}$/.test(input)) return `https://search.google.com/local/writereview?placeid=${input}`;
+  try {
+    const url = new URL(input);
+    const host = url.hostname;
+    const ok = url.protocol === 'https:' && (/(^|\.)google\.[a-z.]+$/.test(host) || host === 'g.page' || host === 'goo.gl' || host === 'maps.app.goo.gl' || host === 'g.co');
+    return ok ? url.toString() : 'invalid';
+  } catch {
+    return 'invalid';
+  }
+}
+
+export async function saveIdentity(_: FormState, formData: FormData): Promise<FormState> {
+  const restaurant = await requirePaidRestaurant();
+  const parsed = identitySchema.parse(Object.fromEntries(formData));
+
+  if (parsed.category && !isCategory(parsed.category)) return fail('Categoria inválida.', formData);
+
+  const instagram = parsed.instagram.replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/$/, '');
+  if (instagram && !/^[A-Za-z0-9._]{1,30}$/.test(instagram)) return fail('Instagram inválido. Use só o @ do perfil (ex.: burgerdoze).', formData);
+
+  const review = normalizeGoogleReview(parsed.googleReviewUrl);
+  if (review === 'invalid') {
+    return fail('Link do Google inválido. Cole o link de avaliação do Google Meu Negócio (ou o Place ID).', formData);
+  }
+
+  let latitude: number | null = null;
+  let longitude: number | null = null;
+  if (parsed.latitude || parsed.longitude) {
+    latitude = Number(parsed.latitude.replace(',', '.'));
+    longitude = Number(parsed.longitude.replace(',', '.'));
+    if (!validCoords(latitude, longitude)) return fail('Localização inválida. Use o botão "Usar minha localização atual".', formData);
+  }
+
+  try {
+    const logo = imageField(formData, 'logoData');
+    const cover = imageField(formData, 'coverData');
+    const logoImageId = logo ? await saveImageFromDataUrl(restaurant.id, logo, restaurant.logoImageId) : restaurant.logoImageId;
+    const coverImageId = cover ? await saveImageFromDataUrl(restaurant.id, cover, restaurant.coverImageId) : restaurant.coverImageId;
+
+    await prisma.restaurant.update({
+      where: { id: restaurant.id },
+      data: {
+        category: parsed.category || null,
+        instagram: instagram || null,
+        googleReviewUrl: review,
+        latitude,
+        longitude,
+        listed: formData.get('listed') === 'on',
+        logoImageId,
+        coverImageId,
+      },
+    });
+  } catch (e) {
+    if (e instanceof BusinessError) return fail(e.message, formData);
+    throw e;
+  }
+  revalidatePath('/dashboard', 'layout');
+  return { ok: 'Identidade do lugar salva.' };
+}
+
+const engagementSchema = z.object({
+  checkInPoints: z.coerce.number().int('Use um número inteiro.').min(0).max(10_000),
+  referralPoints: z.coerce.number().int('Use um número inteiro.').min(0).max(100_000),
+});
+
+export async function saveEngagement(_: FormState, formData: FormData): Promise<FormState> {
+  const restaurant = await requirePaidRestaurant();
+  const parsed = engagementSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return fail(firstIssue(parsed.error), formData);
+  await prisma.restaurant.update({ where: { id: restaurant.id }, data: parsed.data });
+  revalidatePath('/dashboard', 'layout');
+  return { ok: 'Salvo.' };
+}
+
+// ---------------------------------------------------------------- Desafios
+
+const challengeSchema = z.object({
+  kind: z.enum(['PURCHASES', 'CHECKINS']),
+  period: z.enum(['WEEK', 'MONTH']),
+  target: z.coerce.number().int('Use um número inteiro.').min(1, 'A meta mínima é 1.').max(60),
+  minAmount: z.string().default(''),
+  bonusPoints: z.coerce.number().int('Use um número inteiro.').min(1, 'Informe os pontos de bônus.').max(100_000),
+});
+
+export async function addChallenge(_: FormState, formData: FormData): Promise<FormState> {
+  const restaurant = await requirePaidRestaurant();
+  const parsed = challengeSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return fail(firstIssue(parsed.error), formData);
+  const { kind, period, target, bonusPoints } = parsed.data;
+
+  let minAmountCents = 0;
+  if (kind === 'PURCHASES' && parsed.data.minAmount.trim()) {
+    const cents = parseMoneyToCents(parsed.data.minAmount);
+    if (cents === null || cents > MAX_BILL_CENTS) return fail('Valor mínimo inválido. Exemplo: 42,00', formData);
+    minAmountCents = cents;
+  }
+  if ((await prisma.challenge.count({ where: { restaurantId: restaurant.id } })) >= 10) {
+    return fail('Limite de 10 desafios atingido.', formData);
+  }
+
+  const title = describeChallenge({ kind, target, minAmountCents, period });
+  await prisma.challenge.create({
+    data: { restaurantId: restaurant.id, title, kind, period, target, minAmountCents, bonusPoints },
+  });
+  revalidatePath('/dashboard', 'layout');
+  return { ok: 'Desafio criado.' };
+}
+
+export async function removeChallenge(formData: FormData) {
+  const restaurant = await requirePaidRestaurant();
+  await prisma.challenge.deleteMany({ where: { id: String(formData.get('id')), restaurantId: restaurant.id } });
+  revalidatePath('/dashboard', 'layout');
 }
 
 // ---------------------------------------------------------------- Caixa

@@ -1,20 +1,21 @@
 import Link from 'next/link';
 import { Brand } from '@/components/Brand';
+import { Icon, type IconName } from '@/components/Icons';
 import { SignupForm } from '@/components/AuthForms';
 
 const steps = [
-  { n: '1', title: 'O caixa lança a conta', text: 'Digita o valor gasto e marca se o cliente avaliou no Google ou postou no Instagram.' },
+  { n: '1', title: 'O caixa lança a conta', text: 'Ele digita o valor gasto e marca se o cliente avaliou no Google ou postou no Instagram.' },
   { n: '2', title: 'Cliente lê o QR Code', text: 'Ou recebe o link no WhatsApp. Sem baixar app: abre direto no celular, em segundos.' },
   { n: '3', title: 'Pontos viram prêmios', text: 'O saldo fica na carteira digital do cliente e ele troca por produtos que você escolheu.' },
 ];
 
 const benefits = [
-  { icon: '⭐', title: 'Mais avaliações no Google', text: 'Pontos extras para quem avalia sua casa com 5 estrelas e fortalece seu ranking local.' },
-  { icon: '📸', title: 'Divulgação orgânica', text: 'Clientes ganham pontos ao postar e marcar o restaurante no Instagram.' },
-  { icon: '🔁', title: 'Cliente que volta', text: 'Saldo de pontos é motivo concreto para voltar — e para pedir mais da próxima vez.' },
-  { icon: '🛡️', title: 'Controle antifraude', text: 'QR Code de uso único, validade de 24h e limite mensal de resgates por CPF.' },
-  { icon: '📱', title: 'Feito para o balcão', text: 'Painel otimizado para celular e notebook: lançar pontos leva menos de 10 segundos.' },
-  { icon: '⚙️', title: 'Você dita as regras', text: 'Defina a conversão (ex.: R$ 1 = 10 pontos), as interações e os prêmios.' },
+  { icon: 'star' as IconName, title: 'Mais avaliações no Google', text: 'Pontos extras para quem avalia sua casa com 5 estrelas e fortalece seu ranking local.' },
+  { icon: 'camera' as IconName, title: 'Divulgação orgânica', text: 'Clientes ganham pontos ao postar e marcar o restaurante no Instagram.' },
+  { icon: 'trophy' as IconName, title: 'Cliente que volta', text: 'Saldo de pontos é motivo concreto para voltar — e para pedir mais da próxima vez.' },
+  { icon: 'lock' as IconName, title: 'Controle antifraude', text: 'QR Code de uso único, validade de 24h e limite mensal de resgates por CPF.' },
+  { icon: 'receipt' as IconName, title: 'Feito para o balcão', text: 'Painel otimizado para celular e notebook: lançar pontos leva menos de 10 segundos.' },
+  { icon: 'cog' as IconName, title: 'Você dita as regras', text: 'Defina a conversão (ex.: R$ 1 = 10 pontos), as interações e os prêmios.' },
 ];
 
 const faqs = [
@@ -82,7 +83,7 @@ export default function LandingPage() {
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {benefits.map((b) => (
             <div key={b.title} className="glass-panel-sm p-5">
-              <div className="mb-2 text-2xl" aria-hidden>{b.icon}</div>
+              <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-electric-600/10 text-electric-600"><Icon name={b.icon} size={22} /></span>
               <h3 className="mb-1 font-bold text-slate-800">{b.title}</h3>
               <p className="text-sm text-slate-600">{b.text}</p>
             </div>

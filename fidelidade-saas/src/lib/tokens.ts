@@ -13,3 +13,10 @@ export function newVoucherCode(): string {
   for (let i = 0; i < 6; i++) out += ALPHABET[randomInt(ALPHABET.length)];
   return out;
 }
+
+/** Código curto do link "Indique amigos" (8 caracteres sem ambiguidade). */
+export function newReferralCode(): string {
+  let out = '';
+  for (let i = 0; i < 8; i++) out += ALPHABET[randomInt(ALPHABET.length)];
+  return out;
+}

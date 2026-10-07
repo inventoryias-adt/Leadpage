@@ -12,7 +12,7 @@ export function SignupForm() {
     <form action={action} className="space-y-4">
       <div>
         <label className="glass-label" htmlFor="name">Nome do estabelecimento</label>
-        <input id="name" name="name" defaultValue={state.values?.name} className="glass-input" placeholder="Ex: Burger do Zé" autoComplete="organization" required />
+        <input id="name" name="name" defaultValue={state.values?.name} className="glass-input" placeholder="Ex.: Burger do Zé" autoComplete="organization" required />
       </div>
       <div>
         <label className="glass-label" htmlFor="email">E-mail profissional</label>
@@ -58,16 +58,24 @@ export function CustomerAuthForm({
   token,
   next,
   cta,
+  invite,
 }: {
   token?: string;
   next?: string;
   cta: string;
+  invite?: { restaurantId: string; code: string };
 }) {
   const [state, action] = useActionState(customerAuth, {});
   return (
     <form action={action} className="space-y-4">
       {token && <input type="hidden" name="token" value={token} />}
       {next && <input type="hidden" name="next" value={next} />}
+      {invite && (
+        <>
+          <input type="hidden" name="inviteRestaurant" value={invite.restaurantId} />
+          <input type="hidden" name="inviteCode" value={invite.code} />
+        </>
+      )}
       <div>
         <label className="glass-label" htmlFor="cpf">CPF</label>
         <MaskedInput mask="cpf" id="cpf" name="cpf" defaultValue={state.values?.cpf} placeholder="000.000.000-00" autoComplete="off" required />

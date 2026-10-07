@@ -1,6 +1,8 @@
 /** Estado devolvido pelas Server Actions para os formulários (useActionState). */
 export type FormState = { error?: string; ok?: string; values?: Record<string, string> };
 
+export type BagState = FormState & { codes?: { name: string; code: string }[] };
+
 /**
  * Erro de formulário que devolve o que o usuário digitou (menos senhas): o React 19 limpa os
  * campos não controlados após cada action, então reaproveitamos esses valores como defaultValue.
@@ -8,7 +10,7 @@ export type FormState = { error?: string; ok?: string; values?: Record<string, s
 export function fail(error: string, formData: FormData): FormState {
   const values: Record<string, string> = {};
   for (const [key, value] of formData.entries()) {
-    if (typeof value === 'string' && !/password|senha|token/i.test(key)) values[key] = value;
+    if (typeof value === 'string' && !/password|senha|token|data$/i.test(key)) values[key] = value;
   }
   return { error, values };
 }

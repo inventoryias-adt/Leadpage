@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Icon, type IconName } from './Icons';
 
-const items = [
-  { href: '/dashboard', label: 'Início', icon: '🏠' },
-  { href: '/dashboard/caixa', label: 'Caixa', icon: '🧾' },
-  { href: '/dashboard/clientes', label: 'Clientes', icon: '👥' },
-  { href: '/dashboard/resgates', label: 'Resgates', icon: '🎁' },
-  { href: '/dashboard/configuracoes', label: 'Regras', icon: '⚙️' },
+const items: { href: string; label: string; icon: IconName }[] = [
+  { href: '/dashboard', label: 'Início', icon: 'home' },
+  { href: '/dashboard/caixa', label: 'Caixa', icon: 'receipt' },
+  { href: '/dashboard/clientes', label: 'Clientes', icon: 'users' },
+  { href: '/dashboard/resgates', label: 'Resgates', icon: 'gift' },
+  { href: '/dashboard/configuracoes', label: 'Regras', icon: 'cog' },
 ];
 
 export function DashboardNav({ variant }: { variant: 'top' | 'bottom' }) {
@@ -46,7 +47,7 @@ export function DashboardNav({ variant }: { variant: 'top' | 'bottom' }) {
           onClick={() => setPending(i.href)}
           className={`nav-tab flex flex-col items-center gap-0.5 !rounded-2xl !px-1 !py-2 !text-[11px] ${active(i.href) ? 'nav-tab-active' : ''}`}
         >
-          <span className="text-lg" aria-hidden>{i.icon}</span>
+          <Icon name={i.icon} size={20} />
           {i.label}
         </Link>
       ))}

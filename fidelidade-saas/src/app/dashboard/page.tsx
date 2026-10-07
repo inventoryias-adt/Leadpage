@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Icon } from '@/components/Icons';
 import { prisma } from '@/lib/db';
 import { formatPoints, startOfMonthBR } from '@/lib/points';
 import { requireActiveRestaurant } from '@/lib/session';
@@ -29,7 +30,7 @@ export default async function DashboardHome() {
 
   return (
     <div className="space-y-6">
-      <Link href="/dashboard/caixa" className="glass-button py-5 text-lg">🧾 Lançar pontos no caixa</Link>
+      <Link href="/dashboard/caixa" className="glass-button py-5 text-lg"><Icon name="receipt" size={22} /> Lançar pontos no caixa</Link>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {stats.map((s) => {
           const card = (

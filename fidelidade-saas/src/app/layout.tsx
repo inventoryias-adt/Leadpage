@@ -6,7 +6,7 @@ import './globals.css';
 export const metadata: Metadata = {
   title: { default: 'Fidelize — Programa de pontos para restaurantes', template: '%s · Fidelize' },
   description:
-    'Sistema de recompensa por pontos para restaurantes: faça o cliente voltar, receba mais avaliações no Google e posts no Instagram.',
+    'Sistema de recompensas por pontos para restaurantes: faça o cliente voltar, receba mais avaliações no Google e posts no Instagram.',
   applicationName: 'Fidelize',
   icons: { apple: '/apple-touch-icon.png' },
   appleWebApp: { capable: true, title: 'Fidelize', statusBarStyle: 'default' },
