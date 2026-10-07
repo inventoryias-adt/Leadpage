@@ -5,10 +5,13 @@ export const PLAN_PRICE_CENTS = 19700;
 
 export const appUrl = () => (process.env.APP_URL ?? 'http://localhost:3000').replace(/\/$/, '');
 
+/** Pagamento simulado só em desenvolvimento local ou em *previews* da Vercel — nunca em produção. */
+export const mockPaymentsAllowed = () => process.env.NODE_ENV !== 'production' || process.env.VERCEL_ENV === 'preview';
+
 export function paymentProvider(): 'stripe' | 'mock' {
   const p = process.env.PAYMENT_PROVIDER ?? 'mock';
-  if (p === 'mock' && process.env.NODE_ENV === 'production') {
-    throw new Error('PAYMENT_PROVIDER=mock não é permitido em produção.');
+  if (p !== 'stripe' && !mockPaymentsAllowed()) {
+    throw new Error('Configure PAYMENT_PROVIDER=stripe (pagamento simulado não é permitido em produção).');
   }
   return p === 'stripe' ? 'stripe' : 'mock';
 }

@@ -1,13 +1,13 @@
 import { notFound, redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
-import { paymentProvider } from '@/lib/payments';
+import { mockPaymentsAllowed, paymentProvider } from '@/lib/payments';
 import { requireRestaurant } from '@/lib/session';
 import { SubmitButton } from '@/components/ui';
 
 export const metadata = { title: 'Pagamento simulado' };
 export const dynamic = 'force-dynamic';
 
-const mockEnabled = () => process.env.NODE_ENV !== 'production' && paymentProvider() === 'mock';
+const mockEnabled = () => mockPaymentsAllowed() && paymentProvider() === 'mock';
 
 /** Apenas desenvolvimento (PAYMENT_PROVIDER=mock): simula a aprovação do pagamento. */
 async function approve() {
