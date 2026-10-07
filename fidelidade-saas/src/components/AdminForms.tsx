@@ -3,11 +3,13 @@
 import { useActionState, useState } from 'react';
 import {
   acceptInvite,
+  adminCreateRestaurant,
   adminLogin,
   adminResetPassword,
   adminSaveNote,
   adminSetStatus,
   adminUpdateRestaurant,
+  type CreateState,
   type ResetState,
 } from '@/app/actions/admin';
 import { FormMessage, SubmitButton } from './ui';
@@ -51,40 +53,171 @@ export function InviteForm({ token, name }: { token: string; name: string }) {
   );
 }
 
-const STATUSES = [
-  ['ACTIVE', 'Ativa'],
-  ['PENDING', 'Aguardando pagamento'],
-  ['PAST_DUE', 'Inadimplente'],
-  ['CANCELED', 'Cancelada'],
-] as const;
+type StatusTarget = 'ACTIVE' | 'PAST_DUE' | 'CANCELED';
 
-export function StatusForm({ id, current }: { id: string; current: string }) {
-  const [state, action] = useActionState(adminSetStatus, {});
+const TARGET_COPY: Record<StatusTarget, { title: (n: string) => string; text: string; confirm: string; done: string }> = {
+  PAST_DUE: {
+    title: (n) => `Suspender o acesso de ${n}?`,
+    text: 'O dono volta para a tela de pagamento e o lugar some da vitrine dos clientes. Nada é apagado: clientes, pontos e configurações ficam guardados. Você pode reativar quando quiser.',
+    confirm: 'Sim, suspender acesso',
+    done: 'Acesso suspenso.',
+  },
+  CANCELED: {
+    title: (n) => `Cancelar a assinatura de ${n}?`,
+    text: 'O painel e a vitrine ficam bloqueados para essa conta. Nada é apagado: clientes, pontos e configurações são mantidos, e você pode reativar depois.',
+    confirm: 'Sim, cancelar assinatura',
+    done: 'Assinatura cancelada.',
+  },
+  ACTIVE: {
+    title: (n) => `Liberar o acesso de ${n}?`,
+    text: 'O painel e a vitrine voltam a funcionar na hora. Use quando o pagamento foi feito por fora (Pix, transferência) ou para dar uma cortesia.',
+    confirm: 'Sim, liberar acesso',
+    done: 'Acesso liberado.',
+  },
+};
+
+/** Botões claros no topo da ficha: o que dá para fazer com a assinatura agora, cada um com confirmação. */
+export function StatusActions({ id, current, name }: { id: string; current: string; name: string }) {
+  const [target, setTarget] = useState<StatusTarget | null>(null);
+  const buttons: { to: StatusTarget; label: string; cls: string }[] =
+    current === 'ACTIVE'
+      ? [{ to: 'PAST_DUE', label: 'Suspender acesso', cls: 'glass-button-ghost btn-sm' }, { to: 'CANCELED', label: 'Cancelar assinatura', cls: 'btn-danger btn-sm' }]
+      : current === 'PENDING'
+        ? [{ to: 'ACTIVE', label: 'Liberar acesso (já pagou)', cls: 'glass-button btn-sm' }, { to: 'CANCELED', label: 'Cancelar assinatura', cls: 'btn-danger btn-sm' }]
+        : current === 'PAST_DUE'
+          ? [{ to: 'ACTIVE', label: 'Reativar', cls: 'glass-button btn-sm' }, { to: 'CANCELED', label: 'Cancelar assinatura', cls: 'btn-danger btn-sm' }]
+          : [{ to: 'ACTIVE', label: 'Reativar assinatura', cls: 'glass-button btn-sm' }];
+
   return (
-    <form action={action} className="space-y-3">
-      <input type="hidden" name="id" value={id} />
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div>
-          <label className="glass-label" htmlFor="status">Status da assinatura</label>
-          <select id="status" name="status" className="glass-input" defaultValue={state.values?.status ?? current}>
-            {STATUSES.map(([v, l]) => (
-              <option key={v} value={v}>{l}</option>
-            ))}
-          </select>
+    <>
+      <div className="flex flex-wrap gap-2">
+        {buttons.map((b) => (
+          <button key={b.to} type="button" className={b.cls} onClick={() => setTarget(b.to)} aria-haspopup="dialog">
+            {b.label}
+          </button>
+        ))}
+      </div>
+      {target && <StatusDialog id={id} name={name} target={target} onClose={() => setTarget(null)} />}
+    </>
+  );
+}
+
+/** Montado só enquanto aberto: cada abertura começa com o estado limpo. */
+function StatusDialog({ id, name, target, onClose }: { id: string; name: string; target: StatusTarget; onClose: () => void }) {
+  const [state, action] = useActionState(adminSetStatus, {});
+  const copy = TARGET_COPY[target];
+  const finished = !!state.ok;
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 md:items-center md:p-6" onClick={() => !finished && onClose()}>
+      <form
+        action={action}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="status-title"
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md animate-fade-in space-y-4 rounded-t-3xl bg-white p-6 shadow-2xl md:rounded-3xl"
+      >
+        <input type="hidden" name="id" value={id} />
+        <input type="hidden" name="status" value={target} />
+        <h2 id="status-title" className="text-xl font-semibold text-primary">{copy.title(name)}</h2>
+        {finished ? (
+          <>
+            <p role="status" className="glass-success">{copy.done}</p>
+            <button type="button" className="glass-button" onClick={onClose}>Fechar</button>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-slate-600">{copy.text}</p>
+            <div>
+              <label className="glass-label" htmlFor="status-reason">Motivo <span className="font-normal text-slate-500">(fica no registro)</span></label>
+              <input id="status-reason" name="reason" className="glass-input" maxLength={200} placeholder="Ex.: pediu para cancelar, pagou por Pix" />
+            </div>
+            {state.error && <p role="alert" className="glass-error">{state.error}</p>}
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" className="glass-button-ghost" onClick={onClose}>Voltar</button>
+              <SubmitButton variant={target === 'CANCELED' ? 'ghost' : 'primary'} pendingText="Salvando…" className={target === 'CANCELED' ? '!border-red-600 !bg-red-600 !text-white hover:!bg-white hover:!text-red-600' : ''}>
+                {copy.confirm}
+              </SubmitButton>
+            </div>
+          </>
+        )}
+      </form>
+    </div>
+  );
+}
+
+/** Nova conta de assinante criada pela administração. Mostra a senha temporária uma única vez. */
+export function CreateForm() {
+  const [state, action] = useActionState<CreateState, FormData>(adminCreateRestaurant, {});
+  const [copied, setCopied] = useState(false);
+  if (state.created) {
+    const c = state.created;
+    return (
+      <div className="space-y-4" role="status">
+        <p className="glass-success">Conta criada: <strong>{c.name}</strong> ({c.status}).</p>
+        <div className="glass-inset space-y-1 p-4">
+          <p className="text-xs font-semibold text-slate-500">Entrada do dono</p>
+          <p className="text-sm text-slate-700">E-mail: <strong>{c.email}</strong></p>
+          <p className="text-sm text-slate-700">Senha temporária: <span className="font-mono text-lg font-bold tracking-wider text-primary" data-testid="new-password">{c.password}</span></p>
+          <p className="text-xs text-slate-500">Ela só aparece agora. Passe por um canal seguro; o dono pode trocá-la em Regras → Minha conta.</p>
+          <button
+            type="button"
+            className="glass-button-ghost btn-sm mt-2"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(`E-mail: ${c.email}\nSenha temporária: ${c.password}`);
+                setCopied(true);
+              } catch {
+                /* os dados seguem visíveis na tela */
+              }
+            }}
+          >
+            <Icon name="copy" size={16} /> {copied ? 'Copiado!' : 'Copiar e-mail e senha'}
+          </button>
         </div>
-        <div>
-          <label className="glass-label" htmlFor="reason">Motivo <span className="font-normal text-slate-500">(fica no registro)</span></label>
-          <input id="reason" name="reason" className="glass-input" placeholder="Ex.: pagamento por Pix, cortesia de 30 dias" defaultValue={state.values?.reason} maxLength={200} />
+        <div className="flex flex-wrap gap-2">
+          <a href={`/admin/assinantes/${c.id}`} className="glass-button btn-sm">Abrir a ficha</a>
+          <a href="/admin/assinantes/novo" className="glass-button-ghost btn-sm">Criar outra conta</a>
         </div>
       </div>
-      <p className="text-xs text-slate-500">“Ativa” libera o painel e a vitrine; qualquer outro status leva o dono de volta ao pagamento.</p>
-      <FormMessage state={state} />
-      <SubmitButton variant="ghost" pendingText="Salvando…" className="!w-auto">Alterar status</SubmitButton>
+    );
+  }
+  const v = state.values;
+  return (
+    <form action={action} className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <label className="glass-label" htmlFor="n-name">Nome do estabelecimento</label>
+          <input id="n-name" name="name" className="glass-input" defaultValue={v?.name} maxLength={80} required />
+        </div>
+        <div>
+          <label className="glass-label" htmlFor="n-email">E-mail de acesso</label>
+          <input id="n-email" name="email" type="email" className="glass-input" defaultValue={v?.email} required />
+        </div>
+        <div>
+          <label className="glass-label" htmlFor="n-phone">Telefone / WhatsApp</label>
+          <input id="n-phone" name="phone" inputMode="tel" className="glass-input" placeholder="(11) 91234-5678" defaultValue={v?.phone} required />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="glass-label" htmlFor="n-status">Assinatura</label>
+          <select id="n-status" name="status" className="glass-input" defaultValue={v?.status ?? 'ACTIVE'}>
+            <option value="ACTIVE">Ativa (já pagou por fora ou cortesia)</option>
+            <option value="PENDING">Aguardando pagamento (o dono paga ao entrar)</option>
+          </select>
+        </div>
+      </div>
+      <label className="flex items-start gap-3">
+        <input type="checkbox" name="isTest" defaultChecked={v?.isTest === 'on'} className="mt-0.5 h-5 w-5 rounded accent-electric-500" />
+        <span className="text-sm text-slate-700"><span className="font-semibold">Conta de teste</span> — fica fora da receita e dos números de assinantes.</span>
+      </label>
+      <p className="text-xs text-slate-500">Uma senha temporária é gerada e mostrada uma única vez, depois de criar.</p>
+      {state.error && <p role="alert" className="glass-error">{state.error}</p>}
+      <SubmitButton pendingText="Criando…">Criar conta</SubmitButton>
     </form>
   );
 }
 
-type Editable = { id: string; name: string; phone: string; pointsPerReal: number; maxRedeemsPerMonth: number; checkInPoints: number; referralPoints: number; listed: boolean };
+type Editable = { id: string; name: string; phone: string; pointsPerReal: number; maxRedeemsPerMonth: number; checkInPoints: number; referralPoints: number; listed: boolean; isTest: boolean };
 
 export function EditForm({ r }: { r: Editable }) {
   const [state, action] = useActionState(adminUpdateRestaurant, {});
@@ -121,6 +254,10 @@ export function EditForm({ r }: { r: Editable }) {
       <label className="flex items-center gap-3">
         <input type="checkbox" name="listed" defaultChecked={v ? v.listed === 'on' : r.listed} className="h-5 w-5 rounded accent-electric-500" />
         <span className="text-sm text-slate-700"><span className="font-semibold">Aparece na vitrine “Lugares”</span></span>
+      </label>
+      <label className="flex items-start gap-3">
+        <input type="checkbox" name="isTest" defaultChecked={v ? v.isTest === 'on' : r.isTest} className="mt-0.5 h-5 w-5 rounded accent-electric-500" />
+        <span className="text-sm text-slate-700"><span className="font-semibold">Conta de teste</span> — fica fora da receita e dos números de assinantes. Para esconder da vitrine dos clientes, desmarque a opção acima.</span>
       </label>
       <FormMessage state={state} />
       <SubmitButton variant="ghost" pendingText="Salvando…" className="!w-auto">Salvar dados</SubmitButton>

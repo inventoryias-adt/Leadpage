@@ -14,6 +14,7 @@ import {
   saveUnit,
   setRewardImage,
 } from '@/app/actions/restaurant';
+import { changePassword } from '@/app/actions/auth';
 import { UFS, cepDigits, maskCep, parseViaCep } from '@/lib/address';
 import { CATEGORIES } from '@/lib/categories';
 import { defaultSchedule, parseSchedule, type Schedule } from '@/lib/hours';
@@ -572,6 +573,30 @@ export function UnitForm({ unit, uid }: { unit: UnitFormData; uid: string }) {
 
       <FormMessage state={state} />
       <SubmitButton pendingText="Salvando…">{isNew ? 'Adicionar unidade' : 'Salvar unidade'}</SubmitButton>
+    </form>
+  );
+}
+
+export function PasswordForm() {
+  const [state, action] = useActionState(changePassword, {});
+  return (
+    <form action={action} className="max-w-md space-y-4">
+      <input type="text" name="username" autoComplete="username" className="sr-only" tabIndex={-1} aria-hidden defaultValue="" />
+      <div>
+        <label className="glass-label" htmlFor="pw-cur">Senha atual</label>
+        <input id="pw-cur" name="current" type="password" autoComplete="current-password" className="glass-input" required />
+      </div>
+      <div>
+        <label className="glass-label" htmlFor="pw-new">Nova senha</label>
+        <input id="pw-new" name="next" type="password" autoComplete="new-password" minLength={8} maxLength={72} className="glass-input" required />
+        <p className="mt-1 text-xs text-slate-500">Mínimo de 8 caracteres.</p>
+      </div>
+      <div>
+        <label className="glass-label" htmlFor="pw-conf">Repita a nova senha</label>
+        <input id="pw-conf" name="confirm" type="password" autoComplete="new-password" minLength={8} maxLength={72} className="glass-input" required />
+      </div>
+      <FormMessage state={state} />
+      <SubmitButton pendingText="Salvando…">Trocar senha</SubmitButton>
     </form>
   );
 }

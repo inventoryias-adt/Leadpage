@@ -29,7 +29,7 @@ export default async function Assinantes({ searchParams }: { searchParams: Promi
       where,
       orderBy: { createdAt: 'desc' },
       take: LIMIT,
-      select: { id: true, name: true, email: true, phone: true, subscriptionStatus: true, createdAt: true, onboardedAt: true, _count: { select: { wallets: true, units: true } } },
+      select: { id: true, name: true, email: true, phone: true, isTest: true, subscriptionStatus: true, createdAt: true, onboardedAt: true, _count: { select: { wallets: true, units: true } } },
     }),
   ]);
   const ids = rows.map((r) => r.id);
@@ -51,8 +51,13 @@ export default async function Assinantes({ searchParams }: { searchParams: Promi
   return (
     <div className="space-y-5">
       <section className="glass-panel p-5 sm:p-7">
-        <h1 className="mb-1 text-xl font-semibold text-primary">Assinantes</h1>
-        <p className="mb-4 text-sm text-slate-500">{formatPoints(total)} {total === 1 ? 'conta' : 'contas'} na plataforma.</p>
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="mb-1 text-xl font-semibold text-primary">Assinantes</h1>
+            <p className="text-sm text-slate-500">{formatPoints(total)} {total === 1 ? 'conta' : 'contas'} na plataforma.</p>
+          </div>
+          <Link href="/admin/assinantes/novo" className="glass-button btn-sm">+ Novo assinante</Link>
+        </div>
         <nav aria-label="Status" className="chip-row mb-4">
           {tab('/admin/assinantes', !status, 'Todos', total)}
           {STATUSES.map((s) => tab(`/admin/assinantes?status=${s}`, status === s, STATUS_LOOK[s].label, countOf(s)))}
@@ -87,7 +92,7 @@ export default async function Assinantes({ searchParams }: { searchParams: Promi
                   <tr key={r.id} className="transition-colors hover:bg-[#f6f8fd]">
                     <td className="px-4 py-3">
                       <Link href={`/admin/assinantes/${r.id}`} className="block">
-                        <span className="block font-semibold text-slate-800">{r.name}</span>
+                        <span className="block font-semibold text-slate-800">{r.name}{r.isTest && <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">TESTE</span>}</span>
                         <span className="block text-xs text-slate-500">{r.email}</span>
                         {!r.onboardedAt && r.subscriptionStatus === 'ACTIVE' && <span className="text-xs font-semibold text-amber-700">configuração pendente</span>}
                       </Link>

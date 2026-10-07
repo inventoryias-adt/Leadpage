@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { adminImpersonate } from '@/app/actions/admin';
 import { StatusChip } from '@/components/StatusChip';
 import { KpiCard } from '@/components/DashboardCharts';
 import { EmptyState } from '@/components/EmptyState';
@@ -15,18 +16,20 @@ export default async function AdminHome() {
   const d30 = new Date(now - 30 * DAY);
   const d14 = new Date(now - 14 * DAY);
 
-  const [byStatus, signups, customers, points, purchases, lastClaims, restaurants] = await Promise.all([
-    prisma.restaurant.groupBy({ by: ['subscriptionStatus'], _count: true }),
-    prisma.restaurant.findMany({ where: { createdAt: { gte: d30 } }, select: { createdAt: true } }),
+  const [byStatus, signups, customers, points, purchases, lastClaims, restaurants, testAccounts] = await Promise.all([
+    prisma.restaurant.groupBy({ by: ['subscriptionStatus'], where: { isTest: false }, _count: true }),
+    prisma.restaurant.findMany({ where: { createdAt: { gte: d30 }, isTest: false }, select: { createdAt: true } }),
     prisma.customer.count(),
     prisma.transaction.aggregate({ where: { type: 'EARN', createdAt: { gte: d30 } }, _sum: { points: true } }),
     prisma.claim.count({ where: { redeemedAt: { gte: d30 }, amountCents: { gt: 0 } } }),
     prisma.claim.groupBy({ by: ['restaurantId'], where: { redeemedAt: { not: null } }, _max: { redeemedAt: true } }),
     prisma.restaurant.findMany({
+      where: { isTest: false },
       select: { id: true, name: true, email: true, subscriptionStatus: true, createdAt: true, onboardedAt: true },
       orderBy: { createdAt: 'desc' },
       take: 500,
     }),
+    prisma.restaurant.findMany({ where: { isTest: true }, select: { id: true, name: true, email: true, subscriptionStatus: true }, orderBy: { createdAt: 'asc' } }),
   ]);
 
   const count = (s: string) => byStatus.find((x) => x.subscriptionStatus === s)?._count ?? 0;
@@ -72,6 +75,30 @@ export default async function AdminHome() {
         <KpiCard label="Compras em 30 dias" value={formatPoints(purchases)} hint="lançadas e lidas pelos clientes" />
         <KpiCard label="Pontos emitidos (30 dias)" value={formatPoints(points._sum.points ?? 0)} hint="em todos os estabelecimentos" />
       </div>
+
+      {testAccounts.length > 0 && (
+        <section className="glass-panel p-5 sm:p-6" aria-labelledby="testes">
+          <h2 id="testes" className="mb-1 font-semibold text-primary">Contas de teste</h2>
+          <p className="mb-3 text-sm text-slate-500">Use para experimentar novidades antes de liberar aos clientes. Não entram na receita nem nos números acima.</p>
+          <ul className="divide-y divide-[#e4e7f3]">
+            {testAccounts.map((t) => (
+              <li key={t.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                <Link href={`/admin/assinantes/${t.id}`} className="min-w-0">
+                  <span className="block truncate font-semibold text-slate-800">{t.name}</span>
+                  <span className="text-xs text-slate-500">{t.email}</span>
+                </Link>
+                <span className="flex items-center gap-3">
+                  <StatusChip status={t.subscriptionStatus} />
+                  <form action={adminImpersonate}>
+                    <input type="hidden" name="id" value={t.id} />
+                    <button className="glass-button btn-sm">Entrar</button>
+                  </form>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="glass-panel p-5 sm:p-6" aria-labelledby="cad-dia">
         <h2 id="cad-dia" className="mb-1 font-semibold text-primary">Cadastros por dia</h2>
