@@ -55,3 +55,36 @@ export function startOfMonthBR(now: Date = new Date()): Date {
   const local = new Date(now.getTime() - 3 * 60 * 60 * 1000);
   return new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), 1, 3, 0, 0));
 }
+
+const MONTHS_PT = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+
+/** Intervalo [start, end) de um mês em Brasília, a partir de "YYYY-MM" (padrão: mês atual), com navegação. */
+export function monthRangeBR(ym?: string | null, now: Date = new Date()) {
+  const local = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+  let y = local.getUTCFullYear();
+  let m = local.getUTCMonth();
+  const match = ym?.match(/^(\d{4})-(0[1-9]|1[0-2])$/);
+  if (match) {
+    y = Number(match[1]);
+    m = Number(match[2]) - 1;
+  }
+  const key = (yy: number, mm: number) => `${yy}-${String(mm + 1).padStart(2, '0')}`;
+  const prev = m === 0 ? key(y - 1, 11) : key(y, m - 1);
+  const next = m === 11 ? key(y + 1, 0) : key(y, m + 1);
+  return {
+    start: new Date(Date.UTC(y, m, 1, 3)),
+    end: new Date(Date.UTC(y, m + 1, 1, 3)),
+    label: `${MONTHS_PT[m]} de ${y}`,
+    key: key(y, m),
+    prev,
+    next,
+    isCurrent: key(y, m) === key(local.getUTCFullYear(), local.getUTCMonth()),
+  };
+}
+
+/** "07/10/2026 às 14:32" em Brasília. */
+export function formatDateTimeBR(d: Date): string {
+  const date = d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+  const time = d.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
+  return `${date} às ${time}`;
+}

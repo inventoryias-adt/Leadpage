@@ -14,10 +14,11 @@ export function HoursForm({ initial }: { initial: Schedule }) {
     setDays((all) => all.map((d) => (d.day === day ? { ...d, ...patch } : d)));
 
   /** Copia o horário (ou "fechado") deste dia para todos os outros. */
-  const applyToAll = (day: number) => {
-    const src = days.find((d) => d.day === day)!;
-    setDays((all) => all.map((d) => ({ ...d, closed: src.closed, open: src.open, close: src.close })));
-  };
+  const applyToAll = (day: number) =>
+    setDays((all) => {
+      const src = all.find((d) => d.day === day)!; // sempre o estado mais recente, nunca um valor "velho" do render
+      return all.map((d) => ({ ...d, closed: src.closed, open: src.open, close: src.close }));
+    });
 
   return (
     <form action={action} className="space-y-4">

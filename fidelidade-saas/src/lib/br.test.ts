@@ -48,3 +48,19 @@ test('início do mês em Brasília', () => {
   assert.equal(startOfMonthBR(new Date('2026-03-01T01:00:00Z')).toISOString(), '2026-02-01T03:00:00.000Z');
   assert.equal(startOfMonthBR(new Date('2026-03-15T12:00:00Z')).toISOString(), '2026-03-01T03:00:00.000Z');
 });
+
+import { monthRangeBR } from './points';
+test('intervalo do mês em Brasília e navegação', () => {
+  const r = monthRangeBR(null, new Date('2026-10-07T12:00:00Z'));
+  assert.equal(r.key, '2026-10');
+  assert.equal(r.start.toISOString(), '2026-10-01T03:00:00.000Z');
+  assert.equal(r.end.toISOString(), '2026-11-01T03:00:00.000Z');
+  assert.equal(r.prev, '2026-09');
+  assert.equal(r.next, '2026-11');
+  assert.equal(r.isCurrent, true);
+  const jan = monthRangeBR('2026-01', new Date('2026-10-07T12:00:00Z'));
+  assert.equal(jan.prev, '2025-12');
+  assert.equal(jan.label, 'janeiro de 2026');
+  assert.equal(jan.isCurrent, false);
+  assert.equal(monthRangeBR('lixo', new Date('2026-10-07T12:00:00Z')).key, '2026-10');
+});

@@ -32,7 +32,9 @@ webhook para `/api/webhooks/stripe` (eventos `checkout.session.completed`,
 | `/` | Restaurante | Landing + cadastro (nome, e-mail, telefone, senha) → pagamento |
 | `/dashboard/configuracoes` | Restaurante | Onboarding: dados, conversão, limite/CPF, interações, produtos |
 | `/dashboard/caixa` | Restaurante | Valor + interações → pontos → QR Code, WhatsApp e link |
-| `/dashboard/resgates` | Restaurante | Valida o código do prêmio no balcão |
+| `/dashboard/clientes` | Restaurante | Lista de clientes (busca por nome/CPF/telefone) e, por cliente, saldo, pontos recebidos/usados, produtos resgatados e histórico com dia e horário |
+| `/dashboard/pontos` | Restaurante | Pontos emitidos por mês: quem recebeu, quanto, quando e por quê |
+| `/dashboard/resgates` | Restaurante | Valida o código do prêmio no balcão; histórico de resgates do mês |
 | `/r/[token]` | Cliente | Lê o QR, entra com CPF + telefone e recebe os pontos |
 | `/carteira`, `/carteira/[id]` | Cliente (PWA) | Saldo, histórico, vouchers e catálogo de prêmios |
 

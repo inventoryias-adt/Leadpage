@@ -21,9 +21,9 @@ export default async function DashboardHome() {
   ]);
 
   const stats = [
-    { label: 'Clientes na carteira', value: formatPoints(customers) },
-    { label: 'Pontos emitidos no mês', value: formatPoints(issued._sum.points ?? 0) },
-    { label: 'Resgates no mês', value: formatPoints(redeemed) },
+    { label: 'Clientes na carteira', value: formatPoints(customers), href: '/dashboard/clientes' },
+    { label: 'Pontos emitidos no mês', value: formatPoints(issued._sum.points ?? 0), href: '/dashboard/pontos' },
+    { label: 'Resgates no mês', value: formatPoints(redeemed), href: '/dashboard/resgates#mes' },
     { label: 'Prêmios a entregar', value: formatPoints(pending), href: '/dashboard/resgates' },
   ];
 
@@ -36,6 +36,7 @@ export default async function DashboardHome() {
             <div className="glass-panel-sm h-full p-4">
               <p className="text-3xl font-extrabold text-primary">{s.value}</p>
               <p className="text-sm text-slate-600">{s.label}</p>
+              {s.href && <p className="mt-1 text-xs font-semibold text-electric-600">Ver detalhes →</p>}
             </div>
           );
           return s.href ? <Link key={s.label} href={s.href}>{card}</Link> : <div key={s.label}>{card}</div>;
