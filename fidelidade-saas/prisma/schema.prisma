@@ -1,0 +1,176 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SubscriptionStatus {
+  PENDING  // cadastrou, ainda não pagou
+  ACTIVE   // assinatura de R$ 197,00/mês paga e vigente
+  PAST_DUE // cobrança falhou
+  CANCELED
+}
+
+enum TransactionType {
+  EARN
+  REDEEM
+}
+
+enum RedemptionStatus {
+  PENDING // voucher gerado pelo cliente, ainda não entregue pelo balcão
+  USED    // balcão validou e entregou o prêmio
+}
+
+/// Restaurante = conta do SaaS (quem paga a assinatura).
+model Restaurant {
+  id           String @id @default(uuid())
+  name         String
+  email        String @unique
+  phone        String
+  passwordHash String
+
+  // Onboarding
+  address      String?
+  openingHours String?
+  onboardedAt  DateTime?
+
+  // Assinatura
+  subscriptionStatus   SubscriptionStatus @default(PENDING)
+  paymentCustomerId    String?
+  paymentSubscriptionId String?
+
+  // Regras de pontuação
+  pointsPerReal      Int @default(10) // R$ 1,00 = 10 pontos
+  maxRedeemsPerMonth Int @default(5)  // limite de resgates por CPF por mês
+
+  createdAt DateTime @default(now())
+
+  interactionRules InteractionRule[]
+  rewards          Reward[]
+  claims           Claim[]
+  wallets          Wallet[]
+  redemptions      Redemption[]
+}
+
+/// Pontuação fixa por interação (foto no Instagram, avaliação 5★ no Google...).
+model InteractionRule {
+  id           String  @id @default(uuid())
+  restaurantId String
+  label        String
+  points       Int
+  active       Boolean @default(true)
+  createdAt    DateTime @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId])
+}
+
+/// Produto do cardápio elegível para resgate com pontos.
+model Reward {
+  id           String  @id @default(uuid())
+  restaurantId String
+  name         String
+  description  String?
+  pointsCost   Int
+  active       Boolean @default(true)
+  createdAt    DateTime @default(now())
+
+  restaurant  Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  redemptions Redemption[]
+
+  @@index([restaurantId])
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  cpf       String   @unique // somente dígitos
+  phone     String            // somente dígitos, sem +55
+  name      String
+  createdAt DateTime @default(now())
+
+  wallets     Wallet[]
+  claims      Claim[]
+  redemptions Redemption[]
+}
+
+/// Uma carteira por cliente por restaurante.
+model Wallet {
+  id           String   @id @default(uuid())
+  customerId   String
+  restaurantId String
+  balance      Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  customer     Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  redemptions  Redemption[]
+
+  @@unique([customerId, restaurantId])
+}
+
+/// Pontos gerados pelo caixa e ainda não creditados. O token vai no QR Code / link.
+/// Os pontos são calculados e gravados no servidor — nunca vêm da URL.
+model Claim {
+  id           String    @id @default(uuid())
+  token        String    @unique
+  restaurantId String
+  amountCents  Int
+  points       Int
+  description  String
+  createdAt    DateTime  @default(now())
+  expiresAt    DateTime
+  redeemedAt   DateTime?
+  customerId   String?
+
+  restaurant  Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  customer    Customer?    @relation(fields: [customerId], references: [id])
+  transaction Transaction?
+
+  @@index([restaurantId, createdAt])
+}
+
+model Transaction {
+  id          String          @id @default(uuid())
+  walletId    String
+  type        TransactionType
+  points      Int             // sempre positivo; o sinal vem do type
+  description String
+  claimId     String?         @unique // garante crédito único por QR Code
+  redemptionId String?        @unique
+  createdAt   DateTime        @default(now())
+
+  wallet     Wallet      @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  claim      Claim?      @relation(fields: [claimId], references: [id])
+  redemption Redemption? @relation(fields: [redemptionId], references: [id])
+
+  @@index([walletId, createdAt])
+}
+
+/// Troca de pontos por prêmio. O cliente apresenta o `code` no balcão.
+model Redemption {
+  id           String           @id @default(uuid())
+  restaurantId String
+  customerId   String
+  walletId     String
+  rewardId     String
+  rewardName   String           // snapshot, caso o prêmio seja editado depois
+  pointsCost   Int              // snapshot
+  code         String
+  status       RedemptionStatus @default(PENDING)
+  createdAt    DateTime         @default(now())
+  usedAt       DateTime?
+
+  restaurant  Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  customer    Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  wallet      Wallet       @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  reward      Reward       @relation(fields: [rewardId], references: [id])
+  transaction Transaction?
+
+  @@unique([restaurantId, code])
+  @@index([customerId, restaurantId, createdAt])
+}
