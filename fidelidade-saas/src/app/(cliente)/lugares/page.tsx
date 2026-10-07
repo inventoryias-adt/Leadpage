@@ -1,5 +1,6 @@
 import { Brand } from '@/components/Brand';
 import { PlacesExplorer, type PlaceCard } from '@/components/PlacesExplorer';
+import { buildCampaigns } from '@/lib/campaigns';
 import { CATEGORIES, categoryLabel } from '@/lib/categories';
 import { prisma } from '@/lib/db';
 import { isOpenNow, parseSchedule } from '@/lib/hours';
@@ -27,7 +28,9 @@ export default async function LugaresPage() {
           select: { id: true, name: true, address: true, latitude: true, longitude: true, openingSchedule: true },
         },
         rewards: { where: { active: true }, select: { pointsCost: true }, orderBy: { pointsCost: 'asc' }, take: 1 },
-        _count: { select: { challenges: { where: { active: true } } } },
+        checkInPoints: true,
+        referralPoints: true,
+        challenges: { where: { active: true }, select: { id: true, kind: true, target: true, minAmountCents: true, period: true, bonusPoints: true }, take: 6 },
       },
       take: 300,
     }),
@@ -46,7 +49,13 @@ export default async function LugaresPage() {
       pointsPerReal: r.pointsPerReal,
       balance: customer ? (balances.get(r.id) ?? 0) : null,
       minReward: r.rewards[0]?.pointsCost ?? null,
-      challenges: r._count.challenges,
+      challenges: r.challenges.length,
+      campaigns: buildCampaigns(r.id, {
+        challenges: r.challenges,
+        checkInPoints: r.checkInPoints,
+        hasCoords: r.units.some((u) => u.latitude != null && u.longitude != null),
+        referralPoints: r.referralPoints,
+      }),
       units: r.units.map((u) => {
         const schedule = parseSchedule(u.openingSchedule);
         return { id: u.id, name: u.name, address: u.address, lat: u.latitude, lng: u.longitude, openNow: schedule ? isOpenNow(schedule) : null };

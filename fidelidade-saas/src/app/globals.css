@@ -242,6 +242,38 @@ body {
   }
 }
 
+/* Campanhas: no celular, carrossel sem barra; no computador, grade. */
+.campaign-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-left: -1rem;
+  margin-right: -1rem;
+  padding: 0 1rem 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+}
+.campaign-row::-webkit-scrollbar {
+  display: none;
+}
+.campaign-row > li {
+  width: 15.5rem;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+}
+@media (min-width: 768px) {
+  .campaign-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+  }
+  .campaign-row > li {
+    width: auto;
+  }
+}
+
 /* Carrossel de cartões: no celular rola de lado (sem barra); no computador vira uma grade. */
 .card-row {
   display: flex;
@@ -303,9 +335,55 @@ label:has(input[type='radio']) {
   }
 }
 
+/* Ilustrações animadas das categorias */
+@keyframes cat-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-2.5px) rotate(-2deg); }
+}
+@keyframes cat-wiggle {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+@keyframes cat-steam {
+  0% { opacity: 0; transform: translateY(5px); }
+  40% { opacity: 0.95; }
+  100% { opacity: 0; transform: translateY(-7px); }
+}
+@keyframes cat-twinkle {
+  0%, 100% { opacity: 0.15; transform: scale(0.5); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+@keyframes cat-rise {
+  0% { opacity: 0; transform: translateY(6px); }
+  30% { opacity: 0.95; }
+  100% { opacity: 0; transform: translateY(-12px); }
+}
+@keyframes cat-stripes {
+  from { transform: translateY(0); }
+  to { transform: translateY(16px); }
+}
+@keyframes cat-drip {
+  0%, 55% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(12px); }
+}
+.cat-anim .cat-bob,
+.cat-anim .cat-wiggle,
+.cat-anim .cat-twinkle {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.cat-anim .cat-bob { animation: cat-bob 3.4s ease-in-out infinite; }
+.cat-anim .cat-wiggle { animation: cat-wiggle 3.6s ease-in-out infinite; }
+.cat-anim .cat-steam { animation: cat-steam 2.6s ease-in-out infinite; }
+.cat-anim .cat-twinkle { animation: cat-twinkle 2.2s ease-in-out infinite; }
+.cat-anim .cat-rise { animation: cat-rise 2.4s ease-in infinite; }
+.cat-anim .cat-stripes { animation: cat-stripes 1.6s linear infinite; }
+.cat-anim .cat-drip { animation: cat-drip 2.8s ease-in infinite; }
+
 @media (prefers-reduced-motion: reduce) {
   .animate-blob,
-  .animate-fade-in {
+  .animate-fade-in,
+  .cat-anim * {
     animation: none !important;
   }
 }

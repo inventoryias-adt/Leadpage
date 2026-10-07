@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { distanceMeters, formatDistance } from '@/lib/geo';
 import { formatPoints } from '@/lib/points';
-import { CategoryIcon } from './CategoryIcon';
+import type { CampaignItem } from '@/lib/campaigns';
+import { CampaignCards } from './CampaignCards';
+import { CategoryArt } from './CategoryArt';
 import { Icon } from './Icons';
 import { Illustration } from './Illustrations';
 import { PlaceAvatar } from './Visual';
@@ -21,6 +23,7 @@ export type PlaceCard = {
   balance: number | null;
   minReward: number | null;
   challenges: number;
+  campaigns: CampaignItem[];
   units: PlaceUnit[];
 };
 
@@ -153,29 +156,27 @@ export function PlacesExplorer({ places, categories, loggedIn }: { places: Place
           </button>
         ))}
       </div>
+      <CampaignCards
+        loggedIn={loggedIn}
+        items={list.flatMap((p) => p.campaigns.map((c) => ({ ...c, placeId: p.id, placeName: p.name, logoUrl: p.logoUrl })))}
+      />
+
       {/* Categorias: ícone redondo com o nome embaixo. Sem barra de rolagem no celular; quebra de linha no computador. */}
       <div className="chip-row !items-start !gap-3.5" role="group" aria-label="Categorias">
         {[{ value: '', label: 'Todos', icon: 'todos' }, ...categories.map((c) => ({ ...c, icon: c.value }))].map((c) => {
           const on = (category ?? '') === c.value;
-          const empty = c.value !== '' && !places.some((p) => p.category === c.value);
           return (
             <button
               key={c.value || 'todos'}
               type="button"
               aria-pressed={on}
               onClick={() => setCategory(c.value === '' || on ? null : c.value)}
-              className="group flex w-[4.75rem] shrink-0 flex-col items-center gap-1.5 !bg-transparent !p-0 !shadow-none"
+              className="group flex w-[4.5rem] shrink-0 flex-col items-center gap-1.5 !bg-transparent !p-0 !shadow-none"
             >
-              <span
-                className={`flex h-14 w-14 items-center justify-center rounded-full border transition-colors ${
-                  on
-                    ? 'border-electric-600 bg-electric-600 text-white shadow-md shadow-blue-900/20'
-                    : `border-slate-200 bg-white group-hover:border-electric-600 group-hover:bg-electric-600 group-hover:text-white ${empty ? 'text-slate-500' : 'text-electric-600'}`
-                }`}
-              >
-                <CategoryIcon name={c.icon} size={26} />
+              <span className={`rounded-[1.25rem] p-0.5 transition-all group-hover:-translate-y-0.5 ${on ? 'bg-electric-600 shadow-md shadow-blue-900/25' : ''}`}>
+                <CategoryArt name={c.icon} size={60} />
               </span>
-              <span className={`text-center text-[11px] font-semibold leading-tight ${on ? 'text-electric-600' : empty ? 'text-slate-500' : 'text-slate-700'}`}>{c.label}</span>
+              <span className={`text-center text-[11px] font-semibold leading-tight ${on ? 'text-electric-600' : 'text-slate-700'}`}>{c.label}</span>
             </button>
           );
         })}
