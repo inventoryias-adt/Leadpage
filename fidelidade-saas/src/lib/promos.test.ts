@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { applyPromos, endOfDayBR, promoActiveAt, promoBadge, promoStatus, promoWhen, startOfDayBR, weekdaysText, type PromoLike } from './promos';
+import { applyPromos, audienceText, endOfDayBR, promoActiveAt, promoBadge, promoStatus, promoWhen, qualifiesForAudience, startOfDayBR, weekdaysText, type PromoLike } from './promos';
 
-const base: PromoLike = { title: 'Terça em dobro', kind: 'MULTIPLIER', multiplier: 2, bonusPoints: null, minAmountCents: 0, startsAt: null, endsAt: null, weekdays: [], startTime: null, endTime: null, active: true };
+const base: PromoLike = { title: 'Terça em dobro', kind: 'MULTIPLIER', multiplier: 2, bonusPoints: null, minAmountCents: 0, startsAt: null, endsAt: null, weekdays: [], startTime: null, endTime: null, audience: 'ALL', inactiveDays: null, active: true };
 // 2026-10-06 é terça-feira. 21:00 UTC = 18:00 em Brasília.
 const tue18 = new Date('2026-10-06T21:00:00Z');
 const wed18 = new Date('2026-10-07T21:00:00Z');
@@ -55,4 +55,30 @@ test('textos', () => {
   assert.equal(promoBadge({ kind: 'MULTIPLIER', multiplier: 1.5, bonusPoints: null }), '1,5x pontos');
   const money = (c: number) => `R$ ${(c / 100).toFixed(2).replace('.', ',')}`;
   assert.equal(promoWhen({ ...base, weekdays: [2, 4], startTime: '18:00', endTime: '22:30', minAmountCents: 4000 }, money), 'Ter e qui, das 18h às 22h30, em compras a partir de R$ 40,00');
+});
+
+test('público: primeira compra e quem sumiu', () => {
+  const at = new Date('2026-10-06T21:00:00Z');
+  const daysAgo = (n: number) => new Date(at.getTime() - n * 24 * 60 * 60 * 1000);
+  const novo = { audience: 'NEW' as const, inactiveDays: null };
+  const sumido = { audience: 'INACTIVE' as const, inactiveDays: 30 };
+  assert.equal(qualifiesForAudience(novo, { purchases: 0, lastPurchaseAt: null }, at), true);
+  assert.equal(qualifiesForAudience(novo, { purchases: 2, lastPurchaseAt: daysAgo(3) }, at), false);
+  assert.equal(qualifiesForAudience(sumido, { purchases: 0, lastPurchaseAt: null }, at), false); // quem nunca comprou é "novo"
+  assert.equal(qualifiesForAudience(sumido, { purchases: 3, lastPurchaseAt: daysAgo(29) }, at), false);
+  assert.equal(qualifiesForAudience(sumido, { purchases: 3, lastPurchaseAt: daysAgo(30) }, at), true);
+  assert.equal(qualifiesForAudience({ audience: 'ALL', inactiveDays: null }, { purchases: 9, lastPurchaseAt: daysAgo(1) }, at), true);
+  assert.equal(audienceText(sumido), 'para quem não compra há 30 dias');
+  assert.equal(audienceText(novo), 'só na primeira compra do cliente');
+  assert.equal(audienceText({ audience: 'ALL', inactiveDays: null }), '');
+});
+
+test('quanto cada campanha rendeu a mais', () => {
+  const at = new Date('2026-10-06T21:00:00Z');
+  const x2 = { ...base, title: '2x' };
+  const bonus = { ...base, title: '+50', kind: 'BONUS' as const, multiplier: null, bonusPoints: 50 };
+  const r = applyPromos(100, 5000, [x2, bonus], at);
+  assert.equal(r.points, 250);
+  assert.deepEqual(r.parts.map((x) => [x.promo.title, x.points]), [['2x', 100], ['+50', 50]]);
+  assert.equal(r.parts.reduce((n, x) => n + x.points, 100), r.points);
 });

@@ -1,3 +1,4 @@
+import { EmptyState } from '@/components/EmptyState';
 import Link from 'next/link';
 import { Icon } from '@/components/Icons';
 import { prisma } from '@/lib/db';
@@ -43,6 +44,14 @@ export default async function DashboardHome() {
           return s.href ? <Link key={s.label} href={s.href}>{card}</Link> : <div key={s.label}>{card}</div>;
         })}
       </div>
+      {customers === 0 && (
+        <EmptyState
+          variant="coin"
+          title="O primeiro ponto está a um QR Code de distância"
+          text="Quando o cliente pagar a conta, lance o valor no caixa e mostre o QR Code. A carteira dele é criada na hora."
+          action={{ href: '/dashboard/caixa', label: 'Lançar a primeira compra' }}
+        />
+      )}
     </div>
   );
 }

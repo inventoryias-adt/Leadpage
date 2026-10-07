@@ -12,6 +12,7 @@ import {
   RulesForm,
   UnitForm,
 } from '@/components/SettingsForms';
+import { EmptyState } from '@/components/EmptyState';
 import { RewardImage } from '@/components/Visual';
 import { describeChallenge } from '@/lib/challenges';
 import { prisma } from '@/lib/db';
@@ -221,7 +222,11 @@ export default async function ConfiguracoesPage() {
 
       <Section id="campanhas" n={8} title="Campanhas de pontos" hint="Pontos em dobro na terça, +50 pontos acima de R$ 40… Valem no caixa e aparecem como card na vitrine dos clientes.">
         <ul className="mb-4 space-y-3">
-          {promotions.length === 0 && <li className="py-2 text-sm text-slate-500">Nenhuma campanha criada.</li>}
+          {promotions.length === 0 && (
+            <li>
+              <EmptyState compact variant="coin" title="Nenhuma campanha ainda" text="Crie a primeira: pontos em dobro na terça, bônus para quem volta… Ela vira um card na vitrine dos clientes." />
+            </li>
+          )}
           {promotions.map((p) => {
             const status = promoStatus(p, nowDate);
             const look = { now: ['Valendo agora', 'bg-emerald-100 text-emerald-700'], scheduled: ['Agendada', 'bg-blue-100 text-electric-600'], paused: ['Pausada', 'bg-slate-200 text-slate-600'], ended: ['Encerrada', 'bg-slate-200 text-slate-500'] }[status];

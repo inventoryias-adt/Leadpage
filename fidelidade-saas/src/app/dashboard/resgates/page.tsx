@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { formatPoints, monthRangeBR } from '@/lib/points';
 import { MonthNav } from '@/components/MonthNav';
 import Link from 'next/link';
+import { EmptyState } from '@/components/EmptyState';
 import { requireActiveRestaurant } from '@/lib/session';
 
 export const metadata = { title: 'Resgates' };
@@ -52,7 +53,7 @@ export default async function ResgatesPage({ searchParams }: { searchParams: Pro
         </form>
 
         {pending.length === 0 ? (
-          <p className="text-sm text-slate-500">{q ? 'Nenhum resgate pendente com esse código.' : 'Nenhum prêmio aguardando entrega.'}</p>
+          <EmptyState compact variant="gift" title={q ? 'Nenhum resgate com esse código' : 'Nenhum prêmio para entregar'} text={q ? 'Confira o código mostrado pelo cliente.' : 'Quando um cliente resgatar, o código aparece aqui para você validar no balcão.'} />
         ) : (
           <ul className="space-y-3">
             {pending.map((r) => (
@@ -95,7 +96,7 @@ export default async function ResgatesPage({ searchParams }: { searchParams: Pro
           {month.length} {month.length === 1 ? 'resgate' : 'resgates'} · {formatPoints(month.reduce((a, r) => a + r.pointsCost, 0))} pts usados
         </p>
         {month.length === 0 ? (
-          <p className="text-sm text-slate-500">Nenhum resgate neste mês.</p>
+          <EmptyState compact variant="gift" title="Nenhum resgate neste mês" text="Os resgates dos clientes deste mês aparecem aqui." />
         ) : (
           <ul className="divide-y divide-white/60 text-sm">
             {month.map((r) => (

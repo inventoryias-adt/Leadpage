@@ -1,6 +1,7 @@
 /** Campanhas de pontos criadas pelo dono: multiplicador ("2x") ou pontos extras, por período, dia da semana e horário (Brasília). */
 
 export type PromoKind = 'MULTIPLIER' | 'BONUS';
+export type PromoAudience = 'ALL' | 'NEW' | 'INACTIVE';
 
 export type PromoLike = {
   title: string;
@@ -13,6 +14,8 @@ export type PromoLike = {
   weekdays: number[]; // 0 = domingo … 6 = sábado; vazio = todos os dias
   startTime: string | null; // "HH:MM"
   endTime: string | null;
+  audience: PromoAudience;
+  inactiveDays: number | null;
   active: boolean;
 };
 
@@ -82,7 +85,28 @@ export function applyPromos<P extends PromoLike>(billPoints: number, amountCents
   const best = multipliers.reduce<P | null>((a, p) => (!a || (p.multiplier ?? 1) > (a.multiplier ?? 1) ? p : a), null);
   const bonuses = live.filter((p) => p.kind === 'BONUS' && (p.bonusPoints ?? 0) > 0);
   const points = Math.round(billPoints * (best?.multiplier ?? 1)) + bonuses.reduce((n, p) => n + (p.bonusPoints ?? 0), 0);
-  return { points, applied: [...(best ? [best] : []), ...bonuses] };
+  // Quanto cada campanha rendeu a mais (base do relatório).
+  const parts = [
+    ...(best ? [{ promo: best, points: Math.round(billPoints * (best.multiplier ?? 1)) - billPoints }] : []),
+    ...bonuses.map((p) => ({ promo: p, points: p.bonusPoints ?? 0 })),
+  ];
+  return { points, applied: [...(best ? [best] : []), ...bonuses], parts };
+}
+
+export type CustomerHistory = { purchases: number; lastPurchaseAt: Date | null };
+
+/** O cliente entra no público da campanha? `history` conta só compras anteriores à atual. */
+export function qualifiesForAudience(p: Pick<PromoLike, 'audience' | 'inactiveDays'>, h: CustomerHistory, at: Date): boolean {
+  if (p.audience === 'ALL') return true;
+  if (p.audience === 'NEW') return h.purchases === 0;
+  const days = p.inactiveDays ?? 0;
+  return h.purchases > 0 && !!h.lastPurchaseAt && days > 0 && at.getTime() - h.lastPurchaseAt.getTime() >= days * 24 * 60 * 60 * 1000;
+}
+
+export function audienceText(p: Pick<PromoLike, 'audience' | 'inactiveDays'>): string {
+  if (p.audience === 'NEW') return 'só na primeira compra do cliente';
+  if (p.audience === 'INACTIVE') return `para quem não compra há ${p.inactiveDays ?? 30} dias`;
+  return '';
 }
 
 const DAYS = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
@@ -120,5 +144,7 @@ export function promoWhen(p: PromoLike, formatMoney: (cents: number) => string):
   else if (p.startsAt) parts.push(`a partir de ${ddmm(p.startsAt)}`);
   else if (p.endsAt) parts.push(`até ${ddmm(new Date(p.endsAt.getTime() - 1))}`);
   if (p.minAmountCents > 0) parts.push(`em compras a partir de ${formatMoney(p.minAmountCents)}`);
+  const aud = audienceText(p);
+  if (aud) parts.push(aud);
   return parts.join(', ');
 }

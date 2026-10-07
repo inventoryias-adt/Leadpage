@@ -234,6 +234,7 @@ const WEEKDAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 export function AddPromotionForm() {
   const [state, action] = useActionState(addPromotion, {});
   const [kind, setKind] = useState<'MULTIPLIER' | 'BONUS'>((state.values?.kind as 'MULTIPLIER' | 'BONUS') ?? 'MULTIPLIER');
+  const [audience, setAudience] = useState<'ALL' | 'NEW' | 'INACTIVE'>((state.values?.audience as 'ALL' | 'NEW' | 'INACTIVE') ?? 'ALL');
   return (
     <form action={action} className="space-y-4" key={state.ok ?? 'idle'}>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -264,6 +265,22 @@ export function AddPromotionForm() {
             <label className="glass-label" htmlFor="p-bonus">Pontos extras por compra</label>
             <input id="p-bonus" name="bonusPoints" type="number" min={1} inputMode="numeric" className="glass-input" placeholder="Ex.: 50" defaultValue={state.values?.bonusPoints} required />
           </div>
+        )}
+        <div>
+          <label className="glass-label" htmlFor="p-audience">Para quem</label>
+          <select id="p-audience" name="audience" className="glass-input" value={audience} onChange={(e) => setAudience(e.target.value as 'ALL' | 'NEW' | 'INACTIVE')}>
+            <option value="ALL">Todos os clientes</option>
+            <option value="NEW">Só na primeira compra (clientes novos)</option>
+            <option value="INACTIVE">Quem não compra há um tempo</option>
+          </select>
+        </div>
+        {audience === 'INACTIVE' ? (
+          <div>
+            <label className="glass-label" htmlFor="p-inactive">Sem comprar há (dias)</label>
+            <input id="p-inactive" name="inactiveDays" type="number" min={7} max={365} inputMode="numeric" className="glass-input" defaultValue={state.values?.inactiveDays ?? 30} required />
+          </div>
+        ) : (
+          <div className="hidden sm:block" />
         )}
         <div className="sm:col-span-2">
           <label className="glass-label" htmlFor="p-min">Valor mínimo da compra (R$) <span className="font-normal text-slate-500">— opcional</span></label>
@@ -302,7 +319,7 @@ export function AddPromotionForm() {
         </div>
       </div>
       <p className="text-xs text-slate-500">
-        A campanha vale no caixa, no horário de Brasília, e já aparece como card na vitrine “Lugares”. Multiplicadores não se somam (vale o maior); pontos extras se somam.
+        A campanha vale no caixa, no horário de Brasília, e já aparece como card na vitrine “Lugares”. Multiplicadores não se somam (vale o maior); pontos extras se somam. Campanhas para um público específico (clientes novos ou quem sumiu) entram quando o cliente lê o QR Code, porque só então sabemos quem ele é.
       </p>
       <FormMessage state={state} />
       <SubmitButton variant="ghost" pendingText="Criando…">Criar campanha</SubmitButton>

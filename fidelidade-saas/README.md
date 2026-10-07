@@ -99,3 +99,12 @@ multiplicador e os pontos extras somam (`src/lib/promos.ts`). Elas aparecem como
 
 Depois do pagamento, um passo a passo em janelas (`OwnerGuide`) abre sozinho no painel até ser concluído ou dispensado
 (`Restaurant.guideDoneAt`); o botão "Guia" do topo reabre quando quiser.
+
+## Público das campanhas, relatório e telas vazias
+
+Campanhas podem ser para **todos**, só na **primeira compra** do cliente ou para **quem não compra há N dias**
+(`Promotion.audience`, migração `0008_publico_relatorio`). Como só sabemos quem é o cliente quando ele lê o QR Code,
+as campanhas por público são aplicadas em `creditClaim` (o caixa grava `Claim.billPoints`, a parte da conta que as
+campanhas multiplicam). Cada campanha aplicada vira uma linha em `PromotionUse`, que alimenta o relatório
+"Campanhas no mês" em **Pontos** (compras, clientes, pontos extras e vendas por campanha). As telas vazias do painel
+usam ilustrações isométricas (`IsoIllustration`, `EmptyState`).

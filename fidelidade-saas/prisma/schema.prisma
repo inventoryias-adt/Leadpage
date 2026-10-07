@@ -85,6 +85,7 @@ model Restaurant {
   redemptions      Redemption[]
   units            Unit[]
   promotions Promotion[]
+  promotionUses PromotionUse[]
   challenges       Challenge[]
   checkIns         CheckIn[]
   referrals        Referral[]
@@ -138,6 +139,7 @@ model Customer {
   referralsMade     Referral[]            @relation("referrer")
   referralsReceived Referral[]            @relation("referred")
   notifications     Notification[]
+  promotionUses     PromotionUse[]
 }
 
 /// Uma carteira por cliente por restaurante.
@@ -170,6 +172,7 @@ model Claim {
   redeemedAt   DateTime?
   customerId   String?
   unitId       String? // unidade onde o caixa lançou a compra
+  billPoints   Int? // parte dos pontos que veio do valor da conta (base das campanhas)
 
   restaurant  Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   customer    Customer?    @relation(fields: [customerId], references: [id])
@@ -374,10 +377,39 @@ model Promotion {
   weekdays       Int[] // 0 = domingo … 6 = sábado; vazio = todos os dias
   startTime      String? // "HH:MM" em Brasília
   endTime        String?
+  audience       PromoAudience @default(ALL)
+  inactiveDays   Int? // só para audience = INACTIVE
   active         Boolean   @default(true)
   createdAt      DateTime  @default(now())
 
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  restaurant Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  uses       PromotionUse[]
 
   @@index([restaurantId])
+}
+
+enum PromoAudience {
+  ALL // todos os clientes
+  NEW // só a primeira compra do cliente no estabelecimento
+  INACTIVE // quem já comprou, mas não volta há `inactiveDays` dias
+}
+
+/// Uma campanha aplicada numa compra creditada (base do relatório mensal).
+model PromotionUse {
+  id           String   @id @default(uuid())
+  promotionId  String?
+  restaurantId String
+  title        String // cópia do nome: o histórico fica mesmo se a campanha for removida
+  claimId      String
+  customerId   String
+  points       Int // pontos a mais que esta campanha rendeu
+  amountCents  Int // valor da compra
+  createdAt    DateTime @default(now())
+
+  promotion  Promotion?  @relation(fields: [promotionId], references: [id], onDelete: SetNull)
+  restaurant Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  customer   Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([claimId, promotionId])
+  @@index([restaurantId, createdAt])
 }

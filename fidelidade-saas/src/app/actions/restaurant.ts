@@ -381,6 +381,8 @@ export async function removeChallenge(formData: FormData) {
 const promoSchema = z.object({
   title: z.string().trim().min(3, 'Dê um nome à campanha (ex.: Terça em dobro).').max(60),
   kind: z.enum(['MULTIPLIER', 'BONUS']),
+  audience: z.enum(['ALL', 'NEW', 'INACTIVE']).default('ALL'),
+  inactiveDays: z.string().default(''),
   multiplier: z.string().default(''),
   bonusPoints: z.string().default(''),
   minAmount: z.string().default(''),
@@ -405,6 +407,12 @@ export async function addPromotion(_: FormState, formData: FormData): Promise<Fo
   } else {
     bonusPoints = Number(d.bonusPoints);
     if (!Number.isInteger(bonusPoints) || bonusPoints < 1 || bonusPoints > 100_000) return fail('Informe os pontos extras (número inteiro, a partir de 1).', formData);
+  }
+
+  let inactiveDays: number | null = null;
+  if (d.audience === 'INACTIVE') {
+    inactiveDays = Number(d.inactiveDays);
+    if (!Number.isInteger(inactiveDays) || inactiveDays < 7 || inactiveDays > 365) return fail('Informe há quantos dias o cliente não compra (de 7 a 365).', formData);
   }
 
   let minAmountCents = 0;
@@ -432,6 +440,8 @@ export async function addPromotion(_: FormState, formData: FormData): Promise<Fo
       restaurantId: restaurant.id,
       title: d.title,
       kind: d.kind,
+      audience: d.audience,
+      inactiveDays,
       multiplier,
       bonusPoints,
       minAmountCents,
@@ -502,7 +512,9 @@ export async function createClaim(_: CaixaState, formData: FormData): Promise<Ca
 
   // Os pontos são calculados aqui, com as regras gravadas no banco — nada vem do cliente.
   // Campanhas valendo agora (multiplicador / pontos extras) incidem só sobre a parte da conta, não sobre as interações.
-  const promos = await prisma.promotion.findMany({ where: { restaurantId: restaurant.id, active: true } });
+  // Campanhas para um público específico (primeira compra, quem sumiu) só são aplicadas quando o cliente lê o QR,
+  // porque só então sabemos quem ele é (ver creditClaim).
+  const promos = await prisma.promotion.findMany({ where: { restaurantId: restaurant.id, active: true, audience: 'ALL' } });
   const billPoints = calculatePoints(amountCents, restaurant.pointsPerReal);
   const promoResult = applyPromos(billPoints, amountCents, promos);
   const points = promoResult.points + interactions.reduce((n, i) => n + i.points, 0);
@@ -516,7 +528,7 @@ export async function createClaim(_: CaixaState, formData: FormData): Promise<Ca
   const { unit } = await currentUnit(restaurant.id);
 
   await prisma.claim.create({
-    data: { token, restaurantId: restaurant.id, unitId: unit?.id ?? null, amountCents, points, description, expiresAt },
+    data: { token, restaurantId: restaurant.id, unitId: unit?.id ?? null, amountCents, points, billPoints, description, expiresAt },
   });
   // Sem revalidatePath aqui: o QR Code aparece na hora e a lista de lançamentos atualiza em segundo plano (router.refresh no cliente).
   return {

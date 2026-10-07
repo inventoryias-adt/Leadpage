@@ -1,7 +1,8 @@
 import Link from 'next/link';
+import { EmptyState } from '@/components/EmptyState';
 import { MonthNav } from '@/components/MonthNav';
 import { prisma } from '@/lib/db';
-import { formatDateTimeBR, formatPoints, monthRangeBR } from '@/lib/points';
+import { formatBRL, formatDateTimeBR, formatPoints, monthRangeBR } from '@/lib/points';
 import { requireActiveRestaurant } from '@/lib/session';
 
 export const metadata = { title: 'Pontos emitidos' };
@@ -14,7 +15,7 @@ export default async function PontosPage({ searchParams }: { searchParams: Promi
   const range = monthRangeBR((await searchParams).mes);
   const where = { type: 'EARN' as const, createdAt: { gte: range.start, lt: range.end }, wallet: { restaurantId: restaurant.id } };
 
-  const [sum, rows, perUnit, units] = await Promise.all([
+  const [sum, rows, perUnit, units, uses, purchases] = await Promise.all([
     prisma.transaction.aggregate({ _sum: { points: true }, _count: true, where }),
     prisma.transaction.findMany({
       where,
@@ -32,7 +33,28 @@ export default async function PontosPage({ searchParams }: { searchParams: Promi
       _count: true,
     }),
     prisma.unit.findMany({ where: { restaurantId: restaurant.id }, select: { id: true, name: true } }),
+    prisma.promotionUse.findMany({
+      where: { restaurantId: restaurant.id, createdAt: { gte: range.start, lt: range.end } },
+      select: { promotionId: true, claimId: true, title: true, customerId: true, points: true, amountCents: true },
+      take: 20000,
+    }),
+    prisma.claim.count({ where: { restaurantId: restaurant.id, redeemedAt: { gte: range.start, lt: range.end }, amountCents: { gt: 0 } } }),
   ]);
+
+  // Relatório do mês por campanha: compras, clientes diferentes, pontos extras e vendas.
+  const byPromo = new Map<string, { title: string; uses: number; customers: Set<string>; points: number; cents: number }>();
+  for (const u of uses) {
+    const key = u.promotionId ?? `removida:${u.title}`;
+    const row = byPromo.get(key) ?? { title: u.title, uses: 0, customers: new Set<string>(), points: 0, cents: 0 };
+    row.uses += 1;
+    row.customers.add(u.customerId);
+    row.points += u.points;
+    row.cents += u.amountCents;
+    byPromo.set(key, row);
+  }
+  const promoRows = [...byPromo.values()].sort((a, b) => b.points - a.points);
+  const claimsWithPromo = new Set(uses.map((u) => u.claimId)).size;
+  const extraTotal = uses.reduce((n, u) => n + u.points, 0);
 
   return (
     <div className="mx-auto max-w-5xl space-y-5 lg:grid lg:grid-cols-5 lg:items-start lg:gap-6 lg:space-y-0">
@@ -66,7 +88,7 @@ export default async function PontosPage({ searchParams }: { searchParams: Promi
       <section className="glass-panel p-5 sm:p-7 lg:col-span-3">
         <h1 className="mb-3 font-bold text-primary">Quem recebeu pontos</h1>
         {rows.length === 0 ? (
-          <p className="text-sm text-slate-500">Nenhum ponto emitido neste mês.</p>
+          <EmptyState compact variant="chart" title="Nenhum ponto emitido neste mês" text="Os pontos lançados no caixa e as compras lidas pelos clientes aparecem aqui." />
         ) : (
           <ul className="divide-y divide-white/60">
             {rows.map((t) => (
@@ -84,6 +106,62 @@ export default async function PontosPage({ searchParams }: { searchParams: Promi
           </ul>
         )}
         {sum._count > LIMIT && <p className="mt-3 text-center text-xs text-slate-500">Mostrando os {LIMIT} lançamentos mais recentes do mês.</p>}
+      </section>
+
+      <section className="glass-panel p-5 sm:p-7 lg:col-span-5" aria-labelledby="rel-campanhas">
+        <h2 id="rel-campanhas" className="mb-1 font-bold text-primary">Campanhas no mês</h2>
+        <p className="mb-4 text-sm text-slate-500">Quanto cada campanha rendeu em pontos extras e em vendas, no mês escolhido acima.</p>
+        {promoRows.length === 0 ? (
+          <EmptyState
+            compact
+            variant="coin"
+            title="Nenhuma campanha rendeu pontos neste mês"
+            text="Quando uma compra for creditada com uma campanha valendo, ela aparece aqui com os números."
+            action={{ href: '/dashboard/configuracoes#campanhas', label: 'Criar uma campanha' }}
+          />
+        ) : (
+          <>
+            <div className="mb-4 grid grid-cols-3 gap-3">
+              <div className="glass-inset p-3">
+                <p className="text-2xl font-extrabold text-primary">{formatPoints(extraTotal)}</p>
+                <p className="text-xs text-slate-600">pontos extras dados</p>
+              </div>
+              <div className="glass-inset p-3">
+                <p className="text-2xl font-extrabold text-primary">{formatPoints(claimsWithPromo)}</p>
+                <p className="text-xs text-slate-600">compras com campanha</p>
+              </div>
+              <div className="glass-inset p-3">
+                <p className="text-2xl font-extrabold text-primary">{purchases > 0 ? Math.round((claimsWithPromo / purchases) * 100) : 0}%</p>
+                <p className="text-xs text-slate-600">das compras do mês</p>
+              </div>
+            </div>
+            <div className="overflow-hidden rounded-2xl border border-[#e4e7f3]">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-[#f6f8fd] text-xs uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="px-4 py-2.5 font-semibold">Campanha</th>
+                    <th className="px-3 py-2.5 text-right font-semibold">Compras</th>
+                    <th className="hidden px-3 py-2.5 text-right font-semibold sm:table-cell">Clientes</th>
+                    <th className="px-3 py-2.5 text-right font-semibold">Pontos extras</th>
+                    <th className="hidden px-4 py-2.5 text-right font-semibold sm:table-cell">Vendas</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#e4e7f3]">
+                  {promoRows.map((r) => (
+                    <tr key={r.title}>
+                      <td className="px-4 py-3 font-semibold text-slate-800">{r.title}</td>
+                      <td className="px-3 py-3 text-right">{formatPoints(r.uses)}</td>
+                      <td className="hidden px-3 py-3 text-right sm:table-cell">{formatPoints(r.customers.size)}</td>
+                      <td className="px-3 py-3 text-right font-bold text-electric-600">+{formatPoints(r.points)}</td>
+                      <td className="hidden px-4 py-3 text-right sm:table-cell">{formatBRL(r.cents)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-2 text-xs text-slate-500">Uma compra pode contar em mais de uma campanha. “Vendas” é o valor das compras que usaram a campanha.</p>
+          </>
+        )}
       </section>
     </div>
   );
