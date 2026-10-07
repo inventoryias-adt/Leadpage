@@ -1,4 +1,4 @@
-import { removeChallenge, removeInteraction, removeReward } from '@/app/actions/restaurant';
+import { removeChallenge, removeInteraction, removeReward, removeUnit } from '@/app/actions/restaurant';
 import {
   AddChallengeForm,
   AddInteractionForm,
@@ -9,12 +9,11 @@ import {
   IdentityForm,
   RewardPhotoForm,
   RulesForm,
+  UnitForm,
 } from '@/components/SettingsForms';
-import { HoursForm } from '@/components/HoursForm';
 import { RewardImage } from '@/components/Visual';
 import { describeChallenge } from '@/lib/challenges';
 import { prisma } from '@/lib/db';
-import { defaultSchedule, parseSchedule } from '@/lib/hours';
 import { imageUrl } from '@/lib/images';
 import { formatPoints } from '@/lib/points';
 import { requirePaidRestaurant } from '@/lib/session';
@@ -49,9 +48,9 @@ function RemoveButton({ action, id, label }: { action: (fd: FormData) => Promise
 }
 
 const SECTIONS = [
-  ['dados', 'Dados'],
-  ['identidade', 'Identidade e local'],
-  ['horarios', 'Horários'],
+  ['dados', 'Marca'],
+  ['identidade', 'Identidade'],
+  ['unidades', 'Unidades'],
   ['pontos', 'Pontuação'],
   ['engajamento', 'Check-in e indicação'],
   ['interacoes', 'Interações'],
@@ -61,11 +60,13 @@ const SECTIONS = [
 
 export default async function ConfiguracoesPage() {
   const restaurant = await requirePaidRestaurant();
-  const [interactions, rewards, challenges] = await Promise.all([
+  const [interactions, rewards, challenges, units] = await Promise.all([
     prisma.interactionRule.findMany({ where: { restaurantId: restaurant.id, active: true }, orderBy: { createdAt: 'asc' } }),
     prisma.reward.findMany({ where: { restaurantId: restaurant.id, active: true }, orderBy: { pointsCost: 'asc' } }),
     prisma.challenge.findMany({ where: { restaurantId: restaurant.id }, orderBy: { createdAt: 'asc' } }),
+    prisma.unit.findMany({ where: { restaurantId: restaurant.id }, orderBy: [{ active: 'desc' }, { createdAt: 'asc' }] }),
   ]);
+  const activeCount = units.filter((u) => u.active).length;
   const onboarding = !restaurant.onboardedAt;
 
   return (
@@ -86,17 +87,14 @@ export default async function ConfiguracoesPage() {
       </nav>
 
       <Section id="dados" n={1} title="Dados do estabelecimento">
-        <BasicsForm defaults={{ name: restaurant.name, address: restaurant.address ?? '' }} />
+        <BasicsForm defaults={{ name: restaurant.name }} />
       </Section>
 
-      <Section id="identidade" n={2} title="Identidade e localização" hint="Como seu restaurante aparece para os clientes no app, e onde ele fica no mapa.">
+      <Section id="identidade" n={2} title="Identidade da marca" hint="Como seu restaurante aparece para os clientes no app.">
         <IdentityForm
           defaults={{
             category: restaurant.category ?? '',
             instagram: restaurant.instagram ?? '',
-            googleReviewUrl: restaurant.googleReviewUrl ?? '',
-            latitude: restaurant.latitude,
-            longitude: restaurant.longitude,
             listed: restaurant.listed,
             logoUrl: imageUrl(restaurant.logoImageId),
             coverUrl: imageUrl(restaurant.coverImageId),
@@ -104,8 +102,56 @@ export default async function ConfiguracoesPage() {
         />
       </Section>
 
-      <Section id="horarios" n={3} title="Horário de funcionamento" hint="Aparece para o cliente quando ele resgata pontos: é quando ele pode ir retirar o prêmio.">
-        <HoursForm initial={parseSchedule(restaurant.openingSchedule) ?? defaultSchedule()} />
+      <Section id="unidades" n={3} title="Unidades" hint="Cada unidade tem endereço, horário, localização e link do Google próprios. Pontos, prêmios e desafios valem em todas.">
+        <ul className="mb-5 space-y-3">
+          {units.map((u) => (
+            <li key={u.id} className="glass-inset p-3">
+              <details open={units.length === 1 || onboarding}>
+                <summary className="flex cursor-pointer items-center justify-between gap-3 py-1">
+                  <span className="min-w-0">
+                    <span className="block truncate font-bold text-slate-800">{u.name}</span>
+                    <span className="block truncate text-xs text-slate-500">{u.address || 'Endereço não informado'}</span>
+                  </span>
+                  <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${u.active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
+                    {u.active ? 'Ativa' : 'Inativa'}
+                  </span>
+                </summary>
+                <div className="mt-4 space-y-4 border-t border-slate-200/70 pt-4">
+                  <UnitForm
+                    uid={`u${u.id.slice(0, 8)}-`}
+                    unit={{
+                      id: u.id,
+                      name: u.name,
+                      address: u.address ?? '',
+                      googleReviewUrl: u.googleReviewUrl ?? '',
+                      latitude: u.latitude,
+                      longitude: u.longitude,
+                      active: u.active,
+                      schedule: u.openingSchedule,
+                    }}
+                  />
+                  {(!u.active || activeCount > 1) && (
+                    <form action={removeUnit} className="border-t border-slate-200/70 pt-4">
+                      <input type="hidden" name="id" value={u.id} />
+                      <button className="btn-danger btn-sm" aria-label={`Remover unidade ${u.name}`}>Remover unidade</button>
+                      <p className="mt-1 text-xs text-slate-500">Se a unidade já tem histórico de lançamentos, ela apenas é desativada.</p>
+                    </form>
+                  )}
+                </div>
+              </details>
+            </li>
+          ))}
+        </ul>
+
+        <details className="glass-inset p-3" open={false}>
+          <summary className="link-inline cursor-pointer text-sm">+ Adicionar outra unidade</summary>
+          <div className="mt-4 border-t border-slate-200/70 pt-4">
+            <UnitForm
+              uid="unew-"
+              unit={{ id: null, name: '', address: '', googleReviewUrl: '', latitude: null, longitude: null, active: true, schedule: null }}
+            />
+          </div>
+        </details>
       </Section>
 
       <Section id="pontos" n={4} title="Conversão e segurança" hint="Quanto cada real vale em pontos e quantos resgates cada CPF pode fazer por mês.">

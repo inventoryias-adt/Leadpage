@@ -30,7 +30,7 @@ export default async function ResgatesPage({ searchParams }: { searchParams: Pro
       where: { restaurantId: restaurant.id, status: 'USED' },
       orderBy: { usedAt: 'desc' },
       take: 10,
-      include,
+      include: { ...include, usedUnit: { select: { name: true } } },
     }),
     prisma.redemption.findMany({
       where: { restaurantId: restaurant.id, createdAt: { gte: range.start, lt: range.end } },
@@ -80,7 +80,7 @@ export default async function ResgatesPage({ searchParams }: { searchParams: Pro
           <ul className="divide-y divide-white/60 text-sm">
             {used.map((r) => (
               <li key={r.id} className="flex justify-between gap-3 py-2">
-                <span className="truncate text-slate-800">{r.rewardName} · {r.customer.name}</span>
+                <span className="truncate text-slate-800">{r.rewardName} · {r.customer.name}{r.usedUnit ? ` · ${r.usedUnit.name}` : ''}</span>
                 <span className="shrink-0 text-slate-500">{formatPoints(r.pointsCost)} pts · {r.usedAt ? when(r.usedAt) : ''}</span>
               </li>
             ))}

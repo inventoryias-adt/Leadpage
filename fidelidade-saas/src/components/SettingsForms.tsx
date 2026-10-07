@@ -10,14 +10,17 @@ import {
   saveEngagement,
   saveIdentity,
   saveRules,
+  saveUnit,
   setRewardImage,
 } from '@/app/actions/restaurant';
 import { CATEGORIES } from '@/lib/categories';
+import { defaultSchedule, parseSchedule, type Schedule } from '@/lib/hours';
+import { HoursGrid } from './HoursGrid';
 import { Icon } from './Icons';
 import { ImageUpload } from './ImageUpload';
 import { FormMessage, SubmitButton } from './ui';
 
-type Basics = { name: string; address: string };
+type Basics = { name: string };
 
 export function BasicsForm({ defaults }: { defaults: Basics }) {
   const [state, action] = useActionState(saveBasics, {});
@@ -26,13 +29,10 @@ export function BasicsForm({ defaults }: { defaults: Basics }) {
       <div>
         <label className="glass-label" htmlFor="b-name">Nome do estabelecimento</label>
         <input id="b-name" name="name" className="glass-input" defaultValue={state.values?.name ?? defaults.name} required />
-      </div>
-      <div>
-        <label className="glass-label" htmlFor="b-address">Endereço completo</label>
-        <input id="b-address" name="address" className="glass-input" placeholder="Rua, número, bairro, cidade - UF, CEP" defaultValue={state.values?.address ?? defaults.address} required />
+        <p className="mt-1 text-xs text-slate-500">É o nome que o cliente vê. Endereço e horário ficam em cada unidade.</p>
       </div>
       <FormMessage state={state} />
-      <SubmitButton pendingText="Salvando…">Salvar dados</SubmitButton>
+      <SubmitButton pendingText="Salvando…">Salvar nome</SubmitButton>
     </form>
   );
 }
@@ -115,45 +115,16 @@ export function FinishOnboardingForm() {
 type Identity = {
   category: string;
   instagram: string;
-  googleReviewUrl: string;
-  latitude: number | null;
-  longitude: number | null;
   listed: boolean;
   logoUrl: string | null;
   coverUrl: string | null;
 };
 
-/** Logo, capa, categoria, Instagram, link de avaliação do Google e localização (para check-in e "Lugares perto"). */
+/** Logo, capa, categoria e Instagram da marca. Endereço, horário, localização e link do Google ficam em cada unidade. */
 export function IdentityForm({ defaults }: { defaults: Identity }) {
   const [state, action] = useActionState(saveIdentity, {});
-  const [coords, setCoords] = useState<{ lat: string; lng: string }>({
-    lat: state.values?.latitude ?? (defaults.latitude != null ? String(defaults.latitude) : ''),
-    lng: state.values?.longitude ?? (defaults.longitude != null ? String(defaults.longitude) : ''),
-  });
-  const [geo, setGeo] = useState<'idle' | 'loading' | 'error'>('idle');
-  const [geoError, setGeoError] = useState('');
   // Controlado: um <select> não-controlado ficaria em branco depois que o formulário é reiniciado ao salvar.
   const [category, setCategory] = useState(state.values?.category ?? defaults.category);
-
-  function useMyLocation() {
-    if (!('geolocation' in navigator)) {
-      setGeo('error');
-      setGeoError('Seu navegador não permite obter a localização.');
-      return;
-    }
-    setGeo('loading');
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCoords({ lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6) });
-        setGeo('idle');
-      },
-      (err) => {
-        setGeo('error');
-        setGeoError(err.code === err.PERMISSION_DENIED ? 'Permissão negada. Libere a localização no navegador e tente de novo.' : 'Não foi possível obter a localização. Tente de novo.');
-      },
-      { enableHighAccuracy: true, timeout: 15000 },
-    );
-  }
 
   return (
     <form action={action} className="space-y-5">
@@ -176,41 +147,6 @@ export function IdentityForm({ defaults }: { defaults: Identity }) {
           <label className="glass-label" htmlFor="i-ig">Instagram</label>
           <input id="i-ig" name="instagram" className="glass-input" placeholder="@seurestaurante" defaultValue={state.values?.instagram ?? defaults.instagram} autoCapitalize="none" />
         </div>
-      </div>
-
-      <div>
-        <label className="glass-label" htmlFor="i-g">Link para avaliar no Google</label>
-        <input id="i-g" name="googleReviewUrl" className="glass-input" placeholder="https://g.page/r/…/review" defaultValue={state.values?.googleReviewUrl ?? defaults.googleReviewUrl} inputMode="url" autoCapitalize="none" />
-        <p className="mt-1 text-xs text-slate-500">
-          No Google Meu Negócio, abra o perfil da empresa e toque em “Pedir avaliações” para copiar o link. Também aceitamos o Place ID.
-        </p>
-      </div>
-
-      <div className="glass-inset space-y-3 p-4">
-        <div className="flex items-start gap-3">
-          <Icon name="pin" className="mt-0.5 text-electric-600" />
-          <div>
-            <p className="font-semibold text-slate-800">Localização do restaurante</p>
-            <p className="text-xs text-slate-500">
-              Usada no check-in (o cliente precisa estar a até 200 m) e para o lugar aparecer em “Lugares perto de você”. Toque no botão estando no restaurante.
-            </p>
-          </div>
-        </div>
-        <input type="hidden" name="latitude" value={coords.lat} />
-        <input type="hidden" name="longitude" value={coords.lng} />
-        <div className="flex flex-wrap items-center gap-3">
-          <button type="button" onClick={useMyLocation} disabled={geo === 'loading'} className="glass-button-ghost btn-sm">
-            {geo === 'loading' ? 'Obtendo localização…' : 'Usar minha localização atual'}
-          </button>
-          {coords.lat && coords.lng ? (
-            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700">
-              <Icon name="check" size={16} /> Localização definida ({Number(coords.lat).toFixed(4)}, {Number(coords.lng).toFixed(4)})
-            </span>
-          ) : (
-            <span className="text-sm text-slate-500">Ainda não definida</span>
-          )}
-        </div>
-        {geo === 'error' && <p role="alert" className="text-xs text-red-600">{geoError}</p>}
       </div>
 
       <label className="flex items-start gap-3">
@@ -286,6 +222,118 @@ export function AddChallengeForm() {
       )}
       <FormMessage state={state} />
       <SubmitButton variant="ghost" pendingText="Criando…">Criar desafio</SubmitButton>
+    </form>
+  );
+}
+
+export type UnitFormData = {
+  id: string | null;
+  name: string;
+  address: string;
+  googleReviewUrl: string;
+  latitude: number | null;
+  longitude: number | null;
+  active: boolean;
+  schedule: unknown;
+};
+
+/** Cadastro de uma unidade: nome, endereço, horários por dia, localização (GPS) e link de avaliação do Google. */
+export function UnitForm({ unit, uid }: { unit: UnitFormData; uid: string }) {
+  const [state, action] = useActionState(saveUnit, {});
+  const [days, setDays] = useState<Schedule>(() => parseSchedule(unit.schedule) ?? defaultSchedule());
+  const [coords, setCoords] = useState<{ lat: string; lng: string }>({
+    lat: state.values?.latitude ?? (unit.latitude != null ? String(unit.latitude) : ''),
+    lng: state.values?.longitude ?? (unit.longitude != null ? String(unit.longitude) : ''),
+  });
+  const [geo, setGeo] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [geoError, setGeoError] = useState('');
+  const isNew = unit.id === null;
+
+  function useMyLocation() {
+    if (!('geolocation' in navigator)) {
+      setGeo('error');
+      setGeoError('Seu navegador não permite obter a localização.');
+      return;
+    }
+    setGeo('loading');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCoords({ lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6) });
+        setGeo('idle');
+      },
+      (err) => {
+        setGeo('error');
+        setGeoError(err.code === err.PERMISSION_DENIED ? 'Permissão negada. Libere a localização no navegador e tente de novo.' : 'Não foi possível obter a localização. Tente de novo.');
+      },
+      { enableHighAccuracy: true, timeout: 15000 },
+    );
+  }
+
+  return (
+    <form action={action} className="space-y-5" key={isNew ? (state.ok ?? 'new') : undefined}>
+      {unit.id && <input type="hidden" name="id" value={unit.id} />}
+      <input type="hidden" name="schedule" value={JSON.stringify(days)} />
+      <input type="hidden" name="latitude" value={coords.lat} />
+      <input type="hidden" name="longitude" value={coords.lng} />
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className="glass-label" htmlFor={`${uid}name`}>Nome da unidade</label>
+          <input id={`${uid}name`} name="name" className="glass-input" placeholder="Ex.: Centro, Shopping Norte" defaultValue={state.values?.name ?? unit.name} required />
+        </div>
+        <div>
+          <label className="glass-label" htmlFor={`${uid}address`}>Endereço completo</label>
+          <input id={`${uid}address`} name="address" className="glass-input" placeholder="Rua, número, bairro, cidade - UF" defaultValue={state.values?.address ?? unit.address} required />
+        </div>
+      </div>
+
+      <div>
+        <label className="glass-label" htmlFor={`${uid}google`}>Link para avaliar esta unidade no Google</label>
+        <input id={`${uid}google`} name="googleReviewUrl" className="glass-input" placeholder="https://g.page/r/…/review" defaultValue={state.values?.googleReviewUrl ?? unit.googleReviewUrl} inputMode="url" autoCapitalize="none" />
+        <p className="mt-1 text-xs text-slate-500">
+          No Google Meu Negócio, abra o perfil da unidade e toque em “Pedir avaliações” para copiar o link. Também aceitamos o Place ID.
+        </p>
+      </div>
+
+      <div className="glass-inset space-y-3 p-4">
+        <div className="flex items-start gap-3">
+          <Icon name="pin" className="mt-0.5 text-electric-600" />
+          <div>
+            <p className="font-semibold text-slate-800">Localização da unidade</p>
+            <p className="text-xs text-slate-500">
+              Usada no check-in (o cliente precisa estar a até 200 m) e para a unidade aparecer em “Lugares perto de você”. Toque no botão estando na unidade.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="button" onClick={useMyLocation} disabled={geo === 'loading'} className="glass-button-ghost btn-sm">
+            {geo === 'loading' ? 'Obtendo localização…' : 'Usar minha localização atual'}
+          </button>
+          {coords.lat && coords.lng ? (
+            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700">
+              <Icon name="check" size={16} /> Localização definida ({Number(coords.lat).toFixed(4)}, {Number(coords.lng).toFixed(4)})
+            </span>
+          ) : (
+            <span className="text-sm text-slate-500">Ainda não definida</span>
+          )}
+        </div>
+        {geo === 'error' && <p role="alert" className="text-xs text-red-600">{geoError}</p>}
+      </div>
+
+      <div>
+        <p className="glass-label">Horário de funcionamento</p>
+        <HoursGrid days={days} setDays={setDays} idPrefix={uid} />
+      </div>
+
+      {!isNew && (
+        <label className="flex items-center gap-3">
+          <input type="checkbox" name="active" defaultChecked={state.values ? state.values.active === 'on' : unit.active} className="h-5 w-5 rounded accent-electric-500" />
+          <span className="text-sm text-slate-700"><span className="font-semibold">Unidade ativa</span> — aparece para os clientes e pode lançar pontos</span>
+        </label>
+      )}
+
+      <FormMessage state={state} />
+      <SubmitButton pendingText="Salvando…">{isNew ? 'Adicionar unidade' : 'Salvar unidade'}</SubmitButton>
     </form>
   );
 }

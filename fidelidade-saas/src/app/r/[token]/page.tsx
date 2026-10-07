@@ -1,12 +1,10 @@
 import { Brand } from '@/components/Brand';
-import { Icon } from '@/components/Icons';
 import { claimPoints } from '@/app/actions/customer';
 import { CustomerAuthForm } from '@/components/AuthForms';
 import { prisma } from '@/lib/db';
 import { formatPoints } from '@/lib/points';
 import { getCustomer } from '@/lib/session';
-import { parseSchedule } from '@/lib/hours';
-import { OpeningHours } from '@/components/OpeningHours';
+import { UnitsHours } from '@/components/UnitsHours';
 import { ClaimForm } from './ClaimForm';
 
 export const metadata = { title: 'Resgatar pontos' };
@@ -29,7 +27,10 @@ export default async function ClaimPage({ params }: { params: Promise<{ token: s
   // Esta página só LÊ. O crédito acontece num POST explícito, para que pré-visualizadores de
   // link (WhatsApp, etc.) não consumam o QR Code antes do cliente.
   const [claim, customer] = await Promise.all([
-    prisma.claim.findUnique({ where: { token }, include: { restaurant: { select: { name: true, address: true, openingSchedule: true } } } }),
+    prisma.claim.findUnique({ where: { token }, include: {
+        unit: { select: { id: true, name: true, address: true, openingSchedule: true } },
+        restaurant: { select: { name: true, units: { where: { active: true }, orderBy: { createdAt: 'asc' }, select: { id: true, name: true, address: true, openingSchedule: true } } } },
+      } }),
     getCustomer(),
   ]);
 
@@ -37,7 +38,8 @@ export default async function ClaimPage({ params }: { params: Promise<{ token: s
   if (claim.redeemedAt) return <Message title="QR Code já utilizado" text="Esses pontos já foram creditados em uma carteira." />;
   if (claim.expiresAt < new Date()) return <Message title="QR Code expirado" text="Peça um novo no balcão do restaurante." />;
 
-  const schedule = parseSchedule(claim.restaurant.openingSchedule);
+  // Mostra a unidade onde a compra foi lançada (ou todas, se não houver registro).
+  const hoursUnits = claim.unit ? [claim.unit] : claim.restaurant.units;
 
   return (
     <main className="flex min-h-screen items-center justify-center p-5">
@@ -52,12 +54,11 @@ export default async function ClaimPage({ params }: { params: Promise<{ token: s
         </div>
 
         {/* Quando e onde retirar: informação importante antes mesmo de entrar. */}
-        {schedule && (
-          <div className="mb-5 space-y-2">
-            <OpeningHours schedule={schedule} title="Quando você pode vir resgatar" />
-            {claim.restaurant.address && <p className="flex items-center justify-center gap-1 text-center text-xs text-slate-500"><Icon name="pin" size={13} /> {claim.restaurant.address}</p>}
-          </div>
-        )}
+        {/* Quando e onde retirar: informação importante antes mesmo de entrar. */}
+        <div className="mb-5">
+          <UnitsHours units={hoursUnits} title="Quando você pode vir resgatar" showNames={claim.restaurant.units.length > 1} />
+          {claim.restaurant.units.length > 1 && <p className="mt-2 text-center text-xs text-slate-500">Você pode retirar em qualquer unidade.</p>}
+        </div>
 
         {customer ? (
           <ClaimForm token={token} name={customer.name.split(' ')[0]} action={claimPoints} />

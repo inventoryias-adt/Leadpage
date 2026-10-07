@@ -19,12 +19,13 @@ export default async function LugaresPage() {
         id: true,
         name: true,
         category: true,
-        address: true,
-        latitude: true,
-        longitude: true,
         logoImageId: true,
         pointsPerReal: true,
-        openingSchedule: true,
+        units: {
+          where: { active: true },
+          orderBy: { createdAt: 'asc' },
+          select: { id: true, name: true, address: true, latitude: true, longitude: true, openingSchedule: true },
+        },
         rewards: { where: { active: true }, select: { pointsCost: true }, orderBy: { pointsCost: 'asc' }, take: 1 },
         _count: { select: { challenges: { where: { active: true } } } },
       },
@@ -34,24 +35,23 @@ export default async function LugaresPage() {
   ]);
 
   const balances = new Map(wallets.map((w) => [w.restaurantId, w.balance]));
-  const places: PlaceCard[] = restaurants.map((r) => {
-    const schedule = parseSchedule(r.openingSchedule);
-    return {
+  const places: PlaceCard[] = restaurants
+    .filter((r) => r.units.length > 0)
+    .map((r) => ({
       id: r.id,
       name: r.name,
       category: r.category,
       categoryLabel: categoryLabel(r.category),
-      address: r.address,
-      lat: r.latitude,
-      lng: r.longitude,
       logoUrl: imageUrl(r.logoImageId),
       pointsPerReal: r.pointsPerReal,
-      openNow: schedule ? isOpenNow(schedule) : null,
       balance: customer ? (balances.get(r.id) ?? 0) : null,
       minReward: r.rewards[0]?.pointsCost ?? null,
       challenges: r._count.challenges,
-    };
-  });
+      units: r.units.map((u) => {
+        const schedule = parseSchedule(u.openingSchedule);
+        return { id: u.id, name: u.name, address: u.address, lat: u.latitude, lng: u.longitude, openNow: schedule ? isOpenNow(schedule) : null };
+      }),
+    }));
 
   return (
     <main className="p-4 sm:p-6">

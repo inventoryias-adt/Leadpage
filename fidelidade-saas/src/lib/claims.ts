@@ -2,7 +2,8 @@ import 'server-only';
 import { Prisma } from '@prisma/client';
 import { prisma } from './db';
 import { dayKeyBR, periodRange } from './challenges';
-import { CHECKIN_RADIUS_M, distanceMeters, formatDistance, validCoords } from './geo';
+import { CHECKIN_RADIUS_M, formatDistance, validCoords } from './geo';
+import { nearestUnit } from './units';
 import { startOfMonthBR } from './points';
 import { newVoucherCode } from './tokens';
 
@@ -120,29 +121,32 @@ async function rewardReferrer(tx: Tx, referredId: string, restaurantId: string, 
   await creditWallet(tx, referral.referrerId, restaurantId, restaurant.referralPoints, `Indicação: ${firstName} fez a primeira compra`);
 }
 
-/** Check-in por proximidade: +pontos uma vez por dia, só se o cliente estiver no local. */
+/** Check-in por proximidade: +pontos uma vez por dia, só se o cliente estiver em alguma unidade da marca. */
 export async function performCheckIn(customerId: string, restaurantId: string, lat: unknown, lng: unknown) {
   const restaurant = await prisma.restaurant.findUnique({ where: { id: restaurantId } });
   if (!restaurant || restaurant.subscriptionStatus !== 'ACTIVE') throw new BusinessError('Lugar indisponível.');
   if (restaurant.checkInPoints <= 0) throw new BusinessError('Este lugar não oferece pontos por check-in.');
-  if (restaurant.latitude == null || restaurant.longitude == null) {
+
+  const units = await prisma.unit.findMany({ where: { restaurantId, active: true } });
+  if (!units.some((u) => u.latitude != null && u.longitude != null)) {
     throw new BusinessError('Este lugar ainda não configurou a localização para check-in.');
   }
   if (!validCoords(lat, lng)) throw new BusinessError('Não conseguimos ler a sua localização. Tente de novo.');
 
-  const meters = distanceMeters({ lat, lng: lng as number }, { lat: restaurant.latitude, lng: restaurant.longitude });
-  if (meters > CHECKIN_RADIUS_M) {
-    throw new BusinessError(`Você está a ${formatDistance(meters)} do local. Chegue mais perto para fazer o check-in.`);
+  const near = nearestUnit(units, { lat, lng: lng as number })!;
+  if (near.meters > CHECKIN_RADIUS_M) {
+    const where = units.length > 1 ? 'da unidade mais próxima' : 'do local';
+    throw new BusinessError(`Você está a ${formatDistance(near.meters)} ${where}. Chegue mais perto para fazer o check-in.`);
   }
 
   return prisma.$transaction(async (tx) => {
     const created = await tx.checkIn.createMany({
-      data: [{ customerId, restaurantId, dayKey: dayKeyBR(), distanceM: Math.round(meters) }],
+      data: [{ customerId, restaurantId, unitId: near.unit.id, dayKey: dayKeyBR(), distanceM: Math.round(near.meters) }],
       skipDuplicates: true,
     });
     if (created.count !== 1) throw new BusinessError('Você já fez check-in aqui hoje. Volte amanhã!');
 
-    await creditWallet(tx, customerId, restaurantId, restaurant.checkInPoints, 'Check-in no local');
+    await creditWallet(tx, customerId, restaurantId, restaurant.checkInPoints, units.length > 1 ? `Check-in: ${near.unit.name}` : 'Check-in no local');
     const bonuses = await awardChallenges(tx, customerId, restaurantId, 'CHECKINS');
     return { points: restaurant.checkInPoints, bonuses };
   });

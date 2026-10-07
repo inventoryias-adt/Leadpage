@@ -18,7 +18,7 @@ export default async function CarteiraPage() {
   const [wallets, vouchers] = await Promise.all([
     prisma.wallet.findMany({
       where: { customerId: customer.id },
-      include: { restaurant: { select: { id: true, name: true, address: true, logoImageId: true, subscriptionStatus: true } } },
+      include: { restaurant: { select: { id: true, name: true, logoImageId: true, subscriptionStatus: true, units: { where: { active: true }, orderBy: { createdAt: 'asc' }, select: { address: true } } } } },
       orderBy: { balance: 'desc' },
     }),
     prisma.redemption.findMany({
@@ -114,7 +114,7 @@ export default async function CarteiraPage() {
                   <PlaceAvatar name={w.restaurant.name} src={imageUrl(w.restaurant.logoImageId)} size={52} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-bold text-slate-900">{w.restaurant.name}</p>
-                    <p className="truncate text-xs text-slate-500">{w.restaurant.address}</p>
+                    <p className="truncate text-xs text-slate-500">{w.restaurant.units.length > 1 ? `${w.restaurant.units.length} unidades` : w.restaurant.units[0]?.address}</p>
                   </div>
                   <p className="shrink-0 text-right">
                     <span className="block text-2xl font-extrabold leading-none text-primary">{formatPoints(w.balance)}</span>

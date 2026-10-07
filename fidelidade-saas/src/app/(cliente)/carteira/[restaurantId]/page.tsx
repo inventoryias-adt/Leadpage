@@ -1,12 +1,10 @@
 import Link from 'next/link';
-import { Icon } from '@/components/Icons';
 import { notFound } from 'next/navigation';
 import { Brand } from '@/components/Brand';
 import { prisma } from '@/lib/db';
 import { formatPoints, startOfMonthBR } from '@/lib/points';
 import { requireCustomer } from '@/lib/session';
-import { parseSchedule } from '@/lib/hours';
-import { OpeningHours } from '@/components/OpeningHours';
+import { UnitsHours } from '@/components/UnitsHours';
 import { RedeemButton } from './RedeemButton';
 
 export const metadata = { title: 'Meus pontos' };
@@ -30,7 +28,12 @@ export default async function WalletPage({
   const [restaurant, wallet, rewards, history, vouchers, usedThisMonth] = await Promise.all([
     prisma.restaurant.findUnique({
       where: { id: restaurantId },
-      select: { id: true, name: true, address: true, maxRedeemsPerMonth: true, openingSchedule: true },
+      select: {
+        id: true,
+        name: true,
+        maxRedeemsPerMonth: true,
+        units: { where: { active: true }, orderBy: { createdAt: 'asc' }, select: { id: true, name: true, address: true, openingSchedule: true } },
+      },
     }),
     prisma.wallet.findUnique({ where: { customerId_restaurantId: ofWallet } }),
     prisma.reward.findMany({ where: { restaurantId, active: true }, orderBy: { pointsCost: 'asc' } }),
@@ -39,7 +42,6 @@ export default async function WalletPage({
     prisma.redemption.count({ where: { ...ofWallet, createdAt: { gte: startOfMonthBR() } } }),
   ]);
   if (!restaurant || !wallet) notFound(); // só quem já pontuou no restaurante vê a carteira
-  const schedule = parseSchedule(restaurant.openingSchedule);
   const limitReached = usedThisMonth >= restaurant.maxRedeemsPerMonth;
 
   return (
@@ -71,12 +73,7 @@ export default async function WalletPage({
       {vouchers.length > 0 && (
         <section className="mb-6">
           <h2 className="mb-3 text-lg font-bold text-slate-800">Prêmios para retirar</h2>
-          {schedule && (
-            <div className="mb-3 space-y-2">
-              <OpeningHours schedule={schedule} />
-              {restaurant.address && <p className="flex items-center justify-center gap-1 text-center text-xs text-slate-500"><Icon name="pin" size={13} /> {restaurant.address}</p>}
-            </div>
-          )}
+          <div className="mb-3"><UnitsHours units={restaurant.units} title="Horário para retirar seu prêmio" /></div>
           <div className="space-y-3">
             {vouchers.map((v) => (
               <div key={v.id} className="glass-panel-sm flex items-center justify-between gap-3 p-4">
@@ -92,10 +89,9 @@ export default async function WalletPage({
       )}
 
       {/* Horário geral (quando ainda não há prêmio para retirar) */}
-      {schedule && vouchers.length === 0 && (
-        <section className="mb-6 space-y-2">
-          <OpeningHours schedule={schedule} title="Horário de funcionamento" />
-          {restaurant.address && <p className="flex items-center justify-center gap-1 text-center text-xs text-slate-500"><Icon name="pin" size={13} /> {restaurant.address}</p>}
+      {vouchers.length === 0 && (
+        <section className="mb-6">
+          <UnitsHours units={restaurant.units} title="Horário de funcionamento" />
         </section>
       )}
 

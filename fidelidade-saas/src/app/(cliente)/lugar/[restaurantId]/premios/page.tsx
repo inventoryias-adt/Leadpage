@@ -4,7 +4,7 @@ import { Icon } from '@/components/Icons';
 import { Illustration } from '@/components/Illustrations';
 import { RewardBag } from '@/components/RewardBag';
 import { prisma } from '@/lib/db';
-import { parseSchedule, summarizeSchedule } from '@/lib/hours';
+import { hoursText as unitsHoursText } from '@/lib/units-text';
 import { imageUrl } from '@/lib/images';
 import { startOfMonthBR } from '@/lib/points';
 import { getCustomer } from '@/lib/session';
@@ -21,7 +21,14 @@ export default async function PremiosPage({ params }: { params: Promise<{ restau
   const [restaurant, rewards, wallet, usedThisMonth] = await Promise.all([
     prisma.restaurant.findUnique({
       where: { id: restaurantId },
-      select: { id: true, name: true, subscriptionStatus: true, onboardedAt: true, maxRedeemsPerMonth: true, openingSchedule: true },
+      select: {
+        id: true,
+        name: true,
+        subscriptionStatus: true,
+        onboardedAt: true,
+        maxRedeemsPerMonth: true,
+        units: { where: { active: true }, orderBy: { createdAt: 'asc' }, select: { name: true, openingSchedule: true } },
+      },
     }),
     prisma.reward.findMany({ where: { restaurantId, active: true }, orderBy: { pointsCost: 'asc' } }),
     ofWallet ? prisma.wallet.findUnique({ where: { customerId_restaurantId: ofWallet } }) : null,
@@ -29,8 +36,7 @@ export default async function PremiosPage({ params }: { params: Promise<{ restau
   ]);
   if (!restaurant || restaurant.subscriptionStatus !== 'ACTIVE' || !restaurant.onboardedAt) notFound();
 
-  const schedule = parseSchedule(restaurant.openingSchedule);
-  const hoursText = schedule ? summarizeSchedule(schedule).map((g) => `${g.label} ${g.hours}`).join(' · ') : null;
+  const hoursText = unitsHoursText(restaurant.units);
   const back = (
     <Link href={`/lugar/${restaurantId}`} className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-electric-600 hover:text-primary">
       <Icon name="back" size={16} /> {restaurant.name}

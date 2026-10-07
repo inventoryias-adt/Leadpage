@@ -14,14 +14,24 @@ export default async function PontosPage({ searchParams }: { searchParams: Promi
   const range = monthRangeBR((await searchParams).mes);
   const where = { type: 'EARN' as const, createdAt: { gte: range.start, lt: range.end }, wallet: { restaurantId: restaurant.id } };
 
-  const [sum, rows] = await Promise.all([
+  const [sum, rows, perUnit, units] = await Promise.all([
     prisma.transaction.aggregate({ _sum: { points: true }, _count: true, where }),
     prisma.transaction.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       take: LIMIT,
-      include: { wallet: { select: { customer: { select: { id: true, name: true } } } } },
+      include: {
+        wallet: { select: { customer: { select: { id: true, name: true } } } },
+        claim: { select: { unit: { select: { name: true } } } },
+      },
     }),
+    prisma.claim.groupBy({
+      by: ['unitId'],
+      where: { restaurantId: restaurant.id, redeemedAt: { gte: range.start, lt: range.end } },
+      _sum: { points: true },
+      _count: true,
+    }),
+    prisma.unit.findMany({ where: { restaurantId: restaurant.id }, select: { id: true, name: true } }),
   ]);
 
   return (
@@ -38,6 +48,19 @@ export default async function PontosPage({ searchParams }: { searchParams: Promi
             <p className="text-xs text-slate-600">pontuações</p>
           </div>
         </div>
+        {units.length > 1 && perUnit.length > 0 && (
+          <div>
+            <p className="mb-2 text-sm font-semibold text-slate-700">Compras por unidade</p>
+            <ul className="divide-y divide-slate-200/70 rounded-2xl border border-slate-200/80 bg-white/60 text-sm">
+              {perUnit.map((u) => (
+                <li key={u.unitId ?? 'sem'} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                  <span className="font-medium text-slate-800">{units.find((x) => x.id === u.unitId)?.name ?? 'Sem unidade'}</span>
+                  <span className="text-slate-600">{u._count} {u._count === 1 ? 'lançamento' : 'lançamentos'} · <strong className="text-primary">{formatPoints(u._sum.points ?? 0)} pts</strong></span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
 
       <section className="glass-panel p-5 sm:p-7">
@@ -53,7 +76,7 @@ export default async function PontosPage({ searchParams }: { searchParams: Promi
                     {t.wallet.customer.name}
                   </Link>
                   <p className="text-slate-700">{t.description}</p>
-                  <p className="text-xs text-slate-500">{formatDateTimeBR(t.createdAt)}</p>
+                  <p className="text-xs text-slate-500">{formatDateTimeBR(t.createdAt)}{units.length > 1 && t.claim?.unit ? ` · ${t.claim.unit.name}` : ''}</p>
                 </div>
                 <span className="shrink-0 font-bold text-emerald-600">+{formatPoints(t.points)}</span>
               </li>

@@ -41,20 +41,22 @@ export default async function LugarPage({
   searchParams,
 }: {
   params: Promise<{ restaurantId: string }>;
-  searchParams: Promise<{ bemvindo?: string }>;
+  searchParams: Promise<{ bemvindo?: string; unidade?: string }>;
 }) {
   const { restaurantId } = await params;
-  const welcome = (await searchParams).bemvindo === '1';
+  const sp = await searchParams;
+  const welcome = sp.bemvindo === '1';
   if (!/^[0-9a-f-]{36}$/.test(restaurantId)) notFound();
 
   const customer = await getCustomer();
-  const [restaurant, rewards, challenges, rules, wallet, completions] = await Promise.all([
+  const [restaurant, rewards, challenges, rules, wallet, completions, units] = await Promise.all([
     prisma.restaurant.findUnique({ where: { id: restaurantId } }),
     prisma.reward.findMany({ where: { restaurantId, active: true }, orderBy: { pointsCost: 'asc' } }),
     prisma.challenge.findMany({ where: { restaurantId, active: true }, orderBy: { createdAt: 'asc' } }),
     prisma.interactionRule.findMany({ where: { restaurantId, active: true }, orderBy: { createdAt: 'asc' } }),
     customer ? prisma.wallet.findUnique({ where: { customerId_restaurantId: { customerId: customer.id, restaurantId } } }) : null,
     customer ? prisma.challengeCompletion.findMany({ where: { customerId: customer.id, challenge: { restaurantId } } }) : [],
+    prisma.unit.findMany({ where: { restaurantId, active: true }, orderBy: { createdAt: 'asc' } }),
   ]);
   if (!restaurant || restaurant.subscriptionStatus !== 'ACTIVE' || !restaurant.onboardedAt) notFound();
 
@@ -77,14 +79,17 @@ export default async function LugarPage({
     referralUrl = `${appUrl()}/convite/${restaurantId}/${code}`;
   }
 
-  const schedule = parseSchedule(restaurant.openingSchedule);
+  // Unidade em destaque: a escolhida no link (?unidade=) ou a primeira. Endereço, horário, mapa e Google vêm dela.
+  const unit = units.find((u) => u.id === sp.unidade) ?? units[0] ?? null;
+  const multi = units.length > 1;
+  const schedule = parseSchedule(unit?.openingSchedule);
   const open = schedule ? isOpenNow(schedule) : null;
   const balance = wallet?.balance ?? 0;
-  const hasCoords = restaurant.latitude != null && restaurant.longitude != null;
-  const directions = hasCoords
-    ? `https://www.google.com/maps/dir/?api=1&destination=${restaurant.latitude},${restaurant.longitude}`
-    : restaurant.address
-      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.address)}`
+  const hasCoords = units.some((u) => u.latitude != null && u.longitude != null); // check-in vale em qualquer unidade com localização
+  const directions = unit?.latitude != null && unit.longitude != null
+    ? `https://www.google.com/maps/dir/?api=1&destination=${unit.latitude},${unit.longitude}`
+    : unit?.address
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(unit.address)}`
       : null;
   const cover = imageUrl(restaurant.coverImageId);
   const here = `/lugar/${restaurantId}`;
@@ -112,7 +117,7 @@ export default async function LugarPage({
             <PlaceAvatar name={restaurant.name} src={imageUrl(restaurant.logoImageId)} size={64} />
             <div className="min-w-0">
               <h1 className="truncate text-xl font-extrabold tracking-tight text-slate-900">{restaurant.name}</h1>
-              <p className="truncate text-sm text-slate-500">{[categoryLabel(restaurant.category), restaurant.address].filter(Boolean).join(' · ')}</p>
+              <p className="truncate text-sm text-slate-500">{[categoryLabel(restaurant.category), multi ? unit?.name : null, unit?.address].filter(Boolean).join(' · ')}</p>
             </div>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
@@ -129,6 +134,25 @@ export default async function LugarPage({
             </a>
           )}
         </section>
+
+        {multi && (
+          <nav aria-label="Unidades" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6">
+            {units.map((u) => {
+              const on = u.id === unit?.id;
+              return (
+                <Link
+                  key={u.id}
+                  href={`${here}?unidade=${u.id}`}
+                  scroll={false}
+                  aria-current={on ? 'true' : undefined}
+                  className={`${on ? 'glass-button' : 'glass-button-ghost'} shrink-0 !w-auto !rounded-full !px-4 !py-1.5 !text-sm`}
+                >
+                  <Icon name="pin" size={14} /> {u.name}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
 
         {welcome && (
           <p role="status" className="glass-success">
@@ -176,7 +200,7 @@ export default async function LugarPage({
               </li>
             )}
             {rules.map((r) => {
-              const meta = actionMeta(r.label, restaurant);
+              const meta = actionMeta(r.label, { googleReviewUrl: unit?.googleReviewUrl ?? null, instagram: restaurant.instagram });
               return (
                 <li key={r.id} className="p-4">
                   <div className="flex items-start gap-3">
@@ -293,7 +317,7 @@ export default async function LugarPage({
         {schedule && (
           <section aria-labelledby="horarios">
             <h2 id="horarios" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Horário de funcionamento</h2>
-            <OpeningHours schedule={schedule} title="Quando você pode vir" />
+            <OpeningHours schedule={schedule} title={multi && unit ? `Quando você pode vir · ${unit.name}` : 'Quando você pode vir'} />
           </section>
         )}
       </div>

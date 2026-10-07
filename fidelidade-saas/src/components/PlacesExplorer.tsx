@@ -8,20 +8,19 @@ import { Icon } from './Icons';
 import { Illustration } from './Illustrations';
 import { PlaceAvatar } from './Visual';
 
+export type PlaceUnit = { id: string; name: string; address: string | null; lat: number | null; lng: number | null; openNow: boolean | null };
+
 export type PlaceCard = {
   id: string;
   name: string;
   category: string | null;
   categoryLabel: string | null;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
   logoUrl: string | null;
   pointsPerReal: number;
-  openNow: boolean | null;
   balance: number | null;
   minReward: number | null;
   challenges: number;
+  units: PlaceUnit[];
 };
 
 type Filter = 'all' | 'saldo' | 'aberto' | 'desafios';
@@ -68,15 +67,27 @@ export function PlacesExplorer({ places, categories, loggedIn }: { places: Place
   const list = useMemo(() => {
     const q = norm(query.trim());
     const rows = places
-      .map((p) => ({
-        ...p,
-        meters: pos && p.lat != null && p.lng != null ? distanceMeters(pos, { lat: p.lat, lng: p.lng }) : null,
-      }))
+      .map((p) => {
+        // Unidade em destaque: a mais perto de você (se a localização estiver ligada) ou a primeira.
+        let unit = p.units[0];
+        let meters: number | null = null;
+        if (pos) {
+          for (const u of p.units) {
+            if (u.lat == null || u.lng == null) continue;
+            const d = distanceMeters(pos, { lat: u.lat, lng: u.lng });
+            if (meters == null || d < meters) {
+              meters = d;
+              unit = u;
+            }
+          }
+        }
+        return { ...p, unit, meters, openAny: p.units.some((u) => u.openNow === true) };
+      })
       .filter((p) => {
-        if (q && !norm(`${p.name} ${p.categoryLabel ?? ''} ${p.address ?? ''}`).includes(q)) return false;
+        if (q && !norm(`${p.name} ${p.categoryLabel ?? ''} ${p.units.map((u) => `${u.name} ${u.address ?? ''}`).join(' ')}`).includes(q)) return false;
         if (category && p.category !== category) return false;
         if (filter === 'saldo') return (p.balance ?? 0) > 0;
-        if (filter === 'aberto') return p.openNow === true;
+        if (filter === 'aberto') return p.openAny;
         if (filter === 'desafios') return p.challenges > 0;
         return true;
       });
@@ -187,19 +198,22 @@ export function PlacesExplorer({ places, categories, loggedIn }: { places: Place
         <ul className="space-y-3">
           {list.map((p) => (
             <li key={p.id}>
-              <Link href={`/lugar/${p.id}`} className="glass-panel-sm card-link flex items-center gap-3.5 p-3.5">
+              <Link href={p.units.length > 1 ? `/lugar/${p.id}?unidade=${p.unit.id}` : `/lugar/${p.id}`} className="glass-panel-sm card-link flex items-center gap-3.5 p-3.5">
                 <PlaceAvatar name={p.name} src={p.logoUrl} size={60} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
                     <p className="truncate font-bold text-slate-900">{p.name}</p>
                     {p.meters != null && <span className="shrink-0 text-xs font-semibold text-electric-600">{formatDistance(p.meters)}</span>}
                   </div>
-                  <p className="truncate text-xs text-slate-500">{[p.categoryLabel, p.address].filter(Boolean).join(' · ')}</p>
+                  <p className="truncate text-xs text-slate-500">{[p.categoryLabel, p.units.length > 1 ? p.unit.name : null, p.unit.address].filter(Boolean).join(' · ')}</p>
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {p.openNow != null && (
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${p.openNow ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
-                        {p.openNow ? 'Aberto agora' : 'Fechado agora'}
+                    {p.unit.openNow != null && (
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${p.unit.openNow ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
+                        {p.unit.openNow ? 'Aberto agora' : 'Fechado agora'}
                       </span>
+                    )}
+                    {p.units.length > 1 && (
+                      <span className="rounded-full bg-slate-900/90 px-2 py-0.5 text-[11px] font-semibold text-white">{p.units.length} unidades</span>
                     )}
                     <span className="rounded-full bg-electric-600/10 px-2 py-0.5 text-[11px] font-semibold text-electric-600">{p.pointsPerReal} pts por R$ 1</span>
                     {p.balance != null && p.balance > 0 && (

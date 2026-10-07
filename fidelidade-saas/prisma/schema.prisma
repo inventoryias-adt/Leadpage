@@ -48,6 +48,7 @@ model Restaurant {
   passwordHash String
 
   // Onboarding
+  // address, openingSchedule, latitude, longitude e googleReviewUrl são LEGADO: hoje vivem em Unit (não use mais).
   address         String?
   /// Horário por dia da semana: [{ day: 0-6, closed, open: "HH:MM", close: "HH:MM" }] (ver src/lib/hours.ts)
   openingSchedule Json?
@@ -81,6 +82,7 @@ model Restaurant {
   claims           Claim[]
   wallets          Wallet[]
   redemptions      Redemption[]
+  units            Unit[]
   challenges       Challenge[]
   checkIns         CheckIn[]
   referrals        Referral[]
@@ -164,9 +166,11 @@ model Claim {
   expiresAt    DateTime
   redeemedAt   DateTime?
   customerId   String?
+  unitId       String? // unidade onde o caixa lançou a compra
 
   restaurant  Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   customer    Customer?    @relation(fields: [customerId], references: [id])
+  unit        Unit?        @relation(fields: [unitId], references: [id], onDelete: SetNull)
   transaction Transaction?
 
   @@index([restaurantId, createdAt])
@@ -202,8 +206,10 @@ model Redemption {
   status       RedemptionStatus @default(PENDING)
   createdAt    DateTime         @default(now())
   usedAt       DateTime?
+  usedUnitId   String? // unidade que entregou o prêmio
 
   restaurant  Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  usedUnit    Unit?        @relation("delivered", fields: [usedUnitId], references: [id], onDelete: SetNull)
   customer    Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
   wallet      Wallet       @relation(fields: [walletId], references: [id], onDelete: Cascade)
   reward      Reward       @relation(fields: [rewardId], references: [id])
@@ -277,6 +283,8 @@ model CheckIn {
 
   customer   Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  unit       Unit?      @relation(fields: [unitId], references: [id])
+  unitId     String?
 
   @@unique([customerId, restaurantId, dayKey])
   @@index([restaurantId, createdAt])
@@ -297,4 +305,26 @@ model Referral {
 
   @@unique([restaurantId, referredId])
   @@index([referrerId])
+}
+
+/// Unidade (filial) de uma marca. Cada unidade tem endereço, horário, localização e link do Google próprios.
+/// Pontos, prêmios, desafios e carteiras são da marca e valem em qualquer unidade.
+model Unit {
+  id              String   @id @default(uuid())
+  restaurantId    String
+  name            String
+  address         String?
+  openingSchedule Json?
+  latitude        Float?
+  longitude       Float?
+  googleReviewUrl String?
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  restaurant Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  claims     Claim[]
+  checkIns   CheckIn[]
+  deliveries Redemption[] @relation("delivered")
+
+  @@index([restaurantId])
 }
