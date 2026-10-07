@@ -72,7 +72,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
             const s = byWallet.get(w.id) ?? { earned: 0, redeemed: 0, visits: 0 };
             return (
               <li key={w.id}>
-                <Link href={`/dashboard/clientes/${w.customer.id}`} className="glass-panel-sm block p-4 transition hover:bg-white/60">
+                <Link href={`/dashboard/clientes/${w.customer.id}`} className="glass-panel-sm card-link block p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate font-bold text-slate-800">{w.customer.name}</p>

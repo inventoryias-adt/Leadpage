@@ -33,7 +33,7 @@ export default async function DashboardHome() {
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {stats.map((s) => {
           const card = (
-            <div className="glass-panel-sm h-full p-4">
+            <div className={`glass-panel-sm h-full p-4 ${s.href ? 'card-link' : ''}`}>
               <p className="text-3xl font-extrabold text-primary">{s.value}</p>
               <p className="text-sm text-slate-600">{s.label}</p>
               {s.href && <p className="mt-1 text-xs font-semibold text-electric-600">Ver detalhes →</p>}

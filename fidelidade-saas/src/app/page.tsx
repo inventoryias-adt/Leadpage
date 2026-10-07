@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Brand } from '@/components/Brand';
 import { SignupForm } from '@/components/AuthForms';
 
 const steps = [
@@ -26,10 +27,10 @@ export default function LandingPage() {
   return (
     <main className="mx-auto max-w-6xl px-5 pb-20">
       <nav className="flex items-center justify-between py-5">
-        <span className="text-xl font-extrabold tracking-tight text-primary">Fidelize</span>
+        <Brand />
         <div className="flex items-center gap-3 text-sm font-semibold">
-          <Link href="/entrar" className="hidden text-slate-600 hover:text-primary sm:inline">Sou cliente</Link>
-          <Link href="/login" className="glass-chip hover:bg-white">Entrar</Link>
+          <Link href="/entrar" className="nav-tab hidden sm:inline-block">Sou cliente</Link>
+          <Link href="/login" className="chip-link">Entrar</Link>
         </div>
       </nav>
 
@@ -107,7 +108,7 @@ export default function LandingPage() {
         <div className="space-y-3">
           {faqs.map((f) => (
             <details key={f.q} className="glass-panel-sm group p-5">
-              <summary className="cursor-pointer list-none font-semibold text-slate-800">{f.q}</summary>
+              <summary className="list-none font-semibold text-slate-800 transition-colors hover:text-electric-600">{f.q}</summary>
               <p className="mt-2 text-slate-600">{f.a}</p>
             </details>
           ))}

@@ -28,14 +28,16 @@ body {
 
 /* ------------------------------------------------------------------ */
 /* Liquid Glass — utilitários                                         */
+/* Vidro mais "firme" (maior opacidade, bordas definidas) para passar */
+/* a sensação de produto robusto, sem perder o efeito translúcido.    */
 /* ------------------------------------------------------------------ */
 @layer components {
   /* Painel mestre: vidro translúcido com brilho especular na borda superior. */
   .glass-panel {
     @apply relative rounded-3xl;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.55), var(--glass-fill));
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.6));
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 0 0 0 1px rgba(30, 58, 138, 0.06), 0 12px 32px -8px rgba(30, 58, 138, 0.16), 0 1px 0 rgba(255, 255, 255, 0.9) inset;
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   }
@@ -46,7 +48,7 @@ body {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 38%);
     mask: linear-gradient(#000, transparent 70%);
     -webkit-mask: linear-gradient(#000, transparent 70%);
-    opacity: 0.55;
+    opacity: 0.5;
   }
   .glass-panel > * {
     @apply relative;
@@ -55,48 +57,185 @@ body {
     @apply glass-panel rounded-2xl;
   }
   .glass-inset {
-    @apply rounded-2xl border border-white/60 bg-white/35;
-    box-shadow: inset 0 1px 2px rgba(30, 58, 138, 0.06);
+    @apply rounded-2xl border border-slate-200/80 bg-white/60;
+    box-shadow: inset 0 1px 2px rgba(30, 58, 138, 0.05);
   }
 
   .glass-input {
-    @apply w-full rounded-xl border border-white/70 bg-white/55 px-4 py-3 text-base text-slate-700 placeholder:text-slate-400
-      transition-all focus:bg-white/80 focus:outline-none focus:ring-2 focus:ring-electric-500/60;
-    box-shadow: inset 0 1px 2px rgba(30, 58, 138, 0.06);
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
+    @apply w-full rounded-xl border border-slate-300/80 bg-white/85 px-4 py-3 text-base text-slate-800 placeholder:text-slate-400
+      transition-all duration-150 hover:border-electric-500/60 focus:border-electric-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-electric-500/15;
+    box-shadow: inset 0 1px 2px rgba(30, 58, 138, 0.05);
+  }
+  select.glass-input,
+  input[type='time'].glass-input {
+    cursor: pointer;
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Botões. Primário: azul sólido → no hover INVERTE (branco/azul).   */
+  /* Secundário: branco/azul → no hover INVERTE (azul/branco).         */
+  /* ---------------------------------------------------------------- */
+  .glass-button,
+  .glass-button-ghost,
+  .btn-danger {
+    @apply inline-flex w-full select-none items-center justify-center gap-2 rounded-xl border-2 px-6 py-3 text-[15px] font-semibold leading-tight;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  }
+  .glass-button:focus-visible,
+  .glass-button-ghost:focus-visible,
+  .btn-danger:focus-visible,
+  .nav-tab:focus-visible,
+  .chip-link:focus-visible {
+    outline: 3px solid rgba(47, 107, 255, 0.45);
+    outline-offset: 2px;
+  }
+  .glass-button:active,
+  .glass-button-ghost:active,
+  .btn-danger:active {
+    transform: translateY(1px) scale(0.99);
+  }
+  .glass-button:disabled,
+  .glass-button-ghost:disabled,
+  .btn-danger:disabled,
+  .glass-button[aria-disabled='true'] {
+    cursor: not-allowed;
+    opacity: 0.55;
+    transform: none;
   }
 
   .glass-button {
-    @apply inline-flex w-full items-center justify-center rounded-xl px-6 py-3 font-semibold text-white
-      transition-all duration-200 hover:scale-[1.015] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100;
-    background: linear-gradient(180deg, #4f86ff 0%, var(--blue-electric) 45%, #1d4ed8 100%);
-    box-shadow: 0 10px 24px -8px rgba(47, 107, 255, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    color: #fff;
+    border-color: #1d4ed8;
+    background-color: #1d4ed8;
+    background-image: linear-gradient(180deg, #3b78ff 0%, #2459e6 55%, #1d4ed8 100%);
+    box-shadow: 0 8px 18px -8px rgba(29, 78, 216, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.35);
   }
+  .glass-button:not(:disabled):hover {
+    color: #1d4ed8;
+    background-color: #fff;
+    background-image: none;
+    box-shadow: 0 8px 18px -8px rgba(29, 78, 216, 0.45);
+  }
+
   .glass-button-ghost {
-    @apply inline-flex w-full items-center justify-center rounded-xl border border-white/80 bg-white/60 px-6 py-3 font-semibold
-      text-electric-600 transition-all hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60;
-    box-shadow: 0 2px 8px rgba(30, 58, 138, 0.08);
+    color: #1d4ed8;
+    border-color: #1d4ed8;
+    background-color: #fff;
+    box-shadow: 0 2px 6px rgba(30, 58, 138, 0.08);
   }
+  .glass-button-ghost:not(:disabled):hover {
+    color: #fff;
+    background-color: #1d4ed8;
+    box-shadow: 0 8px 18px -8px rgba(29, 78, 216, 0.7);
+  }
+
+  .btn-danger {
+    color: #b91c1c;
+    border-color: #dc2626;
+    background-color: #fff;
+  }
+  .btn-danger:not(:disabled):hover {
+    color: #fff;
+    background-color: #dc2626;
+  }
+
+  /* Tamanho compacto (botões dentro de listas, buscas, linhas). */
+  .btn-sm {
+    @apply !w-auto !gap-1.5 !rounded-lg !px-3.5 !py-1.5 !text-sm;
+  }
+
+  /* Abas de navegação do painel. */
+  .nav-tab {
+    @apply rounded-lg px-3.5 py-2 text-sm font-semibold text-slate-700;
+    cursor: pointer;
+    transition: background-color 0.18s ease, color 0.18s ease;
+  }
+  .nav-tab:hover {
+    @apply bg-electric-600 text-white;
+  }
+  .nav-tab-active {
+    @apply bg-electric-600 text-white shadow-md shadow-blue-600/30;
+  }
+  .nav-tab-active:hover {
+    @apply bg-white text-electric-600;
+  }
+
+  /* Rótulo/etiqueta (não clicável) e etiqueta clicável. */
   .glass-chip {
-    @apply inline-flex items-center rounded-full border border-white/70 bg-white/55 px-3 py-1 text-xs font-semibold text-electric-600;
+    @apply inline-flex items-center rounded-full border border-electric-600/20 bg-white/80 px-3 py-1 text-xs font-semibold text-electric-600;
   }
+  .chip-link {
+    @apply inline-flex items-center rounded-full border-2 border-electric-600 bg-white px-3.5 py-1.5 text-sm font-semibold text-electric-600;
+    cursor: pointer;
+    transition: background-color 0.18s ease, color 0.18s ease;
+  }
+  .chip-link:hover {
+    @apply bg-electric-600 text-white;
+  }
+
+  /* Link de texto dentro de conteúdo. */
+  .link-inline {
+    @apply font-semibold text-electric-600 underline-offset-2;
+    cursor: pointer;
+    transition: color 0.15s ease;
+  }
+  .link-inline:hover {
+    @apply text-primary underline;
+  }
+
+  /* Cartão inteiro clicável. */
+  .card-link {
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+  }
+  .card-link:hover {
+    transform: translateY(-2px);
+    border-color: rgba(29, 78, 216, 0.55);
+    background-color: #fff;
+    box-shadow: 0 0 0 1px rgba(29, 78, 216, 0.25), 0 16px 32px -10px rgba(29, 78, 216, 0.28);
+  }
+
   .glass-label {
-    @apply mb-1 block text-sm font-medium text-slate-700;
+    @apply mb-1.5 block text-sm font-semibold text-slate-700;
   }
   .glass-error {
-    @apply rounded-xl border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700;
+    @apply rounded-xl border border-red-200 bg-red-50/90 px-4 py-3 text-sm font-medium text-red-700;
   }
   .glass-success {
-    @apply rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-700;
+    @apply rounded-xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-sm font-medium text-emerald-700;
   }
+}
+
+/* Cursor "mãozinha" em tudo que é clicável (e bloqueado no que está desabilitado). */
+a[href],
+button,
+summary,
+label[for],
+[role='button'],
+input[type='checkbox'],
+input[type='radio'],
+input[type='submit'],
+select {
+  cursor: pointer;
+}
+button:disabled,
+input:disabled,
+select:disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+label:has(input[type='checkbox']),
+label:has(input[type='radio']) {
+  cursor: pointer;
 }
 
 /* Fallback para navegadores sem backdrop-filter: vidro mais opaco. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass-panel,
   .glass-input {
-    background: rgba(255, 255, 255, 0.88);
+    background: rgba(255, 255, 255, 0.94);
   }
 }
 

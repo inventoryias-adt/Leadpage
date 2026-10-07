@@ -75,7 +75,7 @@ export function HoursForm({ initial }: { initial: Schedule }) {
               <button
                 type="button"
                 onClick={() => applyToAll(dayNumber)}
-                className="mt-3 text-sm font-semibold text-electric-600 hover:underline"
+                className="glass-button-ghost btn-sm mt-3"
                 aria-label={`Aplicar o horário de ${name} a todos os dias`}
               >
                 Aplicar a todos os dias

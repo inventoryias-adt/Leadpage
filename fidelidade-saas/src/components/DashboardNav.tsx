@@ -22,9 +22,7 @@ export function DashboardNav({ variant }: { variant: 'top' | 'bottom' }) {
           <Link
             key={i.href}
             href={i.href}
-            className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
-              active(i.href) ? 'bg-white/80 text-electric-600 shadow-sm' : 'text-slate-600 hover:bg-white/50'
-            }`}
+            className={`nav-tab ${active(i.href) ? 'nav-tab-active' : ''}`}
           >
             {i.label}
           </Link>
@@ -39,9 +37,7 @@ export function DashboardNav({ variant }: { variant: 'top' | 'bottom' }) {
         <Link
           key={i.href}
           href={i.href}
-          className={`flex flex-col items-center gap-0.5 rounded-2xl py-2 text-[11px] font-semibold transition ${
-            active(i.href) ? 'bg-white/80 text-electric-600 shadow-sm' : 'text-slate-600'
-          }`}
+          className={`nav-tab flex flex-col items-center gap-0.5 !rounded-2xl !px-1 !py-2 !text-[11px] ${active(i.href) ? 'nav-tab-active' : ''}`}
         >
           <span className="text-lg" aria-hidden>{i.icon}</span>
           {i.label}

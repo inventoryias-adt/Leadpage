@@ -21,7 +21,7 @@ export default async function CarteiraPage() {
     <main className="safe-bottom mx-auto min-h-screen max-w-md p-4 sm:p-6">
       <header className="mb-8 flex items-center justify-between">
         <h1 className="text-xl font-bold text-primary">Olá, {customer.name.split(' ')[0]} 👋</h1>
-        <form action={customerLogout}><button className="text-sm font-semibold text-slate-500">Sair</button></form>
+        <form action={customerLogout}><button className="glass-button-ghost btn-sm">Sair</button></form>
       </header>
 
       {wallets.length === 0 ? (
@@ -32,7 +32,7 @@ export default async function CarteiraPage() {
       ) : (
         <div className="space-y-4">
           {wallets.map((w) => (
-            <Link key={w.id} href={`/carteira/${w.restaurantId}`} className="glass-panel flex items-center justify-between p-5">
+            <Link key={w.id} href={`/carteira/${w.restaurantId}`} className="glass-panel card-link flex items-center justify-between p-5">
               <div className="min-w-0">
                 <p className="truncate font-bold text-slate-800">{w.restaurant.name}</p>
                 <p className="truncate text-xs text-slate-500">{w.restaurant.address}</p>

@@ -14,11 +14,11 @@ export function RedeemButton({ rewardId, name, disabled }: { rewardId: string; n
     <form action={action} className="shrink-0 text-right">
       <input type="hidden" name="rewardId" value={rewardId} />
       {confirming ? (
-        <div className="flex gap-1">
-          <button type="button" onClick={() => setConfirming(false)} className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-500">
+        <div className="flex gap-1.5">
+          <button type="button" onClick={() => setConfirming(false)} className="glass-button-ghost btn-sm">
             Não
           </button>
-          <button type="submit" disabled={pending} className="rounded-lg bg-electric-500 px-3 py-2 text-sm font-semibold text-white shadow-md disabled:opacity-60">
+          <button type="submit" disabled={pending} className="glass-button btn-sm">
             {pending ? '…' : 'Confirmar'}
           </button>
         </div>
@@ -28,9 +28,7 @@ export function RedeemButton({ rewardId, name, disabled }: { rewardId: string; n
           disabled={disabled}
           onClick={() => setConfirming(true)}
           aria-label={`Resgatar ${name}`}
-          className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
-            disabled ? 'cursor-not-allowed bg-slate-200 text-slate-400' : 'bg-electric-500 text-white shadow-md hover:bg-electric-600'
-          }`}
+          className="glass-button btn-sm"
         >
           Resgatar
         </button>

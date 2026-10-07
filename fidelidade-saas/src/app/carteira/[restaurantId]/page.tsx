@@ -51,7 +51,7 @@ export default async function WalletPage({
           <h1 className="text-xl font-bold text-primary">Olá, {customer.name.split(' ')[0]} 👋</h1>
           <p className="truncate text-sm text-slate-500">{restaurant.name}</p>
         </div>
-        <form action={customerLogout}><button className="text-sm font-semibold text-slate-500">Sair</button></form>
+        <form action={customerLogout}><button className="glass-button-ghost btn-sm">Sair</button></form>
       </header>
 
       {credited && <p role="status" className="glass-success mb-4 animate-fade-in">Pontos creditados na sua carteira! 🎉</p>}
@@ -143,7 +143,7 @@ export default async function WalletPage({
         </div>
       </section>
 
-      <p className="mt-8 text-center text-sm"><Link href="/carteira" className="text-slate-500 underline">Todas as carteiras</Link></p>
+      <p className="mt-8 text-center text-sm"><Link href="/carteira" className="link-inline">Todas as carteiras</Link></p>
     </main>
   );
 }

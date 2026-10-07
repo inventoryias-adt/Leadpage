@@ -61,12 +61,12 @@ export default async function ResgatesPage({ searchParams }: { searchParams: Pro
                   <p className="font-mono text-xl font-bold tracking-[0.25em] text-electric-600">{r.code}</p>
                   <p className="truncate font-semibold text-slate-800">{r.rewardName}</p>
                   <p className="text-xs text-slate-500">
-                    <Link href={`/dashboard/clientes/${r.customer.id}`} className="font-semibold text-electric-600 hover:underline">{r.customer.name}</Link> · CPF {maskCpf(r.customer.cpf)} · {when(r.createdAt)}
+                    <Link href={`/dashboard/clientes/${r.customer.id}`} className="link-inline">{r.customer.name}</Link> · CPF {maskCpf(r.customer.cpf)} · {when(r.createdAt)}
                   </p>
                 </div>
                 <form action={markRedemptionUsed}>
                   <input type="hidden" name="id" value={r.id} />
-                  <SubmitButton pendingText="…" className="!w-auto !px-4 !py-2 text-sm">Entregar</SubmitButton>
+                  <SubmitButton pendingText="…" className="btn-sm">Entregar</SubmitButton>
                 </form>
               </li>
             ))}
@@ -102,7 +102,7 @@ export default async function ResgatesPage({ searchParams }: { searchParams: Pro
               <li key={r.id} className="flex items-start justify-between gap-3 py-3">
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-800">{r.rewardName}</p>
-                  <Link href={`/dashboard/clientes/${r.customer.id}`} className="text-electric-600 hover:underline">{r.customer.name}</Link>
+                  <Link href={`/dashboard/clientes/${r.customer.id}`} className="link-inline">{r.customer.name}</Link>
                   <p className="text-xs text-slate-500">
                     {when(r.createdAt)} · {r.status === 'USED' ? 'entregue' : 'a entregar'}
                   </p>

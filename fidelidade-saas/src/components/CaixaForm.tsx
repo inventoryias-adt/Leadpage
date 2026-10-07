@@ -72,7 +72,7 @@ export function CaixaForm({ pointsPerReal, rules }: { pointsPerReal: number; rul
           <fieldset className="glass-inset space-y-1 p-3">
             <legend className="px-1 text-sm font-semibold text-primary">Interações extras</legend>
             {rules.map((r) => (
-              <label key={r.id} className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl px-2 hover:bg-white/40">
+              <label key={r.id} className="flex min-h-12 items-center gap-3 rounded-xl px-2 transition-colors hover:bg-electric-600/10">
                 <input
                   type="checkbox"
                   name="interaction"
@@ -115,7 +115,7 @@ export function CaixaForm({ pointsPerReal, rules }: { pointsPerReal: number; rul
         {claim && (
           <button
             type="button"
-            className="w-full text-sm font-semibold text-slate-500 underline"
+            className="link-inline w-full text-sm"
             onClick={() => {
               setAmount('');
               setChecked([]);

@@ -34,7 +34,7 @@ function RemoveButton({ action, id, label }: { action: (fd: FormData) => Promise
   return (
     <form action={action}>
       <input type="hidden" name="id" value={id} />
-      <button className="rounded-lg px-2 py-1 text-sm font-semibold text-red-600 hover:bg-red-50" aria-label={`Remover ${label}`}>
+      <button className="btn-danger btn-sm" aria-label={`Remover ${label}`}>
         Remover
       </button>
     </form>

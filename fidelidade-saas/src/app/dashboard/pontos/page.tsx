@@ -49,7 +49,7 @@ export default async function PontosPage({ searchParams }: { searchParams: Promi
             {rows.map((t) => (
               <li key={t.id} className="flex items-start justify-between gap-3 py-3 text-sm">
                 <div className="min-w-0">
-                  <Link href={`/dashboard/clientes/${t.wallet.customer.id}`} className="font-semibold text-electric-600 hover:underline">
+                  <Link href={`/dashboard/clientes/${t.wallet.customer.id}`} className="link-inline">
                     {t.wallet.customer.name}
                   </Link>
                   <p className="text-slate-700">{t.description}</p>

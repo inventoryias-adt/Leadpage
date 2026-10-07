@@ -1,3 +1,4 @@
+import { Brand } from '@/components/Brand';
 import { logout } from '@/app/actions/auth';
 import { DashboardNav } from '@/components/DashboardNav';
 import { requireRestaurant } from '@/lib/session';
@@ -9,13 +10,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="mx-auto min-h-screen max-w-5xl px-4 pb-28 pt-4 sm:px-6 md:pb-10">
       <header className="glass-panel-sm mb-6 flex items-center justify-between gap-3 px-4 py-3">
-        <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-electric-600">Fidelize</p>
-          <p className="truncate font-bold text-primary">{restaurant.name}</p>
+        <div className="flex min-w-0 items-center gap-3">
+          <Brand href="/dashboard" />
+          <span className="hidden h-6 w-px bg-slate-300 sm:block" />
+          <p className="hidden truncate text-sm font-semibold text-slate-600 sm:block">{restaurant.name}</p>
         </div>
         {ready && <DashboardNav variant="top" />}
         <form action={logout}>
-          <button className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-500 hover:bg-white/60">Sair</button>
+          <button className="glass-button-ghost btn-sm">Sair</button>
         </form>
       </header>
 

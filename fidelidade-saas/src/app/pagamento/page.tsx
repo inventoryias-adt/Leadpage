@@ -27,7 +27,7 @@ export default async function PagamentoPage() {
           <SubmitButton pendingText="Abrindo pagamento…">Ir para pagamento seguro</SubmitButton>
         </form>
         <form action={logout} className="mt-4">
-          <button className="text-sm text-slate-500 underline">Sair</button>
+          <button className="glass-button-ghost btn-sm">Sair</button>
         </form>
       </div>
     </main>
