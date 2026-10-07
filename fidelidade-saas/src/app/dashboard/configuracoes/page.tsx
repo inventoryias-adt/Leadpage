@@ -136,6 +136,13 @@ export default async function ConfiguracoesPage() {
                       id: u.id,
                       name: u.name,
                       address: u.address ?? '',
+                      cep: u.cep ?? '',
+                      street: u.street ?? u.address ?? '',
+                      number: u.number ?? '',
+                      complement: u.complement ?? '',
+                      district: u.district ?? '',
+                      city: u.city ?? '',
+                      state: u.state ?? '',
                       googleReviewUrl: u.googleReviewUrl ?? '',
                       latitude: u.latitude,
                       longitude: u.longitude,
@@ -161,7 +168,7 @@ export default async function ConfiguracoesPage() {
           <div className="mt-4 border-t border-slate-200/70 pt-4">
             <UnitForm
               uid="unew-"
-              unit={{ id: null, name: '', address: '', googleReviewUrl: '', latitude: null, longitude: null, active: true, schedule: null }}
+              unit={{ id: null, name: '', address: '', cep: '', street: '', number: '', complement: '', district: '', city: '', state: '', googleReviewUrl: '', latitude: null, longitude: null, active: true, schedule: null }}
             />
           </div>
         </details>

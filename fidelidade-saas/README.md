@@ -82,3 +82,10 @@ O cliente recebe avisos dentro do app (aba **Avisos**, com bolinha de não lidos
 (compra, check-in, desafio, indicação) já com a meta do próximo prêmio ("Faltam 50 pontos para Sobremesa" ou
 "Agora você já pode resgatar…") e confirmação de resgate. Ficam na tabela `Notification` (migração `0005_avisos`);
 abrir a tela marca tudo como lido. Notificação push com o app fechado ainda não existe.
+
+## Endereço da unidade
+
+Cada unidade tem CEP, rua, número, complemento, bairro, cidade e UF (migração `0006_endereco`). O CEP preenche o
+resto pelo ViaCEP e "Localizar pelo endereço" define as coordenadas (aproximadas) pelo OpenStreetMap; as duas
+consultas são feitas no navegador do dono. O texto exibido ao cliente é montado a partir das partes
+(`src/lib/address.ts`). O GPS continua disponível e é mais preciso para o check-in.

@@ -13,6 +13,7 @@ import {
   saveUnit,
   setRewardImage,
 } from '@/app/actions/restaurant';
+import { UFS, cepDigits, maskCep, parseViaCep } from '@/lib/address';
 import { CATEGORIES } from '@/lib/categories';
 import { defaultSchedule, parseSchedule, type Schedule } from '@/lib/hours';
 import { HoursGrid } from './HoursGrid';
@@ -230,6 +231,13 @@ export type UnitFormData = {
   id: string | null;
   name: string;
   address: string;
+  cep: string;
+  street: string;
+  number: string;
+  complement: string;
+  district: string;
+  city: string;
+  state: string;
   googleReviewUrl: string;
   latitude: number | null;
   longitude: number | null;
@@ -248,6 +256,63 @@ export function UnitForm({ unit, uid }: { unit: UnitFormData; uid: string }) {
   const [geo, setGeo] = useState<'idle' | 'loading' | 'error'>('idle');
   const [geoError, setGeoError] = useState('');
   const isNew = unit.id === null;
+
+  // Endereço: o CEP preenche rua, bairro, cidade e UF; número e complemento o dono completa.
+  const v = state.values;
+  const [addr, setAddr] = useState({
+    cep: maskCep(v?.cep ?? unit.cep),
+    street: v?.street ?? unit.street,
+    number: v?.number ?? unit.number,
+    complement: v?.complement ?? unit.complement,
+    district: v?.district ?? unit.district,
+    city: v?.city ?? unit.city,
+    state: v?.state ?? unit.state,
+  });
+  const setField = (k: keyof typeof addr) => (e: { target: { value: string } }) => setAddr((a) => ({ ...a, [k]: e.target.value }));
+  const [cepStatus, setCepStatus] = useState<{ kind: 'idle' | 'loading' | 'ok' | 'error'; msg?: string }>({ kind: 'idle' });
+  const [locating, setLocating] = useState<{ kind: 'idle' | 'loading' | 'ok' | 'error'; msg?: string }>({ kind: 'idle' });
+
+  async function lookupCep(raw: string) {
+    const digits = cepDigits(raw);
+    if (digits.length !== 8) return;
+    setCepStatus({ kind: 'loading' });
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+      const found = parseViaCep(await res.json());
+      if (!found) {
+        setCepStatus({ kind: 'error', msg: 'CEP não encontrado. Confira os números ou preencha o endereço abaixo.' });
+        return;
+      }
+      setAddr((a) => ({ ...a, street: found.street || a.street, district: found.district || a.district, city: found.city || a.city, state: found.state || a.state }));
+      setCepStatus({ kind: 'ok', msg: 'Endereço preenchido pelo CEP. Agora informe o número e o complemento.' });
+    } catch {
+      setCepStatus({ kind: 'error', msg: 'Não foi possível consultar o CEP agora. Preencha o endereço abaixo.' });
+    }
+  }
+
+  /** Acha as coordenadas pelo endereço (aproximado), para quem não está na unidade na hora de cadastrar. */
+  async function locateByAddress() {
+    setLocating({ kind: 'loading' });
+    const base = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=br&accept-language=pt-BR';
+    const attempts = [
+      `${base}&street=${encodeURIComponent(`${addr.number} ${addr.street}`.trim())}&city=${encodeURIComponent(addr.city)}&state=${encodeURIComponent(addr.state)}`,
+      `${base}&street=${encodeURIComponent(addr.street)}&city=${encodeURIComponent(addr.city)}&state=${encodeURIComponent(addr.state)}`,
+      ...(cepDigits(addr.cep).length === 8 ? [`${base}&postalcode=${encodeURIComponent(maskCep(addr.cep))}`] : []),
+    ];
+    try {
+      for (const url of attempts) {
+        const hits = (await (await fetch(url)).json()) as { lat: string; lon: string }[];
+        if (hits[0]) {
+          setCoords({ lat: Number(hits[0].lat).toFixed(6), lng: Number(hits[0].lon).toFixed(6) });
+          setLocating({ kind: 'ok', msg: 'Localização definida pelo endereço (aproximada). Confira no mapa; para mais precisão use o GPS dentro da unidade.' });
+          return;
+        }
+      }
+      setLocating({ kind: 'error', msg: 'Não encontramos esse endereço no mapa. Use o GPS dentro da unidade.' });
+    } catch {
+      setLocating({ kind: 'error', msg: 'Não foi possível consultar o mapa agora. Tente de novo ou use o GPS.' });
+    }
+  }
 
   function useMyLocation() {
     if (!('geolocation' in navigator)) {
@@ -276,16 +341,73 @@ export function UnitForm({ unit, uid }: { unit: UnitFormData; uid: string }) {
       <input type="hidden" name="latitude" value={coords.lat} />
       <input type="hidden" name="longitude" value={coords.lng} />
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="glass-label" htmlFor={`${uid}name`}>Nome da unidade</label>
-          <input id={`${uid}name`} name="name" className="glass-input" placeholder="Ex.: Centro, Shopping Norte" defaultValue={state.values?.name ?? unit.name} required />
-        </div>
-        <div>
-          <label className="glass-label" htmlFor={`${uid}address`}>Endereço completo</label>
-          <input id={`${uid}address`} name="address" className="glass-input" placeholder="Rua, número, bairro, cidade - UF" defaultValue={state.values?.address ?? unit.address} required />
-        </div>
+      <div>
+        <label className="glass-label" htmlFor={`${uid}name`}>Nome da unidade</label>
+        <input id={`${uid}name`} name="name" className="glass-input" placeholder="Ex.: Centro, Shopping Norte" defaultValue={state.values?.name ?? unit.name} required />
       </div>
+
+      <fieldset className="space-y-4">
+        <legend className="glass-label">Endereço</legend>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div>
+            <label className="glass-label" htmlFor={`${uid}cep`}>CEP</label>
+            <input
+              id={`${uid}cep`}
+              name="cep"
+              className="glass-input"
+              inputMode="numeric"
+              autoComplete="postal-code"
+              placeholder="00000-000"
+              value={addr.cep}
+              onChange={(e) => {
+                const masked = maskCep(e.target.value);
+                setAddr((a) => ({ ...a, cep: masked }));
+                if (cepDigits(masked).length === 8) void lookupCep(masked);
+                else setCepStatus({ kind: 'idle' });
+              }}
+              maxLength={9}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="glass-label" htmlFor={`${uid}street`}>Rua / avenida</label>
+            <input id={`${uid}street`} name="street" className="glass-input" placeholder="Rua, avenida, praça…" value={addr.street} onChange={setField('street')} required />
+          </div>
+        </div>
+        {cepStatus.kind !== 'idle' && (
+          <p role={cepStatus.kind === 'error' ? 'alert' : 'status'} className={`text-xs ${cepStatus.kind === 'error' ? 'text-red-600' : cepStatus.kind === 'ok' ? 'text-emerald-700' : 'text-slate-500'}`}>
+            {cepStatus.kind === 'loading' ? 'Buscando o CEP…' : cepStatus.msg}
+          </p>
+        )}
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div>
+            <label className="glass-label" htmlFor={`${uid}number`}>Número</label>
+            <input id={`${uid}number`} name="number" className="glass-input" placeholder="Ex.: 100 ou S/N" value={addr.number} onChange={setField('number')} required />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="glass-label" htmlFor={`${uid}complement`}>Complemento <span className="font-normal text-slate-400">(opcional)</span></label>
+            <input id={`${uid}complement`} name="complement" className="glass-input" placeholder="Loja 12, 2º andar, bloco B…" value={addr.complement} onChange={setField('complement')} />
+          </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-6">
+          <div className="sm:col-span-2">
+            <label className="glass-label" htmlFor={`${uid}district`}>Bairro</label>
+            <input id={`${uid}district`} name="district" className="glass-input" value={addr.district} onChange={setField('district')} />
+          </div>
+          <div className="sm:col-span-3">
+            <label className="glass-label" htmlFor={`${uid}city`}>Cidade</label>
+            <input id={`${uid}city`} name="city" className="glass-input" value={addr.city} onChange={setField('city')} required />
+          </div>
+          <div>
+            <label className="glass-label" htmlFor={`${uid}state`}>UF</label>
+            <select id={`${uid}state`} name="state" className="glass-input" value={addr.state} onChange={setField('state')} required>
+              <option value="">—</option>
+              {UFS.map((uf) => (
+                <option key={uf} value={uf}>{uf}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </fieldset>
 
       <div>
         <label className="glass-label" htmlFor={`${uid}google`}>Link para avaliar esta unidade no Google</label>
@@ -301,13 +423,21 @@ export function UnitForm({ unit, uid }: { unit: UnitFormData; uid: string }) {
           <div>
             <p className="font-semibold text-slate-800">Localização da unidade</p>
             <p className="text-xs text-slate-500">
-              Usada no check-in (o cliente precisa estar a até 200 m) e para a unidade aparecer em “Lugares perto de você”. Toque no botão estando na unidade.
+              Usada no check-in (o cliente precisa estar a até 200 m) e para a unidade aparecer em “Lugares perto de você”. Estando na unidade, use o GPS (mais preciso). Se não estiver, localize pelo endereço.
             </p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <button type="button" onClick={useMyLocation} disabled={geo === 'loading'} className="glass-button-ghost btn-sm">
             {geo === 'loading' ? 'Obtendo localização…' : 'Usar minha localização atual'}
+          </button>
+          <button
+            type="button"
+            onClick={locateByAddress}
+            disabled={locating.kind === 'loading' || !addr.street.trim() || !addr.city.trim() || !addr.state}
+            className="glass-button-ghost btn-sm"
+          >
+            {locating.kind === 'loading' ? 'Procurando…' : 'Localizar pelo endereço'}
           </button>
           {coords.lat && coords.lng ? (
             <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700">
@@ -318,6 +448,14 @@ export function UnitForm({ unit, uid }: { unit: UnitFormData; uid: string }) {
           )}
         </div>
         {geo === 'error' && <p role="alert" className="text-xs text-red-600">{geoError}</p>}
+        {locating.kind !== 'idle' && locating.kind !== 'loading' && (
+          <p role={locating.kind === 'error' ? 'alert' : 'status'} className={`text-xs ${locating.kind === 'error' ? 'text-red-600' : 'text-slate-600'}`}>
+            {locating.msg}
+            {locating.kind === 'ok' && coords.lat && (
+              <> <a className="link-inline" href={`https://www.google.com/maps?q=${coords.lat},${coords.lng}`} target="_blank" rel="noopener noreferrer">Ver no mapa</a></>
+            )}
+          </p>
+        )}
       </div>
 
       <div>
