@@ -112,6 +112,12 @@ const paths = {
       <path d="M9 8h6M9 12h6" />
     </>
   ),
+  bell: (
+    <>
+      <path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15L6 16Z" />
+      <path d="M10 21h4" />
+    </>
+  ),
   info: (
     <>
       <circle cx="12" cy="12" r="9" />

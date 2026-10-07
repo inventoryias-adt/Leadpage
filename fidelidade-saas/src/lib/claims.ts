@@ -6,6 +6,7 @@ import { CHECKIN_RADIUS_M, formatDistance, validCoords } from './geo';
 import { nearestUnit } from './units';
 import { startOfMonthBR } from './points';
 import { newVoucherCode } from './tokens';
+import { notify, notifyPoints } from './notifications';
 
 /** Erro de regra de negócio, seguro para exibir ao usuário. */
 export class BusinessError extends Error {}
@@ -29,6 +30,7 @@ async function creditWallet(
   await tx.transaction.create({
     data: { walletId: wallet.id, type: 'EARN', points, description, ...extra },
   });
+  await notifyPoints(tx, customerId, restaurantId, points, wallet.balance, description);
   return wallet;
 }
 
@@ -237,6 +239,13 @@ export async function redeemItems(customerId: string, restaurantId: string, rawI
         created.push(redemption);
       }
     }
+    await notify(tx, {
+      customerId,
+      restaurantId,
+      title: `${created.length === 1 ? 'Prêmio resgatado' : 'Prêmios resgatados'} · ${restaurant.name}`,
+      body: `${created.map((c) => c.rewardName).join(', ')}. Mostre ${created.length === 1 ? 'o código' : 'os códigos'} no balcão para retirar.`,
+      href: `/carteira/${restaurantId}`,
+    });
     return created;
   });
 }

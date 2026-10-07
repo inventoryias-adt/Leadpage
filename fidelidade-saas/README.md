@@ -75,3 +75,10 @@ Manifesto, ícones PNG (`public/`) e service worker (`public/sw.js`, registrado 
 ## Próximos passos sugeridos
 
 OTP por WhatsApp/SMS no login do cliente, e-mail de recuperação de senha, relatórios por período e notificação ao cliente via WhatsApp API.
+
+## Avisos do cliente
+
+O cliente recebe avisos dentro do app (aba **Avisos**, com bolinha de não lidos no menu): pontos recebidos
+(compra, check-in, desafio, indicação) já com a meta do próximo prêmio ("Faltam 50 pontos para Sobremesa" ou
+"Agora você já pode resgatar…") e confirmação de resgate. Ficam na tabela `Notification` (migração `0005_avisos`);
+abrir a tela marca tudo como lido. Notificação push com o app fechado ainda não existe.
