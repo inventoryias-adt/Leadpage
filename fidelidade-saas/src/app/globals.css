@@ -23,7 +23,7 @@ html {
 }
 
 body {
-  @apply min-h-screen bg-ice bg-liquid-bg bg-fixed font-sans text-slate-800 antialiased;
+  @apply min-h-screen bg-[#F6F8FC] font-sans text-slate-800 antialiased;
 }
 
 /* ------------------------------------------------------------------ */

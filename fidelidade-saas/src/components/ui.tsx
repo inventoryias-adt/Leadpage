@@ -32,23 +32,6 @@ export function FormMessage({ state }: { state: FormState }) {
   return null;
 }
 
-/** Fundo decorativo: bolhas azuis desfocadas atrás do vidro. */
-export function LiquidBackground() {
-  return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      <div className="animate-blob absolute -left-24 -top-24 h-96 w-96 rounded-full bg-blue-300/60 blur-3xl" />
-      <div
-        className="animate-blob absolute -right-24 top-1/4 h-96 w-96 rounded-full bg-sky-200/70 blur-3xl"
-        style={{ animationDelay: '-5s' }}
-      />
-      <div
-        className="animate-blob absolute -bottom-32 left-1/4 h-96 w-96 rounded-full bg-indigo-200/60 blur-3xl"
-        style={{ animationDelay: '-9s' }}
-      />
-    </div>
-  );
-}
-
 /** Máscaras simples de digitação (o servidor revalida tudo). */
 export const maskPhoneInput = (v: string) => {
   const d = v.replace(/\D/g, '').slice(0, 11);

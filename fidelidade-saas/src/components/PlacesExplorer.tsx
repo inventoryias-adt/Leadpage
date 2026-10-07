@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { distanceMeters, formatDistance } from '@/lib/geo';
 import { formatPoints } from '@/lib/points';
+import { CategoryIcon } from './CategoryIcon';
 import { Icon } from './Icons';
 import { Illustration } from './Illustrations';
 import { PlaceAvatar } from './Visual';
@@ -100,8 +101,6 @@ export function PlacesExplorer({ places, categories, loggedIn }: { places: Place
     return rows;
   }, [places, query, filter, category, pos]);
 
-  const usedCategories = categories.filter((c) => places.some((p) => p.category === c.value));
-
   return (
     <div className="space-y-4">
       <div className="relative">
@@ -154,23 +153,33 @@ export function PlacesExplorer({ places, categories, loggedIn }: { places: Place
           </button>
         ))}
       </div>
-      {usedCategories.length > 1 && (
-        <div className="chip-row" aria-label="Categorias">
-          {usedCategories.map((c) => (
+      {/* Categorias: ícone redondo com o nome embaixo. Sem barra de rolagem no celular; quebra de linha no computador. */}
+      <div className="chip-row !items-start !gap-3.5" role="group" aria-label="Categorias">
+        {[{ value: '', label: 'Todos', icon: 'todos' }, ...categories.map((c) => ({ ...c, icon: c.value }))].map((c) => {
+          const on = (category ?? '') === c.value;
+          const empty = c.value !== '' && !places.some((p) => p.category === c.value);
+          return (
             <button
-              key={c.value}
+              key={c.value || 'todos'}
               type="button"
-              aria-pressed={category === c.value}
-              onClick={() => setCategory(category === c.value ? null : c.value)}
-              className={`shrink-0 rounded-full border px-3.5 py-1 text-sm font-semibold transition-colors ${
-                category === c.value ? 'border-primary bg-primary text-white' : 'border-slate-300 bg-white/80 text-slate-700 hover:border-primary hover:bg-primary hover:text-white'
-              }`}
+              aria-pressed={on}
+              onClick={() => setCategory(c.value === '' || on ? null : c.value)}
+              className="group flex w-[4.75rem] shrink-0 flex-col items-center gap-1.5 !bg-transparent !p-0 !shadow-none"
             >
-              {c.label}
+              <span
+                className={`flex h-14 w-14 items-center justify-center rounded-full border transition-colors ${
+                  on
+                    ? 'border-electric-600 bg-electric-600 text-white shadow-md shadow-blue-900/20'
+                    : `border-slate-200 bg-white group-hover:border-electric-600 group-hover:bg-electric-600 group-hover:text-white ${empty ? 'text-slate-500' : 'text-electric-600'}`
+                }`}
+              >
+                <CategoryIcon name={c.icon} size={26} />
+              </span>
+              <span className={`text-center text-[11px] font-semibold leading-tight ${on ? 'text-electric-600' : empty ? 'text-slate-500' : 'text-slate-700'}`}>{c.label}</span>
             </button>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
 
       <div className="flex items-center justify-between">
         <h2 className="font-bold text-slate-800">{pos ? 'Lugares por perto' : 'Todos os lugares'}</h2>
@@ -181,7 +190,7 @@ export function PlacesExplorer({ places, categories, loggedIn }: { places: Place
         <div className="glass-panel flex flex-col items-center p-6 text-center">
           <Illustration variant="empty" size={150} />
           <p className="font-bold text-slate-800">
-            {filter === 'saldo' ? 'Nenhum lugar com saldo ainda' : 'Nada encontrado'}
+            {filter === 'saldo' ? 'Nenhum lugar com saldo ainda' : category ? `Nenhum lugar de ${categories.find((c) => c.value === category)?.label ?? 'esta categoria'} por enquanto` : 'Nada encontrado'}
           </p>
           <p className="mt-1 max-w-xs text-sm text-slate-600">
             {filter === 'saldo'

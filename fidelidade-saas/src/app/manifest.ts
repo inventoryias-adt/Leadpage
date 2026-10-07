@@ -8,7 +8,7 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: '/carteira',
     scope: '/',
     display: 'standalone',
-    background_color: '#eaf3ff',
+    background_color: '#F6F8FC',
     theme_color: '#2f6bff',
     lang: 'pt-BR',
     icons: [
