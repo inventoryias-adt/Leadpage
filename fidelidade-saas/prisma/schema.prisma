@@ -53,6 +53,7 @@ model Restaurant {
   /// Horário por dia da semana: [{ day: 0-6, closed, open: "HH:MM", close: "HH:MM" }] (ver src/lib/hours.ts)
   openingSchedule Json?
   onboardedAt     DateTime?
+  guideDoneAt     DateTime? // passo a passo inicial concluído ou dispensado
 
   // Assinatura
   subscriptionStatus    SubscriptionStatus @default(PENDING)
@@ -83,6 +84,7 @@ model Restaurant {
   wallets          Wallet[]
   redemptions      Redemption[]
   units            Unit[]
+  promotions Promotion[]
   challenges       Challenge[]
   checkIns         CheckIn[]
   referrals        Referral[]
@@ -351,4 +353,31 @@ model Notification {
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@index([customerId, createdAt])
+}
+
+enum PromoKind {
+  MULTIPLIER
+  BONUS
+}
+
+/// Campanha de pontos criada pelo dono: multiplicador ("2x") ou pontos extras, por período, dia da semana e horário.
+model Promotion {
+  id             String    @id @default(uuid())
+  restaurantId   String
+  title          String
+  kind           PromoKind
+  multiplier     Float?
+  bonusPoints    Int?
+  minAmountCents Int       @default(0)
+  startsAt       DateTime?
+  endsAt         DateTime? // exclusivo
+  weekdays       Int[] // 0 = domingo … 6 = sábado; vazio = todos os dias
+  startTime      String? // "HH:MM" em Brasília
+  endTime        String?
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId])
 }

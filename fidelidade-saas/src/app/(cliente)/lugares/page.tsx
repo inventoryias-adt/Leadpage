@@ -30,6 +30,7 @@ export default async function LugaresPage() {
         rewards: { where: { active: true }, select: { pointsCost: true }, orderBy: { pointsCost: 'asc' }, take: 1 },
         checkInPoints: true,
         referralPoints: true,
+        promotions: { where: { active: true, OR: [{ endsAt: null }, { endsAt: { gt: new Date() } }] } },
         challenges: { where: { active: true }, select: { id: true, kind: true, target: true, minAmountCents: true, period: true, bonusPoints: true }, take: 6 },
       },
       take: 300,
@@ -55,6 +56,7 @@ export default async function LugaresPage() {
         checkInPoints: r.checkInPoints,
         hasCoords: r.units.some((u) => u.latitude != null && u.longitude != null),
         referralPoints: r.referralPoints,
+        promotions: r.promotions,
       }),
       units: r.units.map((u) => {
         const schedule = parseSchedule(u.openingSchedule);

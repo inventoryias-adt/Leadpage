@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function CaixaPage() {
   const restaurant = await requireActiveRestaurant();
-  const [rules, recent, { unit, units }] = await Promise.all([
+  const [rules, recent, { unit, units }, promos] = await Promise.all([
     prisma.interactionRule.findMany({
       where: { restaurantId: restaurant.id, active: true },
       orderBy: { createdAt: 'asc' },
@@ -23,6 +23,7 @@ export default async function CaixaPage() {
       include: { customer: { select: { name: true } }, unit: { select: { name: true } } },
     }),
     currentUnit(restaurant.id),
+    prisma.promotion.findMany({ where: { restaurantId: restaurant.id, active: true, OR: [{ endsAt: null }, { endsAt: { gt: new Date() } }] } }),
   ]);
 
   const now = Date.now();
@@ -39,7 +40,11 @@ export default async function CaixaPage() {
             <span className="text-slate-500">(troque no topo da tela)</span>
           </p>
         )}
-        <CaixaForm pointsPerReal={restaurant.pointsPerReal} rules={rules} />
+        <CaixaForm
+          pointsPerReal={restaurant.pointsPerReal}
+          rules={rules}
+          promos={promos.map((p) => ({ ...p, startsAt: p.startsAt?.toISOString() ?? null, endsAt: p.endsAt?.toISOString() ?? null }))}
+        />
       </div>
 
       <section className="glass-panel h-fit p-5">

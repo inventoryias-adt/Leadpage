@@ -5,12 +5,15 @@ import { useRouter } from 'next/navigation';
 import { useActionState, useEffect, useMemo, useState } from 'react';
 import { createClaim, type CaixaState } from '@/app/actions/restaurant';
 import { calculatePoints, formatPoints, parseMoneyToCents } from '@/lib/points';
+import { applyPromos, promoActiveAt, promoBadge, type PromoLike } from '@/lib/promos';
 import { normalizePhone } from '@/lib/br';
 import { SubmitButton, maskPhoneInput } from './ui';
 
 type Rule = { id: string; label: string; points: number };
+/** Campanha vinda do servidor (datas em texto ISO). */
+export type PromoData = Omit<PromoLike, 'startsAt' | 'endsAt'> & { id: string; startsAt: string | null; endsAt: string | null };
 
-export function CaixaForm({ pointsPerReal, rules }: { pointsPerReal: number; rules: Rule[] }) {
+export function CaixaForm({ pointsPerReal, rules, promos = [] }: { pointsPerReal: number; rules: Rule[]; promos?: PromoData[] }) {
   const [state, action] = useActionState<CaixaState, FormData>(createClaim, {});
   const [amount, setAmount] = useState('');
   const [checked, setChecked] = useState<string[]>([]);
@@ -18,10 +21,13 @@ export function CaixaForm({ pointsPerReal, rules }: { pointsPerReal: number; rul
   const [copied, setCopied] = useState(false);
 
   // Prévia apenas visual — o servidor recalcula os pontos com as regras do banco.
+  const promoList = useMemo(() => promos.map((p) => ({ ...p, startsAt: p.startsAt ? new Date(p.startsAt) : null, endsAt: p.endsAt ? new Date(p.endsAt) : null })), [promos]);
+  const livePromos = promoList.filter((p) => promoActiveAt(p));
   const preview = useMemo(() => {
     const cents = amount.trim() ? parseMoneyToCents(amount) ?? 0 : 0;
-    return calculatePoints(cents, pointsPerReal, rules.filter((r) => checked.includes(r.id)));
-  }, [amount, checked, pointsPerReal, rules]);
+    const extras = rules.filter((r) => checked.includes(r.id)).reduce((n, r) => n + r.points, 0);
+    return applyPromos(calculatePoints(cents, pointsPerReal), cents, promoList).points + extras;
+  }, [amount, checked, pointsPerReal, rules, promoList]);
 
   const toggle = (id: string) => setChecked((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id]));
   const claim = state.claim;
@@ -52,6 +58,11 @@ export function CaixaForm({ pointsPerReal, rules }: { pointsPerReal: number; rul
   return (
     <div className="glass-panel p-6 sm:p-8">
       <h1 className="mb-6 text-center text-2xl font-bold text-primary">Gerar pontos</h1>
+      {livePromos.length > 0 && (
+        <p className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900" role="status">
+          <strong>Campanha valendo agora:</strong> {livePromos.map((p) => `${p.title} (${promoBadge(p)}${p.minAmountCents > 0 ? `, a partir de R$ ${(p.minAmountCents / 100).toFixed(2).replace('.', ',')}` : ''})`).join(' · ')}. Os pontos já saem com a campanha aplicada.
+        </p>
+      )}
 
       <form
         action={(fd) => {

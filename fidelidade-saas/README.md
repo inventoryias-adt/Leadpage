@@ -89,3 +89,13 @@ Cada unidade tem CEP, rua, número, complemento, bairro, cidade e UF (migração
 resto pelo ViaCEP e "Localizar pelo endereço" define as coordenadas (aproximadas) pelo OpenStreetMap; as duas
 consultas são feitas no navegador do dono. O texto exibido ao cliente é montado a partir das partes
 (`src/lib/address.ts`). O GPS continua disponível e é mais preciso para o check-in.
+
+## Campanhas de pontos e guia inicial
+
+O dono cria campanhas em **Regras → Campanhas de pontos** (tabela `Promotion`, migração `0007_campanhas_guia`):
+multiplicador ("2x") ou pontos extras, com valor mínimo da compra, dias da semana, horário e período (horário de
+Brasília). O caixa aplica as campanhas valendo agora só sobre a parte da conta (não sobre interações): vale o maior
+multiplicador e os pontos extras somam (`src/lib/promos.ts`). Elas aparecem como cards em "Lugares" e na página do lugar.
+
+Depois do pagamento, um passo a passo em janelas (`OwnerGuide`) abre sozinho no painel até ser concluído ou dispensado
+(`Restaurant.guideDoneAt`); o botão "Guia" do topo reabre quando quiser.
