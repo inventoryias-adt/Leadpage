@@ -53,3 +53,14 @@ export async function createCheckoutUrl(restaurant: { id: string; email: string;
   if (!session.url) throw new Error('Stripe não retornou a URL de checkout.');
   return session.url;
 }
+
+/** Portal do cliente do Stripe: trocar cartão, ver faturas e cancelar. Null quando não há cobrança real para gerenciar. */
+export async function createPortalUrl(restaurant: { paymentCustomerId: string | null }) {
+  if (paymentProvider() === 'mock' || !restaurant.paymentCustomerId) return null;
+  const session = await stripe().billingPortal.sessions.create({
+    customer: restaurant.paymentCustomerId,
+    return_url: `${appUrl()}/dashboard/configuracoes#conta`,
+    locale: 'pt-BR',
+  });
+  return session.url;
+}

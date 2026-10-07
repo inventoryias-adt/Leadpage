@@ -1,3 +1,4 @@
+import { openBillingPortal } from '@/app/actions/auth';
 import { removeChallenge, removeInteraction, removePromotion, removeReward, removeUnit, togglePromotion } from '@/app/actions/restaurant';
 import {
   AddChallengeForm,
@@ -286,6 +287,13 @@ export default async function ConfiguracoesPage() {
 
       <Section id="conta" n={10} title="Minha conta" hint="Troque a senha de acesso ao painel. Use uma senha que só você conheça.">
         <PasswordForm />
+        {restaurant.paymentCustomerId && (
+          <form action={openBillingPortal} className="mt-6 border-t border-[#e4e7f3] pt-5">
+            <h3 className="mb-1 font-semibold text-primary">Assinatura e faturas</h3>
+            <p className="mb-3 text-sm text-slate-600">Troque o cartão, baixe as faturas e recibos ou cancele a assinatura, em uma página segura do Stripe.</p>
+            <button className="glass-button-ghost btn-sm">Gerenciar assinatura e faturas</button>
+          </form>
+        )}
       </Section>
 
       {onboarding && (

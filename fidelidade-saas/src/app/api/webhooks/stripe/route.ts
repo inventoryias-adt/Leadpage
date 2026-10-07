@@ -48,6 +48,24 @@ export async function POST(req: Request) {
       }
       break;
     }
+    case 'invoice.payment_failed': {
+      // Cobrança recusada: o acesso fica suspenso até o cartão ser atualizado (portal) ou a nova tentativa passar.
+      const invoice = event.data.object as Stripe.Invoice;
+      const customer = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
+      if (customer) {
+        await prisma.restaurant.updateMany({ where: { paymentCustomerId: customer, subscriptionStatus: 'ACTIVE' }, data: { subscriptionStatus: 'PAST_DUE' } });
+      }
+      break;
+    }
+    case 'invoice.paid': {
+      // Pagamento (ou nova tentativa) confirmado: só reativa quem estava inadimplente; um cancelamento feito pela administração não é desfeito.
+      const invoice = event.data.object as Stripe.Invoice;
+      const customer = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
+      if (customer) {
+        await prisma.restaurant.updateMany({ where: { paymentCustomerId: customer, subscriptionStatus: 'PAST_DUE' }, data: { subscriptionStatus: 'ACTIVE' } });
+      }
+      break;
+    }
     case 'customer.subscription.updated':
     case 'customer.subscription.deleted': {
       const sub = event.data.object as Stripe.Subscription;
