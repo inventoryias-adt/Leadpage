@@ -22,6 +22,13 @@ export const CATEGORY_TINT: Record<string, string> = {
   saudavel: '#E1F4E6',
   bar: '#FFEFCB',
   barbearia: '#E5ECFA',
+  estetica: '#F7E6F0',
+  pet: '#F7ECDD',
+  farmacia: '#E0F3EA',
+  servicos: '#E6EAF2',
+  academia: '#E4E9F7',
+  mercado: '#E8F3E4',
+  moda: '#ECE8FA',
   outros: '#ECEFF6',
 };
 
@@ -50,10 +57,10 @@ function Steam({ x, y, color = '#fff' }: { x: number; y: number; color?: string 
 const art: Record<string, ReactNode> = {
   todos: (
     <g className="cat-bob">
-      <rect x="9" y="9" width="21" height="21" rx="6" fill="#2F6BFF" />
-      <rect x="34" y="9" width="21" height="21" rx="6" fill="#FFC93C" />
-      <rect x="9" y="34" width="21" height="21" rx="6" fill="#34C38F" />
-      <rect x="34" y="34" width="21" height="21" rx="6" fill="#FF7BA9" />
+      <rect x="9" y="9" width="21" height="21" rx="6" fill="#8FA3C7" />
+      <rect x="34" y="9" width="21" height="21" rx="6" fill="#C9D3E6" />
+      <rect x="9" y="34" width="21" height="21" rx="6" fill="#C9D3E6" />
+      <rect x="34" y="34" width="21" height="21" rx="6" fill="#8FA3C7" />
       <Twinkle x={47} y={20} s={0.9} fill="#fff" delay={0.3} />
     </g>
   ),
@@ -292,6 +299,94 @@ const art: Record<string, ReactNode> = {
       <rect x="21" y="48" width="22" height="8" rx="4" fill="#B8C2D6" />
       <path d="M26 8V6a6 6 0 0 1 12 0v2" fill="#D5DCEA" />
       <Twinkle x={50} y={22} s={0.8} delay={0.4} />
+    </>
+  ),
+  estetica: (
+    <>
+      <g className="cat-bob">
+        <rect x="27" y="7" width="10" height="17" rx="3.5" fill="#3B2F4A" />
+        <rect x="29" y="23" width="6" height="6" fill="#E8E1F0" />
+        <rect x="17" y="28" width="30" height="28" rx="9" fill="#E4568B" />
+        <path d="M23 36c0-3 2-5 5-5" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" opacity=".55" fill="none" />
+        <rect x="23" y="42" width="18" height="8" rx="4" fill="#fff" opacity=".35" />
+      </g>
+      <Twinkle x={13} y={16} s={0.9} delay={0.2} />
+      <Twinkle x={52} y={34} s={0.7} fill="#E4568B" delay={0.9} />
+    </>
+  ),
+  pet: (
+    <>
+      <g className="cat-wiggle">
+        <ellipse cx="32" cy="42" rx="13" ry="10.5" fill="#B9774A" />
+        <ellipse cx="15.5" cy="30" rx="5.5" ry="7.5" fill="#B9774A" transform="rotate(-20 15.5 30)" />
+        <ellipse cx="25.5" cy="19.5" rx="5.5" ry="8" fill="#B9774A" transform="rotate(-6 25.5 19.5)" />
+        <ellipse cx="38.5" cy="19.5" rx="5.5" ry="8" fill="#B9774A" transform="rotate(6 38.5 19.5)" />
+        <ellipse cx="48.5" cy="30" rx="5.5" ry="7.5" fill="#B9774A" transform="rotate(20 48.5 30)" />
+        <ellipse cx="32" cy="44" rx="6" ry="4" fill="#D9A079" opacity=".6" />
+      </g>
+      <Twinkle x={54} y={10} s={0.8} delay={0.5} />
+    </>
+  ),
+  farmacia: (
+    <>
+      <g className="cat-bob">
+        <rect x="23" y="9" width="18" height="46" rx="6" fill="#2FB67C" />
+        <rect x="9" y="23" width="46" height="18" rx="6" fill="#2FB67C" />
+        <rect x="26" y="12" width="12" height="40" rx="4" fill="#fff" opacity=".18" />
+        <rect x="12" y="26" width="40" height="12" rx="4" fill="#fff" opacity=".18" />
+      </g>
+      <Twinkle x={52} y={14} s={0.9} fill="#fff" delay={0.3} />
+    </>
+  ),
+  servicos: (
+    <>
+      <g className="cat-wiggle">
+        <g transform="rotate(45 32 32)">
+          <rect x="29" y="16" width="6" height="40" rx="3" fill="#8C9BB5" />
+          <circle cx="32" cy="15" r="9.5" fill="#8C9BB5" />
+          <rect x="28.5" y="3" width="7" height="12" rx="1.5" fill="#F3F5F8" />
+        </g>
+        <g transform="rotate(-45 32 32)">
+          <rect x="28.5" y="36" width="7" height="20" rx="3.5" fill="#F59E0B" />
+          <rect x="30.5" y="12" width="3" height="26" fill="#94A3B8" />
+          <path d="M30 12h4l-2 -4Z" fill="#64748B" />
+        </g>
+      </g>
+      <Twinkle x={52} y={52} s={0.7} delay={0.6} />
+    </>
+  ),
+  academia: (
+    <>
+      <g className="cat-bob">
+        <rect x="14" y="29" width="36" height="6" rx="3" fill="#64748B" />
+        <rect x="9" y="20" width="9" height="24" rx="3.5" fill="#2150C9" />
+        <rect x="46" y="20" width="9" height="24" rx="3.5" fill="#2150C9" />
+        <rect x="3" y="25" width="6" height="14" rx="2.5" fill="#334155" />
+        <rect x="55" y="25" width="6" height="14" rx="2.5" fill="#334155" />
+      </g>
+      <Twinkle x={32} y={13} s={0.8} delay={0.4} />
+    </>
+  ),
+  mercado: (
+    <>
+      <g className="cat-bob">
+        <circle cx="26" cy="19" r="6" fill="#E5483B" />
+        <circle cx="38" cy="17" r="5.5" fill="#34A87B" />
+        <path d="M10 26h44l-5 24a4 4 0 0 1-4 3H19a4 4 0 0 1-4-3L10 26Z" fill="#F4B860" />
+        <rect x="6" y="23" width="52" height="6" rx="3" fill="#E39A2D" />
+        <path d="M22 33v14M32 33v14M42 33v14" stroke="#E39A2D" strokeWidth="2.6" strokeLinecap="round" />
+      </g>
+      <Twinkle x={54} y={10} s={0.7} delay={0.7} />
+    </>
+  ),
+  moda: (
+    <>
+      <g className="cat-wiggle">
+        <path d="M22 10 8 18l6 11 7-3v29h22V26l7 3 6-11-14-8c-2 4-5 6-10 6s-8-2-10-6Z" fill="#6366F1" />
+        <path d="M24 11c2 4 5 6 8 6s6-2 8-6" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" fill="none" opacity=".7" />
+        <path d="M24 34h16" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" opacity=".35" />
+      </g>
+      <Twinkle x={53} y={46} s={0.8} fill="#6366F1" delay={0.5} />
     </>
   ),
   outros: (

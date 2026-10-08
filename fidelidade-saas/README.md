@@ -164,3 +164,11 @@ Recuperação por e-mail ainda não existe (precisa de um serviço de envio, com
   (`src/lib/product-images.ts`); a rota `/api/imagens/buscar` exige dono logado e limita as buscas.
 - **Imprimir o QR Code** (Caixa): botão **Imprimir QR Code** abre o cupom de 80 mm (preto e branco, uma página) com o nome do
   estabelecimento, QR, pontos e validade; funciona na impressora configurada no computador do caixa.
+
+## Gráficos e categorias
+
+- Gráfico de área padrão (`src/components/AreaChart.tsx`): perfil do cliente, início do restaurante (vendas por dia) e visão geral do admin
+  (cadastros por dia), com dica imediata ao passar o mouse.
+- Categorias novas: Estética e saúde, Pet shop, Farmácia, Serviços, Academia e fitness, Mercado e empório, Moda e acessórios.
+  Em **Outros** o estabelecimento descreve o negócio (`categoryOther`, migração `0012_categoria_outros`); os clientes acham por esse
+  texto em Lugares → Outros. O botão "Fale com o suporte" abre o WhatsApp do número definido em `SUPPORT_WHATSAPP` (só dígitos com DDI).

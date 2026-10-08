@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import { adminImpersonate } from '@/app/actions/admin';
+import { AreaChart, type AreaPoint } from '@/components/AreaChart';
 import { StatusChip } from '@/components/StatusChip';
 import { KpiCard } from '@/components/DashboardCharts';
 import { EmptyState } from '@/components/EmptyState';
 import { prisma } from '@/lib/db';
+import { WEEKDAYS, brtParts } from '@/lib/insights';
 import { PLAN_PRICE_CENTS } from '@/lib/payments';
 import { formatBRL, formatPoints } from '@/lib/points';
 
@@ -56,7 +58,17 @@ export default async function AdminHome() {
     const i = 29 - Math.floor((now - s.createdAt.getTime()) / DAY);
     if (i >= 0 && i < 30) perDay[i] += 1;
   }
-  const maxDay = Math.max(1, ...perDay);
+  const signupPoints: AreaPoint[] = perDay.map((n, i) => {
+    const ymd = brtParts(new Date(now - (29 - i) * DAY)).ymd;
+    const label = `${ymd.slice(8, 10)}/${ymd.slice(5, 7)}`;
+    return {
+      label,
+      value: n,
+      active: n > 0,
+      title: `${WEEKDAYS[new Date(`${ymd}T12:00:00Z`).getUTCDay()]}, ${label}`,
+      strong: `${n} ${n === 1 ? 'cadastro' : 'cadastros'}`,
+    };
+  });
 
   return (
     <div className="space-y-6">
@@ -103,11 +115,7 @@ export default async function AdminHome() {
       <section className="glass-panel p-5 sm:p-6" aria-labelledby="cad-dia">
         <h2 id="cad-dia" className="mb-1 font-semibold text-primary">Cadastros por dia</h2>
         <p className="mb-4 text-sm text-slate-500">Últimos 30 dias.</p>
-        <div className="flex h-28 items-end gap-1" role="img" aria-label="Cadastros por dia nos últimos 30 dias">
-          {perDay.map((n, i) => (
-            <span key={i} title={`${n} ${n === 1 ? 'cadastro' : 'cadastros'}`} className="flex-1 rounded-t bg-electric-500/80" style={{ height: `${n === 0 ? 3 : Math.max(8, (n / maxDay) * 100)}%`, opacity: n === 0 ? 0.25 : 1 }} />
-          ))}
-        </div>
+        <AreaChart points={signupPoints} label="Cadastros por dia nos últimos 30 dias" empty="Nenhum cadastro nos últimos 30 dias" />
       </section>
 
       <section className="glass-panel p-5 sm:p-6" aria-labelledby="atencao">

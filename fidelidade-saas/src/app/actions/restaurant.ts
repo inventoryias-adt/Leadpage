@@ -287,6 +287,7 @@ export async function finishOnboarding(_: FormState, __: FormData): Promise<Form
 
 const identitySchema = z.object({
   category: z.string().trim().default(''),
+  categoryOther: z.string().trim().max(60, 'Descreva o tipo de negócio em até 60 caracteres.').default(''),
   instagram: z.string().trim().default(''),
 });
 
@@ -323,6 +324,7 @@ export async function saveIdentity(_: FormState, formData: FormData): Promise<Fo
       where: { id: restaurant.id },
       data: {
         category: parsed.category || null,
+        categoryOther: parsed.category === 'outros' && parsed.categoryOther ? parsed.categoryOther : null,
         instagram: instagram || null,
         listed: formData.get('listed') === 'on',
         logoImageId,

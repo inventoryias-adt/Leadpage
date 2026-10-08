@@ -41,7 +41,7 @@ const FILTERS: { id: Filter; label: string }[] = [
 const norm = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 /** Vitrine de lugares: busca, filtros e ordenação por distância usando a localização do aparelho. */
-export function PlacesExplorer({ places, categories, loggedIn }: { places: PlaceCard[]; categories: { value: string; label: string }[]; loggedIn: boolean }) {
+export function PlacesExplorer({ places, categories, loggedIn }: { places: PlaceCard[]; categories: { value: string; label: string; hint?: string }[]; loggedIn: boolean }) {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
   const [category, setCategory] = useState<string | null>(null);
@@ -206,6 +206,14 @@ export function PlacesExplorer({ places, categories, loggedIn }: { places: Place
         </button>
       )}
 
+      {category === 'outros' && (
+        <div className="glass-inset space-y-2 p-3">
+          <label className="glass-label" htmlFor="outros-q">O que você procura em “Outros”?</label>
+          <input id="outros-q" value={query} onChange={(e) => setQuery(e.target.value)} className="glass-input" placeholder="Ex.: doceria, chaveiro, ateliê" maxLength={60} />
+          <p className="text-xs text-slate-500">Mostra os lugares que descreveram o que são (ex.: “Outros · Doceria”).</p>
+        </div>
+      )}
+
       {allOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 md:items-center md:p-6" onClick={() => setAllOpen(false)}>
           <div
@@ -231,6 +239,7 @@ export function PlacesExplorer({ places, categories, loggedIn }: { places: Place
                         setCategory(on ? null : c.value);
                         setAllOpen(false);
                       }}
+                      title={c.hint}
                       className="group flex w-[4.5rem] flex-col items-center gap-1.5 !bg-transparent !p-0 !shadow-none"
                     >
                       <span className={`rounded-xl p-0.5 transition-colors ${on ? 'bg-electric-500' : 'group-hover:bg-slate-200'}`}>

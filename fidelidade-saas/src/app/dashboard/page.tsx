@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BarList, KpiCard, PeakHeatmap, SalesBars } from '@/components/DashboardCharts';
+import { BarList, KpiCard, PeakHeatmap, SalesArea } from '@/components/DashboardCharts';
 import { EmptyState } from '@/components/EmptyState';
 import { Icon } from '@/components/Icons';
 import { prisma } from '@/lib/db';
@@ -158,7 +158,7 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
         {cur.length === 0 ? (
           <EmptyState compact variant="chart" title="Sem compras neste período" text="Quando houver lançamentos, as vendas de cada dia aparecem aqui." />
         ) : (
-          <SalesBars days={series} />
+          <SalesArea days={series} />
         )}
       </section>
 
