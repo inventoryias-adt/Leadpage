@@ -1,7 +1,15 @@
 import Link from 'next/link';
-import { IsoIllustration } from './Illustrations';
+import { Icon, type IconName } from './Icons';
 
-/** Tela vazia com ilustração isométrica, título, explicação e, se fizer sentido, um próximo passo. */
+const ICON: Record<'coin' | 'shield' | 'gift' | 'users' | 'chart', IconName> = {
+  coin: 'star',
+  shield: 'lock',
+  gift: 'gift',
+  users: 'users',
+  chart: 'chart',
+};
+
+/** Tela vazia: ícone discreto, título, explicação e, se fizer sentido, um próximo passo. */
 export function EmptyState({
   variant,
   title,
@@ -16,9 +24,11 @@ export function EmptyState({
   compact?: boolean;
 }) {
   return (
-    <div className={`flex flex-col items-center text-center ${compact ? 'py-2' : 'glass-panel bg-dots p-6 sm:p-8'}`}>
-      <IsoIllustration variant={variant} size={compact ? 150 : 190} />
-      <p className="mt-1 text-lg font-semibold text-primary">{title}</p>
+    <div className={`flex flex-col items-center text-center ${compact ? 'py-4' : 'glass-panel p-8 sm:p-10'}`}>
+      <span className="flex h-12 w-12 items-center justify-center rounded-lg border border-[#E5E7EB] bg-[#F6F7F9] text-slate-500">
+        <Icon name={ICON[variant]} size={22} />
+      </span>
+      <p className="mt-3 text-base font-semibold text-primary">{title}</p>
       <p className="mt-1 max-w-sm text-sm text-slate-600">{text}</p>
       {action && (
         <Link href={action.href} className="glass-button btn-sm mt-4">

@@ -153,7 +153,7 @@ export function CaixaForm({ pointsPerReal, rules, promos = [] }: { pointsPerReal
 
       {claim && (
         <div className="animate-fade-in mt-8 flex flex-col items-center rounded-3xl bg-white p-6 shadow-inner">
-          <QRCodeSVG value={claim.url} size={208} fgColor="#1E3A8A" level="M" marginSize={1} />
+          <QRCodeSVG value={claim.url} size={208} fgColor="#0F1F3D" level="M" marginSize={1} />
           <p className="mt-4 text-center text-lg font-bold text-primary">{formatPoints(claim.points)} pontos</p>
           <p className="text-center text-sm text-slate-500">{claim.description}</p>
           <p className="mt-1 text-center text-xs text-slate-400">

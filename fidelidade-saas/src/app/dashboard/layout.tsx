@@ -1,5 +1,4 @@
 import { Brand } from '@/components/Brand';
-import { SideArt } from '@/components/Illustrations';
 import { OwnerGuide } from '@/components/OwnerGuide';
 import { exitImpersonation } from '@/app/actions/admin';
 import { getAdmin } from '@/lib/session';
@@ -39,7 +38,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </form>
         </div>
       )}
-      <SideArt container="72rem" />
       <header className="glass-panel-sm mb-6 flex items-center justify-between gap-3 px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
           <Brand href="/dashboard" />

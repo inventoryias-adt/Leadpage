@@ -74,7 +74,7 @@ export default async function Assinantes({ searchParams }: { searchParams: Promi
       ) : (
         <div className="glass-panel overflow-hidden">
           <table className="w-full text-left text-sm">
-            <thead className="bg-[#f6f8fd] text-xs uppercase tracking-wide text-slate-500">
+            <thead className="bg-[#F6F7F9] text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3 font-semibold">Assinante</th>
                 <th className="px-3 py-3 font-semibold">Status</th>
@@ -84,15 +84,15 @@ export default async function Assinantes({ searchParams }: { searchParams: Promi
                 <th className="hidden px-4 py-3 font-semibold lg:table-cell">Cadastro</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#e4e7f3]">
+            <tbody className="divide-y divide-[#E5E7EB]">
               {rows.map((r) => {
                 const rec = recentBy.get(r.id);
                 const lb = lastBy.get(r.id);
                 return (
-                  <tr key={r.id} className="transition-colors hover:bg-[#f6f8fd]">
+                  <tr key={r.id} className="transition-colors hover:bg-[#F6F7F9]">
                     <td className="px-4 py-3">
                       <Link href={`/admin/assinantes/${r.id}`} className="block">
-                        <span className="block font-semibold text-slate-800">{r.name}{r.isTest && <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">TESTE</span>}</span>
+                        <span className="block font-semibold text-slate-800">{r.name}{r.isTest && <span className="ml-2 rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">TESTE</span>}</span>
                         <span className="block text-xs text-slate-500">{r.email}</span>
                         {!r.onboardedAt && r.subscriptionStatus === 'ACTIVE' && <span className="text-xs font-semibold text-amber-700">configuração pendente</span>}
                       </Link>

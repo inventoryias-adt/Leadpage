@@ -8,7 +8,7 @@ export function KpiCard({ label, value, hint, delta }: { label: string; value: s
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-semibold text-slate-600">{label}</p>
         {delta != null && (
-          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${delta >= 0 ? 'bg-blue-100 text-electric-600' : 'bg-rose-100 text-rose-600'}`} title="Em relação ao período anterior">
+          <span className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-bold ${delta >= 0 ? 'bg-blue-100 text-electric-600' : 'bg-rose-100 text-rose-600'}`} title="Em relação ao período anterior">
             {delta > 0 ? '+' : ''}{delta}%
           </span>
         )}
@@ -38,15 +38,9 @@ export function SalesBars({ days }: { days: DayBucket[] }) {
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label="Vendas lançadas por dia">
-      <defs>
-        <linearGradient id="bars-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#2F6BFF" />
-          <stop offset="1" stopColor="#8FB4FF" />
-        </linearGradient>
-      </defs>
       {[0, 0.5, 1].map((f) => (
         <g key={f}>
-          <line x1={padL} x2={W - 6} y1={padT + innerH * (1 - f)} y2={padT + innerH * (1 - f)} stroke="#E4E7F3" strokeWidth="1" />
+          <line x1={padL} x2={W - 6} y1={padT + innerH * (1 - f)} y2={padT + innerH * (1 - f)} stroke="#E5E7EB" strokeWidth="1" />
           <text x={padL - 6} y={padT + innerH * (1 - f) + 4} textAnchor="end" fontSize="10" fill="#64748B">{f === 0 ? '0' : money(max * f)}</text>
         </g>
       ))}
@@ -55,7 +49,7 @@ export function SalesBars({ days }: { days: DayBucket[] }) {
         const h = Math.max(d.cents > 0 ? 3 : 0, innerH - (y(d.cents) - padT));
         return (
           <g key={d.ymd}>
-            <rect x={x} y={padT + innerH - h} width={bar} height={h} rx={Math.min(5, bar / 2)} fill={i === days.length - 1 ? '#1A43C7' : 'url(#bars-fill)'}>
+            <rect x={x} y={padT + innerH - h} width={bar} height={h} rx={Math.min(3, bar / 2)} fill={i === days.length - 1 ? '#0F1F3D' : '#2150C9'}>
               <title>{`${d.label}: ${formatBRL(d.cents)} · ${d.count} ${d.count === 1 ? 'compra' : 'compras'} · ${d.points} pts`}</title>
             </rect>
             {i % tickEvery === 0 && (
@@ -66,8 +60,8 @@ export function SalesBars({ days }: { days: DayBucket[] }) {
       })}
       {avg > 0 && (
         <g>
-          <line x1={padL} x2={W - 6} y1={y(avg)} y2={y(avg)} stroke="#FFB22E" strokeWidth="1.5" strokeDasharray="5 4" />
-          <text x={padL + 6} y={y(avg) - 4} textAnchor="start" fontSize="10" fontWeight="700" fill="#B7791F">média {money(avg)}/dia</text>
+          <line x1={padL} x2={W - 6} y1={y(avg)} y2={y(avg)} stroke="#94A3B8" strokeWidth="1.25" strokeDasharray="4 4" />
+          <text x={padL + 6} y={y(avg) - 4} textAnchor="start" fontSize="10" fontWeight="500" fill="#64748B">média {money(avg)}/dia</text>
         </g>
       )}
     </svg>
@@ -114,7 +108,7 @@ export function BarList({ items, unit }: { items: { label: string; value: number
             <span className="truncate font-semibold text-slate-800">{i.label}</span>
             <span className="shrink-0 text-slate-600">{i.value} {unit}</span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-[#eaeef9]">
+          <div className="h-2 overflow-hidden rounded-full bg-[#F1F3F6]">
             <div className="h-full rounded-full bg-electric-500" style={{ width: `${Math.max(4, (i.value / max) * 100)}%` }} />
           </div>
         </li>

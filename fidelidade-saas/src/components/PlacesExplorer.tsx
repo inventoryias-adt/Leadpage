@@ -159,7 +159,7 @@ export function PlacesExplorer({ places, categories, loggedIn }: { places: Place
             role="tab"
             aria-selected={filter === f.id}
             onClick={() => setFilter(f.id)}
-            className={`shrink-0 !w-auto !rounded-full !px-4 !py-1.5 !text-sm ${filter === f.id ? 'glass-button' : 'glass-button-ghost'}`}
+            className={`shrink-0 !w-auto !rounded-md !px-4 !py-1.5 !text-sm ${filter === f.id ? 'glass-button' : 'glass-button-ghost'}`}
           >
             {f.label}
           </button>
@@ -174,7 +174,7 @@ export function PlacesExplorer({ places, categories, loggedIn }: { places: Place
       <Carousel label="Categorias">
         <li className="shrink-0 snap-start">
           <button type="button" onClick={() => setAllOpen(true)} aria-haspopup="dialog" className="group flex w-[4.5rem] flex-col items-center gap-1.5 !bg-transparent !p-0 !shadow-none">
-            <span className="rounded-[1.25rem] p-0.5 transition-all group-hover:-translate-y-0.5">
+            <span className="rounded-xl p-0.5 transition-colors group-hover:bg-slate-200">
               <CategoryArt name="todos" size={60} />
             </span>
             <span className="text-center text-[11px] font-semibold leading-tight text-slate-700">Todos</span>
@@ -190,10 +190,10 @@ export function PlacesExplorer({ places, categories, loggedIn }: { places: Place
                 onClick={() => setCategory(on ? null : c.value)}
                 className="group flex w-[4.5rem] flex-col items-center gap-1.5 !bg-transparent !p-0 !shadow-none"
               >
-                <span className={`rounded-[1.25rem] p-0.5 transition-all group-hover:-translate-y-0.5 ${on ? 'bg-electric-600 shadow-md shadow-blue-900/25' : ''}`}>
+                <span className={`rounded-xl p-0.5 transition-colors ${on ? 'bg-electric-500' : 'group-hover:bg-slate-200'}`}>
                   <CategoryArt name={c.value} size={60} />
                 </span>
-                <span className={`text-center text-[11px] font-semibold leading-tight ${on ? 'text-electric-600' : 'text-slate-700'}`}>{c.label}</span>
+                <span className={`text-center text-[11px] font-medium leading-tight ${on ? 'text-electric-600' : 'text-slate-700'}`}>{c.label}</span>
               </button>
             </li>
           );
@@ -233,10 +233,10 @@ export function PlacesExplorer({ places, categories, loggedIn }: { places: Place
                       }}
                       className="group flex w-[4.5rem] flex-col items-center gap-1.5 !bg-transparent !p-0 !shadow-none"
                     >
-                      <span className={`rounded-[1.25rem] p-0.5 transition-all group-hover:-translate-y-0.5 ${on ? 'bg-electric-600 shadow-md shadow-blue-900/25' : ''}`}>
+                      <span className={`rounded-xl p-0.5 transition-colors ${on ? 'bg-electric-500' : 'group-hover:bg-slate-200'}`}>
                         <CategoryArt name={c.value} size={60} />
                       </span>
-                      <span className={`text-center text-[11px] font-semibold leading-tight ${on ? 'text-electric-600' : 'text-slate-700'}`}>{c.label}</span>
+                      <span className={`text-center text-[11px] font-medium leading-tight ${on ? 'text-electric-600' : 'text-slate-700'}`}>{c.label}</span>
                     </button>
                   </li>
                 );
@@ -286,19 +286,19 @@ export function PlacesExplorer({ places, categories, loggedIn }: { places: Place
                   <p className="truncate text-xs text-slate-500">{[p.categoryLabel, p.units.length > 1 ? p.unit.name : null, p.unit.address].filter(Boolean).join(' · ')}</p>
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
                     {p.unit.openNow != null && (
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${p.unit.openNow ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
+                      <span className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${p.unit.openNow ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
                         {p.unit.openNow ? 'Aberto agora' : 'Fechado agora'}
                       </span>
                     )}
                     {p.units.length > 1 && (
-                      <span className="rounded-full bg-slate-900/90 px-2 py-0.5 text-[11px] font-semibold text-white">{p.units.length} unidades</span>
+                      <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">{p.units.length} unidades</span>
                     )}
-                    <span className="rounded-full bg-electric-600/10 px-2 py-0.5 text-[11px] font-semibold text-electric-600">{p.pointsPerReal} pts por R$ 1</span>
+                    <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">{p.pointsPerReal} pts por R$ 1</span>
                     {p.balance != null && p.balance > 0 && (
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">Você tem {formatPoints(p.balance)} pts</span>
+                      <span className="rounded-md bg-[#E8EEFB] px-2 py-0.5 text-[11px] font-medium text-electric-600">Você tem {formatPoints(p.balance)} pts</span>
                     )}
                     {p.challenges > 0 && (
-                      <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
+                      <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
                         {p.challenges} {p.challenges === 1 ? 'desafio' : 'desafios'}
                       </span>
                     )}

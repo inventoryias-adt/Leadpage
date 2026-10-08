@@ -56,8 +56,8 @@ export default async function PerfilPage() {
         <div className="md:hidden"><Brand href="/carteira" /></div>
         <div className="mt-5 flex items-center gap-4">
           <span
-            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-2xl font-extrabold text-white"
-            style={{ background: 'linear-gradient(145deg, #4F8FFF, #1A43C7)' }}
+            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg text-2xl font-semibold text-white"
+            style={{ background: '#0F1F3D' }}
             aria-hidden
           >
             {customer.name.trim().charAt(0).toUpperCase()}

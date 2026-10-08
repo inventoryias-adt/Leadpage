@@ -36,26 +36,24 @@ const faqs = [
   { q: 'Tenho mais de uma loja. Posso usar?', a: 'Pode. Cada unidade tem endereço, horário e localização próprios, e os pontos valem em todas.' },
 ];
 
-/** Faixa diagonal entre as seções, com losangos nos cruzamentos. */
+/** Linha fina entre as seções. */
 function Hatch() {
-  return <div aria-hidden className="diamond relative h-9 border-y border-[#e4e7f3] bg-hatch" />;
+  return <div aria-hidden className="h-px bg-[#E5E7EB]" />;
 }
 
-/** Botão grande em pílula com seta em círculo. */
-function Cta({ href, children, dark }: { href: string; children: React.ReactNode; dark?: boolean }) {
+/** Botão principal de chamada para ação. */
+function Cta({ href, children }: { href: string; children: React.ReactNode; dark?: boolean }) {
   return (
-    <a href={href} className="glass-button !w-auto !py-3.5 !pl-7 !pr-4 !text-base">
+    <a href={href} className="glass-button !w-auto !px-6 !py-3 !text-base">
       {children}
-      <span className={`flex h-8 w-8 items-center justify-center rounded-full ${dark ? 'bg-white text-electric-600' : 'bg-white/95 text-electric-600'}`}>
-        <Icon name="chevron" size={16} />
-      </span>
+      <Icon name="chevron" size={16} />
     </a>
   );
 }
 
 export default function LandingPage() {
   return (
-    <main className="mx-auto max-w-6xl overflow-x-clip border-x border-[#e4e7f3] bg-white">
+    <main className="mx-auto max-w-6xl overflow-x-clip border-x border-[#E5E7EB] bg-white">
       <nav className="flex items-center justify-between px-5 py-4 sm:px-8">
         <Brand />
         <div className="flex items-center gap-2 text-sm font-semibold">
@@ -64,13 +62,13 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      <div aria-hidden className="diamond relative border-t border-[#e4e7f3]" />
+      <div aria-hidden className="h-px bg-[#E5E7EB]" />
 
       {/* Hero + cadastro */}
       <section className="grid items-center gap-10 px-5 py-12 sm:px-8 md:grid-cols-[1.1fr_1fr] md:py-16">
         <div>
-          <span className="glass-chip mb-6 !px-4 !py-2 !text-sm">
-            <Icon name="spark" size={16} className="mr-2 text-amber-500" /> Programa de pontos para restaurantes e comércios
+          <span className="glass-chip mb-6 !px-3 !py-1.5 !text-[13px]">
+            Programa de pontos para restaurantes e comércios
           </span>
           <h1 className="mb-5 text-4xl font-semibold leading-[1.05] text-primary md:text-6xl">
             Fidelize seus clientes.
@@ -95,8 +93,7 @@ export default function LandingPage() {
       </section>
 
       {/* Vitrine do produto */}
-      <section className="relative overflow-hidden border-y border-[#e4e7f3] px-5 pb-16 pt-12 sm:px-8">
-        <div aria-hidden className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-electric-500 via-[#8fb4ff] to-transparent opacity-80" />
+      <section className="relative overflow-hidden border-y border-[#E5E7EB] bg-[#F6F7F9] px-5 py-14 sm:px-8">
         <div className="relative">
           <LandingMock />
         </div>
@@ -110,9 +107,9 @@ export default function LandingPage() {
         <h2 className="mb-10 max-w-2xl text-3xl font-semibold text-primary md:text-4xl">Do balcão à carteira do cliente em três passos.</h2>
         <div className="grid gap-5 md:grid-cols-3">
           {steps.map((s) => (
-            <div key={s.n} className="overflow-hidden rounded-3xl border border-[#e4e7f3] bg-white">
-              <div className="bg-dots flex justify-center border-b border-[#e4e7f3] bg-[#fbfcff] py-4">
-                <Illustration variant={s.variant} size={190} />
+            <div key={s.n} className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+              <div className="flex justify-center border-b border-[#E5E7EB] bg-[#F6F7F9] py-6">
+                <Illustration variant={s.variant} size={150} />
               </div>
               <div className="p-5">
                 <p className="mb-1 text-xs font-bold uppercase tracking-wide text-electric-500">Passo {s.n}</p>
@@ -132,7 +129,7 @@ export default function LandingPage() {
         <h2 className="mb-10 max-w-2xl text-3xl font-semibold text-primary md:text-4xl">Tudo o que o seu negócio precisa para o cliente voltar.</h2>
         <div className="grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
           {benefits.map((b) => (
-            <div key={b.title} className="border-l-4 border-electric-400 pl-5">
+            <div key={b.title} className="border-l-2 border-electric-500 pl-5">
               <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-electric-500/10 text-electric-600"><Icon name={b.icon} size={22} /></span>
               <h3 className="mb-1 text-lg font-semibold text-primary">{b.title}</h3>
               <p className="text-sm text-slate-600">{b.text}</p>
@@ -144,27 +141,27 @@ export default function LandingPage() {
       {/* Preço */}
       <section className="bg-dots-dark relative overflow-hidden bg-primary px-5 py-16 text-center sm:px-8">
         <h2 className="mx-auto mb-3 max-w-2xl text-3xl font-semibold text-white md:text-4xl">
-          Um plano, tudo incluso. <span className="text-[#8fb4ff]">R$ 197,00 por mês.</span>
+          Um plano, tudo incluso. <span className="text-[#9DB7F5]">R$ 197,00 por mês.</span>
         </h2>
         <p className="mx-auto mb-8 max-w-xl text-slate-300">Sem taxa de adesão e sem fidelidade. Cancele quando quiser.</p>
-        <div className="mx-auto mb-8 max-w-xl rounded-3xl border border-white/20 bg-white/10 p-5 text-left backdrop-blur-sm sm:p-6">
+        <div className="mx-auto mb-8 max-w-xl rounded-xl border border-white/15 bg-white/5 p-5 text-left sm:p-6">
           <p className="mb-3 text-sm font-semibold text-slate-300">O que está incluso</p>
           <ul className="space-y-2.5">
             {included.map((i) => (
-              <li key={i} className="flex items-start gap-3 rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-sm font-medium text-white">
-                <Icon name="check" size={18} className="mt-0.5 shrink-0 text-[#8fb4ff]" /> {i}
+              <li key={i} className="flex items-start gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white">
+                <Icon name="check" size={18} className="mt-0.5 shrink-0 text-[#9DB7F5]" /> {i}
               </li>
             ))}
           </ul>
         </div>
-        <a href="#assinar" className="glass-button !w-auto !border-white !bg-white !text-electric-600 hover:!bg-transparent hover:!text-white">Quero fidelizar meus clientes</a>
+        <a href="#assinar" className="glass-button !w-auto !border-white !bg-white !px-6 !py-3 !text-primary hover:!bg-slate-100">Quero fidelizar meus clientes</a>
       </section>
 
       {/* FAQ */}
       <section className="px-5 py-14 sm:px-8">
         <h2 className="mb-3 max-w-2xl text-3xl font-semibold text-primary md:text-4xl">Tem dúvidas? Relaxa, nós temos as respostas.</h2>
         <p className="mb-8 max-w-xl text-slate-600">Separamos as perguntas que mais recebemos.</p>
-        <div className="divide-y divide-[#e4e7f3] border-y border-[#e4e7f3]">
+        <div className="divide-y divide-[#E5E7EB] border-y border-[#E5E7EB]">
           {faqs.map((f) => (
             <details key={f.q} className="group py-1">
               <summary className="flex list-none items-center gap-4 py-4 font-semibold text-primary transition-colors hover:text-electric-600">

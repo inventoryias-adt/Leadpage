@@ -6,16 +6,20 @@ module.exports = {
       screens: { wide: '1600px' },
       fontFamily: {
         sans: ['"Inter Variable"', 'system-ui', 'sans-serif'],
-        display: ['"DM Sans Variable"', '"Inter Variable"', 'system-ui', 'sans-serif'],
+        display: ['"Inter Variable"', 'system-ui', 'sans-serif'],
       },
+      // Pesos mais contidos: títulos e números firmes, sem o peso "chamativo" do extrabold.
+      fontWeight: { bold: '600', extrabold: '650' },
+      // Cantos menos arredondados: aparência de ferramenta profissional, não de brinquedo.
+      borderRadius: { sm: '4px', DEFAULT: '6px', md: '6px', lg: '8px', xl: '8px', '2xl': '10px', '3xl': '12px' },
       colors: {
         glassBlue: 'rgba(37, 99, 235, 0.1)',
         glassWhite: 'rgba(255, 255, 255, 0.15)',
-        primary: '#14275E', // azul-marinho profundo para títulos
+        primary: '#0F1F3D', // azul-marinho escuro para títulos
         electric: {
-          400: '#38BDF8',
-          500: '#2F6BFF',
-          600: '#1D4ED8',
+          400: '#5B84E6',
+          500: '#2150C9', // azul principal, mais sóbrio
+          600: '#1A3FA3',
         },
         ice: '#F4F8FF',
       },

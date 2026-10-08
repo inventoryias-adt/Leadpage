@@ -18,11 +18,11 @@ export default async function Registro() {
       {logs.length === 0 ? (
         <EmptyState variant="shield" title="Nada registrado ainda" text="As ações feitas nas fichas dos assinantes aparecem aqui." />
       ) : (
-        <ul className="glass-panel divide-y divide-[#e4e7f3]">
+        <ul className="glass-panel divide-y divide-[#E5E7EB]">
           {logs.map((l) => (
             <li key={l.id} className="flex items-start justify-between gap-3 px-5 py-3.5 text-sm">
               <span className="min-w-0">
-                <span className="mb-0.5 inline-block rounded-full border border-[#e0e4f2] px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-slate-600">{LABEL[l.action] ?? l.action}</span>
+                <span className="mb-0.5 inline-block rounded-md border border-[#D5DAE3] px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-slate-600">{LABEL[l.action] ?? l.action}</span>
                 <span className="block font-semibold text-slate-800">{l.detail}</span>
                 <span className="block text-xs text-slate-500">
                   {l.adminEmail} · {l.restaurantId ? <Link href={`/admin/assinantes/${l.restaurantId}`} className="link-inline">{l.restaurantName ?? 'assinante'}</Link> : 'plataforma'}

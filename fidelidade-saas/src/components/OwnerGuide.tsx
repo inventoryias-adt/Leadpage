@@ -214,7 +214,7 @@ export function OwnerGuide({ autoOpen, progress, clientUrl }: { autoOpen: boolea
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="fixed bottom-24 left-4 z-30 inline-flex items-center gap-2 rounded-full border border-electric-500 bg-white px-4 py-2.5 text-sm font-semibold text-electric-600 shadow-lg shadow-blue-900/15 transition-colors hover:bg-electric-500 hover:text-white md:bottom-6"
+          className="fixed bottom-24 left-4 z-30 inline-flex items-center gap-2 rounded-md border border-electric-500 bg-white px-4 py-2.5 text-sm font-semibold text-electric-600 shadow-lg shadow-blue-900/15 transition-colors hover:bg-electric-500 hover:text-white md:bottom-6"
         >
           <Icon name="info" size={16} /> Guia · passo {step + 1} de {STEPS.length}
         </button>
@@ -249,7 +249,7 @@ export function OwnerGuide({ autoOpen, progress, clientUrl }: { autoOpen: boolea
                 <div className="min-w-0">
                   <h2 id="guia-titulo" className="text-xl font-semibold leading-tight text-primary">{s.title}</h2>
                   {s.done && (
-                    <span className={`mt-1 inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${done ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'}`}>
+                    <span className={`mt-1 inline-block rounded-md px-2.5 py-0.5 text-xs font-semibold ${done ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'}`}>
                       {done ? 'Feito' : 'Falta fazer'}
                     </span>
                   )}

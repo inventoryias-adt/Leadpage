@@ -293,7 +293,7 @@ export function AddPromotionForm() {
         <legend className="glass-label">Dias da semana <span className="font-normal text-slate-500">— nenhum marcado = todos os dias</span></legend>
         <div className="flex flex-wrap gap-2">
           {WEEKDAY_LABELS.map((d, i) => (
-            <label key={d} className="inline-flex items-center gap-2 rounded-full border border-[#d8dceb] bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 has-[:checked]:border-electric-500 has-[:checked]:bg-electric-500 has-[:checked]:text-white">
+            <label key={d} className="inline-flex items-center gap-2 rounded-md border border-[#D5DAE3] bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 has-[:checked]:border-electric-500 has-[:checked]:bg-electric-500 has-[:checked]:text-white">
               <input type="checkbox" name="weekdays" value={i} className="sr-only" />
               {d}
             </label>

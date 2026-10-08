@@ -306,14 +306,14 @@ const art: Record<string, ReactNode> = {
   ),
 };
 
-/** Quadradinho colorido com a ilustração animada da categoria. */
+/** Quadradinho neutro com o desenho da categoria em tons de cinza, sem movimento. */
 export function CategoryArt({ name, size = 64 }: { name: string; size?: number }) {
   return (
     <span
-      className="cat-anim flex items-center justify-center overflow-hidden rounded-[1.1rem]"
-      style={{ width: size, height: size, background: CATEGORY_TINT[name] ?? CATEGORY_TINT.outros }}
+      className="flex items-center justify-center overflow-hidden rounded-[10px] border border-[#E2E5EB] bg-[#F3F5F8]"
+      style={{ width: size, height: size }}
     >
-      <svg viewBox="0 0 64 64" width={size * 0.82} height={size * 0.82} fill="none" aria-hidden>
+      <svg viewBox="0 0 64 64" width={size * 0.74} height={size * 0.74} fill="none" aria-hidden style={{ filter: 'grayscale(1) contrast(0.85) opacity(0.8)' }}>
         {art[name] ?? art.outros}
       </svg>
     </span>
