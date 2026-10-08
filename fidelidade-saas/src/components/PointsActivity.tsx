@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
+import { ChartTooltip } from './ChartTooltip';
 import { PERIODS, PERIOD_LABEL, type Activity, type Period } from '@/lib/activity';
 import { formatPoints } from '@/lib/points';
 
 /** Gráfico de área: pontos ganhos acumulados no período. Passe o mouse (ou toque) para ver cada coluna. */
 function AreaChart({ activity, label }: { activity: Activity; label: string }) {
   const gid = useId().replace(/:/g, '');
+  const [hover, setHover] = useState<number | null>(null);
   // largura real do cartão: assim o texto do gráfico mantém o tamanho no celular
   const box = useRef<HTMLDivElement>(null);
   const [W, setW] = useState(640);
@@ -35,7 +37,7 @@ function AreaChart({ activity, label }: { activity: Activity; label: string }) {
 
   return (
     <div ref={box} className="relative">
-      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="block max-w-full" role="img" aria-label={label}>
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="block max-w-full" role="img" aria-label={label} onMouseLeave={() => setHover(null)}>
         <defs>
           <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#2150C9" stopOpacity=".22" />
@@ -50,15 +52,44 @@ function AreaChart({ activity, label }: { activity: Activity; label: string }) {
         ))}
         <path d={`${line} L${x(slots.length - 1)} ${padT + innerH} L${x(0)} ${padT + innerH} Z`} fill={`url(#${gid})`} />
         <path d={line} fill="none" stroke="#2150C9" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-        {slots.map((s, i) => (
-          <g key={i}>
-            <circle cx={x(i)} cy={y(s.total)} r={s.earned > 0 || s.redeemed > 0 ? 4 : 10} fill={s.earned > 0 || s.redeemed > 0 ? '#0F1F3D' : 'transparent'} stroke={s.earned > 0 || s.redeemed > 0 ? '#fff' : 'none'} strokeWidth="1.5">
-              <title>{`${s.label}: +${formatPoints(s.earned)} pts${s.redeemed ? ` · −${formatPoints(s.redeemed)} pts usados` : ''} · acumulado ${formatPoints(s.total)}`}</title>
-            </circle>
-            {(i % tickEvery === 0 || i === slots.length - 1) && (i === slots.length - 1 || slots.length - 1 - i >= tickEvery * 0.7) && <text x={x(i)} y={H - 6} textAnchor={i === slots.length - 1 ? 'end' : 'middle'} fontSize="11" fill="#64748B">{s.label}</text>}
-          </g>
-        ))}
+        {hover != null && <rect x={x(hover) - 1} y={padT} width={2} height={innerH} fill="#C7D6F7" />}
+        {slots.map((s, i) => {
+          const has = s.earned > 0 || s.redeemed > 0;
+          const on = hover === i;
+          return (
+            <g key={i}>
+              {(has || on) && <circle cx={x(i)} cy={y(s.total)} r={on ? 9 : 0} fill="#BFD0F7" />}
+              {(has || on) && <circle cx={x(i)} cy={y(s.total)} r={on ? 6 : 4} fill={on ? '#1A3FA3' : '#0F1F3D'} stroke="#fff" strokeWidth={on ? 2.5 : 1.5} />}
+              {(i % tickEvery === 0 || i === slots.length - 1) && (i === slots.length - 1 || slots.length - 1 - i >= tickEvery * 0.7) && (
+                <text x={x(i)} y={H - 6} textAnchor={i === slots.length - 1 ? 'end' : 'middle'} fontSize="11" fill="#64748B">{s.label}</text>
+              )}
+              <rect
+                x={x(i) - Math.max(8, innerW / slots.length / 2)}
+                y={padT}
+                width={Math.max(16, innerW / slots.length)}
+                height={innerH + padB - 6}
+                fill="transparent"
+                tabIndex={0}
+                aria-label={`${s.label}: ganhou ${formatPoints(s.earned)} pontos, acumulado ${formatPoints(s.total)}`}
+                className="cursor-pointer outline-none"
+                onMouseEnter={() => setHover(i)}
+                onFocus={() => setHover(i)}
+                onBlur={() => setHover(null)}
+                onTouchStart={() => setHover(i)}
+              />
+            </g>
+          );
+        })}
       </svg>
+      {hover != null && slots[hover] && (
+        <ChartTooltip leftPct={(x(hover) / W) * 100} topPct={(y(slots[hover].total) / H) * 100}>
+          <p className="text-xs font-medium text-slate-500">{slots[hover].label}</p>
+          <p className="text-lg font-semibold leading-tight text-primary">+{formatPoints(slots[hover].earned)} pts</p>
+          <p className="text-xs text-slate-600">
+            {slots[hover].redeemed > 0 ? `−${formatPoints(slots[hover].redeemed)} pts usados · ` : ''}acumulado {formatPoints(slots[hover].total)}
+          </p>
+        </ChartTooltip>
+      )}
       {empty && <p className="absolute inset-x-0 top-1/3 text-center text-sm font-semibold text-slate-500">Nenhuma movimentação neste período</p>}
     </div>
   );

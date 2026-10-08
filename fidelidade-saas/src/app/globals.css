@@ -118,7 +118,7 @@ body {
   }
   .glass-button-ghost:not(:disabled):hover {
     border-color: #94a3b8;
-    background-color: #f3f5f9;
+    background-color: #e9edf3;
   }
 
   .btn-danger {
@@ -138,18 +138,19 @@ body {
 
   /* Abas de navegação do painel. */
   .nav-tab {
-    @apply rounded-md px-3 py-2 text-sm font-medium text-slate-600;
+    @apply rounded-md border border-transparent px-3 py-2 text-sm font-medium text-slate-600;
     cursor: pointer;
-    transition: background-color 0.15s ease, color 0.15s ease;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   }
   .nav-tab:hover {
-    @apply bg-slate-100 text-slate-900;
+    @apply border-slate-400 text-slate-900;
+    background-color: #e9edf3;
   }
   .nav-tab-active {
-    @apply bg-[#E8EEFB] font-semibold text-electric-600;
+    @apply border-[#C3D2F4] bg-[#E8EEFB] font-semibold text-electric-600;
   }
   .nav-tab-active:hover {
-    @apply bg-[#E8EEFB] text-electric-600;
+    @apply border-electric-500 bg-[#DCE6F9] text-electric-600;
   }
 
   /* Rótulo/etiqueta (não clicável) e etiqueta clicável. */
