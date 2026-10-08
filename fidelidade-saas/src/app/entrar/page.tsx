@@ -15,7 +15,7 @@ export default async function EntrarPage({ searchParams }: { searchParams: Promi
       <div className="glass-panel w-full max-w-md p-8">
         <div className="mb-6"><Brand href="/entrar" /></div>
         <h1 className="mb-1 text-2xl font-bold text-primary">Minha carteira de pontos</h1>
-        <p className="mb-6 text-sm text-slate-500">Entre com seu CPF e telefone. No primeiro acesso, criamos sua conta na hora.</p>
+        <p className="mb-6 text-sm text-slate-500">Entre com seu e-mail e senha ou crie sua conta em um minuto.</p>
         <CustomerAuthForm next={next} cta="Entrar" />
       </div>
     </main>

@@ -90,7 +90,7 @@ const STEPS: Step[] = [
     id: 'cliente',
     icon: 'users',
     title: 'Como o cliente entra',
-    text: 'O cliente não baixa nada. Ele abre o link, entra com CPF e telefone, e a carteira dele é criada na hora.',
+    text: 'O cliente não baixa nada. Ele abre o link, cria a conta com e-mail e senha em um minuto, e a carteira dele é criada na hora.',
     bullets: ['Peça o QR do caixa depois de pagar: ele já cai na carteira', 'Ou compartilhe o link abaixo (Instagram, WhatsApp, balcão)', 'Em “Lugares”, ele encontra o seu estabelecimento e as campanhas'],
     clientLink: true,
   },

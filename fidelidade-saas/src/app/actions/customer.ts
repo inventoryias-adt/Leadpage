@@ -6,61 +6,119 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { isValidCpf, normalizePhone, onlyDigits } from '@/lib/br';
 import { BusinessError, creditClaim, performCheckIn, redeemItems, redeemReward, type BagItem } from '@/lib/claims';
+import { dummyHash, hashPassword, verifyPassword } from '@/lib/password';
 import { newReferralCode } from '@/lib/tokens';
 import { endCustomerSession, getCustomer, startCustomerSession } from '@/lib/session';
 import { fail, safeNext, type BagState, type FormState } from '@/lib/form';
 import { TOO_MANY, allow, clientIp } from '@/lib/rate-limit';
 
-const authSchema = z.object({
-  cpf: z.string().refine(isValidCpf, 'CPF inválido.'),
-  phone: z.string().refine((v) => normalizePhone(v) !== null, 'Telefone inválido. Use DDD + número.'),
-  name: z.string().trim().max(80).default(''),
-});
+const emailField = z.string().trim().toLowerCase().email('E-mail inválido.').max(120);
+const passwordField = z.string().min(8, 'A senha precisa ter pelo menos 8 caracteres.').max(72, 'A senha pode ter no máximo 72 caracteres.');
+const cpfField = z.string().refine(isValidCpf, 'CPF inválido.');
+const phoneField = z.string().refine((v) => normalizePhone(v) !== null, 'Telefone inválido. Use DDD + número.');
+
+const loginSchema = z.object({ email: emailField, password: z.string().min(1, 'Informe a senha.') });
+const signupSchema = z.object({ name: z.string().trim().min(2, 'Informe seu nome.').max(80), cpf: cpfField, phone: phoneField, email: emailField, password: passwordField });
+const recoverSchema = z.object({ cpf: cpfField, phone: phoneField, email: emailField, password: passwordField });
+
+const BAD_LOGIN = 'E-mail ou senha incorretos.';
 
 /**
- * Login rápido por CPF + telefone (cria a conta no primeiro acesso).
- * Se vier um `token`, já credita os pontos do QR Code depois de autenticar.
+ * Depois de autenticar: com `token` já credita o QR Code; com convite leva ao lugar; senão vai para `next`.
+ * (redirect() lança — o catch só trata erros de negócio.)
  */
-export async function customerAuth(_: FormState, formData: FormData): Promise<FormState> {
-  const parsed = authSchema.safeParse({
-    cpf: formData.get('cpf') ?? '',
-    phone: formData.get('phone') ?? '',
-    name: formData.get('name') ?? '',
-  });
-  if (!parsed.success) return fail(parsed.error.issues[0].message, formData);
-
-  const cpf = onlyDigits(parsed.data.cpf);
-  const phone = normalizePhone(parsed.data.phone)!;
-
-  // CPF + telefone é uma credencial fraca: limita por IP e por CPF alvo.
-  const ip = await clientIp();
-  const [okIp, okCpf] = await Promise.all([allow(`cust:ip:${ip}`, 30, 900), allow(`cust:cpf:${cpf}`, 8, 900)]);
-  if (!okIp || !okCpf) return fail(TOO_MANY, formData);
-
-  let customer = await prisma.customer.findUnique({ where: { cpf } });
-  if (customer) {
-    if (customer.phone !== phone) return fail('O telefone não confere com o cadastrado para este CPF.', formData);
-  } else {
-    if (parsed.data.name.length < 2) return fail('Primeiro acesso: informe seu nome.', formData);
-    customer = await prisma.customer.create({ data: { cpf, phone, name: parsed.data.name, referralCode: newReferralCode() } });
-    // Cadastro feito pelo link "Indique amigos": registra quem indicou (o prêmio sai na primeira compra).
-    await registerReferral(customer.id, String(formData.get('inviteRestaurant') ?? ''), String(formData.get('inviteCode') ?? ''));
-  }
-  await startCustomerSession(customer.id);
-
+async function finishLogin(customerId: string, formData: FormData): Promise<FormState> {
+  await startCustomerSession(customerId);
   const token = String(formData.get('token') ?? '');
   if (token) {
     try {
-      const { restaurantId } = await creditClaim(token, customer.id);
+      const { restaurantId } = await creditClaim(token, customerId);
       redirect(`/carteira/${restaurantId}?credited=1`);
     } catch (e) {
-      if (!(e instanceof BusinessError)) throw e; // redirect() também lança — deixa passar
+      if (!(e instanceof BusinessError)) throw e;
       return fail(e.message, formData);
     }
   }
   const inviteRestaurant = String(formData.get('inviteRestaurant') ?? '');
   if (/^[0-9a-f-]{36}$/.test(inviteRestaurant)) redirect(`/lugar/${inviteRestaurant}?bemvindo=1`);
   redirect(safeNext(formData.get('next'), '/carteira'));
+}
+
+/** Entrada de quem já tem acesso: só e-mail e senha. */
+export async function customerLogin(_: FormState, formData: FormData): Promise<FormState> {
+  const parsed = loginSchema.safeParse({ email: formData.get('email') ?? '', password: formData.get('password') ?? '' });
+  if (!parsed.success) return fail(parsed.error.issues[0].message, formData);
+  const { email, password } = parsed.data;
+
+  const ip = await clientIp();
+  const [okIp, okEmail] = await Promise.all([allow(`cust:ip:${ip}`, 30, 900), allow(`cust:email:${email}`, 8, 900)]);
+  if (!okIp || !okEmail) return fail(TOO_MANY, formData);
+
+  const customer = await prisma.customer.findUnique({ where: { email } });
+  const ok = await verifyPassword(password, customer?.passwordHash ?? (await dummyHash()));
+  if (!customer || !customer.passwordHash || !ok) return fail(BAD_LOGIN, formData);
+  return finishLogin(customer.id, formData);
+}
+
+/** Conta nova: nome, CPF, telefone, e-mail e senha. O CPF segue sendo a identidade (limite de resgates por mês). */
+export async function customerSignup(_: FormState, formData: FormData): Promise<FormState> {
+  const parsed = signupSchema.safeParse({
+    name: formData.get('name') ?? '',
+    cpf: formData.get('cpf') ?? '',
+    phone: formData.get('phone') ?? '',
+    email: formData.get('email') ?? '',
+    password: formData.get('password') ?? '',
+  });
+  if (!parsed.success) return fail(parsed.error.issues[0].message, formData);
+  const { name, email, password } = parsed.data;
+  const cpf = onlyDigits(parsed.data.cpf);
+  const phone = normalizePhone(parsed.data.phone)!;
+
+  const ip = await clientIp();
+  const [okIp, okCpf] = await Promise.all([allow(`cust:ip:${ip}`, 30, 900), allow(`cust:cpf:${cpf}`, 8, 900)]);
+  if (!okIp || !okCpf) return fail(TOO_MANY, formData);
+
+  const [byCpf, byEmail] = await Promise.all([prisma.customer.findUnique({ where: { cpf }, select: { id: true } }), prisma.customer.findUnique({ where: { email }, select: { id: true } })]);
+  if (byCpf) return fail('Este CPF já tem cadastro. Use “Já tenho cadastro” para criar seu acesso com e-mail e senha.', formData);
+  if (byEmail) return fail('Este e-mail já está em uso. Entre com ele ou use outro.', formData);
+
+  const customer = await prisma.customer
+    .create({ data: { cpf, phone, name, email, passwordHash: await hashPassword(password), referralCode: newReferralCode() } })
+    .catch((e: { code?: string }) => (e.code === 'P2002' ? null : Promise.reject(e))); // corrida: outro cadastro igual no mesmo instante
+  if (!customer) return fail('Este CPF ou e-mail já tem cadastro. Tente entrar.', formData);
+  // Cadastro feito pelo link "Indique amigos": registra quem indicou (o prêmio sai na primeira compra).
+  await registerReferral(customer.id, String(formData.get('inviteRestaurant') ?? ''), String(formData.get('inviteCode') ?? ''));
+  return finishLogin(customer.id, formData);
+}
+
+/**
+ * Quem já tinha cadastro (CPF + telefone) cria o acesso com e-mail e senha — e também serve para redefinir
+ * uma senha esquecida. A prova de identidade é a mesma de antes (CPF + telefone cadastrados).
+ */
+export async function customerRecover(_: FormState, formData: FormData): Promise<FormState> {
+  const parsed = recoverSchema.safeParse({
+    cpf: formData.get('cpf') ?? '',
+    phone: formData.get('phone') ?? '',
+    email: formData.get('email') ?? '',
+    password: formData.get('password') ?? '',
+  });
+  if (!parsed.success) return fail(parsed.error.issues[0].message, formData);
+  const { email, password } = parsed.data;
+  const cpf = onlyDigits(parsed.data.cpf);
+  const phone = normalizePhone(parsed.data.phone)!;
+
+  const ip = await clientIp();
+  const [okIp, okCpf] = await Promise.all([allow(`cust:ip:${ip}`, 30, 900), allow(`cust:cpf:${cpf}`, 8, 900)]);
+  if (!okIp || !okCpf) return fail(TOO_MANY, formData);
+
+  const customer = await prisma.customer.findUnique({ where: { cpf } });
+  if (!customer) return fail('Não encontramos cadastro com este CPF. Use “Criar conta”.', formData);
+  if (customer.phone !== phone) return fail('O telefone não confere com o cadastrado para este CPF.', formData);
+  const taken = await prisma.customer.findUnique({ where: { email }, select: { id: true } });
+  if (taken && taken.id !== customer.id) return fail('Este e-mail já está em uso por outra conta.', formData);
+
+  await prisma.customer.update({ where: { id: customer.id }, data: { email, passwordHash: await hashPassword(password) } });
+  return finishLogin(customer.id, formData);
 }
 
 /** Liga o cliente novo a quem o indicou. Ignora silenciosamente convites inválidos. */

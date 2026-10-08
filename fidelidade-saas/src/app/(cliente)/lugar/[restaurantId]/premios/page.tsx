@@ -53,7 +53,7 @@ export default async function PremiosPage({ params }: { params: Promise<{ restau
         <div className="glass-panel mx-auto max-w-xl p-6 text-center">
           <Illustration variant="gift" size={160} />
           <p className="font-bold text-slate-800">Entre para resgatar seus prêmios</p>
-          <p className="mb-4 mt-1 text-sm text-slate-600">Use CPF e telefone. Seus pontos de cada lugar ficam guardados na sua carteira.</p>
+          <p className="mb-4 mt-1 text-sm text-slate-600">Entre com e-mail e senha ou crie sua conta. Seus pontos de cada lugar ficam guardados na sua carteira.</p>
           <Link href={`/entrar?next=${encodeURIComponent(`/lugar/${restaurantId}/premios`)}`} className="glass-button">Entrar</Link>
         </div>
       ) : rewards.length === 0 ? (

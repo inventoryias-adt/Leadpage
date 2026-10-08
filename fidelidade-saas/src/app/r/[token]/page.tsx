@@ -64,7 +64,7 @@ export default async function ClaimPage({ params }: { params: Promise<{ token: s
           <ClaimForm token={token} name={customer.name.split(' ')[0]} action={claimPoints} />
         ) : (
           <>
-            <p className="mb-4 text-center text-sm text-slate-600">Entre com CPF e telefone para receber seus pontos.</p>
+            <p className="mb-4 text-center text-sm text-slate-600">Entre ou crie sua conta para receber seus pontos.</p>
             <CustomerAuthForm token={token} cta="Receber meus pontos" />
           </>
         )}

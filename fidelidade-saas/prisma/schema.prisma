@@ -130,6 +130,8 @@ model Customer {
   cpf          String   @unique // somente dígitos
   phone        String // somente dígitos, sem +55
   name         String
+  email        String?  @unique // minúsculo; null até o cliente criar o acesso com e-mail e senha
+  passwordHash String?
   referralCode String?  @unique // código do link "Indique amigos"
   createdAt    DateTime @default(now())
 
