@@ -16,7 +16,8 @@ import {
 } from '@/app/actions/restaurant';
 import { changePassword } from '@/app/actions/auth';
 import { UFS, cepDigits, maskCep, parseViaCep } from '@/lib/address';
-import { CATEGORIES } from '@/lib/categories';
+import { CATEGORIES, CATEGORY_HINT } from '@/lib/categories';
+import { categoryRequestMessage, supportLink } from '@/lib/support';
 import { defaultSchedule, parseSchedule, type Schedule } from '@/lib/hours';
 import { HoursGrid } from './HoursGrid';
 import { Icon } from './Icons';
@@ -166,6 +167,7 @@ export function FinishOnboardingForm() {
 
 type Identity = {
   category: string;
+  categoryOther: string;
   instagram: string;
   listed: boolean;
   logoUrl: string | null;
@@ -173,10 +175,12 @@ type Identity = {
 };
 
 /** Logo, capa, categoria e Instagram da marca. Endereço, horário, localização e link do Google ficam em cada unidade. */
-export function IdentityForm({ defaults }: { defaults: Identity }) {
+export function IdentityForm({ defaults, placeName, supportWhatsapp }: { defaults: Identity; placeName: string; supportWhatsapp?: string }) {
   const [state, action] = useActionState(saveIdentity, {});
   // Controlado: um <select> não-controlado ficaria em branco depois que o formulário é reiniciado ao salvar.
   const [category, setCategory] = useState(state.values?.category ?? defaults.category);
+  const [other, setOther] = useState(state.values?.categoryOther ?? defaults.categoryOther);
+  const help = supportLink(supportWhatsapp, categoryRequestMessage(placeName, category === 'outros' ? other : ''));
 
   return (
     <form action={action} className="space-y-5">
@@ -191,7 +195,7 @@ export function IdentityForm({ defaults }: { defaults: Identity }) {
           <select id="i-cat" name="category" className="glass-input" value={category} onChange={(e) => setCategory(e.target.value)}>
             <option value="">Selecione…</option>
             {CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>{c.label}</option>
+              <option key={c.value} value={c.value}>{CATEGORY_HINT[c.value] && c.value !== 'outros' ? `${c.label} (${CATEGORY_HINT[c.value]})` : c.label}</option>
             ))}
           </select>
         </div>
@@ -200,6 +204,22 @@ export function IdentityForm({ defaults }: { defaults: Identity }) {
           <input id="i-ig" name="instagram" className="glass-input" placeholder="@seurestaurante" defaultValue={state.values?.instagram ?? defaults.instagram} autoCapitalize="none" />
         </div>
       </div>
+
+      {category === 'outros' && (
+        <div>
+          <label className="glass-label" htmlFor="i-other">Qual é o seu tipo de negócio?</label>
+          <input id="i-other" name="categoryOther" value={other} onChange={(e) => setOther(e.target.value)} className="glass-input" placeholder="Ex.: doceria, ateliê, chaveiro" maxLength={60} />
+          <p className="mt-1 text-xs text-slate-500">Os clientes encontram você por esse texto em Lugares → Outros. Se quiser uma categoria própria, peça ao suporte.</p>
+        </div>
+      )}
+      <p className="text-sm text-slate-600">
+        Não achou a sua categoria, ou precisa trocar o nicho?{' '}
+        {help ? (
+          <a href={help} target="_blank" rel="noopener noreferrer" className="link-inline">Fale com o suporte no WhatsApp</a>
+        ) : (
+          <span className="text-slate-500">Escolha “Outros” e descreva o que você é.</span>
+        )}
+      </p>
 
       <label className="flex items-start gap-3">
         <input type="checkbox" name="listed" defaultChecked={state.values ? state.values.listed === 'on' : defaults.listed} className="mt-1 h-5 w-5 rounded accent-electric-500" />

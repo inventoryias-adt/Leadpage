@@ -120,7 +120,7 @@ export default async function LugarPage({
             <PlaceAvatar name={restaurant.name} src={imageUrl(restaurant.logoImageId)} size={64} />
             <div className="min-w-0">
               <h1 className="truncate text-xl font-extrabold tracking-tight text-slate-900">{restaurant.name}</h1>
-              <p className="truncate text-sm text-slate-500">{[categoryLabel(restaurant.category), multi ? unit?.name : null, unit?.address].filter(Boolean).join(' · ')}</p>
+              <p className="truncate text-sm text-slate-500">{[categoryLabel(restaurant.category, restaurant.categoryOther), multi ? unit?.name : null, unit?.address].filter(Boolean).join(' · ')}</p>
             </div>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">

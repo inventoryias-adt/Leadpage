@@ -71,6 +71,7 @@ model Restaurant {
   // Vitrine pública ("Lugares")
   listed          Boolean @default(true)
   category        String?
+  categoryOther   String? // texto livre quando category = "outros" (ex.: doceria)
   instagram       String?
   googleReviewUrl String?
   latitude        Float?

@@ -114,8 +114,11 @@ export default async function ConfiguracoesPage() {
 
       <Section id="identidade" n={2} title="Identidade da marca" hint="Como seu restaurante aparece para os clientes no app.">
         <IdentityForm
+          placeName={restaurant.name}
+          supportWhatsapp={process.env.SUPPORT_WHATSAPP}
           defaults={{
             category: restaurant.category ?? '',
+            categoryOther: restaurant.categoryOther ?? '',
             instagram: restaurant.instagram ?? '',
             listed: restaurant.listed,
             logoUrl: imageUrl(restaurant.logoImageId),

@@ -1,7 +1,7 @@
 import { Brand } from '@/components/Brand';
 import { PlacesExplorer, type PlaceCard } from '@/components/PlacesExplorer';
 import { buildCampaigns } from '@/lib/campaigns';
-import { CATEGORIES, categoryLabel } from '@/lib/categories';
+import { CATEGORIES, CATEGORY_HINT, categoryLabel } from '@/lib/categories';
 import { prisma } from '@/lib/db';
 import { isOpenNow, parseSchedule } from '@/lib/hours';
 import { imageUrl } from '@/lib/images';
@@ -19,7 +19,7 @@ export default async function LugaresPage() {
       select: {
         id: true,
         name: true,
-        category: true,
+        category: true, categoryOther: true,
         logoImageId: true,
         pointsPerReal: true,
         units: {
@@ -45,7 +45,7 @@ export default async function LugaresPage() {
       id: r.id,
       name: r.name,
       category: r.category,
-      categoryLabel: categoryLabel(r.category),
+      categoryLabel: categoryLabel(r.category, r.categoryOther),
       logoUrl: imageUrl(r.logoImageId),
       pointsPerReal: r.pointsPerReal,
       balance: customer ? (balances.get(r.id) ?? 0) : null,
@@ -71,7 +71,7 @@ export default async function LugaresPage() {
         <h1 className="mt-5 text-2xl font-extrabold md:mt-0 md:text-3xl tracking-tight text-primary">Lugares</h1>
         <p className="text-sm text-slate-600">Encontre onde ganhar pontos e o que você pode resgatar.</p>
       </header>
-      <PlacesExplorer places={places} categories={CATEGORIES.map((c) => ({ value: c.value, label: c.label }))} loggedIn={!!customer} />
+      <PlacesExplorer places={places} categories={CATEGORIES.map((c) => ({ value: c.value, label: c.label, hint: CATEGORY_HINT[c.value] }))} loggedIn={!!customer} />
     </main>
   );
 }
