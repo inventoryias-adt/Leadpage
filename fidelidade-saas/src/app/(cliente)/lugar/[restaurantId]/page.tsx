@@ -179,7 +179,7 @@ export default async function LugarPage({
         ) : (
           <section className="glass-panel p-4 text-center">
             <p className="font-bold text-slate-800">Entre para ver seus pontos</p>
-            <p className="mb-3 text-sm text-slate-600">Com CPF e telefone. No primeiro acesso criamos a sua conta na hora.</p>
+            <p className="mb-3 text-sm text-slate-600">Entre com e-mail e senha ou crie sua conta em um minuto.</p>
             <Link href={`/entrar?next=${encodeURIComponent(here)}`} className="glass-button">Entrar</Link>
           </section>
         )}

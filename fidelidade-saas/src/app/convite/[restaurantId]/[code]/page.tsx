@@ -70,7 +70,7 @@ export default async function ConvitePage({ params }: { params: Promise<{ restau
           <Link href={`/lugar/${restaurant.id}`} className="glass-button">Ver o clube do {restaurant.name}</Link>
         </>
       ) : (
-        <CustomerAuthForm invite={{ restaurantId: restaurant.id, code }} cta="Criar minha conta e entrar no clube" />
+        <CustomerAuthForm initial="criar" invite={{ restaurantId: restaurant.id, code }} cta="Criar minha conta e entrar no clube" />
       )}
     </Shell>
   );

@@ -40,7 +40,7 @@ webhook para `/api/webhooks/stripe` (eventos `checkout.session.completed`,
 | `/lugar/[id]/premios` | Cliente | Sacola de prêmios: monta o resgate com o saldo e retira no balcão |
 | `/perfil` | Cliente | Dados, links de convite por restaurante e histórico de pontos |
 | `/convite/[id]/[codigo]` | Cliente | Cadastro pelo link de um amigo (o amigo ganha pontos na 1ª compra de quem entrou) |
-| `/r/[token]` | Cliente | Lê o QR, entra com CPF + telefone e recebe os pontos |
+| `/r/[token]` | Cliente | Lê o QR, entra (e-mail e senha) ou cria conta e recebe os pontos |
 | `/carteira`, `/carteira/[id]` | Cliente (PWA) | Saldo, histórico, vouchers e catálogo de prêmios |
 
 ## Várias unidades
@@ -66,7 +66,7 @@ webhook para `/api/webhooks/stripe` (eventos `checkout.session.completed`,
 - Resgate trava a carteira (`SELECT … FOR UPDATE`) e verifica saldo e limite mensal por CPF (mês em America/Sao_Paulo) na mesma transação.
 - Senhas com bcrypt; sessões em cookie `httpOnly` assinado (JWT HS256).
 - **Rate limit** (tabela `RateLimit`, sem infraestrutura extra): login do restaurante (30/15min por IP, 8/15min por e-mail), login do cliente (30/15min por IP, 8/15min por CPF) e cadastro (10/h por IP).
-- ⚠️ Login do cliente por **CPF + telefone** é fraco como autenticação (quem sabe os dois acessa a carteira). Foi mantido por exigência do produto; o rate limit reduz o risco de força bruta, mas antes de produção considere um OTP por WhatsApp/SMS.
+- ⚠️ O cliente entra com e-mail e senha, mas quem já tinha cadastro cria o acesso (ou redefine a senha) provando **CPF + telefone**, credencial fraca: quem sabe os dois consegue. O rate limit reduz o risco de força bruta; o ideal é trocar essa prova por um código enviado por e-mail ou WhatsApp/SMS.
 
 ## PWA
 
@@ -144,3 +144,14 @@ webhook em `/api/webhooks/stripe` (`checkout.session.completed`, `customer.subsc
 `invoice.payment_failed`). Cobrança recusada suspende o acesso; `invoice.paid` reativa só quem estava inadimplente, sem
 desfazer um cancelamento feito pela administração. Variáveis: `PAYMENT_PROVIDER=stripe`, `STRIPE_SECRET_KEY`,
 `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID`. Teste sempre com chaves `sk_test_` e o cartão `4242 4242 4242 4242`.
+
+**Gráfico no perfil do cliente** (`/perfil`): pontos ganhos acumulados em Hoje, Ontem, Essa semana (7 dias) e Esse mês, com
+pontuações, resgates, saldo e lugares, tudo calculado a partir dos lançamentos reais do cliente (`src/lib/activity.ts`).
+
+## Acesso do cliente final (`/entrar`)
+
+Entrada com **e-mail e senha**; quem ainda não tem conta usa a aba **Criar conta** (nome, CPF, telefone, e-mail e senha — o CPF
+segue sendo a identidade, usada no limite de resgates por mês). Quem já tinha cadastro por CPF e telefone usa
+**“Crie seu e-mail e senha”**, que confirma CPF + telefone e define o acesso uma única vez (migração `0011_cliente_email_senha`);
+o mesmo caminho redefine uma senha esquecida. Senha guardada só como hash (scrypt), limite de tentativas por IP, e-mail e CPF.
+Recuperação por e-mail ainda não existe (precisa de um serviço de envio, como o Resend).
