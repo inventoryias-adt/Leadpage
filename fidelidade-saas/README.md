@@ -40,7 +40,7 @@ webhook para `/api/webhooks/stripe` (eventos `checkout.session.completed`,
 | `/lugar/[id]/premios` | Cliente | Sacola de prêmios: monta o resgate com o saldo e retira no balcão |
 | `/perfil` | Cliente | Dados, links de convite por restaurante e histórico de pontos |
 | `/convite/[id]/[codigo]` | Cliente | Cadastro pelo link de um amigo (o amigo ganha pontos na 1ª compra de quem entrou) |
-| `/r/[token]` | Cliente | Lê o QR, entra com CPF + telefone e recebe os pontos |
+| `/r/[token]` | Cliente | Lê o QR, entra (e-mail e senha) ou cria conta e recebe os pontos |
 | `/carteira`, `/carteira/[id]` | Cliente (PWA) | Saldo, histórico, vouchers e catálogo de prêmios |
 
 ## Várias unidades
@@ -66,7 +66,7 @@ webhook para `/api/webhooks/stripe` (eventos `checkout.session.completed`,
 - Resgate trava a carteira (`SELECT … FOR UPDATE`) e verifica saldo e limite mensal por CPF (mês em America/Sao_Paulo) na mesma transação.
 - Senhas com bcrypt; sessões em cookie `httpOnly` assinado (JWT HS256).
 - **Rate limit** (tabela `RateLimit`, sem infraestrutura extra): login do restaurante (30/15min por IP, 8/15min por e-mail), login do cliente (30/15min por IP, 8/15min por CPF) e cadastro (10/h por IP).
-- ⚠️ Login do cliente por **CPF + telefone** é fraco como autenticação (quem sabe os dois acessa a carteira). Foi mantido por exigência do produto; o rate limit reduz o risco de força bruta, mas antes de produção considere um OTP por WhatsApp/SMS.
+- ⚠️ O cliente entra com e-mail e senha, mas quem já tinha cadastro cria o acesso (ou redefine a senha) provando **CPF + telefone**, credencial fraca: quem sabe os dois consegue. O rate limit reduz o risco de força bruta; o ideal é trocar essa prova por um código enviado por e-mail ou WhatsApp/SMS.
 
 ## PWA
 
