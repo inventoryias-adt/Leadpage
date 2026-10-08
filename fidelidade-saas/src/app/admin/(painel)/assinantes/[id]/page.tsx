@@ -49,7 +49,7 @@ export default async function Ficha({ params }: { params: Promise<{ id: string }
         <Link href="/admin/assinantes" className="text-sm font-semibold text-electric-600">← Todos os assinantes</Link>
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="flex items-center gap-2 truncate text-2xl font-semibold text-primary">{r.name}{r.isTest && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">TESTE</span>}</h1>
+            <h1 className="flex items-center gap-2 truncate text-2xl font-semibold text-primary">{r.name}{r.isTest && <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">TESTE</span>}</h1>
             <p className="text-sm text-slate-500">{r.email} · {formatPhone(r.phone)}</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -68,7 +68,7 @@ export default async function Ficha({ params }: { params: Promise<{ id: string }
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Resumo" id="resumo">
-          <dl className="divide-y divide-[#e4e7f3]">
+          <dl className="divide-y divide-[#E5E7EB]">
             <Row k="Cadastro" v={formatDateTimeBR(r.createdAt)} />
             <Row k="Configuração" v={r.onboardedAt ? `concluída em ${formatDateTimeBR(r.onboardedAt).split(' às ')[0]}` : 'não concluída'} />
             <Row k="Unidades ativas" v={r.units.filter((u) => u.active).length} />
@@ -81,12 +81,12 @@ export default async function Ficha({ params }: { params: Promise<{ id: string }
         </Card>
 
         <Card title="Unidades" id="unidades">
-          <ul className="divide-y divide-[#e4e7f3]">
+          <ul className="divide-y divide-[#E5E7EB]">
             {r.units.map((u) => (
               <li key={u.id} className="py-2.5">
                 <p className="flex items-center justify-between gap-3 font-semibold text-slate-800">
                   {u.name}
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${u.active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>{u.active ? 'Ativa' : 'Inativa'}</span>
+                  <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${u.active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>{u.active ? 'Ativa' : 'Inativa'}</span>
                 </p>
                 <p className="text-xs text-slate-500">{u.address || 'Sem endereço'} · {u.latitude != null ? 'com localização' : 'sem localização'} · {u.openingSchedule ? 'com horário' : 'sem horário'}</p>
               </li>
@@ -100,7 +100,7 @@ export default async function Ficha({ params }: { params: Promise<{ id: string }
 
         <Card title="Acesso do dono" id="acesso">
           <ResetPasswordForm id={r.id} />
-          <form action={adminResetGuide} className="mt-5 border-t border-[#e4e7f3] pt-4">
+          <form action={adminResetGuide} className="mt-5 border-t border-[#E5E7EB] pt-4">
             <input type="hidden" name="id" value={r.id} />
             <p className="mb-2 text-sm text-slate-600">Reabre o passo a passo inicial na próxima vez que o dono entrar.</p>
             <button className="glass-button-ghost btn-sm" disabled={!r.guideDoneAt}>Reabrir guia inicial</button>
@@ -117,7 +117,7 @@ export default async function Ficha({ params }: { params: Promise<{ id: string }
           {recent.length === 0 ? (
             <p className="text-sm text-slate-500">Nenhuma compra creditada ainda.</p>
           ) : (
-            <ul className="divide-y divide-[#e4e7f3] text-sm">
+            <ul className="divide-y divide-[#E5E7EB] text-sm">
               {recent.map((c) => (
                 <li key={c.id} className="flex items-center justify-between gap-3 py-2.5">
                   <span className="min-w-0">
@@ -138,7 +138,7 @@ export default async function Ficha({ params }: { params: Promise<{ id: string }
           {logs.length === 0 ? (
             <p className="text-sm text-slate-500">Nenhuma ação registrada.</p>
           ) : (
-            <ul className="divide-y divide-[#e4e7f3] text-sm">
+            <ul className="divide-y divide-[#E5E7EB] text-sm">
               {logs.map((l) => (
                 <li key={l.id} className="py-2.5">
                   <p className="font-semibold text-slate-800">{l.detail}</p>

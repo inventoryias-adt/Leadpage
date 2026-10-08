@@ -69,7 +69,7 @@ export function CustomerNav({ unread = 0 }: { unread?: number }) {
               href={t.href}
               onClick={() => setPending(t.href)}
               aria-current={active ? 'page' : undefined}
-              className={`nav-tab flex flex-col items-center gap-0.5 !rounded-full !px-2 !py-2 !text-[11px] ${active ? 'nav-tab-active' : ''}`}
+              className={`nav-tab flex flex-col items-center gap-0.5 !rounded-md !px-2 !py-2 !text-[11px] ${active ? 'nav-tab-active' : ''}`}
             >
               <span className="relative">
                 <Icon name={t.icon} size={20} />

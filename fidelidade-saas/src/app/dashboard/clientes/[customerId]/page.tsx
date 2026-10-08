@@ -83,7 +83,7 @@ export default async function ClienteDetalhe({ params }: { params: Promise<{ cus
                 </div>
                 <span className="shrink-0 text-right">
                   <span className="block font-bold text-slate-600">−{formatPoints(r.pointsCost)} pts</span>
-                  <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${r.status === 'USED' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                  <span className={`mt-1 inline-block rounded-md px-2 py-0.5 text-xs font-semibold ${r.status === 'USED' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                     {r.status === 'USED' ? 'Entregue' : 'A entregar'}
                   </span>
                 </span>

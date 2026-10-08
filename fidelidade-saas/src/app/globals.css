@@ -13,9 +13,9 @@
   --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.08), 0 1px 0 rgba(255, 255, 255, 0.8) inset;
   --glass-blur: 18px;
   --glass-saturate: 160%;
-  --blue-electric: #2f6bff;
-  --blue-deep: #1e3a8a;
-  --ice: #f4f8ff;
+  --blue-electric: #2150c9;
+  --blue-deep: #0f1f3d;
+  --ice: #f7f8fa;
 }
 
 html {
@@ -26,12 +26,19 @@ html {
 h1,
 h2,
 h3 {
-  font-family: 'DM Sans Variable', 'Inter Variable', system-ui, sans-serif;
-  letter-spacing: -0.025em;
+  font-family: 'Inter Variable', system-ui, sans-serif;
+  letter-spacing: -0.015em;
+}
+
+/* Números alinhados em coluna (valores, pontos, totais). */
+.tabular,
+.text-3xl,
+.text-4xl {
+  font-variant-numeric: tabular-nums;
 }
 
 body {
-  @apply min-h-screen bg-white font-sans text-slate-700 antialiased;
+  @apply min-h-screen bg-[#F7F8FA] font-sans text-slate-700 antialiased;
 }
 
 /* ------------------------------------------------------------------ */
@@ -40,28 +47,27 @@ body {
 /* a sensação de produto robusto, sem perder o efeito translúcido.    */
 /* ------------------------------------------------------------------ */
 @layer components {
-  /* Cartão: branco, borda fina lavanda e sombra bem suave. */
+  /* Cartão: branco, borda fina cinza e quase nenhuma sombra. */
   .glass-panel {
-    @apply relative rounded-3xl bg-white;
-    border: 1px solid #e4e7f3;
-    box-shadow: 0 1px 2px rgba(18, 40, 107, 0.04), 0 14px 32px -18px rgba(18, 40, 107, 0.16);
+    @apply relative rounded-xl bg-white;
+    border: 1px solid #E2E5EB;
+    box-shadow: 0 1px 2px rgba(15, 31, 61, 0.04);
   }
   .glass-panel > * {
     @apply relative;
   }
   .glass-panel-sm {
-    @apply glass-panel rounded-2xl;
-    box-shadow: 0 1px 2px rgba(18, 40, 107, 0.04), 0 8px 20px -14px rgba(18, 40, 107, 0.14);
+    @apply glass-panel rounded-lg;
   }
   .glass-inset {
-    @apply rounded-2xl border bg-[#f6f8fd];
-    border-color: #e4e7f3;
+    @apply rounded-lg border bg-[#F6F7F9];
+    border-color: #E2E5EB;
   }
 
   .glass-input {
-    @apply w-full rounded-xl border bg-white px-4 py-3 text-base text-slate-800 placeholder:text-slate-400
-      transition-all duration-150 hover:border-electric-500/60 focus:border-electric-500 focus:outline-none focus:ring-4 focus:ring-electric-500/15;
-    border-color: #d8dceb;
+    @apply w-full rounded-lg border bg-white px-3.5 py-2.5 text-[15px] text-slate-900 placeholder:text-slate-400
+      transition-colors duration-150 hover:border-slate-400 focus:border-electric-500 focus:outline-none focus:ring-2 focus:ring-electric-500/20;
+    border-color: #CBD2DC;
   }
   select.glass-input,
   input[type='time'].glass-input {
@@ -69,106 +75,97 @@ body {
   }
 
   /* ---------------------------------------------------------------- */
-  /* Botões. Primário: azul sólido → no hover INVERTE (branco/azul).   */
-  /* Secundário: branco/azul → no hover INVERTE (azul/branco).         */
+  /* Botões: retos, sólidos e previsíveis. Hover escurece (sem inverter). */
   /* ---------------------------------------------------------------- */
   .glass-button,
   .glass-button-ghost,
   .btn-danger {
-    @apply inline-flex w-full select-none items-center justify-center gap-2 rounded-full border-2 px-6 py-3 text-[15px] font-semibold leading-tight;
+    @apply inline-flex w-full select-none items-center justify-center gap-2 rounded-lg border px-5 py-2.5 text-sm font-semibold leading-tight;
     cursor: pointer;
     text-decoration: none;
-    transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   }
   .glass-button:focus-visible,
   .glass-button-ghost:focus-visible,
   .btn-danger:focus-visible,
   .nav-tab:focus-visible,
   .chip-link:focus-visible {
-    outline: 3px solid rgba(47, 107, 255, 0.45);
+    outline: 2px solid rgba(33, 80, 201, 0.55);
     outline-offset: 2px;
-  }
-  .glass-button:active,
-  .glass-button-ghost:active,
-  .btn-danger:active {
-    transform: translateY(1px) scale(0.99);
   }
   .glass-button:disabled,
   .glass-button-ghost:disabled,
   .btn-danger:disabled,
   .glass-button[aria-disabled='true'] {
     cursor: not-allowed;
-    opacity: 0.55;
-    transform: none;
+    opacity: 0.5;
   }
 
   .glass-button {
     color: #fff;
-    border-color: #2f6bff;
-    background-color: #2f6bff;
-    box-shadow: 0 10px 22px -12px rgba(47, 107, 255, 0.75);
+    border-color: #2150c9;
+    background-color: #2150c9;
   }
   .glass-button:not(:disabled):hover {
-    color: #2f6bff;
-    background-color: #fff;
-    box-shadow: 0 10px 22px -12px rgba(47, 107, 255, 0.5);
+    border-color: #1a3fa3;
+    background-color: #1a3fa3;
   }
 
   .glass-button-ghost {
-    color: #1e3a8a;
-    border-color: #cfd6ee;
+    color: #0f1f3d;
+    border-color: #cbd2dc;
     background-color: #fff;
   }
   .glass-button-ghost:not(:disabled):hover {
-    color: #fff;
-    border-color: #2f6bff;
-    background-color: #2f6bff;
-    box-shadow: 0 10px 22px -12px rgba(47, 107, 255, 0.75);
+    border-color: #94a3b8;
+    background-color: #f3f5f9;
   }
 
   .btn-danger {
     color: #b91c1c;
-    border-color: #dc2626;
+    border-color: #e5b4b4;
     background-color: #fff;
   }
   .btn-danger:not(:disabled):hover {
-    color: #fff;
-    background-color: #dc2626;
+    border-color: #dc2626;
+    background-color: #fef2f2;
   }
 
   /* Tamanho compacto (botões dentro de listas, buscas, linhas). */
   .btn-sm {
-    @apply !w-auto !gap-1.5 !rounded-full !px-4 !py-1.5 !text-sm;
+    @apply !w-auto !gap-1.5 !rounded-md !px-3 !py-1.5 !text-[13px];
   }
 
   /* Abas de navegação do painel. */
   .nav-tab {
-    @apply rounded-full px-4 py-2 text-sm font-semibold text-slate-700;
+    @apply rounded-md px-3 py-2 text-sm font-medium text-slate-600;
     cursor: pointer;
-    transition: background-color 0.18s ease, color 0.18s ease;
+    transition: background-color 0.15s ease, color 0.15s ease;
   }
   .nav-tab:hover {
-    @apply bg-electric-500 text-white;
+    @apply bg-slate-100 text-slate-900;
   }
   .nav-tab-active {
-    @apply bg-electric-500 text-white shadow-md shadow-blue-600/25;
+    @apply bg-[#E8EEFB] font-semibold text-electric-600;
   }
   .nav-tab-active:hover {
-    @apply bg-white text-electric-600;
+    @apply bg-[#E8EEFB] text-electric-600;
   }
 
   /* Rótulo/etiqueta (não clicável) e etiqueta clicável. */
   .glass-chip {
-    @apply inline-flex items-center rounded-full border bg-white px-3 py-1 text-xs font-semibold text-primary;
-    border-color: #e0e4f2;
+    @apply inline-flex items-center rounded-md border bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700;
+    border-color: #e2e5eb;
   }
   .chip-link {
-    @apply inline-flex items-center rounded-full border-2 border-electric-500 bg-white px-3.5 py-1.5 text-sm font-semibold text-electric-600;
+    @apply inline-flex items-center rounded-md border bg-white px-3 py-1.5 text-sm font-medium text-electric-600;
+    border-color: #cbd2dc;
     cursor: pointer;
-    transition: background-color 0.18s ease, color 0.18s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
   }
   .chip-link:hover {
-    @apply bg-electric-600 text-white;
+    @apply bg-[#F3F6FD];
+    border-color: #2150c9;
   }
 
   /* Link de texto dentro de conteúdo. */
@@ -184,23 +181,22 @@ body {
   /* Cartão inteiro clicável. */
   .card-link {
     cursor: pointer;
-    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
   }
   .card-link:hover {
-    transform: translateY(-2px);
-    border-color: rgba(47, 107, 255, 0.55);
+    border-color: #94a3b8;
     background-color: #fff;
-    box-shadow: 0 0 0 1px rgba(47, 107, 255, 0.2), 0 18px 34px -14px rgba(47, 107, 255, 0.3);
+    box-shadow: 0 1px 3px rgba(15, 31, 61, 0.1);
   }
 
   .glass-label {
-    @apply mb-1.5 block text-sm font-semibold text-slate-700;
+    @apply mb-1.5 block text-[13px] font-medium text-slate-700;
   }
   .glass-error {
-    @apply rounded-xl border border-red-200 bg-red-50/90 px-4 py-3 text-sm font-medium text-red-700;
+    @apply rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700;
   }
   .glass-success {
-    @apply rounded-xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-sm font-medium text-emerald-700;
+    @apply rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700;
   }
 }
 
@@ -272,34 +268,15 @@ body {
 /* Moldura de página: linhas finas, faixas diagonais e fundo pontilhado */
 /* ------------------------------------------------------------------ */
 .bg-hatch {
-  background-image: repeating-linear-gradient(135deg, #e3e6f3 0 1px, transparent 1px 9px);
+  background: #f1f3f7;
 }
-.bg-dots {
-  background-image: radial-gradient(#d3d9ee 1px, transparent 1.3px);
-  background-size: 12px 12px;
-}
+.bg-dots,
 .bg-dots-dark {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1.3px);
-  background-size: 12px 12px;
+  background-image: none;
 }
-/* Losango nos cruzamentos das linhas. */
 .diamond::before,
 .diamond::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  width: 9px;
-  height: 9px;
-  background: #fff;
-  border: 1px solid #cfd6ee;
-  transform: translate(-50%, -50%) rotate(45deg);
-  z-index: 1;
-}
-.diamond::before {
-  left: 0;
-}
-.diamond::after {
-  left: 100%;
+  display: none;
 }
 
 /* Cursor "mãozinha" em tudo que é clicável (e bloqueado no que está desabilitado). */

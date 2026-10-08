@@ -119,9 +119,9 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
           <p className="text-sm text-slate-600">Como está o seu estabelecimento nos últimos {days} dias.</p>
         </div>
         <div className="flex items-center gap-3">
-          <nav aria-label="Período" className="flex gap-1 rounded-full bg-[#f1f3fa] p-1">
+          <nav aria-label="Período" className="flex gap-1 rounded-md bg-[#F1F3F6] p-1">
             {PERIODS.map((p) => (
-              <Link key={p} href={`/dashboard?dias=${p}`} aria-current={p === days ? 'true' : undefined} className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors ${p === days ? 'bg-electric-500 text-white shadow-sm' : 'text-slate-600 hover:bg-white'}`}>
+              <Link key={p} href={`/dashboard?dias=${p}`} aria-current={p === days ? 'true' : undefined} className={`rounded-md px-3.5 py-1.5 text-sm font-semibold transition-colors ${p === days ? 'bg-electric-500 text-white shadow-sm' : 'text-slate-600 hover:bg-white'}`}>
                 {p} dias
               </Link>
             ))}
@@ -179,7 +179,7 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
             <ol className="space-y-3">
               {topClients.map(([id, v], i) => (
                 <li key={id}>
-                  <Link href={`/dashboard/clientes/${id}`} className="flex items-center gap-3 rounded-xl p-1 transition-colors hover:bg-[#f6f8fd]">
+                  <Link href={`/dashboard/clientes/${id}`} className="flex items-center gap-3 rounded-xl p-1 transition-colors hover:bg-[#F6F7F9]">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-electric-500/10 text-sm font-bold text-electric-600">{i + 1}</span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-semibold text-slate-800">{nameById.get(id) ?? 'Cliente'}</span>
@@ -201,7 +201,7 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
           {quase.length === 0 ? (
             <p className="text-sm text-slate-500">Ninguém está perto do primeiro prêmio no momento.</p>
           ) : (
-            <ul className="divide-y divide-[#e4e7f3]">
+            <ul className="divide-y divide-[#E5E7EB]">
               {quase.slice(0, 5).map((c) => (
                 <li key={c.customerId} className="flex items-center justify-between gap-3 py-2.5">
                   <span className="min-w-0">
@@ -224,7 +224,7 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
           {sumidos.length === 0 ? (
             <p className="text-sm text-slate-500">Nenhum cliente sumido por enquanto. Ótimo sinal.</p>
           ) : (
-            <ul className="divide-y divide-[#e4e7f3]">
+            <ul className="divide-y divide-[#E5E7EB]">
               {sumidos.slice(0, 5).map((c) => {
                 const d = c.lastPurchaseAt ? Math.floor((now.getTime() - c.lastPurchaseAt.getTime()) / DAY) : null;
                 return (

@@ -134,7 +134,7 @@ export default async function ConfiguracoesPage() {
                     <span className="block truncate font-bold text-slate-800">{u.name}</span>
                     <span className="block truncate text-xs text-slate-500">{u.address || 'Endereço não informado'}</span>
                   </span>
-                  <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${u.active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
+                  <span className={`shrink-0 rounded-md px-2.5 py-0.5 text-xs font-semibold ${u.active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
                     {u.active ? 'Ativa' : 'Inativa'}
                   </span>
                 </summary>
@@ -242,7 +242,7 @@ export default async function ConfiguracoesPage() {
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1.5">
                     <span className="glass-chip">{promoBadge(p)}</span>
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${look[1]}`}>{look[0]}</span>
+                    <span className={`rounded-md px-2.5 py-0.5 text-xs font-semibold ${look[1]}`}>{look[0]}</span>
                   </div>
                 </div>
                 <div className="mt-2 flex gap-2">
@@ -288,7 +288,7 @@ export default async function ConfiguracoesPage() {
       <Section id="conta" n={10} title="Minha conta" hint="Troque a senha de acesso ao painel. Use uma senha que só você conheça.">
         <PasswordForm />
         {restaurant.paymentCustomerId && (
-          <form action={openBillingPortal} className="mt-6 border-t border-[#e4e7f3] pt-5">
+          <form action={openBillingPortal} className="mt-6 border-t border-[#E5E7EB] pt-5">
             <h3 className="mb-1 font-semibold text-primary">Assinatura e faturas</h3>
             <p className="mb-3 text-sm text-slate-600">Troque o cartão, baixe as faturas e recibos ou cancele a assinatura, em uma página segura do Stripe.</p>
             <button className="glass-button-ghost btn-sm">Gerenciar assinatura e faturas</button>

@@ -136,9 +136,9 @@ export default async function PontosPage({ searchParams }: { searchParams: Promi
                 <p className="text-xs text-slate-600">das compras do mês</p>
               </div>
             </div>
-            <div className="overflow-hidden rounded-2xl border border-[#e4e7f3]">
+            <div className="overflow-hidden rounded-2xl border border-[#E5E7EB]">
               <table className="w-full text-left text-sm">
-                <thead className="bg-[#f6f8fd] text-xs uppercase tracking-wide text-slate-500">
+                <thead className="bg-[#F6F7F9] text-xs uppercase tracking-wide text-slate-500">
                   <tr>
                     <th className="px-4 py-2.5 font-semibold">Campanha</th>
                     <th className="px-3 py-2.5 text-right font-semibold">Compras</th>
@@ -147,7 +147,7 @@ export default async function PontosPage({ searchParams }: { searchParams: Promi
                     <th className="hidden px-4 py-2.5 text-right font-semibold sm:table-cell">Vendas</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#e4e7f3]">
+                <tbody className="divide-y divide-[#E5E7EB]">
                   {promoRows.map((r) => (
                     <tr key={r.title}>
                       <td className="px-4 py-3 font-semibold text-slate-800">{r.title}</td>

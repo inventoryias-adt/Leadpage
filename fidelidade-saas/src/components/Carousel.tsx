@@ -32,7 +32,7 @@ export function Carousel({ children, label, className = '' }: { children: ReactN
   }, [update, children]);
 
   const go = (dir: 1 | -1) => ref.current?.scrollBy({ left: dir * ref.current.clientWidth * 0.8, behavior: 'smooth' });
-  const arrow = 'absolute top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md transition-colors hover:border-electric-600 hover:bg-electric-600 hover:text-white md:flex';
+  const arrow = 'absolute top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 md:flex';
 
   return (
     <div className="relative" role="region" aria-label={label}>

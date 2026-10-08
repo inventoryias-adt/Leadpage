@@ -105,10 +105,10 @@ export default async function LugarPage({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={cover} alt="" className="h-full w-full object-cover" />
         ) : (
-          <div className="h-full w-full" style={{ background: 'radial-gradient(120% 140% at 80% 0%, #6EA2FF 0%, #2F6BFF 45%, #1A43C7 100%)' }} />
+          <div className="h-full w-full" style={{ background: 'linear-gradient(135deg, #0F1F3D 0%, #1A3FA3 100%)' }} />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/35 to-transparent" />
-        <Link href="/lugares" aria-label="Voltar para Lugares" className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-800 shadow-md transition-colors hover:bg-primary hover:text-white">
+        <Link href="/lugares" aria-label="Voltar para Lugares" className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-lg bg-white/95 text-slate-800 shadow-sm transition-colors hover:bg-slate-100">
           <Icon name="back" size={20} />
         </Link>
       </div>
@@ -125,7 +125,7 @@ export default async function LugarPage({
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
             {open != null && (
-              <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${open ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
+              <span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${open ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
                 {open ? 'Aberto agora' : 'Fechado agora'}
               </span>
             )}
@@ -148,7 +148,7 @@ export default async function LugarPage({
                   href={`${here}?unidade=${u.id}`}
                   scroll={false}
                   aria-current={on ? 'true' : undefined}
-                  className={`${on ? 'glass-button' : 'glass-button-ghost'} shrink-0 !w-auto !rounded-full !px-4 !py-1.5 !text-sm`}
+                  className={`${on ? 'glass-button' : 'glass-button-ghost'} shrink-0 !w-auto !rounded-md !px-4 !py-1.5 !text-sm`}
                 >
                   <Icon name="pin" size={14} /> {u.name}
                 </Link>

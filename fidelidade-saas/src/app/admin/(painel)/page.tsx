@@ -80,7 +80,7 @@ export default async function AdminHome() {
         <section className="glass-panel p-5 sm:p-6" aria-labelledby="testes">
           <h2 id="testes" className="mb-1 font-semibold text-primary">Contas de teste</h2>
           <p className="mb-3 text-sm text-slate-500">Use para experimentar novidades antes de liberar aos clientes. Não entram na receita nem nos números acima.</p>
-          <ul className="divide-y divide-[#e4e7f3]">
+          <ul className="divide-y divide-[#E5E7EB]">
             {testAccounts.map((t) => (
               <li key={t.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                 <Link href={`/admin/assinantes/${t.id}`} className="min-w-0">
@@ -116,10 +116,10 @@ export default async function AdminHome() {
         {attention.length === 0 ? (
           <EmptyState compact variant="shield" title="Tudo em ordem" text="Nenhuma conta precisando de atenção agora." />
         ) : (
-          <ul className="divide-y divide-[#e4e7f3]">
+          <ul className="divide-y divide-[#E5E7EB]">
             {attention.map(({ r, why }) => (
               <li key={r.id}>
-                <Link href={`/admin/assinantes/${r.id}`} className="flex items-center justify-between gap-3 rounded-xl py-3 transition-colors hover:bg-[#f6f8fd]">
+                <Link href={`/admin/assinantes/${r.id}`} className="flex items-center justify-between gap-3 rounded-xl py-3 transition-colors hover:bg-[#F6F7F9]">
                   <span className="min-w-0">
                     <span className="block truncate font-semibold text-slate-800">{r.name}</span>
                     <span className="text-xs text-slate-500">{why}</span>

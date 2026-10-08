@@ -91,7 +91,7 @@ export function CustomerAuthForm({
       role="tab"
       aria-selected={mode === m}
       onClick={() => setMode(m)}
-      className={`flex-1 rounded-full px-4 py-2 text-sm font-bold transition-colors ${mode === m ? 'bg-primary text-white' : 'text-slate-600 hover:bg-white'}`}
+      className={`flex-1 rounded-md px-4 py-2 text-sm font-bold transition-colors ${mode === m ? 'bg-primary text-white' : 'text-slate-600 hover:bg-white'}`}
     >
       {label}
     </button>
@@ -100,7 +100,7 @@ export function CustomerAuthForm({
   return (
     <div className="space-y-5">
       {mode !== 'recuperar' ? (
-        <div role="tablist" aria-label="Entrar ou criar conta" className="flex gap-1 rounded-full bg-[#EEF1FA] p-1">
+        <div role="tablist" aria-label="Entrar ou criar conta" className="flex gap-1 rounded-md bg-slate-100 p-1">
           {tab('entrar', 'Entrar')}
           {tab('criar', 'Criar conta')}
         </div>

@@ -8,7 +8,7 @@ export function OpeningHours({ schedule, title = 'Horário para retirar seu prê
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="min-w-0 text-sm font-semibold text-primary">{title}</p>
         <span
-          className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+          className={`shrink-0 whitespace-nowrap rounded-md px-2.5 py-0.5 text-xs font-semibold ${
             open ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'
           }`}
         >
