@@ -118,7 +118,7 @@ body {
   }
   .glass-button-ghost:not(:disabled):hover {
     border-color: #94a3b8;
-    background-color: #f3f5f9;
+    background-color: #e9edf3;
   }
 
   .btn-danger {
@@ -138,18 +138,19 @@ body {
 
   /* Abas de navegação do painel. */
   .nav-tab {
-    @apply rounded-md px-3 py-2 text-sm font-medium text-slate-600;
+    @apply rounded-md border border-transparent px-3 py-2 text-sm font-medium text-slate-600;
     cursor: pointer;
-    transition: background-color 0.15s ease, color 0.15s ease;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   }
   .nav-tab:hover {
-    @apply bg-slate-100 text-slate-900;
+    @apply border-slate-400 text-slate-900;
+    background-color: #e9edf3;
   }
   .nav-tab-active {
-    @apply bg-[#E8EEFB] font-semibold text-electric-600;
+    @apply border-[#C3D2F4] bg-[#E8EEFB] font-semibold text-electric-600;
   }
   .nav-tab-active:hover {
-    @apply bg-[#E8EEFB] text-electric-600;
+    @apply border-electric-500 bg-[#DCE6F9] text-electric-600;
   }
 
   /* Rótulo/etiqueta (não clicável) e etiqueta clicável. */
@@ -366,4 +367,66 @@ label:has(input[type='radio']) {
 /* Respeita a área segura (notch / barra de gestos) no PWA. */
 .safe-bottom {
   padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
+
+/* ------------------------------------------------------------------ */
+/* Impressão do QR Code (cupom de 80 mm, preto e branco)               */
+/* ------------------------------------------------------------------ */
+.print-portal {
+  display: none;
+}
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 4mm;
+  }
+  html,
+  body {
+    background: #fff !important;
+    min-height: 0 !important;
+  }
+  body > *:not(.print-portal) {
+    display: none !important;
+  }
+  .print-portal {
+    display: block !important;
+    width: 72mm;
+    margin: 0 auto;
+    color: #000;
+    text-align: center;
+    font-family: 'Inter Variable', system-ui, sans-serif;
+  }
+  .print-portal .pt-name {
+    font-size: 17pt;
+    font-weight: 700;
+    line-height: 1.15;
+  }
+  .print-portal .pt-sub {
+    margin-top: 1mm;
+    font-size: 9pt;
+  }
+  .print-portal .pt-qr {
+    width: 62mm;
+    margin: 4mm auto 2mm;
+  }
+  .print-portal .pt-points {
+    font-size: 20pt;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+  .print-portal .pt-desc {
+    margin-top: 1mm;
+    font-size: 9pt;
+  }
+  .print-portal .pt-how {
+    margin-top: 3mm;
+    font-size: 10pt;
+    font-weight: 600;
+  }
+  .print-portal .pt-small {
+    margin-top: 2mm;
+    padding-top: 2mm;
+    border-top: 1px dashed #000;
+    font-size: 8pt;
+  }
 }

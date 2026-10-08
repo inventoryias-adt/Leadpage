@@ -41,6 +41,7 @@ export default async function CaixaPage() {
           </p>
         )}
         <CaixaForm
+          placeName={restaurant.name}
           pointsPerReal={restaurant.pointsPerReal}
           rules={rules}
           promos={promos.map((p) => ({ ...p, startsAt: p.startsAt?.toISOString() ?? null, endsAt: p.endsAt?.toISOString() ?? null }))}

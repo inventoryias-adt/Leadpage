@@ -121,7 +121,7 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
         <div className="flex items-center gap-3">
           <nav aria-label="Período" className="flex gap-1 rounded-md bg-[#F1F3F6] p-1">
             {PERIODS.map((p) => (
-              <Link key={p} href={`/dashboard?dias=${p}`} aria-current={p === days ? 'true' : undefined} className={`rounded-md px-3.5 py-1.5 text-sm font-semibold transition-colors ${p === days ? 'bg-electric-500 text-white shadow-sm' : 'text-slate-600 hover:bg-white'}`}>
+              <Link key={p} href={`/dashboard?dias=${p}`} aria-current={p === days ? 'true' : undefined} className={`rounded-md border px-3.5 py-1.5 text-sm font-semibold transition-colors ${p === days ? 'border-electric-500 bg-electric-500 text-white' : 'border-transparent text-slate-600 hover:border-slate-400 hover:bg-white hover:text-slate-900'}`}>
                 {p} dias
               </Link>
             ))}
@@ -179,7 +179,7 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
             <ol className="space-y-3">
               {topClients.map(([id, v], i) => (
                 <li key={id}>
-                  <Link href={`/dashboard/clientes/${id}`} className="flex items-center gap-3 rounded-xl p-1 transition-colors hover:bg-[#F6F7F9]">
+                  <Link href={`/dashboard/clientes/${id}`} className="flex items-center gap-3 rounded-lg border border-transparent p-2 transition-colors hover:border-slate-300 hover:bg-[#EDF0F5]">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-electric-500/10 text-sm font-bold text-electric-600">{i + 1}</span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-semibold text-slate-800">{nameById.get(id) ?? 'Cliente'}</span>

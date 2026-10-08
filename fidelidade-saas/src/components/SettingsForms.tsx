@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { startTransition, useActionState, useId, useState } from 'react';
 import {
   addChallenge,
   addInteraction,
@@ -20,7 +20,8 @@ import { CATEGORIES } from '@/lib/categories';
 import { defaultSchedule, parseSchedule, type Schedule } from '@/lib/hours';
 import { HoursGrid } from './HoursGrid';
 import { Icon } from './Icons';
-import { ImageUpload } from './ImageUpload';
+import { ImageUpload, shrinkImage } from './ImageUpload';
+import { WebImageSearch } from './WebImageSearch';
 import { FormMessage, SubmitButton } from './ui';
 
 type Basics = { name: string };
@@ -80,7 +81,7 @@ export function AddRewardForm() {
   const [state, action] = useActionState(addReward, {});
   return (
     <form action={action} className="space-y-3" key={state.ok ?? 'idle'}>
-      <ImageUpload name="imageData" label="Foto do produto" hint="Opcional, mas aumenta muito a vontade de resgatar." maxSide={640} />
+      <ImageUpload name="imageData" label="Foto do produto" hint="Opcional, mas aumenta muito a vontade de resgatar." maxSide={640} webSearch />
       <div className="grid gap-3 sm:grid-cols-[1fr_8rem]">
         <input name="name" defaultValue={state.values?.name} className="glass-input" placeholder="Ex.: Sobremesa grátis" aria-label="Nome do produto" required />
         <input name="pointsCost" defaultValue={state.values?.pointsCost} type="number" min={1} inputMode="numeric" className="glass-input" placeholder="Pontos" aria-label="Custo em pontos" required />
@@ -92,16 +93,64 @@ export function AddRewardForm() {
   );
 }
 
-/** Troca a foto de um prêmio já cadastrado. */
-export function RewardPhotoForm({ id, currentUrl }: { id: string; currentUrl: string | null }) {
-  const [state, action] = useActionState(setRewardImage, {});
+/**
+ * Foto de um produto já cadastrado, num passo só: "Trocar foto" abre a pasta do computador e salva assim que o
+ * arquivo é escolhido; "Buscar na web" mostra fotos por nome ou código de barras e salva a escolhida.
+ */
+export function RewardPhotoForm({ id, hasPhoto, name }: { id: string; hasPhoto: boolean; name: string }) {
+  const [state, action, pending] = useActionState(setRewardImage, {});
+  const [searching, setSearching] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const fileId = useId();
+
+  function send(fields: Record<string, string>) {
+    const fd = new FormData();
+    fd.set('id', id);
+    for (const [k, v] of Object.entries(fields)) fd.set(k, v);
+    startTransition(() => action(fd));
+  }
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setError('');
+    setBusy(true);
+    try {
+      if (!file.type.startsWith('image/')) throw new Error('Escolha um arquivo de imagem.');
+      send({ imageData: await shrinkImage(file, 640) });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível ler a imagem.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const working = busy || pending;
   return (
-    <form action={action} className="mt-3 space-y-2 rounded-2xl border border-slate-200 bg-white/60 p-3">
-      <input type="hidden" name="id" value={id} />
-      <ImageUpload name="imageData" label="Foto" currentUrl={currentUrl} maxSide={640} />
-      <FormMessage state={state} />
-      <SubmitButton variant="ghost" pendingText="Salvando…" className="btn-sm">Salvar foto</SubmitButton>
-    </form>
+    <div className="mt-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <label htmlFor={fileId} className={`glass-button-ghost btn-sm ${working ? 'pointer-events-none opacity-60' : ''}`}>
+          <Icon name="camera" size={15} /> {working ? 'Salvando…' : hasPhoto ? 'Trocar foto' : 'Adicionar foto'}
+        </label>
+        <input id={fileId} type="file" accept="image/*" className="sr-only" onChange={onFile} disabled={working} />
+        <button type="button" className="glass-button-ghost btn-sm" onClick={() => setSearching((v) => !v)} aria-expanded={searching} disabled={working}>
+          <Icon name="search" size={15} /> Buscar na web
+        </button>
+      </div>
+      {(error || state.error) && <p role="alert" className="mt-2 text-xs text-red-600">{error || state.error}</p>}
+      {state.ok && !working && !error && <p role="status" className="mt-2 text-xs text-emerald-700">{state.ok}</p>}
+      {searching && (
+        <WebImageSearch
+          initialQuery={name}
+          onChoose={(item) => {
+            setSearching(false);
+            send({ imageWebUrl: item.image });
+          }}
+        />
+      )}
+    </div>
   );
 }
 

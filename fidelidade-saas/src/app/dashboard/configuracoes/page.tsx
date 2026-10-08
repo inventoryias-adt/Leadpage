@@ -275,10 +275,7 @@ export default async function ConfiguracoesPage() {
                 <span className="glass-chip shrink-0">{formatPoints(r.pointsCost)} pts</span>
                 <RemoveButton action={removeReward} id={r.id} label={r.name} />
               </div>
-              <details className="mt-2">
-                <summary className="link-inline inline-block text-sm">{r.imageId ? 'Trocar foto' : 'Adicionar foto'}</summary>
-                <RewardPhotoForm id={r.id} currentUrl={imageUrl(r.imageId)} />
-              </details>
+              <RewardPhotoForm id={r.id} hasPhoto={!!r.imageId} name={r.name} />
             </li>
           ))}
         </ul>

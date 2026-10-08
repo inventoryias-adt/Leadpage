@@ -155,3 +155,12 @@ segue sendo a identidade, usada no limite de resgates por mês). Quem já tinha 
 **“Crie seu e-mail e senha”**, que confirma CPF + telefone e define o acesso uma única vez (migração `0011_cliente_email_senha`);
 o mesmo caminho redefine uma senha esquecida. Senha guardada só como hash (scrypt), limite de tentativas por IP, e-mail e CPF.
 Recuperação por e-mail ainda não existe (precisa de um serviço de envio, como o Resend).
+
+## Fotos de produtos e QR Code impresso
+
+- **Foto do produto num passo só** (Regras → Produtos): "Trocar foto" abre a pasta do computador e já salva ao escolher o arquivo;
+  "Buscar na web" procura por **nome ou código de barras** no [Open Food Facts](https://world.openfoodfacts.org) (gratuito, sem chave;
+  bom para produtos embalados e bebidas) e salva a foto escolhida. O servidor baixa a imagem só de hosts permitidos, até 450 KB
+  (`src/lib/product-images.ts`); a rota `/api/imagens/buscar` exige dono logado e limita as buscas.
+- **Imprimir o QR Code** (Caixa): botão **Imprimir QR Code** abre o cupom de 80 mm (preto e branco, uma página) com o nome do
+  estabelecimento, QR, pontos e validade; funciona na impressora configurada no computador do caixa.

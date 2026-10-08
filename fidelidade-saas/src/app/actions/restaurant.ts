@@ -14,6 +14,7 @@ import { validCoords } from '@/lib/geo';
 import { UFS, cepDigits, composeAddress } from '@/lib/address';
 import { BusinessError } from '@/lib/claims';
 import { saveImageFromDataUrl } from '@/lib/images';
+import { downloadImageAsDataUrl } from '@/lib/product-images';
 import { describeChallenge } from '@/lib/challenges';
 import { applyPromos, endOfDayBR, promoBadge, startOfDayBR, parseTime } from '@/lib/promos';
 import { fail, type FormState } from '@/lib/form';
@@ -201,6 +202,19 @@ const imageField = (formData: FormData, key: string) => {
   return v.startsWith('data:image/') ? v : null;
 };
 
+/** Foto enviada do computador (data URL) ou escolhida na busca da web (URL de host permitido, baixada aqui). */
+async function photoFromForm(formData: FormData): Promise<string | null> {
+  const file = imageField(formData, 'imageData');
+  if (file) return file;
+  const web = String(formData.get('imageWebUrl') ?? '');
+  if (!web) return null;
+  try {
+    return await downloadImageAsDataUrl(web);
+  } catch (e) {
+    throw new BusinessError(e instanceof Error ? e.message : 'Não foi possível baixar a imagem.');
+  }
+}
+
 export async function addReward(_: FormState, formData: FormData): Promise<FormState> {
   const restaurant = await requirePaidRestaurant();
   const parsed = rewardSchema.safeParse(Object.fromEntries(formData));
@@ -210,7 +224,7 @@ export async function addReward(_: FormState, formData: FormData): Promise<FormS
   }
 
   try {
-    const photo = imageField(formData, 'imageData');
+    const photo = await photoFromForm(formData);
     const imageId = photo ? await saveImageFromDataUrl(restaurant.id, photo) : null;
     await prisma.reward.create({
       data: { name: parsed.data.name, description: parsed.data.description || null, pointsCost: parsed.data.pointsCost, imageId, restaurantId: restaurant.id },
@@ -228,9 +242,10 @@ export async function setRewardImage(_: FormState, formData: FormData): Promise<
   const restaurant = await requirePaidRestaurant();
   const id = String(formData.get('id') ?? '');
   const reward = await prisma.reward.findFirst({ where: { id, restaurantId: restaurant.id } });
-  const photo = imageField(formData, 'imageData');
-  if (!reward || !photo) return { error: 'Escolha uma foto.' };
+  if (!reward) return { error: 'Produto não encontrado.' };
   try {
+    const photo = await photoFromForm(formData);
+    if (!photo) return { error: 'Escolha uma foto.' };
     const imageId = await saveImageFromDataUrl(restaurant.id, photo, reward.imageId);
     await prisma.reward.update({ where: { id }, data: { imageId } });
   } catch (e) {
