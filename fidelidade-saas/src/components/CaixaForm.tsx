@@ -7,13 +7,15 @@ import { createClaim, type CaixaState } from '@/app/actions/restaurant';
 import { calculatePoints, formatPoints, parseMoneyToCents } from '@/lib/points';
 import { applyPromos, promoActiveAt, promoBadge, type PromoLike } from '@/lib/promos';
 import { normalizePhone } from '@/lib/br';
+import { Icon } from './Icons';
+import { PrintTicket } from './PrintTicket';
 import { SubmitButton, maskPhoneInput } from './ui';
 
 type Rule = { id: string; label: string; points: number };
 /** Campanha vinda do servidor (datas em texto ISO). */
 export type PromoData = Omit<PromoLike, 'startsAt' | 'endsAt'> & { id: string; startsAt: string | null; endsAt: string | null };
 
-export function CaixaForm({ pointsPerReal, rules, promos = [] }: { pointsPerReal: number; rules: Rule[]; promos?: PromoData[] }) {
+export function CaixaForm({ pointsPerReal, rules, promos = [], placeName }: { pointsPerReal: number; rules: Rule[]; promos?: PromoData[]; placeName: string }) {
   const [state, action] = useActionState<CaixaState, FormData>(createClaim, {});
   const [amount, setAmount] = useState('');
   const [checked, setChecked] = useState<string[]>([]);
@@ -160,10 +162,14 @@ export function CaixaForm({ pointsPerReal, rules, promos = [] }: { pointsPerReal
             Uso único · válido até {new Date(claim.expiresAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
           </p>
           <p className="mt-3 text-center text-sm text-slate-500">Peça para o cliente escanear com a câmera do celular.</p>
-          <div className="mt-4 grid w-full gap-2 sm:grid-cols-2">
+          <div className="mt-4 grid w-full gap-2 sm:grid-cols-3">
             <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="glass-button">Enviar por WhatsApp</a>
+            <button type="button" onClick={() => window.print()} className="glass-button-ghost">
+              <Icon name="receipt" size={16} /> Imprimir QR Code
+            </button>
             <button type="button" onClick={copy} className="glass-button-ghost">{copied ? 'Link copiado ✓' : 'Copiar link'}</button>
           </div>
+          <PrintTicket placeName={placeName} points={claim.points} description={claim.description} url={claim.url} expiresAt={claim.expiresAt} />
         </div>
       )}
     </div>
