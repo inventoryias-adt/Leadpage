@@ -13,6 +13,8 @@ export function detectPlatform(ua: string, maxTouchPoints = 0): InstallPlatform 
 export const isInAppBrowser = (ua: string) => /FBAN|FBAV|FB_IAB|Instagram|TikTok|musical_ly|Line\/|Snapchat|MicroMessenger|; wv\)/i.test(ua);
 
 export const DISMISS_KEY = 'fz_install_dismissed_v1';
+/** O pop-up central abre uma vez só por aparelho; depois fica apenas o cartão no topo. */
+export const INTRO_KEY = 'fz_install_intro_v1';
 export const DISMISS_DAYS = 14;
 
 /** `stored`: valor do localStorage — "installed" (nunca mais) ou o horário (ms) em que dispensou. */
