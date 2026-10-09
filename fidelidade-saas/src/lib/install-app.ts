@@ -25,3 +25,12 @@ export function shouldOffer(opts: { platform: InstallPlatform; standalone: boole
   if (opts.stored && Number.isFinite(at) && opts.now - at < DISMISS_DAYS * 86_400_000) return false;
   return true;
 }
+
+/**
+ * Pop-up da primeira visita: só depende de ser celular, não estar instalado e nunca ter aberto.
+ * Ignora o "Agora não" antigo do cartão (que esconde o cartão por 14 dias), senão quem já recusou o cartão nunca veria o pop-up.
+ */
+export function shouldShowIntro(opts: { platform: InstallPlatform; standalone: boolean; stored: string | null; introSeen: boolean }): boolean {
+  if (opts.platform === 'other' || opts.standalone || opts.introSeen) return false;
+  return opts.stored !== 'installed';
+}

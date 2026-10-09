@@ -217,3 +217,5 @@ Recuperação por e-mail ainda não existe (precisa de um serviço de envio, com
   mostram a antiga por um tempo; para testar, envie um link novo (ex.: `...vercel.app/lugares?v=2`).
 - **Pop-up de instalação**: na **primeira visita** de cada aparelho (celular, app ainda não instalado) abre um pop-up no meio da tela ("Instale o Fidelize no seu celular") com um toque para
   adicionar. Se a pessoa recusar, o pop-up não volta e fica o cartão no topo (em todas as telas do cliente, via `src/app/(cliente)/layout.tsx`, e em `/entrar`); o "Agora não" do cartão o esconde por 14 dias.
+- O pop-up da primeira visita **ignora** o "Agora não" antigo do cartão (só o app instalado o impede). Para reabri-lo num aparelho (teste ou ajudar alguém), acrescente `?instalar` ao endereço,
+  ex.: `https://fidelize-nu.vercel.app/entrar?instalar`.

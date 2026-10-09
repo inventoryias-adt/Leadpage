@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Icon } from './Icons';
-import { DISMISS_KEY, INTRO_KEY, detectPlatform, isInAppBrowser, shouldOffer, type InstallPlatform } from '@/lib/install-app';
+import { DISMISS_KEY, INTRO_KEY, detectPlatform, isInAppBrowser, shouldOffer, shouldShowIntro, type InstallPlatform } from '@/lib/install-app';
 
 type DeferredPrompt = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }> };
 declare global {
@@ -47,12 +47,28 @@ export function InstallApp({ className = '' }: { className?: string }) {
     setInApp(isInAppBrowser(ua));
     setSafari(!/CriOS|FxiOS|EdgiOS/i.test(ua));
     if (window.__fzInstall) setPrompt(window.__fzInstall); // o evento pode ter chegado antes de o React carregar
-    const offer = shouldOffer({ platform: p, standalone, stored: read(), now: Date.now() });
-    setVisible(offer);
-    if (offer && !read(INTRO_KEY)) {
+    // ?instalar na URL reabre o pop-up (para testar ou ajudar alguém): esquece o que já foi dispensado/aberto neste aparelho
+    if (new URLSearchParams(window.location.search).has('instalar')) {
+      try {
+        localStorage.removeItem(DISMISS_KEY);
+        localStorage.removeItem(INTRO_KEY);
+      } catch {
+        /* sem armazenamento */
+      }
+    }
+    const stored = read();
+    let offer = shouldOffer({ platform: p, standalone, stored, now: Date.now() });
+    if (shouldShowIntro({ platform: p, standalone, stored, introSeen: !!read(INTRO_KEY) })) {
       write('1', INTRO_KEY); // abre só na primeira visita; se fechar sem instalar, fica o cartão no topo
+      try {
+        localStorage.removeItem(DISMISS_KEY); // um "Agora não" antigo do cartão não pode esconder o cartão que fica após o pop-up
+      } catch {
+        /* sem armazenamento */
+      }
+      offer = true;
       setIntro(true);
     }
+    setVisible(offer);
 
     const onPrompt = (e: Event) => {
       e.preventDefault(); // guarda o evento para abrir só quando a pessoa tocar no botão

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { detectPlatform, isInAppBrowser, shouldOffer } from './install-app';
+import { detectPlatform, isInAppBrowser, shouldOffer, shouldShowIntro } from './install-app';
 
 const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1';
 const ANDROID = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Mobile Safari/537.36';
@@ -32,4 +32,13 @@ test('oferece só no celular, fora do app instalado e respeitando "Agora não" p
   assert.equal(shouldOffer({ ...base, stored: String(now - 3 * 86_400_000) }), false);
   assert.equal(shouldOffer({ ...base, stored: String(now - 15 * 86_400_000) }), true);
   assert.equal(shouldOffer({ ...base, stored: 'lixo' }), true);
+});
+
+test('pop-up da primeira visita ignora o "Agora não" antigo do cartão, mas não o app instalado', () => {
+  const base = { platform: 'ios' as const, standalone: false, stored: String(Date.now()), introSeen: false };
+  assert.equal(shouldShowIntro(base), true, 'cartão dispensado há pouco não impede o pop-up');
+  assert.equal(shouldShowIntro({ ...base, introSeen: true }), false, 'só abre uma vez');
+  assert.equal(shouldShowIntro({ ...base, stored: 'installed' }), false);
+  assert.equal(shouldShowIntro({ ...base, standalone: true }), false);
+  assert.equal(shouldShowIntro({ ...base, platform: 'other' }), false);
 });
