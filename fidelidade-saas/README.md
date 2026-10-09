@@ -202,8 +202,10 @@ Recuperação por e-mail ainda não existe (precisa de um serviço de envio, com
 
 - `InstallApp` (`src/components/InstallApp.tsx`) mostra um cartão "Tenha o Fidelize na tela inicial" **só quando o acesso é pelo celular** e o app ainda não está
   instalado. Aparece em `/entrar` e no início da carteira do cliente.
-- **Android/Chrome**: o botão "Adicionar à tela inicial" abre o instalador do sistema (evento `beforeinstallprompt`, que exige manifesto + service worker, ativos em produção).
-  Sem o evento (outros navegadores) o botão mostra o passo a passo do menu ⋮.
-- **iPhone/iPad**: o iOS não permite instalar por botão; o cartão mostra Compartilhar → "Adicionar à Tela de Início". Em navegadores embutidos (Instagram, Facebook…)
-  avisa para abrir no Safari/Chrome.
-- "Agora não" esconde por 14 dias; depois de instalado (ou se já abriu como app) nunca mais aparece. Detecção em `src/lib/install-app.ts` (testada).
+- **Um toque só**: o botão "Adicionar à tela inicial" já faz a ação. No **Android/Chrome** abre direto o instalador do sistema (evento `beforeinstallprompt`,
+  guardado por um script em `layout.tsx` porque o Chrome o dispara antes de o React carregar; exige manifesto + service worker, ativos em produção).
+- **iPhone/iPad** (e navegadores sem instalador): o iOS não permite instalar por código, então o mesmo toque abre na hora um guia de 3 passos
+  (Compartilhar → "Adicionar à Tela de Início" → Adicionar), com seta apontando a barra do Safari. Em navegadores embutidos (Instagram, Facebook…) orienta a abrir no Safari/Chrome.
+- **Ícones com versão** (`?v=2` no manifesto e nos `<link>`): quem instalou antes mantém o ícone antigo no celular até remover o atalho e adicionar de novo
+  (iPhone grava a imagem na hora de adicionar; Android atualiza por conta própria em alguns dias). Ao trocar o ícone de novo, suba o `v`.
+- "Agora não" esconde o cartão por 14 dias (o guia fecha em "Entendi" e o cartão continua); depois de instalado (ou se já abriu como app) nunca mais aparece. Detecção em `src/lib/install-app.ts` (testada).
