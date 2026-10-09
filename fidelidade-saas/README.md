@@ -197,3 +197,13 @@ Recuperação por e-mail ainda não existe (precisa de um serviço de envio, com
   (múltiplos de 48 px, o que o Google exige para mostrar o favicon nos resultados), `apple-touch-icon.png` e `src/app/opengraph-image.tsx`
   (imagem 1200×630 dos links compartilhados). `metadataBase` usa `APP_URL`. O Google e o WhatsApp guardam o ícone/prévia em cache: pode levar
   dias para atualizar (Search Console → Inspeção de URL → Solicitar indexação acelera).
+
+## Adicionar à tela inicial (PWA)
+
+- `InstallApp` (`src/components/InstallApp.tsx`) mostra um cartão "Tenha o Fidelize na tela inicial" **só quando o acesso é pelo celular** e o app ainda não está
+  instalado. Aparece em `/entrar` e no início da carteira do cliente.
+- **Android/Chrome**: o botão "Adicionar à tela inicial" abre o instalador do sistema (evento `beforeinstallprompt`, que exige manifesto + service worker, ativos em produção).
+  Sem o evento (outros navegadores) o botão mostra o passo a passo do menu ⋮.
+- **iPhone/iPad**: o iOS não permite instalar por botão; o cartão mostra Compartilhar → "Adicionar à Tela de Início". Em navegadores embutidos (Instagram, Facebook…)
+  avisa para abrir no Safari/Chrome.
+- "Agora não" esconde por 14 dias; depois de instalado (ou se já abriu como app) nunca mais aparece. Detecção em `src/lib/install-app.ts` (testada).
