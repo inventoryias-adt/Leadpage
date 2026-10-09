@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { Brand } from '@/components/Brand';
 import { Icon } from '@/components/Icons';
 import { Illustration } from '@/components/Illustrations';
-import { InstallApp } from '@/components/InstallApp';
 import { IntroSlides } from '@/components/IntroSlides';
 import { PlaceAvatar, RewardImage } from '@/components/Visual';
 import { prisma } from '@/lib/db';
@@ -56,8 +55,6 @@ export default async function CarteiraPage() {
         <h1 className="mt-5 text-2xl font-extrabold md:mt-0 md:text-3xl tracking-tight text-primary">Olá, {customer.name.split(' ')[0]}</h1>
         <p className="text-sm text-slate-600">Seus pontos e prêmios em um só lugar.</p>
       </header>
-
-      <InstallApp />
 
       {vouchers.length > 0 && (
         <section aria-labelledby="retirar">

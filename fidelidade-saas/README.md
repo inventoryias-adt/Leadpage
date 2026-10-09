@@ -209,3 +209,11 @@ Recuperação por e-mail ainda não existe (precisa de um serviço de envio, com
 - **Ícones com versão** (`?v=2` no manifesto e nos `<link>`): quem instalou antes mantém o ícone antigo no celular até remover o atalho e adicionar de novo
   (iPhone grava a imagem na hora de adicionar; Android atualiza por conta própria em alguns dias). Ao trocar o ícone de novo, suba o `v`.
 - "Agora não" esconde o cartão por 14 dias (o guia fecha em "Entendi" e o cartão continua); depois de instalado (ou se já abriu como app) nunca mais aparece. Detecção em `src/lib/install-app.ts` (testada).
+
+## Prévia do link e pop-up de instalação (primeira visita)
+
+- **Prévia ao compartilhar** (WhatsApp, redes): `src/app/opengraph-image.tsx` desenha o logo **centralizado** (o WhatsApp mostra miniatura quadrada com corte central, então tudo fica
+  no quadrado do meio) e os textos são genéricos para qualquer estabelecimento ("Programa de pontos para o seu negócio"). O WhatsApp guarda a prévia por link: links já enviados antes
+  mostram a antiga por um tempo; para testar, envie um link novo (ex.: `...vercel.app/lugares?v=2`).
+- **Pop-up de instalação**: na **primeira visita** de cada aparelho (celular, app ainda não instalado) abre um pop-up no meio da tela ("Instale o Fidelize no seu celular") com um toque para
+  adicionar. Se a pessoa recusar, o pop-up não volta e fica o cartão no topo (em todas as telas do cliente, via `src/app/(cliente)/layout.tsx`, e em `/entrar`); o "Agora não" do cartão o esconde por 14 dias.

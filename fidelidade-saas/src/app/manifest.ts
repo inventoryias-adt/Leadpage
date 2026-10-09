@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Fidelize — Minha carteira de pontos',
     short_name: 'Fidelize',
-    description: 'Seus pontos e prêmios nos restaurantes que você ama.',
+    description: 'Seus pontos e prêmios nos lugares que você ama.',
     start_url: '/carteira',
     scope: '/',
     display: 'standalone',

@@ -7,9 +7,9 @@ import '@fontsource-variable/dm-sans';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: { default: 'Fidelize — Programa de pontos para restaurantes', template: '%s · Fidelize' },
+  title: { default: 'Fidelize — Programa de pontos para o seu negócio', template: '%s · Fidelize' },
   description:
-    'Sistema de recompensas por pontos para restaurantes: faça o cliente voltar, receba mais avaliações no Google e posts no Instagram.',
+    'Programa de pontos e prêmios para restaurantes, lojas, salões e qualquer estabelecimento: faça o cliente voltar, receba mais avaliações no Google e posts no Instagram.',
   applicationName: 'Fidelize',
   metadataBase: new URL(process.env.APP_URL ?? 'https://fidelize-nu.vercel.app'),
   icons: {
@@ -24,8 +24,8 @@ export const metadata: Metadata = {
     type: 'website',
     siteName: 'Fidelize',
     locale: 'pt_BR',
-    title: 'Fidelize — Programa de pontos para restaurantes',
-    description: 'Faça o cliente voltar: pontos, prêmios, avaliações no Google e posts no Instagram.',
+    title: 'Fidelize — Programa de pontos para o seu negócio',
+    description: 'Faça seus clientes voltarem: pontos, prêmios e avaliações no Google, para qualquer estabelecimento.',
   },
   twitter: { card: 'summary_large_image' },
   appleWebApp: { capable: true, title: 'Fidelize', statusBarStyle: 'default' },

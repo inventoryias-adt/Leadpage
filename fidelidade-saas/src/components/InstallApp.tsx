@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Icon } from './Icons';
-import { DISMISS_KEY, detectPlatform, isInAppBrowser, shouldOffer, type InstallPlatform } from '@/lib/install-app';
+import { DISMISS_KEY, INTRO_KEY, detectPlatform, isInAppBrowser, shouldOffer, type InstallPlatform } from '@/lib/install-app';
 
 type DeferredPrompt = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }> };
 declare global {
@@ -11,16 +11,16 @@ declare global {
   }
 }
 
-const read = () => {
+const read = (key = DISMISS_KEY) => {
   try {
-    return localStorage.getItem(DISMISS_KEY);
+    return localStorage.getItem(key);
   } catch {
     return null;
   }
 };
-const write = (v: string) => {
+const write = (v: string, key = DISMISS_KEY) => {
   try {
-    localStorage.setItem(DISMISS_KEY, v);
+    localStorage.setItem(key, v);
   } catch {
     /* sem armazenamento: o convite volta na próxima visita */
   }
@@ -36,6 +36,7 @@ export function InstallApp({ className = '' }: { className?: string }) {
   const [inApp, setInApp] = useState(false);
   const [prompt, setPrompt] = useState<DeferredPrompt | null>(null);
   const [guide, setGuide] = useState(false);
+  const [intro, setIntro] = useState(false);
   const [safari, setSafari] = useState(false);
 
   useEffect(() => {
@@ -46,7 +47,12 @@ export function InstallApp({ className = '' }: { className?: string }) {
     setInApp(isInAppBrowser(ua));
     setSafari(!/CriOS|FxiOS|EdgiOS/i.test(ua));
     if (window.__fzInstall) setPrompt(window.__fzInstall); // o evento pode ter chegado antes de o React carregar
-    setVisible(shouldOffer({ platform: p, standalone, stored: read(), now: Date.now() }));
+    const offer = shouldOffer({ platform: p, standalone, stored: read(), now: Date.now() });
+    setVisible(offer);
+    if (offer && !read(INTRO_KEY)) {
+      write('1', INTRO_KEY); // abre só na primeira visita; se fechar sem instalar, fica o cartão no topo
+      setIntro(true);
+    }
 
     const onPrompt = (e: Event) => {
       e.preventDefault(); // guarda o evento para abrir só quando a pessoa tocar no botão
@@ -68,6 +74,7 @@ export function InstallApp({ className = '' }: { className?: string }) {
   if (!visible) return null;
 
   async function install() {
+    setIntro(false);
     if (!prompt) {
       setGuide(true); // iPhone (e navegadores sem instalador): o toque abre o guia na hora, sem passo extra
       return;
@@ -105,6 +112,7 @@ export function InstallApp({ className = '' }: { className?: string }) {
           <button type="button" onClick={dismiss} className="glass-button-ghost btn-sm shrink-0" title="Esconde este aviso por 14 dias">Agora não</button>
         </div>
       </section>
+      {intro && <InstallIntro onInstall={() => void install()} onClose={() => setIntro(false)} />}
       {guide && <InstallGuide platform={platform} inApp={inApp} safari={safari} onClose={() => setGuide(false)} />}
     </>
   );
@@ -154,6 +162,32 @@ function InstallGuide({ platform, inApp, safari, onClose }: { platform: InstallP
           <p aria-hidden className="mt-3 animate-bounce text-center text-2xl text-electric-600">↓</p>
         )}
         <button type="button" autoFocus onClick={onClose} className="glass-button mt-4 w-full">Entendi</button>
+      </div>
+    </div>
+  );
+}
+
+/** Pop-up no meio da tela na primeira visita: explica o benefício e instala (ou abre o guia) em um toque. */
+function InstallIntro({ onInstall, onClose }: { onInstall: () => void; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/60 p-5" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-labelledby="install-intro-title" className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/icon-192.png?v=2" alt="" width={72} height={72} className="mx-auto h-[72px] w-[72px] rounded-2xl" />
+        <h2 id="install-intro-title" className="mt-4 text-xl font-bold text-primary">Instale o Fidelize no seu celular</h2>
+        <p className="mt-2 text-sm leading-relaxed text-slate-600">
+          Veja seus pontos e prêmios com um toque, direto da tela inicial — como um app, sem baixar nada na loja.
+        </p>
+        <button type="button" autoFocus onClick={onInstall} className="glass-button mt-5 w-full">
+          <Icon name="plus" size={18} /> Adicionar à tela inicial
+        </button>
+        <button type="button" onClick={onClose} className="glass-button-ghost btn-sm mt-2 w-full">Agora não</button>
       </div>
     </div>
   );
