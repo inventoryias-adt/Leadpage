@@ -190,7 +190,7 @@ Recuperação por e-mail ainda não existe (precisa de um serviço de envio, com
   vira código + foto da base brasileira (fundo branco) e o código vira nome + foto; o Open Food Facts complementa. Sem o token funciona só
   com o Open Food Facts e a foto pública da Bluesoft. O Open Food Facts limita ~10 buscas/min por IP, por isso são poucas chamadas.
   Falha de fonte **não vira "nenhum resultado"**: a tela mostra o motivo ("Open Food Facts respondeu 503…") e o servidor registra em log.
-  A rota tem `maxDuration = 30` e as respostas da Bluesoft são cacheadas por 24 h (a cota gratuita é pequena).
+  A rota tem `maxDuration = 30` e as respostas da Bluesoft são cacheadas por 24 h (a cota depende do plano da conta Cosmos; confira na área do usuário).
 - **Horário de funcionamento** (Regras → Unidades): uma linha por dia — nome, abre, fecha, "Fechado" e "Copiar p/ todos" — alinhadas em
   coluna; no celular o nome e as ações ficam numa linha e os horários na de baixo.
 - **Ícone/logo**: ícone quadrado de fundo cheio (sem borda branca) em `src/app/favicon.ico`, `src/app/icon.svg` e `public/icon-48/96/192/512.png`

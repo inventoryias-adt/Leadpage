@@ -60,7 +60,7 @@ export function CustomerNav({ unread = 0 }: { unread?: number }) {
 
     {/* Celular: barra flutuante embaixo */}
     <nav aria-label="Navegação principal" className="pointer-events-none md:hidden fixed inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-      <div className="glass-panel pointer-events-auto grid w-full max-w-sm grid-cols-4 gap-1 !rounded-full p-1.5">
+      <div className="glass-panel pointer-events-auto grid w-full max-w-sm grid-cols-4 gap-1 overflow-hidden !rounded-3xl p-2">
         {tabs.map((t) => {
           const active = t.match(current);
           return (
@@ -69,7 +69,7 @@ export function CustomerNav({ unread = 0 }: { unread?: number }) {
               href={t.href}
               onClick={() => setPending(t.href)}
               aria-current={active ? 'page' : undefined}
-              className={`nav-tab flex flex-col items-center gap-0.5 !rounded-md !px-2 !py-2 !text-[11px] ${active ? 'nav-tab-active' : ''}`}
+              className={`nav-tab flex min-w-0 flex-col items-center gap-0.5 !rounded-2xl !px-1 !py-2 !text-[11px] ${active ? 'nav-tab-active' : ''}`}
             >
               <span className="relative">
                 <Icon name={t.icon} size={20} />
