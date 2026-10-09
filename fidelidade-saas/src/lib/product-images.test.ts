@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { buildSearchUrl, cleanBarcode, isAllowedImageUrl, isBarcode, parseProducts } from './product-images';
+import { buildSearchUrl, cleanBarcode, cosmosImageUrl, isAllowedImageUrl, isBarcode, normalize, parseProducts, queryVariants, score, searchProductImages } from './product-images';
 
 test('só aceita imagens https dos hosts conhecidos', () => {
   assert.ok(isAllowedImageUrl('https://images.openfoodfacts.org/images/products/789/123/front_pt.4.400.jpg'));
@@ -96,4 +96,92 @@ test('falha de rede vira mensagem clara em português', async () => {
   await withFetch(async () => { throw new TypeError('fetch failed'); }, async () => {
     await assert.rejects(() => downloadImageAsDataUrl(okUrl), /Não foi possível baixar a imagem/);
   });
+});
+
+test('aceita a foto da Bluesoft só no caminho de produtos', () => {
+  assert.ok(isAllowedImageUrl(cosmosImageUrl('7894900011517')));
+  assert.equal(isAllowedImageUrl('https://cdn-cosmos.bluesoft.com.br/outra/coisa.jpg'), false);
+  assert.equal(isAllowedImageUrl('http://cdn-cosmos.bluesoft.com.br/products/789'), false);
+});
+
+test('normaliza o que o dono digita: acento, hífen e medida colada', () => {
+  assert.equal(normalize('Coca-Cola  350 ML'), 'coca cola 350ml');
+  assert.equal(normalize('Guaraná Antárctica 2 Litros'), 'guarana antarctica 2l');
+  assert.equal(normalize('Leite 1,5 L'), 'leite 1,5l');
+  assert.equal(normalize('Água sem gás 500ml.'), 'agua sem gas 500ml');
+});
+
+test('variações da busca: completa, sem a medida e as duas primeiras palavras', () => {
+  assert.deepEqual(queryVariants('Coca-Cola 350 ml'), ['coca cola 350ml', 'coca cola']);
+  assert.deepEqual(queryVariants('Biscoito Recheado Chocolate Nestlé 140g'), ['biscoito recheado chocolate nestle 140g', 'biscoito recheado chocolate nestle', 'biscoito recheado']);
+  assert.deepEqual(queryVariants('pizza'), ['pizza']);
+});
+
+test('ordena pelo que mais combina, com a medida igual valendo mais', () => {
+  const a = { name: 'Coca-Cola Zero 350 ml', brand: 'Coca-Cola' };
+  const b = { name: 'Coca-Cola Original 2 L', brand: 'Coca-Cola' };
+  const c = { name: 'Guaraná 350 ml', brand: 'Antarctica' };
+  assert.ok(score(b, 'Coca-Cola 350 ml') < score(a, 'Coca-Cola 350 ml'));
+  assert.ok(score(c, 'Coca-Cola 350 ml') < score(b, 'Coca-Cola 350 ml'));
+});
+
+test('por código de barras: usa a foto da Bluesoft quando existe e o nome do Open Food Facts', async () => {
+  const orig = globalThis.fetch;
+  const calls: string[] = [];
+  globalThis.fetch = (async (url: string, init?: RequestInit) => {
+    calls.push(`${init?.method ?? 'GET'} ${url}`);
+    if (url.startsWith('https://cdn-cosmos.bluesoft.com.br/')) return new Response('', { headers: { 'content-type': 'image/jpeg' } });
+    return Response.json({ product: { code: '7894900011517', product_name: 'Coca-Cola', quantity: '350 ml', brands: 'Coca-Cola', image_front_url: 'https://images.openfoodfacts.org/images/products/789/490/001/1517/front_pt.1.400.jpg' } });
+  }) as typeof fetch;
+  try {
+    const r = await searchProductImages('789 4900011517');
+    assert.equal(r.length, 1);
+    assert.equal(r[0].image, cosmosImageUrl('7894900011517'));
+    assert.match(r[0].alt ?? '', /openfoodfacts/);
+    assert.equal(r[0].name, 'Coca-Cola 350 ml');
+    assert.ok(calls.some((c) => c.startsWith('HEAD https://cdn-cosmos')));
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
+test('por código sem foto da Bluesoft cai para o Open Food Facts; sem nenhuma, devolve vazio', async () => {
+  const orig = globalThis.fetch;
+  try {
+    globalThis.fetch = (async (url: string) =>
+      url.startsWith('https://cdn-cosmos') ? new Response('', { status: 404 }) : Response.json({ product: { code: '7891000100103', product_name: 'Leite', image_front_url: 'https://images.openfoodfacts.org/images/products/789/1/front_pt.1.400.jpg' } })) as typeof fetch;
+    const r = await searchProductImages('7891000100103');
+    assert.equal(r.length, 1);
+    assert.match(r[0].image, /openfoodfacts/);
+    globalThis.fetch = (async (url: string) => (url.startsWith('https://cdn-cosmos') ? new Response('', { status: 404 }) : Response.json({ status: 0 }))) as typeof fetch;
+    assert.deepEqual(await searchProductImages('7891000100103'), []);
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
+test('por nome: junta as variações, ordena e troca pela foto da Bluesoft quando existe', async () => {
+  const orig = globalThis.fetch;
+  const img = (n: number) => `https://images.openfoodfacts.org/images/products/${n}/front_pt.1.400.jpg`;
+  globalThis.fetch = (async (url: string) => {
+    if (url.startsWith('https://cdn-cosmos')) return url.endsWith('/7894900011517') ? new Response('', { headers: { 'content-type': 'image/png' } }) : new Response('', { status: 404 });
+    const q = new URL(url).searchParams.get('search_terms');
+    return Response.json({
+      products: q === 'coca cola 350ml'
+        ? [{ code: '7894900011517', product_name: 'Coca-Cola', quantity: '350 ml', brands: 'Coca-Cola', image_front_url: img(1) }]
+        : [
+            { code: '7894900011517', product_name: 'Coca-Cola', quantity: '350 ml', brands: 'Coca-Cola', image_front_url: img(1) },
+            { code: '7894900027013', product_name: 'Coca-Cola', quantity: '2 L', brands: 'Coca-Cola', image_front_url: img(2) },
+          ],
+    });
+  }) as typeof fetch;
+  try {
+    const r = await searchProductImages('Coca-Cola 350 ml');
+    assert.equal(r.length, 2, 'sem repetir o mesmo código');
+    assert.equal(r[0].name, 'Coca-Cola 350 ml');
+    assert.equal(r[0].image, cosmosImageUrl('7894900011517'));
+    assert.match(r[1].image, /openfoodfacts/);
+  } finally {
+    globalThis.fetch = orig;
+  }
 });

@@ -19,7 +19,7 @@ import { RewardImage } from '@/components/Visual';
 import { describeChallenge } from '@/lib/challenges';
 import { prisma } from '@/lib/db';
 import { imageUrl } from '@/lib/images';
-import { formatBRL, formatPoints } from '@/lib/points';
+import { formatBRL, formatPoints, formatPrice } from '@/lib/points';
 import { promoBadge, promoStatus, promoWhen } from '@/lib/promos';
 import { requirePaidRestaurant } from '@/lib/session';
 
@@ -275,10 +275,10 @@ export default async function ConfiguracoesPage() {
                   <p className="truncate font-semibold text-slate-800">{r.name}</p>
                   {r.description && <p className="truncate text-xs text-slate-500">{r.description}</p>}
                 </div>
-                <span className="glass-chip shrink-0">{formatPoints(r.pointsCost)} pts</span>
+                <span className="glass-chip shrink-0">{formatPrice(r.pointsCost, r.cashCents)}</span>
                 <RemoveButton action={removeReward} id={r.id} label={r.name} />
               </div>
-              <RewardPhotoForm id={r.id} hasPhoto={!!r.imageId} name={r.name} />
+              <RewardPhotoForm id={r.id} hasPhoto={!!r.imageId} name={r.name} edit={{ description: r.description ?? '', pointsCost: r.pointsCost, cashCents: r.cashCents }} />
             </li>
           ))}
         </ul>

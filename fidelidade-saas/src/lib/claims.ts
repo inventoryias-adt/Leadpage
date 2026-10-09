@@ -258,6 +258,7 @@ export async function redeemItems(customerId: string, restaurantId: string, rawI
             rewardId: reward.id,
             rewardName: reward.name,
             pointsCost: reward.pointsCost,
+            cashCents: reward.cashCents,
             code,
           },
         });

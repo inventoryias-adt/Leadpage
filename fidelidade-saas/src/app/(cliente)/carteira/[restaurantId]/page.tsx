@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Brand } from '@/components/Brand';
 import { prisma } from '@/lib/db';
-import { formatPoints, startOfMonthBR } from '@/lib/points';
+import { formatBRL, formatPoints, formatPrice, startOfMonthBR } from '@/lib/points';
 import { requireCustomer } from '@/lib/session';
 import { UnitsHours } from '@/components/UnitsHours';
 import { RedeemButton } from './RedeemButton';
@@ -81,7 +81,9 @@ export default async function WalletPage({
               <div key={v.id} className="glass-panel-sm flex items-center justify-between gap-3 p-4">
                 <div className="min-w-0">
                   <p className="truncate font-bold text-slate-800">{v.rewardName}</p>
-                  <p className="text-xs text-slate-500">Mostre este código no balcão</p>
+                  <p className="text-xs text-slate-500">
+                    {v.cashCents > 0 ? `Mostre este código no balcão e pague ${formatBRL(v.cashCents)}` : 'Mostre este código no balcão'}
+                  </p>
                 </div>
                 <p className="font-mono text-2xl font-bold tracking-[0.2em] text-electric-600">{v.code}</p>
               </div>
@@ -115,7 +117,7 @@ export default async function WalletPage({
               <div key={r.id} className="glass-panel-sm flex items-center justify-between gap-3 p-4">
                 <div className="min-w-0">
                   <h3 className="truncate font-bold text-slate-800">{r.name}</h3>
-                  <p className="text-sm font-medium text-electric-600">{formatPoints(r.pointsCost)} pts</p>
+                  <p className="text-sm font-medium text-electric-600">{formatPrice(r.pointsCost, r.cashCents)}</p>
                   {missing > 0 && <p className="text-xs text-slate-500">Faltam {formatPoints(missing)} pts</p>}
                 </div>
                 <RedeemButton rewardId={r.id} name={r.name} disabled={missing > 0 || limitReached} />

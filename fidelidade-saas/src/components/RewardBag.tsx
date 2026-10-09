@@ -3,11 +3,11 @@
 import Link from 'next/link';
 import { useActionState, useMemo, useState } from 'react';
 import { redeemBagAction } from '@/app/actions/customer';
-import { formatPoints } from '@/lib/points';
+import { formatPoints, formatPrice } from '@/lib/points';
 import { Icon } from './Icons';
 import { RewardImage } from './Visual';
 
-export type BagReward = { id: string; name: string; description: string | null; pointsCost: number; imageUrl: string | null };
+export type BagReward = { id: string; name: string; description: string | null; pointsCost: number; cashCents: number; imageUrl: string | null };
 
 /**
  * Vitrine de prêmios + sacola. O cliente monta a sacola com o que cabe nos seus pontos
@@ -104,12 +104,12 @@ export function RewardBag({
               <div className="flex gap-3">
                 <div className="relative shrink-0">
                   <RewardImage src={r.imageUrl} name={r.name} className="h-24 w-24 rounded-2xl" />
-                  <span className="absolute bottom-1.5 left-1.5 rounded-md bg-slate-900/90 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">Só pontos</span>
+                  <span className="absolute bottom-1.5 left-1.5 rounded-md bg-slate-900/90 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">{r.cashCents > 0 ? 'R$ + pontos' : 'Só pontos'}</span>
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col">
                   <p className="line-clamp-2 font-bold leading-snug text-slate-800">{r.name}</p>
                   {r.description && <p className="line-clamp-2 text-xs text-slate-500">{r.description}</p>}
-                  <p className="mt-0.5 text-sm font-bold text-electric-600">{formatPoints(r.pointsCost)} pts</p>
+                  <p className="mt-0.5 text-sm font-bold text-electric-600">{formatPrice(r.pointsCost, r.cashCents)}</p>
                   {missing > 0 && q === 0 && <p className="text-xs text-slate-500">Faltam {formatPoints(missing)} pts</p>}
                   <div className="mt-auto flex justify-end pt-2">
                     {q === 0 ? (
