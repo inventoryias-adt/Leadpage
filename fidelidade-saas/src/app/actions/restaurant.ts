@@ -530,7 +530,7 @@ export async function finishGuide() {
 
 export type CaixaState = {
   error?: string;
-  claim?: { url: string; points: number; description: string; expiresAt: string; phone?: string };
+  claim?: { url: string; points: number; amountCents: number; description: string; createdAt: string; expiresAt: string; phone?: string };
 };
 
 const caixaSchema = z.object({
@@ -582,7 +582,9 @@ export async function createClaim(_: CaixaState, formData: FormData): Promise<Ca
     claim: {
       url: `${appUrl()}/r/${token}`,
       points,
+      amountCents,
       description,
+      createdAt: new Date().toISOString(),
       expiresAt: expiresAt.toISOString(),
       phone: parsed.phone || undefined,
     },

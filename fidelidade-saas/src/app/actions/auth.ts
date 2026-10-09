@@ -80,9 +80,17 @@ export async function startCheckout() {
 }
 
 /** Abre o portal do Stripe (cartão, faturas, cancelamento). Sem cobrança real, volta para a conta. */
-export async function openBillingPortal() {
+export async function openBillingPortal(): Promise<FormState> {
   const restaurant = await requireRestaurant();
-  redirect((await createPortalUrl(restaurant)) ?? '/dashboard/configuracoes#conta');
+  let url: string | null;
+  try {
+    url = await createPortalUrl(restaurant);
+  } catch (e) {
+    console.error('Portal de cobrança falhou', e instanceof Error ? e.message : e);
+    return { error: 'Não conseguimos abrir o portal agora. Tente de novo em instantes; se persistir, fale com o suporte.' };
+  }
+  if (!url) return { error: 'Esta conta não tem uma cobrança ativa para gerenciar.' };
+  redirect(url);
 }
 
 const passwordChangeSchema = z.object({

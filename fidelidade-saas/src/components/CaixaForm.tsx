@@ -20,6 +20,7 @@ export function CaixaForm({ pointsPerReal, rules, promos = [], placeName }: { po
   const [amount, setAmount] = useState('');
   const [checked, setChecked] = useState<string[]>([]);
   const [phone, setPhone] = useState('');
+  const [customerName, setCustomerName] = useState(''); // só sai no cupom impresso; não é enviado ao servidor
   const [copied, setCopied] = useState(false);
 
   // Prévia apenas visual — o servidor recalcula os pontos com as regras do banco.
@@ -131,6 +132,13 @@ export function CaixaForm({ pointsPerReal, rules, promos = [], placeName }: { po
           />
         </div>
 
+        <div>
+          <label className="glass-label" htmlFor="print-name">
+            Nome do cliente <span className="font-normal text-slate-500">(opcional, sai no cupom impresso)</span>
+          </label>
+          <input id="print-name" className="glass-input" maxLength={60} placeholder="Ex.: Maria Souza" value={customerName} onChange={(e) => setCustomerName(e.target.value)} autoComplete="off" />
+        </div>
+
         <p className="text-center">
           <span className="text-sm text-slate-500">Total a creditar: </span>
           <span className="text-3xl font-extrabold text-electric-600">{formatPoints(preview)} pts</span>
@@ -146,6 +154,7 @@ export function CaixaForm({ pointsPerReal, rules, promos = [], placeName }: { po
               setAmount('');
               setChecked([]);
               setPhone('');
+              setCustomerName('');
             }}
           >
             Limpar para novo lançamento
@@ -169,7 +178,7 @@ export function CaixaForm({ pointsPerReal, rules, promos = [], placeName }: { po
             </button>
             <button type="button" onClick={copy} className="glass-button-ghost">{copied ? 'Link copiado ✓' : 'Copiar link'}</button>
           </div>
-          <PrintTicket placeName={placeName} points={claim.points} description={claim.description} url={claim.url} expiresAt={claim.expiresAt} />
+          <PrintTicket placeName={placeName} points={claim.points} amountCents={claim.amountCents} customerName={customerName.trim()} description={claim.description} url={claim.url} createdAt={claim.createdAt} expiresAt={claim.expiresAt} />
         </div>
       )}
     </div>

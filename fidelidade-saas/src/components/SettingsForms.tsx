@@ -15,7 +15,7 @@ import {
   setRewardImage,
   updateReward,
 } from '@/app/actions/restaurant';
-import { changePassword } from '@/app/actions/auth';
+import { changePassword, openBillingPortal } from '@/app/actions/auth';
 import { UFS, cepDigits, maskCep, parseViaCep } from '@/lib/address';
 import { CATEGORIES, CATEGORY_HINT } from '@/lib/categories';
 import { categoryRequestMessage, supportLink } from '@/lib/support';
@@ -199,6 +199,24 @@ function EditRewardForm({ id, name, description, pointsCost, cashCents, onDone }
         <SubmitButton pendingText="Salvando…" className="btn-sm">Salvar alterações</SubmitButton>
         <button type="button" className="glass-button-ghost btn-sm" onClick={onDone}>Cancelar</button>
       </div>
+    </form>
+  );
+}
+
+/** Abre o portal do Stripe (cartão, faturas, cancelamento); se falhar, explica e oferece o suporte. */
+export function BillingPortalForm({ supportHref }: { supportHref: string | null }) {
+  const [state, action] = useActionState(openBillingPortal, {});
+  return (
+    <form action={action} className="mt-6 border-t border-[#E5E7EB] pt-5">
+      <h3 className="mb-1 font-semibold text-primary">Assinatura e faturas</h3>
+      <p className="mb-3 text-sm text-slate-600">Troque o cartão, baixe as faturas e recibos ou cancele a assinatura, em uma página segura do Stripe.</p>
+      <SubmitButton variant="ghost" pendingText="Abrindo…" className="btn-sm">Gerenciar assinatura e faturas</SubmitButton>
+      {state.error && (
+        <p role="alert" className="glass-error mt-3">
+          {state.error}{' '}
+          {supportHref && <a href={supportHref} target="_blank" rel="noopener noreferrer" className="link-inline">Falar com o suporte</a>}
+        </p>
+      )}
     </form>
   );
 }

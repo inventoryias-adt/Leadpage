@@ -1,4 +1,3 @@
-import { openBillingPortal } from '@/app/actions/auth';
 import { removeChallenge, removeInteraction, removePromotion, removeReward, removeUnit, togglePromotion } from '@/app/actions/restaurant';
 import {
   AddChallengeForm,
@@ -6,6 +5,7 @@ import {
   AddInteractionForm,
   AddRewardForm,
   BasicsForm,
+  BillingPortalForm,
   EngagementForm,
   FinishOnboardingForm,
   IdentityForm,
@@ -18,6 +18,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { RewardImage } from '@/components/Visual';
 import { describeChallenge } from '@/lib/challenges';
 import { prisma } from '@/lib/db';
+import { supportLink } from '@/lib/support';
 import { imageUrl } from '@/lib/images';
 import { formatBRL, formatPoints, formatPrice } from '@/lib/points';
 import { promoBadge, promoStatus, promoWhen } from '@/lib/promos';
@@ -287,13 +288,7 @@ export default async function ConfiguracoesPage() {
 
       <Section id="conta" n={10} title="Minha conta" hint="Troque a senha de acesso ao painel. Use uma senha que só você conheça.">
         <PasswordForm />
-        {restaurant.paymentCustomerId && (
-          <form action={openBillingPortal} className="mt-6 border-t border-[#E5E7EB] pt-5">
-            <h3 className="mb-1 font-semibold text-primary">Assinatura e faturas</h3>
-            <p className="mb-3 text-sm text-slate-600">Troque o cartão, baixe as faturas e recibos ou cancele a assinatura, em uma página segura do Stripe.</p>
-            <button className="glass-button-ghost btn-sm">Gerenciar assinatura e faturas</button>
-          </form>
-        )}
+        {restaurant.paymentCustomerId && <BillingPortalForm supportHref={supportLink(process.env.SUPPORT_WHATSAPP, `Olá! Sou do estabelecimento "${restaurant.name}" e não consegui abrir o gerenciamento da assinatura no Fidelize.`)} />}
       </Section>
 
       {onboarding && (

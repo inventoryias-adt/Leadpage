@@ -1,6 +1,14 @@
 import type { SVGProps } from 'react';
 
 const paths = {
+  qr: (
+    <>
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <path d="M14 14h3v3h-3zM20 14v1M14 20h1M17 20h4v-3M6 6h1M17 6h1M6 17h1" />
+    </>
+  ),
   chart: <path d="M4 20V10m6 10V4m6 16v-7m4 7H3" />,
   home: <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z" />,
   compass: (
