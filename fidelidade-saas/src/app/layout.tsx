@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 import { NoAutofill } from '@/components/NoAutofill';
 import { RegisterSW } from '@/components/RegisterSW';
 import '@fontsource-variable/inter';
@@ -13,11 +14,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL ?? 'https://fidelize-nu.vercel.app'),
   icons: {
     icon: [
-      { url: '/icon-48.png', sizes: '48x48', type: 'image/png' },
-      { url: '/icon-96.png', sizes: '96x96', type: 'image/png' },
-      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-48.png?v=2', sizes: '48x48', type: 'image/png' },
+      { url: '/icon-96.png?v=2', sizes: '96x96', type: 'image/png' },
+      { url: '/icon-192.png?v=2', sizes: '192x192', type: 'image/png' },
     ],
-    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+    apple: [{ url: '/apple-touch-icon.png?v=2', sizes: '180x180', type: 'image/png' }],
   },
   openGraph: {
     type: 'website',
@@ -40,6 +41,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR">
       <body>
+        {/* O Chrome dispara o convite de instalação cedo, antes do React carregar: guarda o evento para o botão usar. */}
+        <Script id="fz-install-capture" strategy="beforeInteractive">{`window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__fzInstall=e;});`}</Script>
         <RegisterSW />
         <NoAutofill />
         {children}
