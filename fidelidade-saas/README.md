@@ -183,3 +183,17 @@ Recuperação por e-mail ainda não existe (precisa de um serviço de envio, com
   do token fica no banco, a resposta é igual exista o e-mail ou não. Envio pelo Resend: `RESEND_API_KEY` e `EMAIL_FROM`. Com e-mail configurado, quem já tem senha
   não a redefine mais só com CPF + telefone. Em desenvolvimento, `DEV_MAIL_FILE` grava as mensagens em arquivo.
 - **Cupom impresso**: nome do estabelecimento, QR, pontos, cliente (opcional), data e valor da compra, centralizado na página.
+
+## Busca de fotos (Bluesoft), horários compactos e ícone
+
+- **Busca de foto por nome e por código**: com `COSMOS_TOKEN` (gratuito, API da [Bluesoft Cosmos](https://cosmos.bluesoft.com.br)) o nome
+  vira código + foto da base brasileira (fundo branco) e o código vira nome + foto; o Open Food Facts complementa. Sem o token funciona só
+  com o Open Food Facts e a foto pública da Bluesoft. O Open Food Facts limita ~10 buscas/min por IP, por isso são poucas chamadas.
+  Falha de fonte **não vira "nenhum resultado"**: a tela mostra o motivo ("Open Food Facts respondeu 503…") e o servidor registra em log.
+  A rota tem `maxDuration = 30` e as respostas da Bluesoft são cacheadas por 24 h (a cota gratuita é pequena).
+- **Horário de funcionamento** (Regras → Unidades): uma linha por dia — nome, abre, fecha, "Fechado" e "Copiar p/ todos" — alinhadas em
+  coluna; no celular o nome e as ações ficam numa linha e os horários na de baixo.
+- **Ícone/logo**: ícone quadrado de fundo cheio (sem borda branca) em `src/app/favicon.ico`, `src/app/icon.svg` e `public/icon-48/96/192/512.png`
+  (múltiplos de 48 px, o que o Google exige para mostrar o favicon nos resultados), `apple-touch-icon.png` e `src/app/opengraph-image.tsx`
+  (imagem 1200×630 dos links compartilhados). `metadataBase` usa `APP_URL`. O Google e o WhatsApp guardam o ícone/prévia em cache: pode levar
+  dias para atualizar (Search Console → Inspeção de URL → Solicitar indexação acelera).

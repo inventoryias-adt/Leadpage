@@ -1,16 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <defs>
-    <linearGradient id="fz-g" x1="6" y1="2" x2="58" y2="62" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#4F8FFF"/>
-      <stop offset="1" stop-color="#1A43C7"/>
-    </linearGradient>
-    <linearGradient id="fz-s" x1="34" y1="39" x2="48" y2="53" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFE48F"/>
-      <stop offset="1" stop-color="#FFB22E"/>
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="16" fill="url(#fz-g)"/>
-  <path d="M8 22C8 12 14 6 24 5c7-.6 14-.3 20 .6C34 7 18 9 8 22Z" fill="#fff" opacity=".16"/>
-  <path fill="#fff" d="M21 17a3 3 0 0 1 3-3h20a3 3 0 0 1 3 3v2a3 3 0 0 1-3 3H29v6h12a3 3 0 0 1 3 3v2a3 3 0 0 1-3 3H29v9a3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3Z"/>
-  <path fill="url(#fz-s)" d="M41 39l2.1 5.4L48.5 46.5 43.1 48.6 41 54l-2.1-5.4L33.5 46.5l5.4-2.1Z"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#0F1F3D"/><g transform="translate(32 32) scale(1.18) translate(-34 -36)"><path fill="#fff" d="M21 17a3 3 0 0 1 3-3h20a3 3 0 0 1 3 3v2a3 3 0 0 1-3 3H29v6h12a3 3 0 0 1 3 3v2a3 3 0 0 1-3 3H29v9a3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3Z"/><rect x="40" y="46" width="8" height="4" rx="2" fill="#5B84E6"/></g></svg>
