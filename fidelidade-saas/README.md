@@ -172,3 +172,14 @@ Recuperação por e-mail ainda não existe (precisa de um serviço de envio, com
 - Categorias novas: Estética e saúde, Pet shop, Farmácia, Serviços, Academia e fitness, Mercado e empório, Moda e acessórios.
   Em **Outros** o estabelecimento descreve o negócio (`categoryOther`, migração `0012_categoria_outros`); os clientes acham por esse
   texto em Lugares → Outros. O botão "Fale com o suporte" abre o WhatsApp do número definido em `SUPPORT_WHATSAPP` (só dígitos com DDI).
+
+## Produtos com valor, fotos, recuperação de senha e cupom
+
+- **Produto "R$ + pontos"** (Regras → Produtos): valor em R$ opcional (`Reward.cashCents`, migração `0013_premio_com_valor`). O cliente vê "R$ 8,00 + 300 pts",
+  o voucher manda pagar o valor no balcão e a tela de resgates do dono mostra "Cobrar R$ …". Produtos podem ser **editados** (nome, pontos, valor, descrição);
+  resgates antigos mantêm o preço da época.
+- **Busca de foto**: por nome (normaliza "Coca-Cola 350 ml") ou código de barras; prefere a foto da Bluesoft (fundo branco) e cai para o Open Food Facts.
+- **Recuperação de senha por e-mail** (clientes em `/entrar` e donos em `/login/esqueci`; migração `0014_redefinir_senha`): link de uso único, vale 1 hora, só o hash
+  do token fica no banco, a resposta é igual exista o e-mail ou não. Envio pelo Resend: `RESEND_API_KEY` e `EMAIL_FROM`. Com e-mail configurado, quem já tem senha
+  não a redefine mais só com CPF + telefone. Em desenvolvimento, `DEV_MAIL_FILE` grava as mensagens em arquivo.
+- **Cupom impresso**: nome do estabelecimento, QR, pontos, cliente (opcional), data e valor da compra, centralizado na página.
