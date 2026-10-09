@@ -1,7 +1,8 @@
 /**
  * Busca de fotos de produtos na web, por código de barras ou por nome.
  *  - Imagem preferida: Bluesoft Cosmos (cdn-cosmos.bluesoft.com.br/products/<GTIN>), em geral com fundo branco.
- *  - Nomes → códigos e fotos de reserva: Open Food Facts (gratuito, sem chave).
+ *  - API da Bluesoft Cosmos (COSMOS_TOKEN, gratuito): nome ↔ código ↔ foto, base brasileira.
+ *  - Open Food Facts (gratuito, sem chave): complemento e reserva.
  * O servidor é quem baixa a imagem escolhida, só de hosts conhecidos, para o navegador nunca mandar
  * uma URL arbitrária (SSRF).
  */
@@ -116,11 +117,65 @@ export function buildSearchUrl(q: string, brazilFirst = false): string {
   return `${OFF}/cgi/search.pl?${params}`;
 }
 
-async function getJson(url: string): Promise<unknown> {
-  const res = await fetch(url, { headers: { 'User-Agent': UA, Accept: 'application/json' }, signal: AbortSignal.timeout(7000), cache: 'no-store' });
-  if (!res.ok) throw new Error(`Open Food Facts respondeu ${res.status}`);
-  return res.json();
+/** Falha de uma fonte: vira aviso na tela em vez de "nenhum resultado". */
+export class SourceError extends Error {
+  constructor(public source: string, message: string) {
+    super(message);
+  }
 }
+
+async function getJson(source: string, url: string, init: { headers?: Record<string, string>; revalidate?: number; timeout?: number } = {}): Promise<unknown> {
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      headers: { 'User-Agent': UA, Accept: 'application/json', ...init.headers },
+      signal: AbortSignal.timeout(init.timeout ?? 9000),
+      ...(init.revalidate ? { next: { revalidate: init.revalidate } } : { cache: 'no-store' as const }),
+    });
+  } catch {
+    throw new SourceError(source, `${source} não respondeu a tempo`);
+  }
+  if (res.status === 404) return {};
+  if (res.status === 429) throw new SourceError(source, `${source} limitou as buscas por enquanto`);
+  if (!res.ok) throw new SourceError(source, `${source} respondeu ${res.status}`);
+  return res.json().catch(() => {
+    throw new SourceError(source, `${source} devolveu uma resposta inválida`);
+  });
+}
+
+/** Bluesoft Cosmos (API oficial, exige token gratuito em COSMOS_TOKEN). */
+const COSMOS_API = 'https://api.cosmos.bluesoft.com.br';
+const cosmosToken = () => (process.env.COSMOS_TOKEN ?? '').trim();
+export const hasCosmosApi = () => cosmosToken().length > 0;
+
+type CosmosRaw = { gtin?: unknown; description?: unknown; thumbnail?: unknown; brand?: { name?: unknown } | null };
+
+/** `/gtins/<código>.json` (um produto) ou `/products?query=` (lista) → mesmos cartões da tela. */
+export function parseCosmos(json: unknown): ProductImage[] {
+  const j = (json ?? {}) as CosmosRaw & { products?: CosmosRaw[] };
+  const list = Array.isArray(j.products) ? j.products : j.gtin != null ? [j] : [];
+  const out: ProductImage[] = [];
+  const seen = new Set<string>();
+  for (const p of list) {
+    const code = p?.gtin != null ? String(p.gtin).replace(/\D/g, '') : '';
+    if (!isBarcode(code)) continue;
+    const image = typeof p.thumbnail === 'string' && isAllowedImageUrl(p.thumbnail) ? p.thumbnail : cosmosImageUrl(code);
+    if (seen.has(image)) continue;
+    seen.add(image);
+    out.push({
+      code,
+      name: (typeof p.description === 'string' ? p.description.trim() : '').slice(0, 90) || `Código ${code}`,
+      brand: (typeof p.brand?.name === 'string' ? p.brand.name : '').trim().slice(0, 50),
+      thumb: image,
+      image,
+    });
+    if (out.length >= 24) break;
+  }
+  return out;
+}
+
+const cosmosGet = (path: string) =>
+  getJson('Bluesoft Cosmos', `${COSMOS_API}${path}`, { headers: { 'X-Cosmos-Token': cosmosToken() }, revalidate: 86400 });
 
 /** A foto da Bluesoft existe para esse código? (HEAD rápido; qualquer falha = não). */
 async function cosmosExists(gtin: string): Promise<boolean> {
@@ -137,33 +192,69 @@ async function cosmosExists(gtin: string): Promise<boolean> {
 async function preferCosmos(items: ProductImage[]): Promise<ProductImage[]> {
   return Promise.all(
     items.map(async (it) => {
-      if (!isBarcode(it.code) || !(await cosmosExists(cleanBarcode(it.code)))) return it;
+      if (it.image.startsWith(COSMOS) || !isBarcode(it.code) || !(await cosmosExists(cleanBarcode(it.code)))) return it;
       const url = cosmosImageUrl(cleanBarcode(it.code));
       return { ...it, image: url, thumb: url, alt: it.image };
     }),
   );
 }
 
-/** Por código de barras: foto da Bluesoft e/ou do Open Food Facts. */
-async function searchByBarcode(raw: string): Promise<ProductImage[]> {
+export type SearchResult = { items: ProductImage[]; warnings: string[] };
+
+/** Roda uma fonte; se falhar, guarda o aviso e segue com as outras. */
+async function attempt(warnings: string[], job: () => Promise<ProductImage[]>): Promise<ProductImage[]> {
+  try {
+    return await job();
+  } catch (e) {
+    warnings.push(e instanceof SourceError ? e.message : 'uma das fontes falhou');
+    return [];
+  }
+}
+
+/** Por código de barras: Bluesoft (API e foto) e Open Food Facts. */
+async function searchByBarcode(raw: string, warnings: string[]): Promise<ProductImage[]> {
   const code = cleanBarcode(raw);
-  const [offItems, cosmos] = await Promise.all([getJson(buildSearchUrl(code)).then(parseProducts).catch(() => [] as ProductImage[]), cosmosExists(code)]);
+  const [cosmosItems, offItems, cdn] = await Promise.all([
+    hasCosmosApi() ? attempt(warnings, async () => parseCosmos(await cosmosGet(`/gtins/${code}.json`))) : Promise.resolve([] as ProductImage[]),
+    attempt(warnings, async () => parseProducts(await getJson('Open Food Facts', buildSearchUrl(code)))),
+    cosmosExists(code),
+  ]);
   const off = offItems[0];
-  if (cosmos) {
+  const cosmos = cosmosItems[0];
+  if (cosmos) return [{ ...cosmos, name: cosmos.name.startsWith('Código ') && off ? off.name : cosmos.name, alt: off?.image }];
+  if (cdn) {
     const url = cosmosImageUrl(code);
     return [{ code, name: off?.name ?? `Código ${code}`, brand: off?.brand ?? '', thumb: url, image: url, alt: off?.image }];
   }
   return off ? [{ ...off, code }] : [];
 }
 
-/** Por nome: junta as variações da busca, ordena pelo que mais combina e prefere fotos de fundo branco. */
-async function searchByName(q: string): Promise<ProductImage[]> {
+/**
+ * Por nome: Bluesoft primeiro (base brasileira, fundo branco) e Open Food Facts como complemento.
+ * O Open Food Facts limita ~10 buscas/min por IP, então são poucas chamadas, em sequência só se faltar resultado.
+ */
+async function searchByName(q: string, warnings: string[]): Promise<ProductImage[]> {
   const variants = queryVariants(q);
-  const urls = variants.flatMap((v, i) => (i === 0 ? [buildSearchUrl(v, true), buildSearchUrl(v)] : [buildSearchUrl(v, true)]));
-  const batches = await Promise.all(urls.map((u) => getJson(u).then(parseProducts).catch(() => [] as ProductImage[])));
+  const fromCosmos = hasCosmosApi()
+    ? await attempt(warnings, async () => {
+        const first = parseCosmos(await cosmosGet(`/products?query=${encodeURIComponent(variants[0])}`));
+        if (first.length >= 6 || !variants[1]) return first;
+        return [...first, ...parseCosmos(await cosmosGet(`/products?query=${encodeURIComponent(variants[1])}`))];
+      })
+    : [];
+
+  let fromOff: ProductImage[] = [];
+  if (fromCosmos.length < 12) {
+    fromOff = await attempt(warnings, async () => parseProducts(await getJson('Open Food Facts', buildSearchUrl(variants[0], true))));
+    if (fromOff.length < 6) {
+      const wider = variants[1] ?? variants[0];
+      fromOff = [...fromOff, ...(await attempt(warnings, async () => parseProducts(await getJson('Open Food Facts', buildSearchUrl(wider)))))];
+    }
+  }
+
   const seen = new Set<string>();
   const merged: ProductImage[] = [];
-  for (const it of batches.flat()) {
+  for (const it of [...fromCosmos, ...fromOff]) {
     const key = it.code || it.image;
     if (seen.has(key)) continue;
     seen.add(key);
@@ -173,10 +264,19 @@ async function searchByName(q: string): Promise<ProductImage[]> {
   return preferCosmos(merged.slice(0, 12));
 }
 
-/** Foto(s) para o produto digitado (nome) ou para o código de barras. Lança erro se todas as fontes falharem. */
-export async function searchProductImages(q: string): Promise<ProductImage[]> {
+/** Foto(s) para o produto digitado (nome) ou para o código de barras, com avisos das fontes que falharam. */
+export async function searchProducts(q: string): Promise<SearchResult> {
   const term = q.trim();
-  return isBarcode(term) ? searchByBarcode(term) : searchByName(term);
+  const warnings: string[] = [];
+  const items = isBarcode(term) ? await searchByBarcode(term, warnings) : await searchByName(term, warnings);
+  return { items, warnings: [...new Set(warnings)] };
+}
+
+/** Só a lista. Lança erro se não achou nada e alguma fonte falhou (para a tela não dizer "não existe"). */
+export async function searchProductImages(q: string): Promise<ProductImage[]> {
+  const { items, warnings } = await searchProducts(q);
+  if (items.length === 0 && warnings.length > 0) throw new Error(warnings.join('; '));
+  return items;
 }
 
 /** Baixa a imagem escolhida (host permitido, até 450 KB) e devolve como data URL para o fluxo normal de salvar. */

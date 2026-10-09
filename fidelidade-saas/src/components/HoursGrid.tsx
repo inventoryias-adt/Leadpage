@@ -2,7 +2,10 @@
 
 import { DAY_NAMES, DISPLAY_ORDER, type Schedule } from '@/lib/hours';
 
-/** Grade de horário por dia da semana (controlada pelo formulário que a contém), com "Aplicar a todos os dias". */
+/**
+ * Horário por dia da semana, compacto: uma linha por dia (nome, abre, fecha, fechado e copiar para os outros dias).
+ * Controlado pelo formulário que o contém.
+ */
 export function HoursGrid({ days, setDays, idPrefix }: { days: Schedule; setDays: React.Dispatch<React.SetStateAction<Schedule>>; idPrefix: string }) {
   const update = (day: number, patch: Partial<Schedule[number]>) =>
     setDays((all) => all.map((d) => (d.day === day ? { ...d, ...patch } : d)));
@@ -14,52 +17,50 @@ export function HoursGrid({ days, setDays, idPrefix }: { days: Schedule; setDays
       return all.map((d) => ({ ...d, closed: src.closed, open: src.open, close: src.close }));
     });
 
+  const time = 'glass-input min-w-0 !w-full !px-2 !py-1.5 !text-sm sm:!w-[7.5rem]';
+
   return (
-    <div className="space-y-3">
-      <ul className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
+    <div className="space-y-2">
+      <ul className="divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white">
         {DISPLAY_ORDER.map((dayNumber) => {
           const d = days.find((x) => x.day === dayNumber)!;
           const name = DAY_NAMES[dayNumber];
           return (
-            <li key={dayNumber} className="glass-inset p-3">
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <span className="font-semibold text-slate-800">{name}</span>
-                <label className="flex items-center gap-2 text-sm text-slate-600">
-                  <input
-                    type="checkbox"
-                    className="h-5 w-5 rounded accent-electric-500"
-                    checked={d.closed}
-                    onChange={(e) => update(dayNumber, { closed: e.target.checked })}
-                  />
-                  Fechado
-                </label>
-              </div>
+            <li key={dayNumber} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-2 gap-y-1.5 px-3 py-2 sm:gap-x-3 sm:grid-cols-[6.6rem_17rem_auto_auto]">
+              <span className="order-1 whitespace-nowrap text-sm font-medium text-slate-800">{name}</span>
 
               {d.closed ? (
-                <p className="text-sm text-slate-500">Não abre neste dia.</p>
+                <span className="order-4 col-span-3 text-sm text-slate-500 sm:order-2 sm:col-span-1">Não abre neste dia</span>
               ) : (
-                <div className="flex flex-wrap items-end gap-3">
-                  <div className="min-w-[7rem] flex-1">
-                    <label className="mb-1 block text-xs font-medium text-slate-600" htmlFor={`${idPrefix}o-${dayNumber}`}>Abre</label>
-                    <input id={`${idPrefix}o-${dayNumber}`} type="time" required className="glass-input !py-2" value={d.open} onChange={(e) => update(dayNumber, { open: e.target.value })} />
-                  </div>
-                  <div className="min-w-[7rem] flex-1">
-                    <label className="mb-1 block text-xs font-medium text-slate-600" htmlFor={`${idPrefix}c-${dayNumber}`}>Fecha</label>
-                    <input id={`${idPrefix}c-${dayNumber}`} type="time" required className="glass-input !py-2" value={d.close} onChange={(e) => update(dayNumber, { close: e.target.value })} />
-                  </div>
-                </div>
+                <span className="order-4 col-span-3 flex min-w-0 items-center gap-1.5 text-sm text-slate-500 sm:order-2 sm:col-span-1">
+                  <label className="sr-only" htmlFor={`${idPrefix}o-${dayNumber}`}>Abre — {name}</label>
+                  <input id={`${idPrefix}o-${dayNumber}`} type="time" required className={time} value={d.open} onChange={(e) => update(dayNumber, { open: e.target.value })} />
+                  <span aria-hidden>às</span>
+                  <label className="sr-only" htmlFor={`${idPrefix}c-${dayNumber}`}>Fecha — {name}</label>
+                  <input id={`${idPrefix}c-${dayNumber}`} type="time" required className={time} value={d.close} onChange={(e) => update(dayNumber, { close: e.target.value })} />
+                </span>
               )}
 
-              <button type="button" onClick={() => applyToAll(dayNumber)} className="glass-button-ghost btn-sm mt-3" aria-label={`Aplicar o horário de ${name} a todos os dias`}>
-                Aplicar a todos os dias
+              <label className="order-2 flex items-center gap-1.5 whitespace-nowrap text-sm text-slate-600 sm:order-3">
+                <input type="checkbox" className="h-4 w-4 rounded accent-electric-500" checked={d.closed} onChange={(e) => update(dayNumber, { closed: e.target.checked })} />
+                Fechado
+              </label>
+              <button
+                type="button"
+                onClick={() => applyToAll(dayNumber)}
+                className="order-3 whitespace-nowrap rounded-md px-1.5 py-1 text-xs sm:order-4 font-semibold text-electric-600 hover:bg-[#E9EDF3]"
+                aria-label={`Aplicar o horário de ${name} a todos os dias`}
+                title="Copiar este horário para todos os dias"
+              >
+                Copiar<span className="hidden sm:inline"> p/ todos</span>
               </button>
             </li>
           );
         })}
       </ul>
       <p className="text-xs text-slate-500">
-        Dica: preencha um dia, toque em “Aplicar a todos os dias” e depois ajuste só o que muda (ex.: sábado e domingo).
-        Se fechar depois da meia-noite, use o horário normalmente (ex.: abre 18:00, fecha 02:00).
+        Dica: preencha um dia, toque em “Copiar p/ todos” e depois ajuste só o que muda (ex.: sábado e domingo). Se fechar depois da meia-noite, use o horário
+        normalmente (ex.: abre 18:00, fecha 02:00).
       </p>
     </div>
   );

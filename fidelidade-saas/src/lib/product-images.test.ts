@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { buildSearchUrl, cleanBarcode, cosmosImageUrl, isAllowedImageUrl, isBarcode, normalize, parseProducts, queryVariants, score, searchProductImages } from './product-images';
+import { buildSearchUrl, cleanBarcode, cosmosImageUrl, isAllowedImageUrl, isBarcode, normalize, parseProducts, parseCosmos, queryVariants, score, searchProductImages, searchProducts } from './product-images';
 
 test('só aceita imagens https dos hosts conhecidos', () => {
   assert.ok(isAllowedImageUrl('https://images.openfoodfacts.org/images/products/789/123/front_pt.4.400.jpg'));
@@ -181,6 +181,59 @@ test('por nome: junta as variações, ordena e troca pela foto da Bluesoft quand
     assert.equal(r[0].name, 'Coca-Cola 350 ml');
     assert.equal(r[0].image, cosmosImageUrl('7894900011517'));
     assert.match(r[1].image, /openfoodfacts/);
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
+test('lê a resposta da API da Bluesoft (um produto e lista)', () => {
+  const one = parseCosmos({ gtin: 7891000100103, description: 'LEITE UHT INTEGRAL 1L', thumbnail: 'https://cdn-cosmos.bluesoft.com.br/products/7891000100103', brand: { name: 'Italac' } });
+  assert.equal(one.length, 1);
+  assert.equal(one[0].code, '7891000100103');
+  assert.equal(one[0].brand, 'Italac');
+  const list = parseCosmos({ products: [{ gtin: 7894900011517, description: 'Refrigerante', thumbnail: 'https://evil.example/x.jpg' }, { gtin: 'abc' }] });
+  assert.equal(list.length, 1, 'ignora código inválido');
+  assert.equal(list[0].image, cosmosImageUrl('7894900011517'), 'thumbnail de host estranho vira a foto da Bluesoft');
+  assert.deepEqual(parseCosmos({}), []);
+});
+
+test('com COSMOS_TOKEN: busca por nome e por código usa a API da Bluesoft com o token', async () => {
+  const orig = globalThis.fetch;
+  process.env.COSMOS_TOKEN = 'tok-teste';
+  const seen: { url: string; token?: string }[] = [];
+  globalThis.fetch = (async (url: string, init?: RequestInit) => {
+    const headers = (init?.headers ?? {}) as Record<string, string>;
+    if (url.startsWith('https://api.cosmos.bluesoft.com.br')) {
+      seen.push({ url, token: headers['X-Cosmos-Token'] });
+      if (url.includes('/gtins/')) return Response.json({ gtin: 7891000100103, description: 'LEITE UHT 1L', thumbnail: cosmosImageUrl('7891000100103'), brand: { name: 'Italac' } });
+      return Response.json({ products: Array.from({ length: 12 }, (_, i) => ({ gtin: 7890000000000 + i * 7, description: `AGUA MINERAL ${i}`, thumbnail: cosmosImageUrl(String(7890000000000 + i * 7)) })) });
+    }
+    if (url.startsWith('https://cdn-cosmos')) return new Response('', { status: 404 });
+    return Response.json({});
+  }) as typeof fetch;
+  try {
+    const byName = await searchProducts('água');
+    assert.equal(byName.items.length, 12);
+    assert.deepEqual(byName.warnings, []);
+    const byCode = await searchProducts('7891000100103');
+    assert.equal(byCode.items[0].name, 'LEITE UHT 1L');
+    assert.ok(seen.length >= 2 && seen.every((c) => c.token === 'tok-teste'));
+  } finally {
+    delete process.env.COSMOS_TOKEN;
+    globalThis.fetch = orig;
+  }
+});
+
+test('falha de fonte aparece como aviso/erro, não como "nenhum resultado"', async () => {
+  const orig = globalThis.fetch;
+  try {
+    globalThis.fetch = (async (url: string) => (url.startsWith('https://cdn-cosmos') ? new Response('', { status: 404 }) : new Response('', { status: 503 }))) as typeof fetch;
+    const r = await searchProducts('água');
+    assert.equal(r.items.length, 0);
+    assert.match(r.warnings.join(' '), /Open Food Facts respondeu 503/);
+    await assert.rejects(() => searchProductImages('água'), /Open Food Facts/);
+    globalThis.fetch = (async (url: string) => (url.startsWith('https://cdn-cosmos') ? new Response('', { status: 404 }) : new Response('', { status: 429 }))) as typeof fetch;
+    assert.match((await searchProducts('7891000100103')).warnings.join(' '), /limitou/);
   } finally {
     globalThis.fetch = orig;
   }

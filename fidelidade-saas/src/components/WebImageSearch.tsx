@@ -10,6 +10,7 @@ export function WebImageSearch({ onChoose, initialQuery = '' }: { onChoose: (ite
   const [q, setQ] = useState(initialQuery);
   const [items, setItems] = useState<WebImage[] | null>(null);
   const [error, setError] = useState('');
+  const [partial, setPartial] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function search() {
@@ -22,9 +23,10 @@ export function WebImageSearch({ onChoose, initialQuery = '' }: { onChoose: (ite
     setError('');
     try {
       const res = await fetch(`/api/imagens/buscar?q=${encodeURIComponent(term)}`);
-      const json = (await res.json()) as { items?: WebImage[]; error?: string };
+      const json = (await res.json()) as { items?: WebImage[]; error?: string; partial?: boolean };
       if (!res.ok) throw new Error(json.error ?? 'Não foi possível buscar agora.');
       setItems(json.items ?? []);
+      setPartial(Boolean(json.partial));
     } catch (e) {
       setItems(null);
       setError(e instanceof Error ? e.message : 'Não foi possível buscar agora.');
@@ -63,7 +65,7 @@ export function WebImageSearch({ onChoose, initialQuery = '' }: { onChoose: (ite
       </div>
       {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
       {items && items.length === 0 && (
-        <p className="text-sm text-slate-600">Nenhuma foto encontrada. Confira o código ou tente outro nome. Se for um prato da casa, envie a foto do seu computador.</p>
+        <p className="text-sm text-slate-600">{partial ? 'Nenhuma foto encontrada, mas uma das fontes está instável agora. Tente de novo em instantes. ' : 'Nenhuma foto encontrada. '} Confira o código ou tente outro nome. Se for um prato da casa, envie a foto do seu computador.</p>
       )}
       {items && items.length > 0 && (
         <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4" aria-label="Fotos encontradas">
