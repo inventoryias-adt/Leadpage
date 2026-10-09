@@ -2,7 +2,7 @@ import { markRedemptionUsed } from '@/app/actions/restaurant';
 import { SubmitButton } from '@/components/ui';
 import { maskCpf } from '@/lib/br';
 import { prisma } from '@/lib/db';
-import { formatPoints, monthRangeBR } from '@/lib/points';
+import { formatBRL, formatPoints, formatPrice, monthRangeBR } from '@/lib/points';
 import { MonthNav } from '@/components/MonthNav';
 import Link from 'next/link';
 import { EmptyState } from '@/components/EmptyState';
@@ -61,6 +61,7 @@ export default async function ResgatesPage({ searchParams }: { searchParams: Pro
                 <div className="min-w-0">
                   <p className="font-mono text-xl font-bold tracking-[0.25em] text-electric-600">{r.code}</p>
                   <p className="truncate font-semibold text-slate-800">{r.rewardName}</p>
+                  {r.cashCents > 0 && <p className="text-sm font-bold text-primary">Cobrar {formatBRL(r.cashCents)} no balcão</p>}
                   <p className="text-xs text-slate-500">
                     <Link href={`/dashboard/clientes/${r.customer.id}`} className="link-inline">{r.customer.name}</Link> · CPF {maskCpf(r.customer.cpf)} · {when(r.createdAt)}
                   </p>
@@ -82,7 +83,7 @@ export default async function ResgatesPage({ searchParams }: { searchParams: Pro
             {used.map((r) => (
               <li key={r.id} className="flex justify-between gap-3 py-2">
                 <span className="truncate text-slate-800">{r.rewardName} · {r.customer.name}{r.usedUnit ? ` · ${r.usedUnit.name}` : ''}</span>
-                <span className="shrink-0 text-slate-500">{formatPoints(r.pointsCost)} pts · {r.usedAt ? when(r.usedAt) : ''}</span>
+                <span className="shrink-0 text-slate-500">{formatPrice(r.pointsCost, r.cashCents)} · {r.usedAt ? when(r.usedAt) : ''}</span>
               </li>
             ))}
           </ul>
@@ -108,7 +109,7 @@ export default async function ResgatesPage({ searchParams }: { searchParams: Pro
                     {when(r.createdAt)} · {r.status === 'USED' ? 'entregue' : 'a entregar'}
                   </p>
                 </div>
-                <span className="shrink-0 font-bold text-slate-600">−{formatPoints(r.pointsCost)} pts</span>
+                <span className="shrink-0 text-right font-bold text-slate-600">−{formatPoints(r.pointsCost)} pts{r.cashCents > 0 ? <span className="block text-xs font-medium">+ {formatBRL(r.cashCents)}</span> : null}</span>
               </li>
             ))}
           </ul>

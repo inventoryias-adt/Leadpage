@@ -116,6 +116,7 @@ model Reward {
   name         String
   description  String?
   pointsCost   Int
+  cashCents    Int      @default(0) // valor em R$ cobrado no balcão junto com os pontos (0 = só pontos)
   imageId      String?
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())
@@ -213,6 +214,7 @@ model Redemption {
   rewardId     String
   rewardName   String // snapshot, caso o prêmio seja editado depois
   pointsCost   Int // snapshot
+  cashCents    Int              @default(0) // snapshot do valor em R$ a cobrar no balcão
   code         String
   status       RedemptionStatus @default(PENDING)
   createdAt    DateTime         @default(now())
@@ -449,4 +451,17 @@ model AdminLog {
 
   @@index([createdAt])
   @@index([restaurantId])
+}
+
+/// Link de redefinição de senha enviado por e-mail. kind = "customer" | "restaurant". Só o hash do token é guardado.
+model PasswordReset {
+  id        String    @id @default(uuid())
+  kind      String
+  subjectId String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([kind, subjectId])
 }

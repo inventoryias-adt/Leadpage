@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Icon } from './Icons';
 
-export type WebImage = { code: string; name: string; brand: string; thumb: string; image: string };
+export type WebImage = { code: string; name: string; brand: string; thumb: string; image: string; alt?: string };
 
 /** Busca fotos de produtos por nome ou código de barras e deixa o dono escolher uma. */
 export function WebImageSearch({ onChoose, initialQuery = '' }: { onChoose: (item: WebImage) => void; initialQuery?: string }) {
@@ -35,6 +35,13 @@ export function WebImageSearch({ onChoose, initialQuery = '' }: { onChoose: (ite
 
   return (
     <div className="mt-3 space-y-3 rounded-lg border border-slate-200 bg-white p-3">
+      <div>
+        <p className="text-sm font-semibold text-slate-800">Busque a foto do produto de duas formas</p>
+        <ul className="mt-1 space-y-0.5 text-xs text-slate-600">
+          <li><span className="font-semibold">Pelo nome:</span> digite como no rótulo, ex.: <em>Coca-Cola 350 ml</em></li>
+          <li><span className="font-semibold">Pelo código de barras:</span> digite os números (EAN), ex.: <em>7894900011517</em></li>
+        </ul>
+      </div>
       <div className="flex gap-2">
         <input
           value={q}
@@ -46,7 +53,7 @@ export function WebImageSearch({ onChoose, initialQuery = '' }: { onChoose: (ite
             }
           }}
           className="glass-input"
-          placeholder="Código de barras ou nome (ex.: guaraná 350 ml)"
+          placeholder="Nome ou código de barras"
           aria-label="Buscar foto do produto na web"
           maxLength={60}
         />
@@ -72,7 +79,7 @@ export function WebImageSearch({ onChoose, initialQuery = '' }: { onChoose: (ite
           ))}
         </ul>
       )}
-      <p className="text-[11px] text-slate-500">Fotos do Open Food Facts. Funciona melhor com produtos embalados e bebidas.</p>
+      <p className="text-[11px] text-slate-500">Damos preferência às fotos da Bluesoft (fundo branco); se não houver, usamos o Open Food Facts. Funciona melhor com produtos embalados e bebidas.</p>
     </div>
   );
 }

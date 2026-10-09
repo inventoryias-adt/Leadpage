@@ -14,7 +14,7 @@ import { validCoords } from '@/lib/geo';
 import { UFS, cepDigits, composeAddress } from '@/lib/address';
 import { BusinessError } from '@/lib/claims';
 import { saveImageFromDataUrl } from '@/lib/images';
-import { downloadImageAsDataUrl } from '@/lib/product-images';
+import { downloadWithFallback } from '@/lib/product-images';
 import { describeChallenge } from '@/lib/challenges';
 import { applyPromos, endOfDayBR, promoBadge, startOfDayBR, parseTime } from '@/lib/promos';
 import { fail, type FormState } from '@/lib/form';
@@ -194,7 +194,15 @@ const rewardSchema = z.object({
   name: z.string().trim().min(2, 'Informe o nome do produto.').max(80),
   description: z.string().trim().max(160).optional().default(''),
   pointsCost: z.coerce.number().int('Use um número inteiro.').min(1, 'Mínimo de 1 ponto.').max(10_000_000),
+  cashValue: z.string().trim().max(20).optional().default(''), // R$ cobrado no balcão junto com os pontos (opcional)
 });
+
+/** Valor em reais digitado ("8,00") → centavos. Vazio = 0 (só pontos). */
+function cashCentsFrom(input: string): number | 'invalid' {
+  if (!input) return 0;
+  const cents = parseMoneyToCents(input);
+  return cents == null || cents > MAX_BILL_CENTS ? 'invalid' : cents;
+}
 
 /** Aceita só data URL de imagem; campo vazio = sem foto nova. */
 const imageField = (formData: FormData, key: string) => {
@@ -209,7 +217,7 @@ async function photoFromForm(formData: FormData): Promise<string | null> {
   const web = String(formData.get('imageWebUrl') ?? '');
   if (!web) return null;
   try {
-    return await downloadImageAsDataUrl(web);
+    return await downloadWithFallback(web, String(formData.get('imageWebAlt') ?? '') || undefined);
   } catch (e) {
     throw new BusinessError(e instanceof Error ? e.message : 'Não foi possível baixar a imagem.');
   }
@@ -223,11 +231,14 @@ export async function addReward(_: FormState, formData: FormData): Promise<FormS
     return fail('Limite de 100 produtos atingido.', formData);
   }
 
+  const cash = cashCentsFrom(parsed.data.cashValue);
+  if (cash === 'invalid') return fail('Valor em R$ inválido. Use algo como 8,00.', formData);
+
   try {
     const photo = await photoFromForm(formData);
     const imageId = photo ? await saveImageFromDataUrl(restaurant.id, photo) : null;
     await prisma.reward.create({
-      data: { name: parsed.data.name, description: parsed.data.description || null, pointsCost: parsed.data.pointsCost, imageId, restaurantId: restaurant.id },
+      data: { name: parsed.data.name, description: parsed.data.description || null, pointsCost: parsed.data.pointsCost, cashCents: cash, imageId, restaurantId: restaurant.id },
     });
   } catch (e) {
     if (e instanceof BusinessError) return fail(e.message, formData);
@@ -235,6 +246,25 @@ export async function addReward(_: FormState, formData: FormData): Promise<FormS
   }
   revalidatePath('/dashboard', 'layout');
   return { ok: 'Produto adicionado.' };
+}
+
+/** Edita nome, pontos, valor em R$ e descrição de um produto já cadastrado. Resgates antigos mantêm o preço da época. */
+export async function updateReward(_: FormState, formData: FormData): Promise<FormState> {
+  const restaurant = await requirePaidRestaurant();
+  const id = String(formData.get('id') ?? '');
+  const parsed = rewardSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return fail(firstIssue(parsed.error), formData);
+  const cash = cashCentsFrom(parsed.data.cashValue);
+  if (cash === 'invalid') return fail('Valor em R$ inválido. Use algo como 8,00.', formData);
+  const reward = await prisma.reward.findFirst({ where: { id, restaurantId: restaurant.id, active: true } });
+  if (!reward) return { error: 'Produto não encontrado.' };
+  await prisma.reward.update({
+    where: { id },
+    data: { name: parsed.data.name, description: parsed.data.description || null, pointsCost: parsed.data.pointsCost, cashCents: cash },
+  });
+  revalidatePath('/dashboard', 'layout');
+  revalidatePath('/', 'layout');
+  return { ok: 'Produto atualizado.' };
 }
 
 /** Troca a foto de um prêmio já cadastrado. */
@@ -500,7 +530,7 @@ export async function finishGuide() {
 
 export type CaixaState = {
   error?: string;
-  claim?: { url: string; points: number; description: string; expiresAt: string; phone?: string };
+  claim?: { url: string; points: number; amountCents: number; description: string; createdAt: string; expiresAt: string; phone?: string };
 };
 
 const caixaSchema = z.object({
@@ -552,7 +582,9 @@ export async function createClaim(_: CaixaState, formData: FormData): Promise<Ca
     claim: {
       url: `${appUrl()}/r/${token}`,
       points,
+      amountCents,
       description,
+      createdAt: new Date().toISOString(),
       expiresAt: expiresAt.toISOString(),
       phone: parsed.phone || undefined,
     },

@@ -93,6 +93,7 @@ export function ImageUpload({
       </div>
       <input type="hidden" name={name} value={data} />
       {webSearch && <input type="hidden" name="imageWebUrl" value={web?.image ?? ''} />}
+      {webSearch && <input type="hidden" name="imageWebAlt" value={web?.alt ?? ''} />}
       {webSearch && searching && (
         <WebImageSearch
           onChoose={(item) => {

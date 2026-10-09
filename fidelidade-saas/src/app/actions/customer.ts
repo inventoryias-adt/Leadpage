@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { isValidCpf, normalizePhone, onlyDigits } from '@/lib/br';
 import { BusinessError, creditClaim, performCheckIn, redeemItems, redeemReward, type BagItem } from '@/lib/claims';
+import { emailConfigured } from '@/lib/mailer';
 import { dummyHash, hashPassword, verifyPassword } from '@/lib/password';
 import { newReferralCode } from '@/lib/tokens';
 import { endCustomerSession, getCustomer, startCustomerSession } from '@/lib/session';
@@ -113,6 +114,8 @@ export async function customerRecover(_: FormState, formData: FormData): Promise
 
   const customer = await prisma.customer.findUnique({ where: { cpf } });
   if (!customer) return fail('Não encontramos cadastro com este CPF. Use “Criar conta”.', formData);
+  // Quem já tem senha e pode receber e-mail redefine por e-mail: CPF + telefone sozinhos não bastam para trocar uma senha.
+  if (customer.passwordHash && emailConfigured()) return fail('Esta conta já tem senha. Use “Esqueci minha senha” para receber um link por e-mail.', formData);
   if (customer.phone !== phone) return fail('O telefone não confere com o cadastrado para este CPF.', formData);
   const taken = await prisma.customer.findUnique({ where: { email }, select: { id: true } });
   if (taken && taken.id !== customer.id) return fail('Este e-mail já está em uso por outra conta.', formData);

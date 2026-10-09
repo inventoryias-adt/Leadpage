@@ -2,12 +2,13 @@ import Link from 'next/link';
 import { Brand } from '@/components/Brand';
 import { Icon, type IconName } from '@/components/Icons';
 import { Illustration } from '@/components/Illustrations';
+import { SignupCta } from '@/components/SignupCta';
 import { LandingMock } from '@/components/LandingMock';
 import { SignupForm } from '@/components/AuthForms';
 
 const steps = [
-  { n: '1', variant: 'qr' as const, title: 'O caixa lança a conta', text: 'Ele digita o valor gasto e marca se o cliente avaliou no Google ou postou no Instagram.' },
-  { n: '2', variant: 'places' as const, title: 'Cliente lê o QR Code', text: 'Ou recebe o link no WhatsApp. Sem baixar app: abre direto no celular, em segundos.' },
+  { n: '1', variant: 'caixa' as const, title: 'O caixa lança a conta', text: 'Ele digita o valor gasto e marca se o cliente avaliou no Google ou postou no Instagram.' },
+  { n: '2', variant: 'scan' as const, title: 'Cliente lê o QR Code', text: 'Ou recebe o link no WhatsApp. Sem baixar app: abre direto no celular, em segundos.' },
   { n: '3', variant: 'gift' as const, title: 'Pontos viram prêmios', text: 'O saldo fica na carteira digital do cliente e ele troca por produtos que você escolheu.' },
 ];
 
@@ -42,12 +43,12 @@ function Hatch() {
 }
 
 /** Botão principal de chamada para ação. */
-function Cta({ href, children }: { href: string; children: React.ReactNode; dark?: boolean }) {
+function Cta({ children }: { children: React.ReactNode }) {
   return (
-    <a href={href} className="glass-button !w-auto !px-6 !py-3 !text-base">
+    <SignupCta className="glass-button !w-auto !px-6 !py-3 !text-base">
       {children}
       <Icon name="chevron" size={16} />
-    </a>
+    </SignupCta>
   );
 }
 
@@ -78,7 +79,7 @@ export default function LandingPage() {
             Pontos, prêmios e desafios num só lugar: o cliente lê um QR Code, acumula pontos na carteira digital e troca por produtos que você escolhe. Sem app para baixar.
           </p>
           <div className="flex flex-wrap items-center gap-5">
-            <Cta href="#assinar">Começar agora</Cta>
+            <Cta>Começar agora</Cta>
             <p className="text-sm text-slate-500">
               <span className="text-2xl font-semibold text-primary">R$ 197,00</span> / mês · sem taxa de adesão
             </p>
@@ -154,7 +155,7 @@ export default function LandingPage() {
             ))}
           </ul>
         </div>
-        <a href="#assinar" className="glass-button !w-auto !border-white !bg-white !px-6 !py-3 !text-primary hover:!bg-slate-100">Quero fidelizar meus clientes</a>
+        <SignupCta className="glass-button !w-auto !border-white !bg-white !px-6 !py-3 !text-primary hover:!bg-slate-100">Quero fidelizar meus clientes</SignupCta>
       </section>
 
       {/* FAQ */}
@@ -181,7 +182,7 @@ export default function LandingPage() {
         <div className="flex gap-5 font-semibold text-primary">
           <Link href="/entrar" className="hover:text-electric-600">Sou cliente</Link>
           <Link href="/login" className="hover:text-electric-600">Entrar</Link>
-          <a href="#assinar" className="hover:text-electric-600">Assinar</a>
+          <SignupCta className="hover:text-electric-600">Assinar</SignupCta>
         </div>
         <p>© {new Date().getFullYear()} Fidelize. Todos os direitos reservados.</p>
       </footer>

@@ -3,6 +3,7 @@
 import { useActionState, useState } from 'react';
 import { login, signup } from '@/app/actions/auth';
 import { customerLogin, customerRecover, customerSignup } from '@/app/actions/customer';
+import { requestCustomerReset, requestOwnerReset, resetPassword } from '@/app/actions/password-reset';
 import { FormMessage, SubmitButton } from './ui';
 import { MaskedInput } from './MaskedInput';
 
@@ -49,11 +50,14 @@ export function LoginForm() {
       </div>
       <FormMessage state={state} />
       <SubmitButton pendingText="Entrando…">Entrar</SubmitButton>
+      <p className="text-center text-sm">
+        <a href="/login/esqueci" className="link-inline font-semibold">Esqueci minha senha</a>
+      </p>
     </form>
   );
 }
 
-type Mode = 'entrar' | 'criar' | 'recuperar';
+type Mode = 'entrar' | 'criar' | 'recuperar' | 'esqueci';
 
 /**
  * Acesso do cliente final: entrar (e-mail e senha), criar conta ou, para quem já tinha cadastro por CPF e
@@ -99,7 +103,12 @@ export function CustomerAuthForm({
 
   return (
     <div className="space-y-5">
-      {mode !== 'recuperar' ? (
+      {mode === 'esqueci' ? (
+        <div>
+          <h2 className="text-lg font-bold text-primary">Esqueci minha senha</h2>
+          <p className="text-sm text-slate-500">Informe o e-mail da sua conta e enviamos um link para criar uma senha nova.</p>
+        </div>
+      ) : mode !== 'recuperar' ? (
         <div role="tablist" aria-label="Entrar ou criar conta" className="flex gap-1 rounded-md bg-slate-100 p-1">
           {tab('entrar', 'Entrar')}
           {tab('criar', 'Criar conta')}
@@ -110,14 +119,15 @@ export function CustomerAuthForm({
           <p className="text-sm text-slate-500">Confirme seu CPF e telefone e crie seu e-mail e senha. Serve também se você esqueceu a senha.</p>
         </div>
       )}
-      {mode === 'entrar' && <LoginPane hidden={hidden} cta={cta} onRecover={() => setMode('recuperar')} />}
+      {mode === 'entrar' && <LoginPane hidden={hidden} cta={cta} onRecover={() => setMode('recuperar')} onForgot={() => setMode('esqueci')} />}
+      {mode === 'esqueci' && <ForgotForm kind="customer" onBack={() => setMode('entrar')} />}
       {mode === 'criar' && <SignupPane hidden={hidden} cta={cta === 'Entrar' ? 'Criar minha conta' : cta} />}
       {mode === 'recuperar' && <RecoverPane hidden={hidden} onBack={() => setMode('entrar')} />}
     </div>
   );
 }
 
-function LoginPane({ hidden, cta, onRecover }: { hidden: React.ReactNode; cta: string; onRecover: () => void }) {
+function LoginPane({ hidden, cta, onRecover, onForgot }: { hidden: React.ReactNode; cta: string; onRecover: () => void; onForgot: () => void }) {
   const [state, action] = useActionState(customerLogin, {});
   return (
     <form action={action} className="space-y-4">
@@ -132,6 +142,9 @@ function LoginPane({ hidden, cta, onRecover }: { hidden: React.ReactNode; cta: s
       </div>
       <FormMessage state={state} />
       <SubmitButton pendingText="Entrando…">{cta}</SubmitButton>
+      <p className="text-center text-sm">
+        <button type="button" onClick={onForgot} className="link-inline font-semibold">Esqueci minha senha</button>
+      </p>
       <p className="text-center text-sm text-slate-600">
         Já tinha cadastro com CPF e telefone?{' '}
         <button type="button" onClick={onRecover} className="link-inline font-semibold">Crie seu e-mail e senha</button>
@@ -197,6 +210,57 @@ function RecoverPane({ hidden, onBack }: { hidden: React.ReactNode; onBack: () =
       <p className="text-center text-sm">
         <button type="button" onClick={onBack} className="link-inline font-semibold">Voltar</button>
       </p>
+    </form>
+  );
+}
+
+/** Pede o link de redefinição por e-mail (cliente ou dono). */
+export function ForgotForm({ kind, onBack, backHref }: { kind: 'customer' | 'restaurant'; onBack?: () => void; backHref?: string }) {
+  const [state, action] = useActionState(kind === 'customer' ? requestCustomerReset : requestOwnerReset, {});
+  return (
+    <form action={action} className="space-y-4">
+      <div>
+        <label className="glass-label" htmlFor={`forgot-${kind}`}>E-mail da conta</label>
+        <input id={`forgot-${kind}`} name="email" type="email" defaultValue={state.values?.email} className="glass-input" placeholder="voce@email.com" autoComplete="username" required />
+      </div>
+      <FormMessage state={state} />
+      <SubmitButton pendingText="Enviando…">Enviar link por e-mail</SubmitButton>
+      <p className="text-center text-sm">
+        {onBack ? (
+          <button type="button" onClick={onBack} className="link-inline font-semibold">Voltar</button>
+        ) : (
+          <a href={backHref ?? '/login'} className="link-inline font-semibold">Voltar para entrar</a>
+        )}
+      </p>
+    </form>
+  );
+}
+
+/** Define a senha nova a partir do link recebido por e-mail. */
+export function ResetPasswordForm({ tipo, token, loginHref }: { tipo: string; token: string; loginHref: string }) {
+  const [state, action] = useActionState(resetPassword, {});
+  if (state.ok) {
+    return (
+      <div className="space-y-4" role="status">
+        <p className="glass-success">{state.ok}</p>
+        <a href={loginHref} className="glass-button">Entrar</a>
+      </div>
+    );
+  }
+  return (
+    <form action={action} className="space-y-4">
+      <input type="hidden" name="tipo" value={tipo} />
+      <input type="hidden" name="token" value={token} />
+      <div>
+        <label className="glass-label" htmlFor="rp-pw">Senha nova</label>
+        <input id="rp-pw" name="password" type="password" className="glass-input" placeholder="Mínimo de 8 caracteres" autoComplete="new-password" minLength={8} maxLength={72} required />
+      </div>
+      <div>
+        <label className="glass-label" htmlFor="rp-conf">Repita a senha nova</label>
+        <input id="rp-conf" name="confirm" type="password" className="glass-input" autoComplete="new-password" minLength={8} maxLength={72} required />
+      </div>
+      <FormMessage state={state} />
+      <SubmitButton pendingText="Salvando…">Salvar senha nova</SubmitButton>
     </form>
   );
 }

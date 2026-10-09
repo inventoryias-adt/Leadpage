@@ -69,7 +69,7 @@ export default async function PremiosPage({ params }: { params: Promise<{ restau
           remainingThisMonth={Math.max(0, restaurant.maxRedeemsPerMonth - usedThisMonth)}
           limit={restaurant.maxRedeemsPerMonth}
           hoursText={hoursText}
-          rewards={rewards.map((r) => ({ id: r.id, name: r.name, description: r.description, pointsCost: r.pointsCost, imageUrl: imageUrl(r.imageId) }))}
+          rewards={rewards.map((r) => ({ id: r.id, name: r.name, description: r.description, pointsCost: r.pointsCost, cashCents: r.cashCents, imageUrl: imageUrl(r.imageId) }))}
         />
       )}
     </main>

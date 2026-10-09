@@ -6,7 +6,7 @@ import { IntroSlides } from '@/components/IntroSlides';
 import { PlaceAvatar, RewardImage } from '@/components/Visual';
 import { prisma } from '@/lib/db';
 import { imageUrl } from '@/lib/images';
-import { formatPoints } from '@/lib/points';
+import { formatPoints, formatPrice } from '@/lib/points';
 import { requireCustomer } from '@/lib/session';
 
 export const metadata = { title: 'Início' };
@@ -86,7 +86,7 @@ export default async function CarteiraPage() {
                   <div className="space-y-0.5 p-3">
                     <p className="truncate text-sm font-bold text-slate-800">{r.name}</p>
                     <p className="truncate text-xs text-slate-500">{r.place.name}</p>
-                    <p className="text-sm font-semibold text-electric-600">{formatPoints(r.pointsCost)} pts</p>
+                    <p className="text-sm font-semibold text-electric-600">{formatPrice(r.pointsCost, r.cashCents)}</p>
                   </div>
                 </Link>
               </li>

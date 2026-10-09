@@ -12,7 +12,7 @@ import { prisma } from '@/lib/db';
 import { isOpenNow, parseSchedule, todayLabel } from '@/lib/hours';
 import { imageUrl } from '@/lib/images';
 import { appUrl } from '@/lib/payments';
-import { formatBRL, formatPoints } from '@/lib/points';
+import { formatBRL, formatPoints, formatPrice } from '@/lib/points';
 import { promoActiveAt, promoBadge, promoStatus, promoWhen } from '@/lib/promos';
 import { getCustomer } from '@/lib/session';
 import { newReferralCode } from '@/lib/tokens';
@@ -269,7 +269,7 @@ export default async function LugarPage({
                       <RewardImage src={imageUrl(r.imageId)} name={r.name} className="h-28 w-full" />
                       <div className="space-y-1.5 p-3">
                         <p className="truncate text-sm font-bold text-slate-800">{r.name}</p>
-                        <p className="text-sm font-semibold text-electric-600">{formatPoints(r.pointsCost)} pts</p>
+                        <p className="text-sm font-semibold text-electric-600">{formatPrice(r.pointsCost, r.cashCents)}</p>
                         {customer && (missing > 0 ? (
                           <>
                             <ProgressBar value={balance} max={r.pointsCost} label={`Progresso para ${r.name}`} />

@@ -34,6 +34,11 @@ export function formatBRL(cents: number): string {
   return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+/** Preço de um prêmio: "300 pts" ou, com desconto, "R$ 8,00 + 300 pts". */
+export function formatPrice(points: number, cashCents: number): string {
+  return cashCents > 0 ? `${formatBRL(cashCents)} + ${formatPoints(points)} pts` : `${formatPoints(points)} pts`;
+}
+
 export function formatPoints(points: number): string {
   return points.toLocaleString('pt-BR');
 }

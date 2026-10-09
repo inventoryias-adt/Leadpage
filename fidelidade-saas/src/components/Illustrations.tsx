@@ -1,8 +1,8 @@
 import { Icon, type IconName } from './Icons';
 
-type Variant = 'qr' | 'places' | 'gift' | 'empty';
+type Variant = 'qr' | 'places' | 'gift' | 'empty' | 'caixa' | 'scan';
 
-const ICON: Record<Variant, IconName> = { qr: 'camera', places: 'pin', gift: 'gift', empty: 'search' };
+const ICON: Record<Variant, IconName> = { qr: 'camera', places: 'pin', gift: 'gift', empty: 'search', caixa: 'receipt', scan: 'qr' };
 
 /** Marca visual discreta das telas de apresentação e vazias: um ícone de linha em um ladrilho neutro. */
 export function Illustration({ variant, size = 120 }: { variant: Variant; size?: number }) {

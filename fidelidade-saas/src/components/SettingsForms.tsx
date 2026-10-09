@@ -1,6 +1,6 @@
 'use client';
 
-import { startTransition, useActionState, useId, useState } from 'react';
+import { startTransition, useActionState, useEffect, useId, useState } from 'react';
 import {
   addChallenge,
   addInteraction,
@@ -13,8 +13,9 @@ import {
   saveRules,
   saveUnit,
   setRewardImage,
+  updateReward,
 } from '@/app/actions/restaurant';
-import { changePassword } from '@/app/actions/auth';
+import { changePassword, openBillingPortal } from '@/app/actions/auth';
 import { UFS, cepDigits, maskCep, parseViaCep } from '@/lib/address';
 import { CATEGORIES, CATEGORY_HINT } from '@/lib/categories';
 import { categoryRequestMessage, supportLink } from '@/lib/support';
@@ -87,6 +88,11 @@ export function AddRewardForm() {
         <input name="name" defaultValue={state.values?.name} className="glass-input" placeholder="Ex.: Sobremesa grátis" aria-label="Nome do produto" required />
         <input name="pointsCost" defaultValue={state.values?.pointsCost} type="number" min={1} inputMode="numeric" className="glass-input" placeholder="Pontos" aria-label="Custo em pontos" required />
       </div>
+      <div>
+        <label className="glass-label" htmlFor="rw-cash">Valor em R$ <span className="font-normal text-slate-500">(opcional — para produto com desconto)</span></label>
+        <input id="rw-cash" name="cashValue" defaultValue={state.values?.cashValue} inputMode="decimal" className="glass-input sm:max-w-[12rem]" placeholder="Ex.: 8,00" />
+        <p className="mt-1 text-xs text-slate-500">Deixe vazio para resgate só com pontos. Com valor, o cliente paga esse valor no balcão e dá os pontos. Faça a conta para ter certeza de que compensa.</p>
+      </div>
       <input name="description" defaultValue={state.values?.description} className="glass-input" placeholder="Descrição curta (opcional)" aria-label="Descrição do produto" maxLength={160} />
       <FormMessage state={state} />
       <SubmitButton variant="ghost" pendingText="Adicionando…">Adicionar produto</SubmitButton>
@@ -98,9 +104,10 @@ export function AddRewardForm() {
  * Foto de um produto já cadastrado, num passo só: "Trocar foto" abre a pasta do computador e salva assim que o
  * arquivo é escolhido; "Buscar na web" mostra fotos por nome ou código de barras e salva a escolhida.
  */
-export function RewardPhotoForm({ id, hasPhoto, name }: { id: string; hasPhoto: boolean; name: string }) {
+export function RewardPhotoForm({ id, hasPhoto, name, edit }: { id: string; hasPhoto: boolean; name: string; edit: { description: string; pointsCost: number; cashCents: number } }) {
   const [state, action, pending] = useActionState(setRewardImage, {});
   const [searching, setSearching] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const fileId = useId();
@@ -139,7 +146,11 @@ export function RewardPhotoForm({ id, hasPhoto, name }: { id: string; hasPhoto: 
         <button type="button" className="glass-button-ghost btn-sm" onClick={() => setSearching((v) => !v)} aria-expanded={searching} disabled={working}>
           <Icon name="search" size={15} /> Buscar na web
         </button>
+        <button type="button" className="glass-button-ghost btn-sm" onClick={() => setEditing((v) => !v)} aria-expanded={editing}>
+          <Icon name="cog" size={15} /> Editar produto
+        </button>
       </div>
+      {editing && <EditRewardForm id={id} name={name} {...edit} onDone={() => setEditing(false)} />}
       {(error || state.error) && <p role="alert" className="mt-2 text-xs text-red-600">{error || state.error}</p>}
       {state.ok && !working && !error && <p role="status" className="mt-2 text-xs text-emerald-700">{state.ok}</p>}
       {searching && (
@@ -147,11 +158,66 @@ export function RewardPhotoForm({ id, hasPhoto, name }: { id: string; hasPhoto: 
           initialQuery={name}
           onChoose={(item) => {
             setSearching(false);
-            send({ imageWebUrl: item.image });
+            send({ imageWebUrl: item.image, imageWebAlt: item.alt ?? '' });
           }}
         />
       )}
     </div>
+  );
+}
+
+/** Edita nome, pontos, valor em R$ (opcional) e descrição de um produto já cadastrado. */
+function EditRewardForm({ id, name, description, pointsCost, cashCents, onDone }: { id: string; name: string; description: string; pointsCost: number; cashCents: number; onDone: () => void }) {
+  const [state, action] = useActionState(updateReward, {});
+  useEffect(() => {
+    if (state.ok) onDone();
+  }, [state.ok, onDone]);
+  return (
+    <form action={action} className="mt-3 space-y-3 rounded-lg border border-slate-200 bg-white p-3">
+      <input type="hidden" name="id" value={id} />
+      <div className="grid gap-3 sm:grid-cols-[1fr_8rem_9rem]">
+        <div>
+          <label className="glass-label" htmlFor={`e-name-${id}`}>Nome</label>
+          <input id={`e-name-${id}`} name="name" defaultValue={state.values?.name ?? name} className="glass-input" required maxLength={80} />
+        </div>
+        <div>
+          <label className="glass-label" htmlFor={`e-pts-${id}`}>Pontos</label>
+          <input id={`e-pts-${id}`} name="pointsCost" type="number" min={1} inputMode="numeric" defaultValue={state.values?.pointsCost ?? pointsCost} className="glass-input" required />
+        </div>
+        <div>
+          <label className="glass-label" htmlFor={`e-cash-${id}`}>Valor em R$ <span className="font-normal text-slate-500">(opcional)</span></label>
+          <input id={`e-cash-${id}`} name="cashValue" inputMode="decimal" defaultValue={state.values?.cashValue ?? (cashCents > 0 ? (cashCents / 100).toFixed(2).replace('.', ',') : '')} className="glass-input" placeholder="0,00" />
+        </div>
+      </div>
+      <div>
+        <label className="glass-label" htmlFor={`e-desc-${id}`}>Descrição</label>
+        <input id={`e-desc-${id}`} name="description" defaultValue={state.values?.description ?? description} className="glass-input" maxLength={160} placeholder="Opcional" />
+      </div>
+      <p className="text-xs text-slate-500">Resgates já feitos mantêm o preço da época. Com valor em R$, o cliente paga no balcão e dá os pontos.</p>
+      <FormMessage state={state} />
+      <div className="flex gap-2">
+        <SubmitButton pendingText="Salvando…" className="btn-sm">Salvar alterações</SubmitButton>
+        <button type="button" className="glass-button-ghost btn-sm" onClick={onDone}>Cancelar</button>
+      </div>
+    </form>
+  );
+}
+
+/** Abre o portal do Stripe (cartão, faturas, cancelamento); se falhar, explica e oferece o suporte. */
+export function BillingPortalForm({ supportHref }: { supportHref: string | null }) {
+  const [state, action] = useActionState(openBillingPortal, {});
+  return (
+    <form action={action} className="mt-6 border-t border-[#E5E7EB] pt-5">
+      <h3 className="mb-1 font-semibold text-primary">Assinatura e faturas</h3>
+      <p className="mb-3 text-sm text-slate-600">Troque o cartão, baixe as faturas e recibos ou cancele a assinatura, em uma página segura do Stripe.</p>
+      <SubmitButton variant="ghost" pendingText="Abrindo…" className="btn-sm">Gerenciar assinatura e faturas</SubmitButton>
+      {state.error && (
+        <p role="alert" className="glass-error mt-3">
+          {state.error}{' '}
+          {supportHref && <a href={supportHref} target="_blank" rel="noopener noreferrer" className="link-inline">Falar com o suporte</a>}
+        </p>
+      )}
+    </form>
   );
 }
 
