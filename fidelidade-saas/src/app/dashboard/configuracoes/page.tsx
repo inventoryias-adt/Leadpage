@@ -7,6 +7,7 @@ import {
   BasicsForm,
   BillingPortalForm,
   EngagementForm,
+  SharingForm,
   FinishOnboardingForm,
   IdentityForm,
   PasswordForm,
@@ -63,6 +64,7 @@ const SECTIONS = [
   ['desafios', 'Desafios'],
   ['campanhas', 'Campanhas'],
   ['produtos', 'Produtos'],
+  ['compartilhar', 'Pontos compartilhados'],
   ['conta', 'Minha conta'],
 ] as const;
 
@@ -286,7 +288,11 @@ export default async function ConfiguracoesPage() {
         <AddRewardForm />
       </Section>
 
-      <Section id="conta" n={10} title="Minha conta" hint="Troque a senha de acesso ao painel. Use uma senha que só você conheça.">
+      <Section id="compartilhar" n={10} title="Pontos compartilhados" hint="Uma rede entre lugares: o cliente junta pontos em um e pode usar em outros que participam.">
+        <SharingForm defaults={{ pointsShareOut: restaurant.pointsShareOut, pointsAcceptIn: restaurant.pointsAcceptIn }} />
+      </Section>
+
+      <Section id="conta" n={11} title="Minha conta" hint="Troque a senha de acesso ao painel. Use uma senha que só você conheça.">
         <PasswordForm />
         {restaurant.paymentCustomerId && <BillingPortalForm supportHref={supportLink(process.env.SUPPORT_WHATSAPP, `Olá! Sou do estabelecimento "${restaurant.name}" e não consegui abrir o gerenciamento da assinatura no Fidelize.`)} />}
       </Section>

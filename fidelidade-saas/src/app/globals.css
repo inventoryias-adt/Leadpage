@@ -168,6 +168,11 @@ body {
     @apply bg-[#F3F6FD];
     border-color: #2150c9;
   }
+  .chip-link-active {
+    @apply font-semibold;
+    background-color: #e8eefb;
+    border-color: #c3d2f4;
+  }
 
   /* Link de texto dentro de conteúdo. */
   .link-inline {

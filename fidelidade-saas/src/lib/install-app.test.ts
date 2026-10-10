@@ -22,21 +22,18 @@ test('reconhece navegador embutido (não instala)', () => {
   assert.equal(isInAppBrowser(ANDROID), false);
 });
 
-test('oferece só no celular, fora do app instalado e respeitando "Agora não" por 14 dias', () => {
-  const now = Date.UTC(2026, 9, 9);
-  const base = { platform: 'android' as const, standalone: false, stored: null, now };
+test('oferece só no celular e fora do app instalado; "Agora não" nunca esconde', () => {
+  const base = { platform: 'android' as const, standalone: false, stored: null };
   assert.equal(shouldOffer(base), true);
   assert.equal(shouldOffer({ ...base, platform: 'other' }), false);
   assert.equal(shouldOffer({ ...base, standalone: true }), false);
   assert.equal(shouldOffer({ ...base, stored: 'installed' }), false);
-  assert.equal(shouldOffer({ ...base, stored: String(now - 3 * 86_400_000) }), false);
-  assert.equal(shouldOffer({ ...base, stored: String(now - 15 * 86_400_000) }), true);
-  assert.equal(shouldOffer({ ...base, stored: 'lixo' }), true);
+  assert.equal(shouldOffer({ ...base, stored: String(Date.now()) }), true, 'valor antigo de "dispensado" é ignorado: a informação fica fixa');
 });
 
-test('pop-up da primeira visita ignora o "Agora não" antigo do cartão, mas não o app instalado', () => {
+test('pop-up da primeira visita: só celular, só uma vez e não no app instalado', () => {
   const base = { platform: 'ios' as const, standalone: false, stored: String(Date.now()), introSeen: false };
-  assert.equal(shouldShowIntro(base), true, 'cartão dispensado há pouco não impede o pop-up');
+  assert.equal(shouldShowIntro(base), true, 'valor antigo de dispensa não impede o pop-up');
   assert.equal(shouldShowIntro({ ...base, introSeen: true }), false, 'só abre uma vez');
   assert.equal(shouldShowIntro({ ...base, stored: 'installed' }), false);
   assert.equal(shouldShowIntro({ ...base, standalone: true }), false);
