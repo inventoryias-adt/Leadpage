@@ -219,3 +219,15 @@ Recuperação por e-mail ainda não existe (precisa de um serviço de envio, com
   adicionar. Se a pessoa recusar, o pop-up não volta e fica o cartão no topo (em todas as telas do cliente, via `src/app/(cliente)/layout.tsx`, e em `/entrar`); o "Agora não" do cartão o esconde por 14 dias.
 - O pop-up da primeira visita **ignora** o "Agora não" antigo do cartão (só o app instalado o impede). Para reabri-lo num aparelho (teste ou ajudar alguém), acrescente `?instalar` ao endereço,
   ex.: `https://fidelize-nu.vercel.app/entrar?instalar`.
+
+## App do cliente: Início, Perfil e pontos compartilhados
+
+- **Cartão de instalação fixo**: "Agora não" não esconde nada, só **comprime** o cartão numa tira fina com uma seta para baixo (`COLLAPSE_KEY`); tocar na tira abre o cartão de novo e o botão
+  "Adicionar à tela inicial" instala (Android) ou abre o guia (iPhone). Só some quando o app está instalado.
+- **Início** (`/carteira`): Olá → **Suas carteiras** (carrossel horizontal, escala para muitos lugares, com total de pontos) → dicas de uso ("Já usou seus pontos hoje?", "Falta pouco" com o
+  prêmio mais próximo, "Veja o que te espera em Lugares") → **Prêmios para retirar** (3 e "Ver todos") → **Você pode resgatar agora** (carrossel e "Ver todos"). As consultas ficam em `src/lib/customer-rewards.ts`.
+- **Perfil** (`/perfil`): gráfico de pontos e dois atalhos — **Histórico de pontos** (`/perfil/pontos`, filtro por lugar, 100 mais recentes) e **Meus prêmios** (`/perfil/premios`, abas
+  *Para retirar*, *Posso resgatar* e *Já resgatados*, com lugar, unidade e data da entrega).
+- **Pontos compartilhados** (migration `0015_pontos_compartilhados`): em Regras → "Pontos compartilhados" cada estabelecimento liga/desliga `pointsShareOut` ("meus pontos valem em outros
+  lugares") e `pointsAcceptIn` ("aceito pontos de outros lugares"), ambos desligados por padrão. No Perfil o cliente vê cada carteira como *Compartilhada* ou *Individual* e a lista de lugares
+  que aceitam pontos de outros. **A troca de pontos entre lugares ainda não está ativa**: falta definir a regra de conversão e de quem arca com o prêmio.

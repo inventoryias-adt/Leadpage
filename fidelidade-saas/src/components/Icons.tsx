@@ -76,6 +76,7 @@ const paths = {
   ),
   chevron: <path d="m9 5 7 7-7 7" />,
   back: <path d="M15 5 8 12l7 7" />,
+  down: <path d="m5 9 7 7 7-7" />,
   bag: (
     <>
       <path d="M5 8h14l-1 12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 8Z" />

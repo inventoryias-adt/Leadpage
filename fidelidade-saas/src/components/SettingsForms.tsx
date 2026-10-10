@@ -9,6 +9,7 @@ import {
   finishOnboarding,
   saveBasics,
   saveEngagement,
+  saveSharing,
   saveIdentity,
   saveRules,
   saveUnit,
@@ -317,6 +318,33 @@ export function EngagementForm({ defaults }: { defaults: { checkInPoints: number
           <p className="mt-1 text-xs text-slate-500">Quem indica ganha quando o amigo faz a primeira compra. Use 0 para desligar.</p>
         </div>
       </div>
+      <FormMessage state={state} />
+      <SubmitButton pendingText="Salvando…">Salvar</SubmitButton>
+    </form>
+  );
+}
+
+export function SharingForm({ defaults }: { defaults: { pointsShareOut: boolean; pointsAcceptIn: boolean } }) {
+  const [state, action] = useActionState(saveSharing, {});
+  return (
+    <form action={action} className="space-y-4">
+      <label className="flex items-start gap-3">
+        <input type="checkbox" name="pointsShareOut" defaultChecked={defaults.pointsShareOut} className="mt-0.5 h-5 w-5 rounded accent-electric-500" />
+        <span className="text-sm text-slate-700">
+          <span className="font-semibold">Meus pontos valem em outros lugares</span>
+          <span className="block text-xs text-slate-500">Seus clientes poderão usar os pontos ganhos aqui em estabelecimentos que aceitam pontos de outros.</span>
+        </span>
+      </label>
+      <label className="flex items-start gap-3">
+        <input type="checkbox" name="pointsAcceptIn" defaultChecked={defaults.pointsAcceptIn} className="mt-0.5 h-5 w-5 rounded accent-electric-500" />
+        <span className="text-sm text-slate-700">
+          <span className="font-semibold">Aceito pontos de outros lugares</span>
+          <span className="block text-xs text-slate-500">Clientes de outros estabelecimentos poderão usar aqui os pontos que ganharam lá. Seu nome aparece na lista de quem aceita.</span>
+        </span>
+      </label>
+      <p className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+        Os dois começam desligados e você pode mudar quando quiser. Hoje isso já aparece para o cliente (carteira “compartilhada” ou “individual” e a lista de quem aceita); a troca de pontos entre lugares será liberada em seguida.
+      </p>
       <FormMessage state={state} />
       <SubmitButton pendingText="Salvando…">Salvar</SubmitButton>
     </form>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Icon } from './Icons';
-import { DISMISS_KEY, INTRO_KEY, detectPlatform, isInAppBrowser, shouldOffer, shouldShowIntro, type InstallPlatform } from '@/lib/install-app';
+import { COLLAPSE_KEY, DISMISS_KEY, INTRO_KEY, detectPlatform, isInAppBrowser, shouldOffer, shouldShowIntro, type InstallPlatform } from '@/lib/install-app';
 
 type DeferredPrompt = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }> };
 declare global {
@@ -37,6 +37,8 @@ export function InstallApp({ className = '' }: { className?: string }) {
   const [prompt, setPrompt] = useState<DeferredPrompt | null>(null);
   const [guide, setGuide] = useState(false);
   const [intro, setIntro] = useState(false);
+  const [collapsed, setCollapsed] = useState(false); // preferência (persistida): o cartão aparece comprimido
+  const [open, setOpen] = useState(false); // abriu a tira nesta tela (não persiste)
   const [safari, setSafari] = useState(false);
 
   useEffect(() => {
@@ -47,28 +49,23 @@ export function InstallApp({ className = '' }: { className?: string }) {
     setInApp(isInAppBrowser(ua));
     setSafari(!/CriOS|FxiOS|EdgiOS/i.test(ua));
     if (window.__fzInstall) setPrompt(window.__fzInstall); // o evento pode ter chegado antes de o React carregar
-    // ?instalar na URL reabre o pop-up (para testar ou ajudar alguém): esquece o que já foi dispensado/aberto neste aparelho
+    // ?instalar na URL reabre tudo (para testar ou ajudar alguém): esquece o que já foi recolhido/aberto neste aparelho
     if (new URLSearchParams(window.location.search).has('instalar')) {
       try {
         localStorage.removeItem(DISMISS_KEY);
         localStorage.removeItem(INTRO_KEY);
+        localStorage.removeItem(COLLAPSE_KEY);
       } catch {
         /* sem armazenamento */
       }
     }
     const stored = read();
-    let offer = shouldOffer({ platform: p, standalone, stored, now: Date.now() });
+    setVisible(shouldOffer({ platform: p, standalone, stored }));
+    setCollapsed(read(COLLAPSE_KEY) === '1');
     if (shouldShowIntro({ platform: p, standalone, stored, introSeen: !!read(INTRO_KEY) })) {
-      write('1', INTRO_KEY); // abre só na primeira visita; se fechar sem instalar, fica o cartão no topo
-      try {
-        localStorage.removeItem(DISMISS_KEY); // um "Agora não" antigo do cartão não pode esconder o cartão que fica após o pop-up
-      } catch {
-        /* sem armazenamento */
-      }
-      offer = true;
+      write('1', INTRO_KEY); // o pop-up abre só na primeira visita de cada aparelho
       setIntro(true);
     }
-    setVisible(offer);
 
     const onPrompt = (e: Event) => {
       e.preventDefault(); // guarda o evento para abrir só quando a pessoa tocar no botão
@@ -105,13 +102,28 @@ export function InstallApp({ className = '' }: { className?: string }) {
     }
   }
 
-  function dismiss() {
-    write(String(Date.now()));
-    setVisible(false);
+  /** "Agora não": só comprime o cartão numa tira fina; a informação continua fixa no topo. */
+  function collapse() {
+    write('1', COLLAPSE_KEY);
+    setCollapsed(true);
+    setOpen(false);
+    setIntro(false);
   }
 
   return (
     <>
+      {collapsed && !open ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-expanded={false}
+          aria-label="Mostrar como adicionar o Fidelize à tela inicial"
+          className={`flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white py-1 text-xs font-medium text-slate-500 transition-colors hover:border-slate-400 hover:text-slate-700 ${className}`}
+        >
+          Adicionar à tela inicial
+          <Icon name="down" size={14} strokeWidth={1.2} />
+        </button>
+      ) : (
       <section aria-label="Adicionar à tela inicial" className={`glass-panel p-4 ${className}`}>
         <div className="flex items-start gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -125,10 +137,11 @@ export function InstallApp({ className = '' }: { className?: string }) {
           <button type="button" onClick={() => void install()} className="glass-button btn-sm flex-1">
             <Icon name="plus" size={16} /> Adicionar à tela inicial
           </button>
-          <button type="button" onClick={dismiss} className="glass-button-ghost btn-sm shrink-0" title="Esconde este aviso por 14 dias">Agora não</button>
+          <button type="button" onClick={collapse} className="glass-button-ghost btn-sm shrink-0" title="Comprime este aviso no topo da tela">Agora não</button>
         </div>
       </section>
-      {intro && <InstallIntro onInstall={() => void install()} onClose={() => setIntro(false)} />}
+      )}
+      {intro && <InstallIntro onInstall={() => void install()} onClose={collapse} />}
       {guide && <InstallGuide platform={platform} inApp={inApp} safari={safari} onClose={() => setGuide(false)} />}
     </>
   );

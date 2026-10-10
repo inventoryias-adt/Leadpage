@@ -383,6 +383,19 @@ export async function saveEngagement(_: FormState, formData: FormData): Promise<
   return { ok: 'Salvo.' };
 }
 
+// ---------------------------------------------------------------- Pontos compartilhados
+
+/** Os dois interruptores do ecossistema: pontos daqui valem em outros lugares / aceita pontos de outros lugares. */
+export async function saveSharing(_: FormState, formData: FormData): Promise<FormState> {
+  const restaurant = await requirePaidRestaurant();
+  const pointsShareOut = formData.get('pointsShareOut') === 'on';
+  const pointsAcceptIn = formData.get('pointsAcceptIn') === 'on';
+  await prisma.restaurant.update({ where: { id: restaurant.id }, data: { pointsShareOut, pointsAcceptIn } });
+  revalidatePath('/dashboard', 'layout');
+  revalidatePath('/perfil');
+  return { ok: 'Salvo.' };
+}
+
 // ---------------------------------------------------------------- Desafios
 
 const challengeSchema = z.object({

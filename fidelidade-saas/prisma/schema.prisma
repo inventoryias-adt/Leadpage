@@ -68,6 +68,10 @@ model Restaurant {
   checkInPoints      Int @default(1) // pontos por check-in no local (0 desliga)
   referralPoints     Int @default(100) // pontos para quem indica um amigo que compra (0 desliga)
 
+  // Pontos compartilhados entre lugares (ecossistema). Os dois começam desligados.
+  pointsShareOut Boolean @default(false) // clientes podem usar em outros lugares os pontos ganhos aqui
+  pointsAcceptIn Boolean @default(false) // aceita pontos que o cliente ganhou em outros lugares
+
   // Vitrine pública ("Lugares")
   listed          Boolean @default(true)
   category        String?
