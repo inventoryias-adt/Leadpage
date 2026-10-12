@@ -313,3 +313,14 @@ Decisões em aberto: modelo de recebimento (Stripe Connect com Pix e repasse a c
 - **Segurança**: tudo é recalculado no servidor, na mesma transação, com **todas as carteiras do cliente travadas em ordem de id** (resgates simultâneos nunca gastam duas vezes nem se travam entre si; testado com 6 pedidos ao mesmo tempo).
   Só entram carteiras de lugares ativos com a chave ligada; lugar que não aceita ignora a opção.
 - **Números do dono**: as conversões são movimentações próprias (`SHARED_OUT` / `SHARED_IN`), por isso **não** entram em "pontos emitidos" nem em "resgatados" (só `EARN` e `REDEEM`).
+
+## Localização do cliente: "Onde está?" (migration `0022_enderecos_do_cliente`)
+
+- **Faixa "Onde está?"** no topo da vitrine (`/lugares`) abre o seletor `LocationPicker` (tela cheia no celular): **Minha localização** (GPS), **Marcar no mapa** e a lista de **endereços salvos** (Casa, Trabalho, Outro). A vitrine ordena do mais perto ao mais longe e mostra a distância de cada lugar.
+- **Marcar no mapa**: o pino fica fixo no centro e o cliente arrasta o mapa; a cada parada mostramos a rua e o bairro. **Usar CEP** (ViaCEP + Nominatim) recentraliza o mapa. Depois, **Qual o número?**: rua, número (ou "Sem número" = S/N), complemento e o tipo (Casa, Trabalho, Outro).
+  **Salvar endereço** grava na conta (`CustomerAddress`, até 6; Casa e Trabalho têm um só, salvar de novo troca); **Usar sem salvar** vale só neste aparelho. Quem não tem conta usa GPS ou mapa e é convidado a entrar para salvar.
+- A escolha fica no aparelho (`localStorage` `fz_loc_v1`, lida com validação: coordenadas fora do Brasil e dados adulterados são descartados). Endereço salvo que foi apagado em outro aparelho deixa de valer. Se o cliente já liberou o GPS e não escolheu nada, a vitrine usa o GPS sozinha. Se ele ignorar o pedido de permissão, o botão libera em 15 s.
+- **Servidor**: `saveMyAddress` valida tudo de novo (zod, ponto dentro do Brasil, limite por conta, limite de pedidos); `deleteMyAddress` só apaga o do próprio cliente. Lógica pura e testada em `src/lib/customer-location.ts`.
+- **Mapa** (Leaflet): por padrão usa os azulejos públicos do OpenStreetMap, ok para o piloto. **Em produção com muito acesso, use um provedor próprio** (MapTiler, Stadia, Mapbox…) definindo `NEXT_PUBLIC_MAP_TILES` com a URL no formato `https://.../{z}/{x}/{y}.png` (a política do OSM proíbe uso intenso).
+  A busca de endereço (reverso e por CEP) usa o Nominatim a partir do navegador do cliente, com a mesma ressalva de uso moderado; para escalar, trocar por um geocodificador pago.
+- A vitrine também ganhou o filtro **Em promoção** (lugares com promoção ativa).

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import type { SavedAddress } from '@/app/actions/location';
 import { distanceMeters, formatDistance } from '@/lib/geo';
 import { formatPoints } from '@/lib/points';
 import type { CampaignItem } from '@/lib/campaigns';
@@ -10,6 +11,7 @@ import { Carousel } from './Carousel';
 import { CategoryArt } from './CategoryArt';
 import { Icon } from './Icons';
 import { Illustration } from './Illustrations';
+import { LocationBar } from './LocationBar';
 import { PlaceAvatar } from './Visual';
 
 export type PlaceUnit = { id: string; name: string; address: string | null; lat: number | null; lng: number | null; openNow: boolean | null };
@@ -28,7 +30,7 @@ export type PlaceCard = {
   units: PlaceUnit[];
 };
 
-type Filter = 'all' | 'saldo' | 'aberto' | 'desafios';
+type Filter = 'all' | 'saldo' | 'aberto' | 'desafios' | 'promo';
 type Pos = { lat: number; lng: number };
 
 const FILTERS: { id: Filter; label: string }[] = [
@@ -36,39 +38,18 @@ const FILTERS: { id: Filter; label: string }[] = [
   { id: 'saldo', label: 'Onde tenho pontos' },
   { id: 'aberto', label: 'Abertos agora' },
   { id: 'desafios', label: 'Com desafios' },
+  { id: 'promo', label: 'Em promoção' },
 ];
 
 const norm = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 /** Vitrine de lugares: busca, filtros e ordenação por distância usando a localização do aparelho. */
-export function PlacesExplorer({ places, categories, loggedIn }: { places: PlaceCard[]; categories: { value: string; label: string; hint?: string }[]; loggedIn: boolean }) {
+export function PlacesExplorer({ places, categories, loggedIn, savedAddresses }: { places: PlaceCard[]; categories: { value: string; label: string; hint?: string }[]; loggedIn: boolean; savedAddresses: SavedAddress[] }) {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
   const [category, setCategory] = useState<string | null>(null);
   const [allOpen, setAllOpen] = useState(false);
   const [pos, setPos] = useState<Pos | null>(null);
-  const [geo, setGeo] = useState<'idle' | 'loading' | 'denied' | 'error'>('idle');
-
-  function locate() {
-    if (!('geolocation' in navigator)) {
-      setGeo('error');
-      return;
-    }
-    setGeo('loading');
-    navigator.geolocation.getCurrentPosition(
-      (p) => {
-        setPos({ lat: p.coords.latitude, lng: p.coords.longitude });
-        setGeo('idle');
-      },
-      (err) => setGeo(err.code === err.PERMISSION_DENIED ? 'denied' : 'error'),
-      { enableHighAccuracy: false, timeout: 12000, maximumAge: 120_000 },
-    );
-  }
-
-  // Se o usuário já liberou a localização antes, usa direto, sem pedir de novo.
-  useEffect(() => {
-    navigator.permissions?.query({ name: 'geolocation' }).then((r) => r.state === 'granted' && locate()).catch(() => {});
-  }, []);
 
   useEffect(() => {
     if (!allOpen) return;
@@ -102,6 +83,7 @@ export function PlacesExplorer({ places, categories, loggedIn }: { places: Place
         if (filter === 'saldo') return (p.balance ?? 0) > 0;
         if (filter === 'aberto') return p.openAny;
         if (filter === 'desafios') return p.challenges > 0;
+        if (filter === 'promo') return p.campaigns.some((c) => c.kind === 'promocao');
         return true;
       });
     rows.sort((a, b) => {
@@ -115,6 +97,7 @@ export function PlacesExplorer({ places, categories, loggedIn }: { places: Place
 
   return (
     <div className="space-y-4">
+      <LocationBar saved={savedAddresses} loggedIn={loggedIn} onChange={(c) => setPos(c ? { lat: c.lat, lng: c.lng } : null)} />
       <div className="relative">
         <Icon name="search" size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
         <input
@@ -123,31 +106,20 @@ export function PlacesExplorer({ places, categories, loggedIn }: { places: Place
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Buscar lugar ou categoria"
           aria-label="Buscar lugares"
+          autoComplete="off"
+          data-lpignore="true"
+          data-1p-ignore="true"
+          data-form-type="other"
           className="glass-input !pl-11"
         />
       </div>
 
-      {/* Localização */}
       {pos ? (
         <p className="flex items-center gap-2 text-sm font-medium text-emerald-700">
           <Icon name="pin" size={16} /> Mostrando do mais perto para o mais longe
         </p>
       ) : (
-        <div className="glass-inset flex items-center justify-between gap-3 p-3">
-          <p className="flex items-start gap-2 text-sm text-slate-700">
-            <Icon name="pin" size={18} className="mt-0.5 text-electric-600" />
-            <span>
-              {geo === 'denied'
-                ? 'Localização bloqueada. Libere no navegador para ver o que tem perto.'
-                : geo === 'error'
-                  ? 'Não foi possível obter a localização. Tente de novo.'
-                  : 'Ative a localização para ver os lugares mais perto de você.'}
-            </span>
-          </p>
-          <button type="button" onClick={locate} disabled={geo === 'loading'} className="glass-button btn-sm shrink-0">
-            {geo === 'loading' ? 'Buscando…' : 'Usar minha localização'}
-          </button>
-        </div>
+        <p className="text-sm text-slate-600">Escolha onde você está para ver o que tem perto e a distância de cada lugar.</p>
       )}
 
       {/* Filtros */}
