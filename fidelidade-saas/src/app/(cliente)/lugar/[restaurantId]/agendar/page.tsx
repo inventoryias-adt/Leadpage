@@ -2,8 +2,10 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { BookingForm } from '@/components/BookingForm';
 import { Icon } from '@/components/Icons';
+import { PlaceAvatar } from '@/components/Visual';
+import { imageUrl } from '@/lib/images';
 import { addDaysKey, bookingPoints, formatBookingWhen, parseDateKey, todayKey, weekdayOf } from '@/lib/booking';
-import { slotsForDay } from '@/lib/booking-db';
+import { slotsForDay, staffFor } from '@/lib/booking-db';
 import { prisma } from '@/lib/db';
 import { DAY_SHORT, parseSchedule } from '@/lib/hours';
 import { formatBRL, formatPoints } from '@/lib/points';
@@ -13,7 +15,7 @@ import { getCustomer } from '@/lib/session';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Agendar' };
 
-type SP = { servico?: string; unidade?: string; data?: string; hora?: string };
+type SP = { servico?: string; unidade?: string; data?: string; hora?: string; prof?: string };
 
 export default async function AgendarPage({ params, searchParams }: { params: Promise<{ restaurantId: string }>; searchParams: Promise<SP> }) {
   const { restaurantId } = await params;
@@ -47,7 +49,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
   const unit = units.find((u) => u.id === sp.unidade) ?? units[0];
   const url = (over: Partial<SP>) => {
     const q = new URLSearchParams();
-    const merged = { servico: service?.id, unidade: units.length > 1 ? unit.id : undefined, data: sp.data, ...over };
+    const merged = { servico: service?.id, unidade: units.length > 1 ? unit.id : undefined, data: sp.data, prof: sp.prof, ...over };
     for (const [k, v] of Object.entries(merged)) if (v) q.set(k, v);
     const s = q.toString();
     return s ? `${base}?${s}` : base;
@@ -87,7 +89,9 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
   const maxKey = addDaysKey(today, restaurant.bookingMaxDaysAhead);
   const date = wanted < today ? today : wanted > maxKey ? maxKey : wanted;
   const schedule = parseSchedule(unit.openingSchedule);
-  const { slots } = await slotsForDay(prisma, { restaurantId, policy: restaurant, service, unit, date, now });
+  const staff = await staffFor(prisma, { restaurantId, service, unitId: unit.id });
+  const prof = staff.find((p) => p.id === sp.prof) ?? null; // quem o cliente escolheu (vazio = qualquer)
+  const { slots } = await slotsForDay(prisma, { restaurantId, policy: restaurant, service, unit, date, now, resourceId: prof?.id });
   const days = Array.from({ length: Math.min(14, restaurant.bookingMaxDaysAhead + 1) }, (_, i) => addDaysKey(today, i));
   const chosen = sp.hora ? slots.find((s) => s.time === sp.hora) ?? null : null;
   const label = (key: string, i: number) => (i === 0 ? 'Hoje' : i === 1 ? 'Amanhã' : DAY_SHORT[weekdayOf(key)]);
@@ -119,11 +123,32 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
         </nav>
       )}
 
+      {(staff.length > 1 || staff.some((p) => p.photoImageId)) && (
+        <section aria-labelledby="quem">
+          <h2 id="quem" className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Com quem?</h2>
+          <ul className="chip-row">
+            <li className="shrink-0">
+              <Link href={url({ prof: undefined, hora: undefined })} aria-current={!prof ? 'true' : undefined} className={`chip-link h-full ${!prof ? 'chip-link-active' : ''}`}>Qualquer um</Link>
+            </li>
+            {staff.map((p) => (
+              <li key={p.id} className="shrink-0">
+                <Link href={url({ prof: p.id, hora: undefined })} aria-current={prof?.id === p.id ? 'true' : undefined} className={`chip-link gap-2 !py-1 ${prof?.id === p.id ? 'chip-link-active' : ''}`}>
+                  <PlaceAvatar name={p.name} src={imageUrl(p.photoImageId)} size={28} /> {p.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <section aria-labelledby="dia">
         <h2 id="dia" className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Escolha o dia</h2>
         <ul className="chip-row">
           {days.map((key, i) => {
-            const closed = !schedule || schedule.find((d) => d.day === weekdayOf(key))?.closed;
+            const wd = weekdayOf(key);
+            const unitOpen = !!schedule && schedule.find((d) => d.day === wd)?.closed === false;
+            const staffWorks = (prof ? [prof] : staff).some((p) => !p.schedule || p.schedule.find((d) => d.day === wd)?.closed === false);
+            const closed = !unitOpen || !staffWorks;
             const day = Number(key.slice(8));
             const on = key === date;
             return (
@@ -182,9 +207,34 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
               {units.length > 1 ? <> · {unit.name}</> : null}
             </p>
             <p className="text-xs text-slate-500">{unit.address ?? restaurant.name} · pagamento no local</p>
+            {(() => {
+              const free = staff.filter((p) => chosen.resourceIds.includes(p.id));
+              const who = prof ?? (free.length === 1 ? free[0] : null);
+              const dur = who ? chosen.durationByResource[who.id] : null;
+              return (
+                <div className="mt-2 space-y-2">
+                  {who ? (
+                    <p className="flex items-center gap-2 text-sm text-slate-700">
+                      <PlaceAvatar name={who.name} src={imageUrl(who.photoImageId)} size={32} /> com <strong>{who.name}</strong>{dur ? <span className="text-xs text-slate-500">· {dur} min</span> : null}
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-xs text-slate-500">Livres neste horário (toque para escolher quem atende, ou deixe que o lugar escolhe):</p>
+                      <ul className="flex flex-wrap gap-2">
+                        {free.map((p) => (
+                          <li key={p.id}>
+                            <Link href={url({ prof: p.id, data: date, hora: chosen.time })} className="chip-link gap-2 !py-1"><PlaceAvatar name={p.name} src={imageUrl(p.photoImageId)} size={24} /> {p.name} <span className="text-xs text-slate-400">{chosen.durationByResource[p.id]} min</span></Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
           </div>
           {customer ? (
-            <BookingForm hidden={{ restaurantId, serviceId: service.id, unitId: unit.id, date, time: chosen.time }} askPartySize={service.askPartySize} discount={{ priceCents: service.priceCents, balance, rate: restaurant.pointsPerRealOff, maxPoints: discount.maxPoints, maxPct: service.pointsDiscountMaxPct }} />
+            <BookingForm hidden={{ restaurantId, serviceId: service.id, unitId: unit.id, date, time: chosen.time, resourceId: prof?.id ?? '' }} askPartySize={service.askPartySize} discount={{ priceCents: service.priceCents, balance, rate: restaurant.pointsPerRealOff, maxPoints: discount.maxPoints, maxPct: service.pointsDiscountMaxPct }} />
           ) : (
             <Link href={`/entrar?next=${encodeURIComponent(url({ data: date, hora: chosen.time }))}`} className="glass-button w-full">Entrar para confirmar</Link>
           )}

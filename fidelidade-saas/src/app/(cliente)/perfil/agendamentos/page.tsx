@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { cancelMyBooking } from '@/app/actions/booking';
+import { answerBookingReminder, cancelMyBooking } from '@/app/actions/booking';
 import { Icon } from '@/components/Icons';
 import { canCustomerCancel, formatBookingWhen } from '@/lib/booking';
 import { prisma } from '@/lib/db';
@@ -17,7 +17,7 @@ const STATUS: Record<string, { label: string; cls: string }> = {
   NO_SHOW: { label: 'Não compareceu', cls: 'bg-slate-100 text-slate-500' },
 };
 
-export default async function MeusAgendamentosPage({ searchParams }: { searchParams: Promise<{ novo?: string; cancelado?: string; erro?: string }> }) {
+export default async function MeusAgendamentosPage({ searchParams }: { searchParams: Promise<{ novo?: string; cancelado?: string; erro?: string; lembrete?: string; presenca?: string; liberado?: string }> }) {
   const customer = await requireCustomer('/perfil/agendamentos');
   const sp = await searchParams;
   const now = new Date();
@@ -25,7 +25,7 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
     where: { customerId: customer.id },
     orderBy: { startsAt: 'desc' },
     take: 100,
-    include: { restaurant: { select: { id: true, name: true, bookingCancelHours: true } }, unit: { select: { name: true, address: true } } },
+    include: { restaurant: { select: { id: true, name: true, bookingCancelHours: true } }, unit: { select: { name: true, address: true } }, resource: { select: { name: true } } },
   });
   const upcoming = all.filter((b) => (b.status === 'PENDING' || b.status === 'CONFIRMED') && b.endsAt > now).sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
   const past = all.filter((b) => !upcoming.includes(b));
@@ -38,7 +38,7 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="truncate font-bold text-slate-800">{b.serviceName}</p>
-            <p className="truncate text-sm text-slate-600">{formatBookingWhen(b.startsAt)}</p>
+            <p className="truncate text-sm text-slate-600">{formatBookingWhen(b.startsAt)}{b.resource ? ` · com ${b.resource.name}` : ''}</p>
             <p className="truncate text-xs text-slate-500">
               <Link href={`/lugar/${b.restaurant.id}`} className="link-inline !font-medium">{b.restaurant.name}</Link>
               {b.unit.address ? ` · ${b.unit.address}` : ''}
@@ -50,6 +50,23 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
           {b.durationMin} min{b.priceCents > 0 ? ` · ${formatBRL(b.priceCents - b.discountCents)}${b.discountCents > 0 ? ` (desconto de ${formatBRL(b.discountCents)} com ${formatPoints(b.pointsUsed)} pts)` : ''}` : ''}{b.partySize ? ` · ${b.partySize} ${b.partySize === 1 ? 'pessoa' : 'pessoas'}` : ''}
           {b.pointsAwarded > 0 ? ` · +${formatPoints(b.pointsAwarded)} pts` : ''}
         </p>
+        {withCancel && b.reminderSentAt && !b.reminderAnswer && (
+          <div role="group" aria-label={`Está tudo certo? ${b.serviceName}`} className={`space-y-2 rounded-xl bg-electric-600/10 p-3 ${sp.lembrete === b.id ? 'ring-2 ring-electric-500' : ''}`}>
+            <p className="text-sm font-bold text-slate-800">Está tudo certo para o seu horário?</p>
+            <p className="text-xs text-slate-600">Se não puder ir, libere o horário para outra pessoa usar. Se não responder, mantemos o seu horário.</p>
+            <div className="flex flex-wrap gap-2">
+              <form action={answerBookingReminder}>
+                <input type="hidden" name="id" value={b.id} /><input type="hidden" name="answer" value="yes" />
+                <button className="glass-button btn-sm">Sim, estarei lá</button>
+              </form>
+              <form action={answerBookingReminder}>
+                <input type="hidden" name="id" value={b.id} /><input type="hidden" name="answer" value="no" />
+                <button className="btn-danger btn-sm">Não vou poder ir</button>
+              </form>
+            </div>
+          </div>
+        )}
+        {withCancel && b.reminderAnswer === 'OK' && <p className="text-xs font-semibold text-emerald-700">Você confirmou que vai. Até já!</p>}
         {withCancel && (
           cancelable ? (
             <form action={cancelMyBooking}>
@@ -74,6 +91,9 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
 
       {sp.novo && <p role="status" className="glass-success">Agendamento feito! Ele aparece abaixo.</p>}
       {sp.cancelado && <p role="status" className="glass-success">Agendamento cancelado.</p>}
+      {sp.presenca && <p role="status" className="glass-success">Combinado! Avisamos o lugar que você vai.</p>}
+      {sp.liberado && <p role="status" className="glass-success">Horário liberado. Obrigado por avisar!</p>}
+      {sp.erro && sp.erro !== 'prazo' && <p role="alert" className="glass-error">{sp.erro}</p>}
       {sp.erro === 'prazo' && <p role="alert" className="glass-error">O prazo para cancelar pelo app já passou. Fale com o lugar.</p>}
 
       <section aria-labelledby="prox">

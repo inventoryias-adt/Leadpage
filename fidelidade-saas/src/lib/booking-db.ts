@@ -2,11 +2,14 @@ import 'server-only';
 import type { Prisma } from '@prisma/client';
 import { prisma } from './db';
 import { BusinessError, creditClaimWith } from './claims';
-import { availableSlots, bookingPoints, dayStartUtc, formatBookingWhen, hmOf, parseDateKey, pickResource, type BusyRange, type Slot } from './booking';
+import { REMINDER_LEAD_MIN, REMINDER_MIN_AHEAD_MIN, availableSlots, bookingPoints, dayStartUtc, formatBookingWhen, hmOf, parseDateKey, pickResource, reminderDue, type BusyRange, type Slot } from './booking';
 import { parseSchedule } from './hours';
+import { sendEmail } from './mailer';
 import { notify } from './notifications';
 import { applyPoints } from './points-discount';
+import { appUrl } from './payments';
 import { formatBRL } from './points';
+import { formatPhone } from './br';
 import { newClaimToken } from './tokens';
 
 type Db = Prisma.TransactionClient | typeof prisma;
@@ -15,28 +18,41 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 type Policy = { bookingMinNoticeMin: number; bookingMaxDaysAhead: number };
 type ServiceLike = { id: string; durationMin: number; resourceId: string | null };
 
+/** Profissionais que podem fazer o serviço nesta unidade, com a duração e a escala de cada um. */
+export async function staffFor(db: Db, args: { restaurantId: string; service: ServiceLike; unitId: string; resourceId?: string | null }) {
+  const { restaurantId, service, unitId } = args;
+  const links = await db.resourceService.findMany({ where: { serviceId: service.id }, select: { resourceId: true, durationMin: true } });
+  const linked = new Map(links.map((l) => [l.resourceId, l.durationMin]));
+  const legacy = service.resourceId ? [service.resourceId] : null;
+  const resources = await db.resource.findMany({
+    where: { restaurantId, active: true, OR: [{ unitId: null }, { unitId }], ...(args.resourceId ? { id: args.resourceId } : {}) },
+    orderBy: { createdAt: 'asc' },
+  });
+  // Serviço sem nenhuma ligação (e sem profissional fixo antigo) é feito por qualquer um.
+  const eligible = resources.filter((r) => (links.length > 0 ? linked.has(r.id) : legacy ? legacy.includes(r.id) : true));
+  return eligible.map((r) => ({
+    id: r.id,
+    name: r.name,
+    photoImageId: r.photoImageId,
+    capacity: r.capacity,
+    durationMin: linked.get(r.id) ?? service.durationMin,
+    schedule: parseSchedule(r.schedule),
+  }));
+}
+
 /** Horários livres de um serviço numa unidade em um dia, com o que está ocupado (para escolher o profissional). */
 export async function slotsForDay(
   db: Db,
-  args: { restaurantId: string; policy: Policy; service: ServiceLike; unit: { id: string; openingSchedule: unknown }; date: string; now?: Date },
+  args: { restaurantId: string; policy: Policy; service: ServiceLike; unit: { id: string; openingSchedule: unknown }; date: string; now?: Date; resourceId?: string | null },
 ): Promise<{ slots: Slot[]; busy: BusyRange[] }> {
   const { restaurantId, policy, service, unit, date } = args;
   if (!parseDateKey(date)) return { slots: [], busy: [] };
-  const resources = await db.resource.findMany({
-    where: {
-      restaurantId,
-      active: true,
-      OR: [{ unitId: null }, { unitId: unit.id }],
-      ...(service.resourceId ? { id: service.resourceId } : {}),
-    },
-    select: { id: true, capacity: true },
-    orderBy: { createdAt: 'asc' },
-  });
-  if (resources.length === 0) return { slots: [], busy: [] };
+  const staff = await staffFor(db, { restaurantId, service, unitId: unit.id, resourceId: args.resourceId });
+  if (staff.length === 0) return { slots: [], busy: [] };
   const start = dayStartUtc(date);
   const busy = await db.booking.findMany({
     where: {
-      resourceId: { in: resources.map((r) => r.id) },
+      resourceId: { in: staff.map((r) => r.id) },
       status: { in: ['PENDING', 'CONFIRMED'] },
       startsAt: { lt: new Date(start.getTime() + 2 * DAY_MS) },
       endsAt: { gt: start },
@@ -47,7 +63,7 @@ export async function slotsForDay(
     date,
     schedule: parseSchedule(unit.openingSchedule),
     durationMin: service.durationMin,
-    resources,
+    resources: staff.map((r) => ({ id: r.id, capacity: r.capacity, durationMin: r.durationMin, schedule: r.schedule })),
     busy,
     now: args.now ?? new Date(),
     minNoticeMin: policy.bookingMinNoticeMin,
@@ -56,12 +72,19 @@ export async function slotsForDay(
   return { slots, busy };
 }
 
-export type BookInput = { restaurantId: string; serviceId: string; unitId: string; date: string; time: string; partySize?: number | null; note?: string; usePoints?: number };
+export type BookInput = { restaurantId: string; serviceId: string; unitId: string; date: string; time: string; partySize?: number | null; note?: string; usePoints?: number; resourceId?: string | null };
 
 const MAX_ACTIVE_PER_PLACE = 5;
 
 /** Cria o agendamento de forma segura contra duas pessoas pegando o mesmo horário ao mesmo tempo. */
 export async function bookSlot(customerId: string, input: BookInput) {
+  const booking = await bookSlotTx(customerId, input);
+  // O aviso ao profissional não pode derrubar o agendamento (e-mail fora do ar, por exemplo).
+  void notifyStaff(booking.id).catch((e) => console.error('Falha ao avisar a equipe', e instanceof Error ? e.message : e));
+  return booking;
+}
+
+async function bookSlotTx(customerId: string, input: BookInput) {
   return prisma.$transaction(
     async (tx) => {
       // Um cadeado por estabelecimento: quem chega depois espera e então já enxerga o horário ocupado.
@@ -83,13 +106,13 @@ export async function bookSlot(customerId: string, input: BookInput) {
         if (!Number.isInteger(partySize) || partySize < 1 || partySize > 30) throw new BusinessError('Informe quantas pessoas (de 1 a 30).');
       }
 
-      const { slots, busy } = await slotsForDay(tx, { restaurantId: restaurant.id, policy: restaurant, service, unit, date: input.date });
+      const { slots, busy } = await slotsForDay(tx, { restaurantId: restaurant.id, policy: restaurant, service, unit, date: input.date, resourceId: input.resourceId || null });
       const slot = slots.find((s) => s.time === input.time);
       if (!slot) throw new BusinessError('Esse horário acabou de ser ocupado ou não está mais disponível. Escolha outro.');
       const resourceId = pickResource(slot.resourceIds, busy);
       if (!resourceId) throw new BusinessError('Esse horário não está mais disponível. Escolha outro.');
-
-      const endsAt = new Date(slot.startsAt.getTime() + service.durationMin * 60_000);
+      const durationMin = slot.durationByResource[resourceId] ?? service.durationMin; // cada profissional leva o seu tempo
+      const endsAt = new Date(slot.startsAt.getTime() + durationMin * 60_000);
       const clash = await tx.booking.count({
         where: { customerId, restaurantId: restaurant.id, status: { in: ['PENDING', 'CONFIRMED'] }, startsAt: { lt: endsAt }, endsAt: { gt: slot.startsAt } },
       });
@@ -127,7 +150,7 @@ export async function bookSlot(customerId: string, input: BookInput) {
           status: auto ? 'CONFIRMED' : 'PENDING',
           confirmedAt: auto ? new Date() : null,
           serviceName: service.name,
-          durationMin: service.durationMin,
+          durationMin,
           priceCents: service.priceCents,
           partySize,
           note: input.note?.trim().slice(0, 300) || null,
@@ -146,6 +169,37 @@ export async function bookSlot(customerId: string, input: BookInput) {
     },
     { timeout: 15_000 },
   );
+}
+
+/** E-mail ao profissional (se tiver e-mail) e ao e-mail padrão do estabelecimento a cada novo agendamento. */
+export async function notifyStaff(bookingId: string) {
+  const b = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      customer: { select: { name: true, phone: true } },
+      resource: { select: { name: true, email: true } },
+      unit: { select: { name: true } },
+      restaurant: { select: { name: true, email: true, bookingNotifyEmail: true } },
+    },
+  });
+  if (!b) return;
+  const to = staffAddresses(b);
+  const when = formatBookingWhen(b.startsAt);
+  const lines = [
+    `Novo agendamento em ${b.restaurant.name}${b.status === 'PENDING' ? ' (aguardando a sua confirmação)' : ''}:`,
+    '',
+    `Serviço: ${b.serviceName} (${b.durationMin} min)`,
+    `Quando: ${when}`,
+    b.resource ? `Profissional: ${b.resource.name}` : null,
+    `Cliente: ${b.customer.name} · ${formatPhone(b.customer.phone)}`,
+    `Unidade: ${b.unit.name}`,
+    b.partySize ? `Pessoas: ${b.partySize}` : null,
+    b.discountCents > 0 ? `Desconto com pontos: ${formatBRL(b.discountCents)} (a cobrar ${formatBRL(b.priceCents - b.discountCents)})` : null,
+    b.note ? `Recado: ${b.note}` : null,
+    '',
+    `Veja a agenda: ${appUrl()}/dashboard/agenda`,
+  ].filter((l) => l !== null) as string[];
+  for (const address of to) await sendEmail({ to: address, subject: `Novo agendamento: ${b.serviceName} · ${when}`, text: lines.join('\n') });
 }
 
 /** Cancela um agendamento em aberto; os pontos usados como desconto voltam para a carteira (uma única vez). */
@@ -243,3 +297,93 @@ export async function cancelByOwner(id: string, restaurantId: string) {
 }
 
 export const bookingTime = (b: { startsAt: Date }) => hmOf(b.startsAt);
+
+/** Quem recebe os avisos de um agendamento: o profissional (se tiver e-mail) e o e-mail padrão do estabelecimento. */
+const staffAddresses = (b: { resource: { email: string | null } | null; restaurant: { email: string; bookingNotifyEmail: string | null } }) =>
+  [...new Set([b.resource?.email, b.restaurant.bookingNotifyEmail || b.restaurant.email].map((e) => (e ?? '').trim().toLowerCase()).filter(Boolean))];
+
+/** Avisa a equipe que o cliente liberou o horário ao responder "não" ao lembrete. */
+export async function notifyStaffFreed(bookingId: string) {
+  const b = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { customer: { select: { name: true, phone: true } }, resource: { select: { name: true, email: true } }, restaurant: { select: { name: true, email: true, bookingNotifyEmail: true } } },
+  });
+  if (!b) return;
+  const when = formatBookingWhen(b.startsAt);
+  const text = [
+    `${b.customer.name} avisou que não vai poder comparecer. O horário foi liberado:`,
+    '',
+    `Serviço: ${b.serviceName}`,
+    `Quando: ${when}`,
+    b.resource ? `Profissional: ${b.resource.name}` : null,
+    `Cliente: ${b.customer.name} · ${formatPhone(b.customer.phone)}`,
+    '',
+    `Veja a agenda: ${appUrl()}/dashboard/agenda`,
+  ].filter((l) => l !== null).join('\n');
+  for (const address of staffAddresses(b)) await sendEmail({ to: address, subject: `Horário liberado: ${b.serviceName} · ${when}`, text });
+}
+
+/**
+ * Envia o "está tudo certo?" aos agendamentos confirmados que entraram na janela de ~30 min.
+ * Roda de tempos em tempos (GitHub Actions → /api/cron/lembretes). Cada agendamento é "reservado" antes do envio,
+ * então execuções simultâneas não mandam duas vezes.
+ */
+export async function sendDueReminders(now: Date = new Date()) {
+  const rows = await prisma.booking.findMany({
+    where: {
+      status: 'CONFIRMED',
+      reminderSentAt: null,
+      startsAt: { gte: new Date(now.getTime() + REMINDER_MIN_AHEAD_MIN * 60_000), lte: new Date(now.getTime() + REMINDER_LEAD_MIN * 60_000) },
+    },
+    include: { customer: { select: { id: true, name: true, email: true } }, restaurant: { select: { name: true } }, resource: { select: { name: true } } },
+    take: 200,
+  });
+  let sent = 0;
+  for (const b of rows) {
+    if (!reminderDue(b, now)) continue;
+    const claimed = await prisma.booking.updateMany({ where: { id: b.id, status: 'CONFIRMED', reminderSentAt: null }, data: { reminderSentAt: now } });
+    if (claimed.count !== 1) continue;
+    const time = hmOf(b.startsAt).replace(/^0/, '').replace(':00', 'h').replace(':', 'h');
+    const what = `${b.serviceName} às ${time}${b.resource ? ` com ${b.resource.name}` : ''} em ${b.restaurant.name}`;
+    try {
+      await notify(prisma, {
+        customerId: b.customerId,
+        restaurantId: b.restaurantId,
+        title: 'Está tudo certo para o seu horário?',
+        body: `${what}. Toque para confirmar que vai ou liberar o horário.`,
+        href: `/perfil/agendamentos?lembrete=${b.id}`,
+      });
+    } catch (e) {
+      console.error('[lembretes] aviso não gravado; será tentado de novo', b.id, e);
+      await prisma.booking.updateMany({ where: { id: b.id, reminderAnswer: null }, data: { reminderSentAt: null } });
+      continue;
+    }
+    sent++;
+    const to = (b.customer.email ?? '').trim();
+    if (to) {
+      await sendEmail({
+        to,
+        subject: `Está tudo certo? ${b.serviceName} às ${time}`,
+        text: [`Olá, ${b.customer.name.split(' ')[0]}!`, '', `Seu horário está chegando: ${what}.`, '', `Está tudo certo? Confirme que vai, ou libere o horário se não puder ir:`, `${appUrl()}/perfil/agendamentos?lembrete=${b.id}`].join('\n'),
+      }).catch((e) => console.error('[lembretes] e-mail não enviado', b.id, e));
+    }
+  }
+  return { checked: rows.length, sent };
+}
+
+/** O cliente responde ao lembrete: "sim" confirma presença; "não" cancela e libera o horário (os pontos usados voltam). */
+export async function answerReminder(id: string, customerId: string, answer: 'yes' | 'no', now: Date = new Date()) {
+  const b = await prisma.booking.findFirst({ where: { id, customerId, status: { in: ['PENDING', 'CONFIRMED'] }, reminderSentAt: { not: null } } });
+  if (!b) throw new BusinessError('Este lembrete não está mais disponível.');
+  if (b.reminderAnswer) throw new BusinessError('Você já respondeu a este lembrete.');
+  if (b.endsAt <= now) throw new BusinessError('Este horário já passou.');
+  if (answer === 'yes') {
+    const r = await prisma.booking.updateMany({ where: { id, reminderAnswer: null }, data: { reminderAnswer: 'OK', reminderAnsweredAt: now } });
+    if (r.count !== 1) throw new BusinessError('Você já respondeu a este lembrete.');
+    return { canceled: false };
+  }
+  await cancelBooking(id, 'CUSTOMER', { customerId });
+  await prisma.booking.update({ where: { id }, data: { reminderAnswer: 'NO', reminderAnsweredAt: now } });
+  notifyStaffFreed(id).catch((e) => console.error('[lembretes] aviso à equipe falhou', id, e));
+  return { canceled: true };
+}

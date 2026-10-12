@@ -103,3 +103,54 @@ test('pontos do atendimento e texto do horário', () => {
   assert.equal(formatBookingWhen(new Date('2026-10-12T17:30:00Z')), 'Seg, 12/10 às 14h30');
   assert.equal(formatBookingWhen(new Date('2026-10-12T12:00:00Z')), 'Seg, 12/10 às 9h');
 });
+
+test('escala do profissional: só marca nos dias e horários em que ele trabalha (dentro do expediente da unidade)', () => {
+  // Segunda 2026-10-12. Unidade 09–12h. João só trabalha 10–11h; Ana não trabalha às segundas.
+  const joao = { id: 'j', capacity: 1, schedule: week('10:00', '11:00') };
+  const ana = { id: 'a', capacity: 1, schedule: week('09:00', '12:00', [1]) };
+  assert.deepEqual(times({ resources: [joao] }), ['10:00'], '60 min dentro da janela de 1h: só às 10h');
+  assert.deepEqual(times({ resources: [joao], durationMin: 30 }), ['10:00', '10:30']);
+  assert.deepEqual(times({ resources: [ana] }), [], 'folga: nenhum horário');
+  const both = availableSlots(base({ resources: [joao, ana], durationMin: 30 }));
+  assert.deepEqual(both.map((s) => s.time), ['10:00', '10:30']);
+  assert.deepEqual(both[0].resourceIds, ['j']);
+  // escala maior que a da unidade não passa do expediente da unidade
+  assert.deepEqual(times({ resources: [{ id: 'x', capacity: 1, schedule: week('08:00', '20:00') }], durationMin: 60 }), ['09:00', '09:30', '10:00', '10:30', '11:00']);
+});
+
+test('duração por profissional: cada um leva um tempo; o horário cabe conforme quem atende', () => {
+  const rapido = { id: 'r', capacity: 1, durationMin: 30 };
+  const calmo = { id: 'c', capacity: 1, durationMin: 90 };
+  const slots = availableSlots(base({ resources: [rapido, calmo] })); // unidade 09–12h
+  const at1100 = slots.find((s) => s.time === '11:00')!;
+  assert.deepEqual(at1100.resourceIds, ['r'], 'às 11h só o rápido cabe antes de fechar');
+  assert.equal(at1100.durationByResource.r, 30);
+  const at0900 = slots.find((s) => s.time === '09:00')!;
+  assert.deepEqual(at0900.resourceIds, ['r', 'c']);
+  assert.equal(at0900.durationByResource.c, 90);
+  assert.equal(slots.find((s) => s.time === '10:30')!.resourceIds.includes('c'), true, '10h30 + 90 min termina exatamente às 12h');
+  assert.equal(slots.find((s) => s.time === '11:00')!.resourceIds.includes('c'), false, '11h + 90 min estoura 12h');
+});
+
+test('ocupação conta por profissional e pela duração dele', () => {
+  const busy = [{ resourceId: 'r', startsAt: at('09:00'), endsAt: at('09:30') }];
+  const slots = availableSlots(base({ busy, resources: [{ id: 'r', capacity: 1, durationMin: 30 }, { id: 'c', capacity: 1, durationMin: 30 }] }));
+  assert.deepEqual(slots.find((s) => s.time === '09:00')!.resourceIds, ['c'], 'r está ocupado, c livre');
+  assert.deepEqual(slots.find((s) => s.time === '09:30')!.resourceIds, ['r', 'c']);
+});
+
+test('lembrete: só confirmados, uma vez, entre 5 e 30 min antes e que não foram feitos em cima da hora', async () => {
+  const { reminderDue } = await import('./booking');
+  const now = new Date('2026-10-12T12:00:00Z');
+  const at = (min: number) => new Date(now.getTime() + min * 60_000);
+  const base = { status: 'CONFIRMED', startsAt: at(28), createdAt: new Date('2026-10-11T12:00:00Z'), reminderSentAt: null as Date | null };
+  assert.equal(reminderDue(base, now), true);
+  assert.equal(reminderDue({ ...base, startsAt: at(30) }, now), true, 'no limite de 30 min');
+  assert.equal(reminderDue({ ...base, startsAt: at(31) }, now), false, 'cedo demais');
+  assert.equal(reminderDue({ ...base, startsAt: at(4) }, now), false, 'tarde demais');
+  assert.equal(reminderDue({ ...base, status: 'PENDING' }, now), false, 'ainda não confirmado pelo dono');
+  assert.equal(reminderDue({ ...base, status: 'CANCELED' }, now), false);
+  assert.equal(reminderDue({ ...base, reminderSentAt: now }, now), false, 'não repete');
+  assert.equal(reminderDue({ ...base, createdAt: at(-1) }, now), false, 'agendado com só 29 min de antecedência: sem lembrete');
+  assert.equal(reminderDue({ ...base, createdAt: at(-10) }, now), true, 'agendado com 38 min de antecedência: lembra');
+});

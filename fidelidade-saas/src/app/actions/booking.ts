@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { canCustomerCancel } from '@/lib/booking';
-import { bookSlot, cancelBooking } from '@/lib/booking-db';
+import { answerReminder, bookSlot, cancelBooking } from '@/lib/booking-db';
 import { BusinessError } from '@/lib/claims';
 import { fail, type FormState } from '@/lib/form';
 import { TOO_MANY, allow } from '@/lib/rate-limit';
@@ -15,6 +15,7 @@ const schema = z.object({
   restaurantId: z.string().regex(/^[0-9a-f-]{36}$/),
   serviceId: z.string().regex(/^[0-9a-f-]{36}$/),
   unitId: z.string().regex(/^[0-9a-f-]{36}$/),
+  resourceId: z.string().default(''),
   date: z.string(),
   time: z.string(),
   partySize: z.string().default(''),
@@ -30,6 +31,7 @@ export async function createBooking(_: FormState, formData: FormData): Promise<F
     restaurantId: formData.get('restaurantId') ?? '',
     serviceId: formData.get('serviceId') ?? '',
     unitId: formData.get('unitId') ?? '',
+    resourceId: formData.get('resourceId') ?? '',
     date: formData.get('date') ?? '',
     time: formData.get('time') ?? '',
     partySize: formData.get('partySize') ?? '',
@@ -42,7 +44,7 @@ export async function createBooking(_: FormState, formData: FormData): Promise<F
   const d = parsed.data;
   let id: string;
   try {
-    const booking = await bookSlot(customer.id, { ...d, partySize: d.partySize ? Number(d.partySize) : null, usePoints: Number(d.usePoints) || 0 });
+    const booking = await bookSlot(customer.id, { ...d, partySize: d.partySize ? Number(d.partySize) : null, usePoints: Number(d.usePoints) || 0, resourceId: /^[0-9a-f-]{36}$/.test(d.resourceId) ? d.resourceId : null });
     id = booking.id;
   } catch (e) {
     if (e instanceof BusinessError) return fail(e.message, formData);
@@ -67,4 +69,21 @@ export async function cancelMyBooking(formData: FormData) {
   }
   revalidatePath('/perfil/agendamentos');
   redirect('/perfil/agendamentos?cancelado=1');
+}
+
+/** Resposta ao "está tudo certo?": "sim" confirma presença, "não" libera o horário. */
+export async function answerBookingReminder(formData: FormData) {
+  const customer = await getCustomer();
+  if (!customer) redirect('/entrar?next=/perfil/agendamentos');
+  const id = String(formData.get('id') ?? '');
+  const answer = formData.get('answer') === 'no' ? 'no' : 'yes';
+  let result: { canceled: boolean };
+  try {
+    result = await answerReminder(id, customer.id, answer);
+  } catch (e) {
+    if (!(e instanceof BusinessError)) throw e;
+    redirect(`/perfil/agendamentos?erro=${encodeURIComponent(e.message)}`);
+  }
+  revalidatePath('/perfil/agendamentos');
+  redirect(result.canceled ? '/perfil/agendamentos?liberado=1' : '/perfil/agendamentos?presenca=1');
 }

@@ -53,45 +53,83 @@ const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
 export const slotStep = (durationMin: number) => (durationMin < 30 ? 15 : 30);
 
 export type BusyRange = { resourceId: string | null; startsAt: Date; endsAt: Date };
+export type SlotResource = {
+  id: string;
+  capacity: number;
+  /** Quanto leva com este profissional (vazio = a duração padrão da entrada). */
+  durationMin?: number;
+  /** Dias e horários em que ele trabalha (vazio = segue o horário da unidade). */
+  schedule?: Schedule | null;
+};
 export type SlotInput = {
   date: string; // AAAA-MM-DD (Brasília)
   schedule: Schedule | null; // horário de funcionamento da unidade
-  durationMin: number;
-  resources: { id: string; capacity: number }[];
+  durationMin: number; // duração padrão do serviço
+  resources: SlotResource[];
   busy: BusyRange[]; // agendamentos pendentes/confirmados desses recursos que tocam o dia
   now: Date;
   minNoticeMin: number;
   maxDaysAhead: number;
 };
-export type Slot = { startsAt: Date; time: string; resourceIds: string[] };
+export type Slot = { startsAt: Date; time: string; resourceIds: string[]; durationByResource: Record<string, number> };
 
 const overlaps = (aStart: number, aEnd: number, b: BusyRange) => aStart < b.endsAt.getTime() && aEnd > b.startsAt.getTime();
 
-/** Horários em que dá para marcar: dentro do expediente, com antecedência, sem estourar a capacidade de nenhum recurso. */
+/** Janela de trabalho do dia em minutos desde a meia-noite (fecha depois da meia-noite = passa de 1440), ou null se não trabalha. */
+function windowOf(schedule: Schedule, weekday: number): { open: number; close: number } | null {
+  const d = schedule.find((x) => x.day === weekday);
+  if (!d || d.closed) return null;
+  const open = toMin(d.open);
+  let close = toMin(d.close);
+  if (close <= open) close += 24 * 60;
+  return { open, close };
+}
+
+/**
+ * Horários em que dá para marcar: dentro do expediente da unidade E da escala do profissional, com antecedência,
+ * respeitando a duração de cada um e sem estourar a capacidade de nenhum recurso.
+ */
 export function availableSlots(input: SlotInput): Slot[] {
   const { date, schedule, durationMin, resources, busy, now, minNoticeMin, maxDaysAhead } = input;
   if (!parseDateKey(date) || !schedule || durationMin <= 0 || resources.length === 0) return [];
   const today = todayKey(now);
   if (date < today || date > addDaysKey(today, maxDaysAhead)) return [];
 
-  const day = schedule.find((d) => d.day === weekdayOf(date));
-  if (!day || day.closed) return [];
-  const open = toMin(day.open);
-  let close = toMin(day.close);
-  if (close <= open) close += 24 * 60; // vira a madrugada (ex.: 18h às 02h)
+  const weekday = weekdayOf(date);
+  const unit = windowOf(schedule, weekday);
+  if (!unit) return [];
+
+  // Janela de cada profissional naquele dia: a interseção da escala dele com a da unidade.
+  const staff = resources
+    .map((r) => {
+      const own = r.schedule ? windowOf(r.schedule, weekday) : unit;
+      if (!own) return null;
+      const win = { open: Math.max(unit.open, own.open), close: Math.min(unit.close, own.close) };
+      const dur = r.durationMin && r.durationMin > 0 ? r.durationMin : durationMin;
+      return win.close - win.open >= dur ? { r, win, dur } : null;
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null);
+  if (staff.length === 0) return [];
 
   const base = dayStartUtc(date).getTime();
   const earliest = now.getTime() + minNoticeMin * 60_000;
-  const step = slotStep(durationMin);
+  const step = slotStep(Math.min(...staff.map((x) => x.dur)));
+  const first = Math.min(...staff.map((x) => x.win.open));
+  const last = Math.max(...staff.map((x) => x.win.close));
   const out: Slot[] = [];
-  for (let m = open; m + durationMin <= close; m += step) {
+  for (let m = first; m < last; m += step) {
     const start = base + m * 60_000;
     if (start < earliest) continue;
-    const end = start + durationMin * 60_000;
-    const free = resources
-      .filter((r) => busy.filter((b) => b.resourceId === r.id && overlaps(start, end, b)).length < r.capacity)
-      .map((r) => r.id);
-    if (free.length) out.push({ startsAt: new Date(start), time: hmOf(new Date(start)), resourceIds: free });
+    const free: string[] = [];
+    const durs: Record<string, number> = {};
+    for (const { r, win, dur } of staff) {
+      if (m < win.open || m + dur > win.close) continue;
+      const end = start + dur * 60_000;
+      if (busy.filter((b) => b.resourceId === r.id && overlaps(start, end, b)).length >= r.capacity) continue;
+      free.push(r.id);
+      durs[r.id] = dur;
+    }
+    if (free.length) out.push({ startsAt: new Date(start), time: hmOf(new Date(start)), resourceIds: free, durationByResource: durs });
   }
   return out;
 }
@@ -107,6 +145,21 @@ export function pickResource(freeIds: string[], busy: BusyRange[]): string | nul
 export function canCustomerCancel(b: { status: string; startsAt: Date }, cancelHours: number, now: Date = new Date()): boolean {
   if (b.status !== 'PENDING' && b.status !== 'CONFIRMED') return false;
   return b.startsAt.getTime() - now.getTime() >= cancelHours * 3_600_000;
+}
+
+/** Lembrete "está tudo certo?": sai quando faltam entre 5 e 30 minutos (a verificação roda a cada ~5 min). */
+export const REMINDER_LEAD_MIN = 30;
+export const REMINDER_MIN_AHEAD_MIN = 5;
+
+/**
+ * Este agendamento está na hora de receber o lembrete? Só confirmados, ainda não lembrados, dentro da janela,
+ * e que já existiam antes da janela começar (quem agenda em cima da hora não precisa de lembrete).
+ */
+export function reminderDue(b: { status: string; startsAt: Date; createdAt: Date; reminderSentAt: Date | null }, now: Date = new Date()): boolean {
+  if (b.status !== 'CONFIRMED' || b.reminderSentAt) return false;
+  const ahead = b.startsAt.getTime() - now.getTime();
+  if (ahead < REMINDER_MIN_AHEAD_MIN * 60_000 || ahead > REMINDER_LEAD_MIN * 60_000) return false;
+  return b.createdAt.getTime() <= b.startsAt.getTime() - REMINDER_LEAD_MIN * 60_000;
 }
 
 /** Pontos de um atendimento concluído: o valor do serviço vezes a taxa do estabelecimento (mesma regra do caixa). */
