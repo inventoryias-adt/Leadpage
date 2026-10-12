@@ -19,7 +19,8 @@ import {
 import { changePassword, openBillingPortal } from '@/app/actions/auth';
 import { UFS, cepDigits, maskCep, parseViaCep } from '@/lib/address';
 import { CATEGORIES, CATEGORY_HINT } from '@/lib/categories';
-import { categoryRequestMessage, supportLink } from '@/lib/support';
+import { categoryRequestMessage, buildSupport, type SupportContact } from '@/lib/support';
+import { SupportLinks } from './SupportLinks';
 import { defaultSchedule, parseSchedule, type Schedule } from '@/lib/hours';
 import { HoursGrid } from './HoursGrid';
 import { Icon } from './Icons';
@@ -205,7 +206,7 @@ function EditRewardForm({ id, name, description, pointsCost, cashCents, onDone }
 }
 
 /** Abre o portal do Stripe (cartão, faturas, cancelamento); se falhar, explica e oferece o suporte. */
-export function BillingPortalForm({ supportHref }: { supportHref: string | null }) {
+export function BillingPortalForm({ support }: { support: SupportContact | null }) {
   const [state, action] = useActionState(openBillingPortal, {});
   return (
     <form action={action} className="mt-6 border-t border-[#E5E7EB] pt-5">
@@ -214,8 +215,7 @@ export function BillingPortalForm({ supportHref }: { supportHref: string | null 
       <SubmitButton variant="ghost" pendingText="Abrindo…" className="btn-sm">Gerenciar assinatura e faturas</SubmitButton>
       {state.error && (
         <p role="alert" className="glass-error mt-3">
-          {state.error}{' '}
-          {supportHref && <a href={supportHref} target="_blank" rel="noopener noreferrer" className="link-inline">Falar com o suporte</a>}
+          {state.error} <SupportLinks support={support} />
         </p>
       )}
     </form>
@@ -242,12 +242,12 @@ type Identity = {
 };
 
 /** Logo, capa, categoria e Instagram da marca. Endereço, horário, localização e link do Google ficam em cada unidade. */
-export function IdentityForm({ defaults, placeName, supportWhatsapp }: { defaults: Identity; placeName: string; supportWhatsapp?: string }) {
+export function IdentityForm({ defaults, placeName, supportEnv }: { defaults: Identity; placeName: string; supportEnv: { email?: string | null; whatsapp?: string | null } }) {
   const [state, action] = useActionState(saveIdentity, {});
   // Controlado: um <select> não-controlado ficaria em branco depois que o formulário é reiniciado ao salvar.
   const [category, setCategory] = useState(state.values?.category ?? defaults.category);
   const [other, setOther] = useState(state.values?.categoryOther ?? defaults.categoryOther);
-  const help = supportLink(supportWhatsapp, categoryRequestMessage(placeName, category === 'outros' ? other : ''));
+  const help = buildSupport(supportEnv, 'Categoria no Fidelize', categoryRequestMessage(placeName, category === 'outros' ? other : ''));
 
   return (
     <form action={action} className="space-y-5">
@@ -281,8 +281,8 @@ export function IdentityForm({ defaults, placeName, supportWhatsapp }: { default
       )}
       <p className="text-sm text-slate-600">
         Não achou a sua categoria, ou precisa trocar o nicho?{' '}
-        {help ? (
-          <a href={help} target="_blank" rel="noopener noreferrer" className="link-inline">Fale com o suporte no WhatsApp</a>
+        {help.emailHref || help.whatsappHref ? (
+          <SupportLinks support={help} lead="Fale com o suporte:" />
         ) : (
           <span className="text-slate-500">Escolha “Outros” e descreva o que você é.</span>
         )}

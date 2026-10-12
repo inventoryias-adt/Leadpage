@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { LoginForm } from '@/components/AuthForms';
+import { LegalLinks } from '@/components/LegalLinks';
 import { getRestaurant } from '@/lib/session';
 
 export const metadata = { title: 'Entrar' };
@@ -16,6 +17,7 @@ export default async function LoginPage() {
         <p className="mt-6 text-center text-sm text-slate-600">
           Ainda não tem conta? <Link href="/#assinar" className="font-semibold text-electric-600">Assinar</Link>
         </p>
+        <LegalLinks className="mt-4" />
       </div>
     </main>
   );

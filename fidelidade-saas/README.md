@@ -231,3 +231,33 @@ Recuperação por e-mail ainda não existe (precisa de um serviço de envio, com
 - **Pontos compartilhados** (migration `0015_pontos_compartilhados`): em Regras → "Pontos compartilhados" cada estabelecimento liga/desliga `pointsShareOut` ("meus pontos valem em outros
   lugares") e `pointsAcceptIn` ("aceito pontos de outros lugares"), ambos desligados por padrão. No Perfil o cliente vê cada carteira como *Compartilhada* ou *Individual* e a lista de lugares
   que aceitam pontos de outros. **A troca de pontos entre lugares ainda não está ativa**: falta definir a regra de conversão e de quem arca com o prêmio.
+
+## Piloto: suporte, e-mail, termos e Stripe real
+
+- **Suporte**: o **e-mail é o canal principal** (`SUPPORT_EMAIL`) e o WhatsApp (`SUPPORT_WHATSAPP`) complementa. Aparecem juntos nos avisos de erro (assinatura, categoria), nos Termos e na Privacidade,
+  sempre com assunto e mensagem prontos (`src/lib/support.ts`, `src/components/SupportLinks.tsx`). Trocar para um e-mail com domínio próprio é só mudar a variável.
+- **E-mail de recuperação de senha** (`src/lib/mailer.ts`): **SMTP** (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM`) tem prioridade e **não exige domínio** (Gmail com "senha de app":
+  `smtp.gmail.com`, porta 465); sem SMTP usa o **Resend** (`RESEND_API_KEY`), que sem domínio verificado só entrega para o e-mail dono da conta. Com domínio próprio, verifique-o no Resend e troque `EMAIL_FROM`.
+- **Termos de Uso e Política de Privacidade**: páginas `/termos` e `/privacidade` (texto em `src/app/termos` e `src/app/privacidade`; versão em `src/lib/legal.ts`). Os cadastros (dono, cliente e criação de
+  acesso do cliente antigo) exigem a caixa "Li e concordo" e gravam `termsAcceptedAt` e `termsVersion` (migration `0016_aceite_termos`). **Ao mudar os textos, mude `TERMS_VERSION`.** `LEGAL_NAME` e
+  `LEGAL_CNPJ` (opcionais) passam a aparecer nos documentos. Os textos são um modelo para o piloto: peça revisão a um advogado antes de escalar.
+- **Pedido de exclusão de dados (LGPD)**: hoje por e-mail/WhatsApp ao suporte (descrito na Política); a exclusão é feita pelo administrador.
+- **Virada para o Stripe real** (hoje tudo está em modo de teste; contas de teste/piloto são ativadas pelo painel de administração, sem cobrança):
+  1. Ativar a conta no Stripe (dados do negócio e conta bancária).
+  2. Autorizar a conta real na sessão do assistente (Stripe MCP) para recriar produto, preço (R$ 197/mês), portal do cliente e webhook em modo real.
+  3. Criar a chave secreta real e colocá-la no Vercel (`STRIPE_SECRET_KEY`, Sensitive); atualizar `STRIPE_PRICE_ID` e `STRIPE_WEBHOOK_SECRET` com os valores reais.
+  4. Redeploy e **uma compra real de teste** (R$ 197, depois cancelar e pedir o reembolso pelo painel do Stripe).
+  Contas antigas com cliente do Stripe de teste (ex.: "Teste Test") mostram o aviso amigável ao abrir o portal: limpe `paymentCustomerId` delas se necessário.
+
+## Roadmap: o Fidelize como ecossistema (visão do dono, ainda não construído)
+
+Objetivo: clientes e estabelecimentos (restaurantes, barbearias, clínicas de estética, serviços…) resolvem tudo na plataforma e o ponto vira o fio condutor, no lugar de várias ferramentas soltas.
+
+1. **Agendamento e reservas**: serviços com duração e preço por estabelecimento, agenda por profissional/unidade, o cliente marca pelo app (restaurantes/bares: reserva e encomenda para dia e hora). Pontos creditados
+   automaticamente quando o atendimento é concluído, ou ao pagar pela plataforma.
+2. **Pontos como desconto no serviço/produto**: o estabelecimento marca quais itens aceitam desconto em pontos; ao escolher o item, o cliente soma os pontos e vê o valor final já com desconto.
+3. **Pagamento antecipado pela plataforma (Pix/cartão)**: o dono habilita o recebimento, o cliente paga adiantado, o ponto cai na hora; no balcão, quem pagou pela plataforma tem o "check" para o dono conferir e dar o ok.
+   Fora da plataforma (maquininha/Pix direto) segue o QR Code ou o CPF no caixa.
+4. **Pontos compartilhados entre lugares** (flags já existem; falta a regra de conversão e de quem arca com o prêmio).
+
+Decisões em aberto: modelo de recebimento (Stripe Connect com Pix e repasse a cada estabelecimento, taxas e quem assume estorno), conciliação/nota fiscal, política de cancelamento e no-show por estabelecimento, e a ordem de entrega (sugestão: 1 → 2 → 3).

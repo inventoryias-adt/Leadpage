@@ -3,6 +3,7 @@ import { customerLogout } from '@/app/actions/customer';
 import { Brand } from '@/components/Brand';
 import { PointsActivity } from '@/components/PointsActivity';
 import { Icon } from '@/components/Icons';
+import { LegalLinks } from '@/components/LegalLinks';
 import { ShareButtons } from '@/components/ShareButtons';
 import { PlaceAvatar } from '@/components/Visual';
 import { formatPhone, maskCpf } from '@/lib/br';
@@ -178,6 +179,7 @@ export default async function PerfilPage() {
           <button className="btn-danger">Sair da conta</button>
         </form>
       </section>
+      <LegalLinks className="pt-2" />
       </div>
     </main>
   );
