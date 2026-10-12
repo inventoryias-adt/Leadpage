@@ -9,10 +9,10 @@ import Link from 'next/link';
 import { MaskedInput } from './MaskedInput';
 
 /** "Li e concordo": obrigatório no cadastro; o servidor grava quando e qual versão foi aceita. */
-function AcceptTerms({ id }: { id: string }) {
+function AcceptTerms({ id, checked }: { id: string; checked?: boolean }) {
   return (
     <label className="flex items-start gap-2.5 text-sm text-slate-600" htmlFor={id}>
-      <input id={id} type="checkbox" name="acceptTerms" required className="mt-0.5 h-4 w-4 shrink-0 rounded accent-electric-500" />
+      <input id={id} type="checkbox" name="acceptTerms" required defaultChecked={checked} className="mt-0.5 h-4 w-4 shrink-0 rounded accent-electric-500" />
       <span>
         Li e concordo com os{' '}
         <Link href="/termos" target="_blank" className="link-inline">Termos de Uso</Link> e a{' '}
@@ -42,7 +42,7 @@ export function SignupForm() {
         <label className="glass-label" htmlFor="password">Senha</label>
         <input id="password" name="password" type="password" className="glass-input" placeholder="Mínimo de 8 caracteres" autoComplete="new-password" minLength={8} required />
       </div>
-      <AcceptTerms id="accept-owner" />
+      <AcceptTerms id="accept-owner" checked={state.values?.acceptTerms === 'on'} />
       <FormMessage state={state} />
       <SubmitButton pendingText="Criando conta…" className="mt-2">Ir para pagamento seguro</SubmitButton>
       <p className="text-center text-xs text-slate-500">Pagamento processado em ambiente seguro.</p>
@@ -192,7 +192,7 @@ function SignupPane({ hidden, cta }: { hidden: React.ReactNode; cta: string }) {
         <label className="glass-label" htmlFor="s-password">Senha</label>
         <input id="s-password" name="password" type="password" className="glass-input" placeholder="Mínimo de 8 caracteres" autoComplete="new-password" minLength={8} maxLength={72} required />
       </div>
-      <AcceptTerms id="accept-customer" />
+      <AcceptTerms id="accept-customer" checked={state.values?.acceptTerms === 'on'} />
       <FormMessage state={state} />
       <SubmitButton pendingText="Criando conta…">{cta}</SubmitButton>
     </form>
@@ -220,7 +220,7 @@ function RecoverPane({ hidden, onBack }: { hidden: React.ReactNode; onBack: () =
         <label className="glass-label" htmlFor="r-password">Nova senha</label>
         <input id="r-password" name="password" type="password" className="glass-input" placeholder="Mínimo de 8 caracteres" autoComplete="new-password" minLength={8} maxLength={72} required />
       </div>
-      <AcceptTerms id="accept-recover" />
+      <AcceptTerms id="accept-recover" checked={state.values?.acceptTerms === 'on'} />
       <FormMessage state={state} />
       <SubmitButton pendingText="Salvando…">Criar acesso e entrar</SubmitButton>
       <p className="text-center text-sm">
