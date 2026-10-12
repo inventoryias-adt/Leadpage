@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { canCustomerCancel } from '@/lib/booking';
-import { bookSlot, cancelBooking } from '@/lib/booking-db';
+import { answerReminder, bookSlot, cancelBooking } from '@/lib/booking-db';
 import { BusinessError } from '@/lib/claims';
 import { fail, type FormState } from '@/lib/form';
 import { TOO_MANY, allow } from '@/lib/rate-limit';
@@ -69,4 +69,21 @@ export async function cancelMyBooking(formData: FormData) {
   }
   revalidatePath('/perfil/agendamentos');
   redirect('/perfil/agendamentos?cancelado=1');
+}
+
+/** Resposta ao "está tudo certo?": "sim" confirma presença, "não" libera o horário. */
+export async function answerBookingReminder(formData: FormData) {
+  const customer = await getCustomer();
+  if (!customer) redirect('/entrar?next=/perfil/agendamentos');
+  const id = String(formData.get('id') ?? '');
+  const answer = formData.get('answer') === 'no' ? 'no' : 'yes';
+  let result: { canceled: boolean };
+  try {
+    result = await answerReminder(id, customer.id, answer);
+  } catch (e) {
+    if (!(e instanceof BusinessError)) throw e;
+    redirect(`/perfil/agendamentos?erro=${encodeURIComponent(e.message)}`);
+  }
+  revalidatePath('/perfil/agendamentos');
+  redirect(result.canceled ? '/perfil/agendamentos?liberado=1' : '/perfil/agendamentos?presenca=1');
 }

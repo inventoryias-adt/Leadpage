@@ -147,6 +147,21 @@ export function canCustomerCancel(b: { status: string; startsAt: Date }, cancelH
   return b.startsAt.getTime() - now.getTime() >= cancelHours * 3_600_000;
 }
 
+/** Lembrete "está tudo certo?": sai quando faltam entre 5 e 30 minutos (a verificação roda a cada ~5 min). */
+export const REMINDER_LEAD_MIN = 30;
+export const REMINDER_MIN_AHEAD_MIN = 5;
+
+/**
+ * Este agendamento está na hora de receber o lembrete? Só confirmados, ainda não lembrados, dentro da janela,
+ * e que já existiam antes da janela começar (quem agenda em cima da hora não precisa de lembrete).
+ */
+export function reminderDue(b: { status: string; startsAt: Date; createdAt: Date; reminderSentAt: Date | null }, now: Date = new Date()): boolean {
+  if (b.status !== 'CONFIRMED' || b.reminderSentAt) return false;
+  const ahead = b.startsAt.getTime() - now.getTime();
+  if (ahead < REMINDER_MIN_AHEAD_MIN * 60_000 || ahead > REMINDER_LEAD_MIN * 60_000) return false;
+  return b.createdAt.getTime() <= b.startsAt.getTime() - REMINDER_LEAD_MIN * 60_000;
+}
+
 /** Pontos de um atendimento concluído: o valor do serviço vezes a taxa do estabelecimento (mesma regra do caixa). */
 export const bookingPoints = (priceCents: number, pointsPerReal: number) => Math.floor((priceCents * pointsPerReal) / 100);
 

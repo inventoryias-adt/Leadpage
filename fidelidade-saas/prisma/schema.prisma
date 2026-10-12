@@ -582,6 +582,9 @@ model Booking {
   completedAt  DateTime?
   canceledAt   DateTime?
   canceledBy   String? // CUSTOMER ou OWNER
+  reminderSentAt     DateTime? // quando o "está tudo certo?" foi enviado
+  reminderAnswer     String? // OK (confirmou presença) ou NO (liberou o horário); vazio = sem resposta
+  reminderAnsweredAt DateTime?
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   unit       Unit       @relation(fields: [unitId], references: [id], onDelete: Cascade)
@@ -593,4 +596,5 @@ model Booking {
   @@index([restaurantId, startsAt])
   @@index([customerId, startsAt])
   @@index([resourceId, startsAt])
+  @@index([status, startsAt])
 }

@@ -2,7 +2,7 @@ import 'server-only';
 import type { Prisma } from '@prisma/client';
 import { prisma } from './db';
 import { BusinessError, creditClaimWith } from './claims';
-import { availableSlots, bookingPoints, dayStartUtc, formatBookingWhen, hmOf, parseDateKey, pickResource, type BusyRange, type Slot } from './booking';
+import { REMINDER_LEAD_MIN, REMINDER_MIN_AHEAD_MIN, availableSlots, bookingPoints, dayStartUtc, formatBookingWhen, hmOf, parseDateKey, pickResource, reminderDue, type BusyRange, type Slot } from './booking';
 import { parseSchedule } from './hours';
 import { sendEmail } from './mailer';
 import { notify } from './notifications';
@@ -183,7 +183,7 @@ export async function notifyStaff(bookingId: string) {
     },
   });
   if (!b) return;
-  const to = [...new Set([b.resource?.email, b.restaurant.bookingNotifyEmail || b.restaurant.email].map((e) => (e ?? '').trim().toLowerCase()).filter(Boolean))];
+  const to = staffAddresses(b);
   const when = formatBookingWhen(b.startsAt);
   const lines = [
     `Novo agendamento em ${b.restaurant.name}${b.status === 'PENDING' ? ' (aguardando a sua confirmação)' : ''}:`,
@@ -297,3 +297,93 @@ export async function cancelByOwner(id: string, restaurantId: string) {
 }
 
 export const bookingTime = (b: { startsAt: Date }) => hmOf(b.startsAt);
+
+/** Quem recebe os avisos de um agendamento: o profissional (se tiver e-mail) e o e-mail padrão do estabelecimento. */
+const staffAddresses = (b: { resource: { email: string | null } | null; restaurant: { email: string; bookingNotifyEmail: string | null } }) =>
+  [...new Set([b.resource?.email, b.restaurant.bookingNotifyEmail || b.restaurant.email].map((e) => (e ?? '').trim().toLowerCase()).filter(Boolean))];
+
+/** Avisa a equipe que o cliente liberou o horário ao responder "não" ao lembrete. */
+export async function notifyStaffFreed(bookingId: string) {
+  const b = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { customer: { select: { name: true, phone: true } }, resource: { select: { name: true, email: true } }, restaurant: { select: { name: true, email: true, bookingNotifyEmail: true } } },
+  });
+  if (!b) return;
+  const when = formatBookingWhen(b.startsAt);
+  const text = [
+    `${b.customer.name} avisou que não vai poder comparecer. O horário foi liberado:`,
+    '',
+    `Serviço: ${b.serviceName}`,
+    `Quando: ${when}`,
+    b.resource ? `Profissional: ${b.resource.name}` : null,
+    `Cliente: ${b.customer.name} · ${formatPhone(b.customer.phone)}`,
+    '',
+    `Veja a agenda: ${appUrl()}/dashboard/agenda`,
+  ].filter((l) => l !== null).join('\n');
+  for (const address of staffAddresses(b)) await sendEmail({ to: address, subject: `Horário liberado: ${b.serviceName} · ${when}`, text });
+}
+
+/**
+ * Envia o "está tudo certo?" aos agendamentos confirmados que entraram na janela de ~30 min.
+ * Roda de tempos em tempos (GitHub Actions → /api/cron/lembretes). Cada agendamento é "reservado" antes do envio,
+ * então execuções simultâneas não mandam duas vezes.
+ */
+export async function sendDueReminders(now: Date = new Date()) {
+  const rows = await prisma.booking.findMany({
+    where: {
+      status: 'CONFIRMED',
+      reminderSentAt: null,
+      startsAt: { gte: new Date(now.getTime() + REMINDER_MIN_AHEAD_MIN * 60_000), lte: new Date(now.getTime() + REMINDER_LEAD_MIN * 60_000) },
+    },
+    include: { customer: { select: { id: true, name: true, email: true } }, restaurant: { select: { name: true } }, resource: { select: { name: true } } },
+    take: 200,
+  });
+  let sent = 0;
+  for (const b of rows) {
+    if (!reminderDue(b, now)) continue;
+    const claimed = await prisma.booking.updateMany({ where: { id: b.id, status: 'CONFIRMED', reminderSentAt: null }, data: { reminderSentAt: now } });
+    if (claimed.count !== 1) continue;
+    const time = hmOf(b.startsAt).replace(/^0/, '').replace(':00', 'h').replace(':', 'h');
+    const what = `${b.serviceName} às ${time}${b.resource ? ` com ${b.resource.name}` : ''} em ${b.restaurant.name}`;
+    try {
+      await notify(prisma, {
+        customerId: b.customerId,
+        restaurantId: b.restaurantId,
+        title: 'Está tudo certo para o seu horário?',
+        body: `${what}. Toque para confirmar que vai ou liberar o horário.`,
+        href: `/perfil/agendamentos?lembrete=${b.id}`,
+      });
+    } catch (e) {
+      console.error('[lembretes] aviso não gravado; será tentado de novo', b.id, e);
+      await prisma.booking.updateMany({ where: { id: b.id, reminderAnswer: null }, data: { reminderSentAt: null } });
+      continue;
+    }
+    sent++;
+    const to = (b.customer.email ?? '').trim();
+    if (to) {
+      await sendEmail({
+        to,
+        subject: `Está tudo certo? ${b.serviceName} às ${time}`,
+        text: [`Olá, ${b.customer.name.split(' ')[0]}!`, '', `Seu horário está chegando: ${what}.`, '', `Está tudo certo? Confirme que vai, ou libere o horário se não puder ir:`, `${appUrl()}/perfil/agendamentos?lembrete=${b.id}`].join('\n'),
+      }).catch((e) => console.error('[lembretes] e-mail não enviado', b.id, e));
+    }
+  }
+  return { checked: rows.length, sent };
+}
+
+/** O cliente responde ao lembrete: "sim" confirma presença; "não" cancela e libera o horário (os pontos usados voltam). */
+export async function answerReminder(id: string, customerId: string, answer: 'yes' | 'no', now: Date = new Date()) {
+  const b = await prisma.booking.findFirst({ where: { id, customerId, status: { in: ['PENDING', 'CONFIRMED'] }, reminderSentAt: { not: null } } });
+  if (!b) throw new BusinessError('Este lembrete não está mais disponível.');
+  if (b.reminderAnswer) throw new BusinessError('Você já respondeu a este lembrete.');
+  if (b.endsAt <= now) throw new BusinessError('Este horário já passou.');
+  if (answer === 'yes') {
+    const r = await prisma.booking.updateMany({ where: { id, reminderAnswer: null }, data: { reminderAnswer: 'OK', reminderAnsweredAt: now } });
+    if (r.count !== 1) throw new BusinessError('Você já respondeu a este lembrete.');
+    return { canceled: false };
+  }
+  await cancelBooking(id, 'CUSTOMER', { customerId });
+  await prisma.booking.update({ where: { id }, data: { reminderAnswer: 'NO', reminderAnsweredAt: now } });
+  notifyStaffFreed(id).catch((e) => console.error('[lembretes] aviso à equipe falhou', id, e));
+  return { canceled: true };
+}

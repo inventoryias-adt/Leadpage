@@ -138,3 +138,19 @@ test('ocupação conta por profissional e pela duração dele', () => {
   assert.deepEqual(slots.find((s) => s.time === '09:00')!.resourceIds, ['c'], 'r está ocupado, c livre');
   assert.deepEqual(slots.find((s) => s.time === '09:30')!.resourceIds, ['r', 'c']);
 });
+
+test('lembrete: só confirmados, uma vez, entre 5 e 30 min antes e que não foram feitos em cima da hora', async () => {
+  const { reminderDue } = await import('./booking');
+  const now = new Date('2026-10-12T12:00:00Z');
+  const at = (min: number) => new Date(now.getTime() + min * 60_000);
+  const base = { status: 'CONFIRMED', startsAt: at(28), createdAt: new Date('2026-10-11T12:00:00Z'), reminderSentAt: null as Date | null };
+  assert.equal(reminderDue(base, now), true);
+  assert.equal(reminderDue({ ...base, startsAt: at(30) }, now), true, 'no limite de 30 min');
+  assert.equal(reminderDue({ ...base, startsAt: at(31) }, now), false, 'cedo demais');
+  assert.equal(reminderDue({ ...base, startsAt: at(4) }, now), false, 'tarde demais');
+  assert.equal(reminderDue({ ...base, status: 'PENDING' }, now), false, 'ainda não confirmado pelo dono');
+  assert.equal(reminderDue({ ...base, status: 'CANCELED' }, now), false);
+  assert.equal(reminderDue({ ...base, reminderSentAt: now }, now), false, 'não repete');
+  assert.equal(reminderDue({ ...base, createdAt: at(-1) }, now), false, 'agendado com só 29 min de antecedência: sem lembrete');
+  assert.equal(reminderDue({ ...base, createdAt: at(-10) }, now), true, 'agendado com 38 min de antecedência: lembra');
+});

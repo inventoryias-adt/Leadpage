@@ -284,3 +284,21 @@ Decisões em aberto: modelo de recebimento (Stripe Connect com Pix e repasse a c
   (`src/lib/points-discount.ts`, testado): pedir mais do que o permitido é recusado.
 - **Cancelar** (cliente ou dono) **devolve os pontos**, uma única vez (testado com cancelamentos simultâneos). **Faltou** não devolve. Concluir credita os pontos ganhos **sobre o valor realmente pago** (preço − desconto)
   e a venda registrada é o valor pago. O dono vê "a cobrar R$ X (desconto de R$ Y com Z pontos)" na agenda. Migration `0018_pontos_como_desconto`.
+
+## Equipe, agenda por profissional e lembrete (migrations `0019_equipe` e `0020_lembrete`)
+
+- **Equipe** (Regras → Agenda e serviços → "Adicionar profissional ou vaga"): **foto**, nome, **e-mail** e **WhatsApp** do profissional, **dias e horários** próprios (ou "segue o horário da unidade"),
+  **quais serviços faz e em quantos minutos** (ex.: corte 45 min com o Lucas, 60 min com a Ana; `ResourceService`). Quem não tem horário próprio segue a unidade.
+- **Cliente**: depois de escolher serviço e unidade aparece **"Com quem?"** (foto e nome de quem faz o serviço, ou "qualquer um"). Dias e horários mostram só o que aquele profissional atende, com a duração dele.
+- **Aviso à equipe**: cada novo agendamento manda e-mail ao profissional (se tiver e-mail) e ao e-mail padrão do estabelecimento (`Restaurant.bookingNotifyEmail`, senão o e-mail da conta).
+- **Agenda por profissional** (`/dashboard/agenda`): filtro por **profissional** e por **período** (Dia, Semana, Mês, Mês passado; setas navegam). Semana e mês aparecem agrupados por dia.
+  **Enviar pelo WhatsApp** abre o WhatsApp do profissional (ou a escolha de contato, se ele não tem número) com o texto pronto da agenda do período, sem os cancelados. **Baixar planilha (CSV)**
+  (`/dashboard/agenda/exportar`, só dono logado; separador `;`, UTF-8 com BOM para o Excel; células que começam com `=`, `+`, `-` ou `@` são neutralizadas contra injeção de fórmula).
+  O envio automático por WhatsApp exige a API oficial (paga); por isso é um clique do gerente com o texto já pronto.
+- **Lembrete "está tudo certo?"**: entre 5 e 30 minutos antes de um agendamento **confirmado** o cliente recebe um aviso no app (e e-mail, se tiver) com **"Sim, estarei lá"** e **"Não vou poder ir"**
+  (cartão em Meus agendamentos). **Não** cancela e libera o horário (os pontos usados voltam; a equipe é avisada por e-mail). **Sem resposta** mantém o horário e a agenda do dono mostra
+  "lembrete enviado, o cliente ainda não respondeu". Quem marca em cima da hora (menos de 30 min) não recebe lembrete. Cada agendamento é lembrado uma única vez, mesmo com chamadas simultâneas.
+- **Como roda**: a rota `POST /api/cron/lembretes` (exige `Authorization: Bearer <CRON_SECRET>`) é chamada a cada 5 minutos pelo GitHub Actions (`.github/workflows/lembretes.yml`), porque o cron da Vercel Hobby é só diário.
+  **Configuração (uma vez)**: gere um segredo longo, cadastre-o na Vercel como `CRON_SECRET` (Sensitive) e no GitHub em Settings → Secrets and variables → Actions → `CRON_SECRET`; faça redeploy.
+  Sem o segredo a rota responde 503 e o workflow acusa erro. Para outro domínio, crie a variável `APP_URL` no GitHub. Observação: o GitHub pode atrasar execuções agendadas em horários de pico; a janela de 5 a 30 minutos absorve isso.
+- Ainda não feito: notificação do sistema (push; no iPhone só com o app instalado), pagamento antecipado e reembolso ao cancelar/reagendar.

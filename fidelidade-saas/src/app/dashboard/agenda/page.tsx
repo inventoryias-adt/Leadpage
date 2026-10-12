@@ -79,6 +79,9 @@ function Item({ b, back, showDay }: { b: Row; back: string; showDay?: boolean })
           Desconto de {formatBRL(b.discountCents)} com {formatPoints(b.pointsUsed)} pontos do cliente{b.status === 'CANCELED' ? ' (devolvidos)' : ''}. Valor cheio: {formatBRL(b.priceCents)}.
         </p>
       )}
+      {(b.status === 'PENDING' || b.status === 'CONFIRMED') && b.reminderAnswer === 'OK' && <p className="text-xs font-semibold text-emerald-700">Cliente confirmou presença no lembrete.</p>}
+      {(b.status === 'PENDING' || b.status === 'CONFIRMED') && b.reminderSentAt && !b.reminderAnswer && <p className="text-xs text-slate-500">Lembrete enviado às {hmOf(b.reminderSentAt)}; o cliente ainda não respondeu.</p>}
+      {b.status === 'CANCELED' && b.reminderAnswer === 'NO' && <p className="text-xs font-semibold text-slate-600">O cliente avisou que não vai e liberou o horário.</p>}
       {b.status === 'COMPLETED' && b.pointsAwarded > 0 && <p className="text-xs font-semibold text-emerald-700">+{formatPoints(b.pointsAwarded)} pontos creditados</p>}
       <Actions b={b} back={back} />
     </li>
