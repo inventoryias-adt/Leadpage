@@ -16,12 +16,13 @@ import {
   UnitForm,
 } from '@/components/SettingsForms';
 import { EmptyState } from '@/components/EmptyState';
-import { RewardImage } from '@/components/Visual';
+import { PlaceAvatar, RewardImage } from '@/components/Visual';
 import { describeChallenge } from '@/lib/challenges';
 import { prisma } from '@/lib/db';
 import { getSupport } from '@/lib/support-env';
+import { parseSchedule } from '@/lib/hours';
 import { removeResource, removeService } from '@/app/actions/agenda';
-import { AddResourceForm, AddServiceForm, BookingPolicyForm } from '@/components/AgendaSettings';
+import { AddServiceForm, BookingPolicyForm, StaffForm } from '@/components/AgendaSettings';
 import { imageUrl } from '@/lib/images';
 import { formatBRL, formatPoints, formatPrice } from '@/lib/points';
 import { promoBadge, promoStatus, promoWhen } from '@/lib/promos';
@@ -79,7 +80,7 @@ export default async function ConfiguracoesPage() {
     prisma.challenge.findMany({ where: { restaurantId: restaurant.id }, orderBy: { createdAt: 'asc' } }),
     prisma.unit.findMany({ where: { restaurantId: restaurant.id }, orderBy: [{ active: 'desc' }, { createdAt: 'asc' }] }),
     prisma.promotion.findMany({ where: { restaurantId: restaurant.id }, orderBy: { createdAt: 'desc' } }),
-    prisma.resource.findMany({ where: { restaurantId: restaurant.id, active: true }, orderBy: { createdAt: 'asc' } }),
+    prisma.resource.findMany({ where: { restaurantId: restaurant.id, active: true }, orderBy: { createdAt: 'asc' }, include: { offers: true } }),
     prisma.service.findMany({ where: { restaurantId: restaurant.id, active: true }, orderBy: { createdAt: 'asc' } }),
   ]);
   const nowDate = new Date();
@@ -305,7 +306,6 @@ export default async function ConfiguracoesPage() {
                     <p className="truncate font-semibold text-slate-800">{sv.name}</p>
                     <p className="truncate text-xs text-slate-500">
                       {sv.durationMin} min · {sv.priceCents > 0 ? formatBRL(sv.priceCents) : 'sem cobrança'}
-                      {sv.resourceId ? ` · ${resources.find((r) => r.id === sv.resourceId)?.name ?? ''}` : ''}
                       {sv.askPartySize ? ' · reserva de mesa' : ''}
                       {sv.pointsDiscountMaxPct > 0 ? ` · aceita pontos (até ${sv.pointsDiscountMaxPct}%)` : ''}
                     </p>
@@ -314,32 +314,69 @@ export default async function ConfiguracoesPage() {
                 </li>
               ))}
             </ul>
-            <AddServiceForm resources={resources.map((r) => ({ id: r.id, name: r.name }))} />
+            <AddServiceForm />
           </div>
 
           <div>
             <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-slate-500">Equipe e vagas</h3>
-            <ul className="mb-4 space-y-2">
-              {resources.length === 0 && <li className="py-2 text-sm text-slate-500">Ao cadastrar o primeiro serviço criamos a vaga “Atendimento” (uma pessoa por vez). Adicione profissionais ou mesas quando precisar.</li>}
-              {resources.map((r) => (
-                <li key={r.id} className="glass-inset flex items-center gap-3 p-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold text-slate-800">{r.name}</p>
-                    <p className="truncate text-xs text-slate-500">
-                      {r.capacity === 1 ? '1 atendimento por vez' : `${r.capacity} ao mesmo tempo`}
-                      {r.unitId ? ` · ${units.find((u) => u.id === r.unitId)?.name ?? ''}` : units.filter((u) => u.active).length > 1 ? ' · todas as unidades' : ''}
-                    </p>
-                  </div>
-                  <RemoveButton action={removeResource} id={r.id} label={r.name} />
-                </li>
-              ))}
+            <ul className="mb-4 space-y-3">
+              {resources.length === 0 && <li className="py-2 text-sm text-slate-500">Ao cadastrar o primeiro serviço criamos a vaga “Atendimento” (uma pessoa por vez). Cadastre cada profissional abaixo, com foto, dias e horários e o tempo de cada serviço.</li>}
+              {resources.map((r) => {
+                const sched = parseSchedule(r.schedule);
+                const names = r.offers.map((o) => services.find((sv) => sv.id === o.serviceId)?.name).filter(Boolean);
+                return (
+                  <li key={r.id} className="glass-inset p-3">
+                    <div className="flex items-center gap-3">
+                      <PlaceAvatar name={r.name} src={imageUrl(r.photoImageId)} size={44} />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold text-slate-800">{r.name}</p>
+                        <p className="truncate text-xs text-slate-500">
+                          {[
+                            sched ? 'escala própria' : 'horário da unidade',
+                            names.length ? `faz: ${names.join(', ')}` : 'faz todos os serviços',
+                            r.capacity > 1 ? `${r.capacity} ao mesmo tempo` : null,
+                            r.unitId ? units.find((u) => u.id === r.unitId)?.name : null,
+                          ].filter(Boolean).join(' · ')}
+                        </p>
+                      </div>
+                      <RemoveButton action={removeResource} id={r.id} label={r.name} />
+                    </div>
+                    <details className="mt-3">
+                      <summary className="cursor-pointer text-sm font-semibold text-electric-600">Editar</summary>
+                      <div className="mt-3">
+                        <StaffForm
+                          uid={`st-${r.id.slice(0, 8)}`}
+                          services={services.map((sv) => ({ id: sv.id, name: sv.name, durationMin: sv.durationMin }))}
+                          units={units.filter((u) => u.active).map((u) => ({ id: u.id, name: u.name }))}
+                          staff={{
+                            id: r.id,
+                            name: r.name,
+                            email: r.email ?? '',
+                            phone: r.phone ?? '',
+                            capacity: r.capacity,
+                            unitId: r.unitId ?? '',
+                            schedule: sched,
+                            photoUrl: imageUrl(r.photoImageId),
+                            offers: Object.fromEntries(r.offers.map((o) => [o.serviceId, o.durationMin])),
+                          }}
+                        />
+                      </div>
+                    </details>
+                  </li>
+                );
+              })}
             </ul>
-            <AddResourceForm units={units.filter((u) => u.active).map((u) => ({ id: u.id, name: u.name }))} />
+            <details className="rounded-lg border border-dashed border-slate-300 p-3" open={resources.length === 0}>
+              <summary className="cursor-pointer text-sm font-semibold text-electric-600">+ Adicionar profissional ou vaga</summary>
+              <div className="mt-3">
+                <StaffForm uid="st-novo" services={services.map((sv) => ({ id: sv.id, name: sv.name, durationMin: sv.durationMin }))} units={units.filter((u) => u.active).map((u) => ({ id: u.id, name: u.name }))} />
+              </div>
+            </details>
           </div>
 
           <div>
             <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-slate-500">Regras de agendamento</h3>
-            <BookingPolicyForm defaults={{ auto: restaurant.bookingAutoConfirm, minNotice: restaurant.bookingMinNoticeMin, maxAhead: restaurant.bookingMaxDaysAhead, cancelHours: restaurant.bookingCancelHours, pointsPerRealOff: restaurant.pointsPerRealOff, earnPerReal: restaurant.pointsPerReal }} />
+            <BookingPolicyForm defaults={{ auto: restaurant.bookingAutoConfirm, minNotice: restaurant.bookingMinNoticeMin, maxAhead: restaurant.bookingMaxDaysAhead, cancelHours: restaurant.bookingCancelHours, pointsPerRealOff: restaurant.pointsPerRealOff, earnPerReal: restaurant.pointsPerReal, notifyEmail: restaurant.bookingNotifyEmail ?? '', accountEmail: restaurant.email }} />
           </div>
         </div>
       </Section>

@@ -25,7 +25,7 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
     where: { customerId: customer.id },
     orderBy: { startsAt: 'desc' },
     take: 100,
-    include: { restaurant: { select: { id: true, name: true, bookingCancelHours: true } }, unit: { select: { name: true, address: true } } },
+    include: { restaurant: { select: { id: true, name: true, bookingCancelHours: true } }, unit: { select: { name: true, address: true } }, resource: { select: { name: true } } },
   });
   const upcoming = all.filter((b) => (b.status === 'PENDING' || b.status === 'CONFIRMED') && b.endsAt > now).sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
   const past = all.filter((b) => !upcoming.includes(b));
@@ -38,7 +38,7 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="truncate font-bold text-slate-800">{b.serviceName}</p>
-            <p className="truncate text-sm text-slate-600">{formatBookingWhen(b.startsAt)}</p>
+            <p className="truncate text-sm text-slate-600">{formatBookingWhen(b.startsAt)}{b.resource ? ` · com ${b.resource.name}` : ''}</p>
             <p className="truncate text-xs text-slate-500">
               <Link href={`/lugar/${b.restaurant.id}`} className="link-inline !font-medium">{b.restaurant.name}</Link>
               {b.unit.address ? ` · ${b.unit.address}` : ''}

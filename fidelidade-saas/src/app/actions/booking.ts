@@ -15,6 +15,7 @@ const schema = z.object({
   restaurantId: z.string().regex(/^[0-9a-f-]{36}$/),
   serviceId: z.string().regex(/^[0-9a-f-]{36}$/),
   unitId: z.string().regex(/^[0-9a-f-]{36}$/),
+  resourceId: z.string().default(''),
   date: z.string(),
   time: z.string(),
   partySize: z.string().default(''),
@@ -30,6 +31,7 @@ export async function createBooking(_: FormState, formData: FormData): Promise<F
     restaurantId: formData.get('restaurantId') ?? '',
     serviceId: formData.get('serviceId') ?? '',
     unitId: formData.get('unitId') ?? '',
+    resourceId: formData.get('resourceId') ?? '',
     date: formData.get('date') ?? '',
     time: formData.get('time') ?? '',
     partySize: formData.get('partySize') ?? '',
@@ -42,7 +44,7 @@ export async function createBooking(_: FormState, formData: FormData): Promise<F
   const d = parsed.data;
   let id: string;
   try {
-    const booking = await bookSlot(customer.id, { ...d, partySize: d.partySize ? Number(d.partySize) : null, usePoints: Number(d.usePoints) || 0 });
+    const booking = await bookSlot(customer.id, { ...d, partySize: d.partySize ? Number(d.partySize) : null, usePoints: Number(d.usePoints) || 0, resourceId: /^[0-9a-f-]{36}$/.test(d.resourceId) ? d.resourceId : null });
     id = booking.id;
   } catch (e) {
     if (e instanceof BusinessError) return fail(e.message, formData);

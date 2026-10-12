@@ -84,6 +84,7 @@ model Restaurant {
   bookingMaxDaysAhead Int     @default(30) // até quantos dias à frente o cliente pode marcar
   bookingCancelHours  Int     @default(2) // o cliente cancela sozinho até X horas antes
   pointsPerRealOff    Int     @default(100) // quantos pontos valem R$ 1,00 de desconto num serviço (padrão: ganha 10 por real, 100 pontos = R$ 1,00)
+  bookingNotifyEmail  String? // e-mail que recebe cada novo agendamento (vazio = o e-mail da conta)
 
   // Pontos compartilhados entre lugares (ecossistema). Os dois começam desligados.
   pointsShareOut Boolean @default(false) // clientes podem usar em outros lugares os pontos ganhos aqui
@@ -504,12 +505,18 @@ model Resource {
   name         String
   capacity     Int      @default(1)
   active       Boolean  @default(true)
+  photoImageId String? // foto do profissional, para o cliente ver com quem vai ser atendido
+  email        String? // recebe aviso de cada agendamento dele
+  phone        String? // WhatsApp (só dígitos), para o gestor enviar a agenda
+  /// Dias e horários em que trabalha, no mesmo formato do horário da unidade. Vazio = segue o horário da unidade.
+  schedule     Json?
   createdAt    DateTime @default(now())
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   unit       Unit?      @relation(fields: [unitId], references: [id], onDelete: SetNull)
   services   Service[]
   bookings   Booking[]
+  offers     ResourceService[]
 
   @@index([restaurantId])
 }
@@ -531,8 +538,23 @@ model Service {
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   resource   Resource?  @relation(fields: [resourceId], references: [id], onDelete: SetNull)
   bookings   Booking[]
+  offers     ResourceService[]
 
   @@index([restaurantId])
+}
+
+/// Quais serviços cada profissional faz e quanto tempo leva com ele. Serviço sem nenhuma linha aqui é feito por qualquer profissional.
+model ResourceService {
+  id         String @id @default(uuid())
+  resourceId String
+  serviceId  String
+  durationMin Int? // vazio = a duração padrão do serviço
+
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  service  Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([resourceId, serviceId])
+  @@index([serviceId])
 }
 
 model Booking {

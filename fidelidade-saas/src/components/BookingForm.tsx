@@ -11,7 +11,7 @@ export function BookingForm({
   askPartySize,
   discount,
 }: {
-  hidden: { restaurantId: string; serviceId: string; unitId: string; date: string; time: string };
+  hidden: { restaurantId: string; serviceId: string; unitId: string; date: string; time: string; resourceId: string };
   askPartySize: boolean;
   discount?: { priceCents: number; balance: number; rate: number; maxPoints: number; maxPct: number } | null;
 }) {
