@@ -1,10 +1,12 @@
 import 'server-only';
 import type { Prisma } from '@prisma/client';
 import { prisma } from './db';
-import { BusinessError } from './claims';
-import { availableSlots, dayStartUtc, formatBookingWhen, hmOf, parseDateKey, pickResource, type BusyRange, type Slot } from './booking';
+import { BusinessError, creditClaimWith } from './claims';
+import { availableSlots, bookingPoints, dayStartUtc, formatBookingWhen, hmOf, parseDateKey, pickResource, type BusyRange, type Slot } from './booking';
 import { parseSchedule } from './hours';
 import { notify } from './notifications';
+import { formatBRL } from './points';
+import { newClaimToken } from './tokens';
 
 type Db = Prisma.TransactionClient | typeof prisma;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -136,6 +138,76 @@ export async function cancelBooking(id: string, by: 'CUSTOMER' | 'OWNER', where:
   });
   if (done.count !== 1) throw new BusinessError('Agendamento não encontrado ou já encerrado.');
   return booking;
+}
+
+/**
+ * O estabelecimento marca o atendimento como concluído: o agendamento fecha e os pontos entram na carteira do cliente,
+ * tudo na mesma transação. Reaproveita o crédito do caixa (campanhas, indicação e desafios valem do mesmo jeito) e o
+ * valor entra nas vendas do painel. Serviço sem preço conclui sem pontos.
+ */
+export async function completeBooking(id: string, restaurantId: string) {
+  return prisma.$transaction(async (tx) => {
+    const booking = await tx.booking.findFirst({ where: { id, restaurantId, status: { in: ['PENDING', 'CONFIRMED'] } } });
+    if (!booking) throw new BusinessError('Agendamento não encontrado ou já encerrado.');
+    const restaurant = await tx.restaurant.findUnique({ where: { id: restaurantId }, select: { pointsPerReal: true } });
+    if (!restaurant) throw new BusinessError('Estabelecimento não encontrado.');
+
+    const marked = await tx.booking.updateMany({ where: { id, status: { in: ['PENDING', 'CONFIRMED'] } }, data: { status: 'COMPLETED', completedAt: new Date(), confirmedAt: booking.confirmedAt ?? new Date() } });
+    if (marked.count !== 1) throw new BusinessError('Agendamento já encerrado.');
+
+    const points = bookingPoints(booking.priceCents, restaurant.pointsPerReal);
+    if (booking.priceCents <= 0 || points <= 0) return { points: 0 };
+
+    const token = newClaimToken();
+    const claim = await tx.claim.create({
+      data: {
+        token,
+        restaurantId,
+        unitId: booking.unitId,
+        amountCents: booking.priceCents,
+        points,
+        billPoints: points,
+        description: `Atendimento: ${booking.serviceName} (${formatBRL(booking.priceCents)})`,
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      },
+    });
+    const credited = await creditClaimWith(tx, token, booking.customerId);
+    await tx.booking.update({ where: { id }, data: { claimId: claim.id, pointsAwarded: credited.points } });
+    return { points: credited.points };
+  });
+}
+
+/** O estabelecimento confirma um pedido que estava aguardando. */
+export async function confirmBooking(id: string, restaurantId: string) {
+  const booking = await prisma.booking.findFirst({ where: { id, restaurantId, status: 'PENDING' }, include: { restaurant: { select: { name: true } } } });
+  if (!booking) throw new BusinessError('Esse pedido não está mais aguardando confirmação.');
+  const done = await prisma.booking.updateMany({ where: { id, status: 'PENDING' }, data: { status: 'CONFIRMED', confirmedAt: new Date() } });
+  if (done.count !== 1) throw new BusinessError('Esse pedido não está mais aguardando confirmação.');
+  await notify(prisma, {
+    customerId: booking.customerId,
+    restaurantId,
+    title: 'Agendamento confirmado',
+    body: `${booking.serviceName} · ${formatBookingWhen(booking.startsAt)} · ${booking.restaurant.name}`,
+    href: '/perfil/agendamentos',
+  });
+}
+
+export async function markNoShow(id: string, restaurantId: string) {
+  const done = await prisma.booking.updateMany({ where: { id, restaurantId, status: { in: ['PENDING', 'CONFIRMED'] } }, data: { status: 'NO_SHOW' } });
+  if (done.count !== 1) throw new BusinessError('Agendamento não encontrado ou já encerrado.');
+}
+
+/** Cancelamento pelo estabelecimento: avisa o cliente. */
+export async function cancelByOwner(id: string, restaurantId: string) {
+  const booking = await cancelBooking(id, 'OWNER', { restaurantId });
+  const restaurant = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { name: true } });
+  await notify(prisma, {
+    customerId: booking.customerId,
+    restaurantId,
+    title: 'Agendamento cancelado pelo lugar',
+    body: `${booking.serviceName} · ${formatBookingWhen(booking.startsAt)} · ${restaurant?.name ?? ''}. Você pode marcar outro horário.`,
+    href: `/lugar/${restaurantId}/agendar`,
+  });
 }
 
 export const bookingTime = (b: { startsAt: Date }) => hmOf(b.startsAt);

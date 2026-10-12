@@ -5,7 +5,10 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { fail, type FormState } from '@/lib/form';
 import { parseMoneyToCents } from '@/lib/points';
-import { requirePaidRestaurant } from '@/lib/session';
+import { redirect } from 'next/navigation';
+import { cancelByOwner, completeBooking, confirmBooking, markNoShow } from '@/lib/booking-db';
+import { BusinessError } from '@/lib/claims';
+import { requireActiveRestaurant, requirePaidRestaurant } from '@/lib/session';
 
 const firstIssue = (e: z.ZodError) => e.issues[0].message;
 const refresh = () => revalidatePath('/dashboard', 'layout');
@@ -118,4 +121,32 @@ export async function removeService(formData: FormData) {
   if (await prisma.booking.count({ where: { serviceId: id } })) await prisma.service.updateMany({ where, data: { active: false } });
   else await prisma.service.deleteMany({ where });
   refresh();
+}
+
+// ---------------------------------------------------------------- Agenda do dia (ações do dono)
+
+const safeBack = (v: FormDataEntryValue | null) => (typeof v === 'string' && v.startsWith('/dashboard/agenda') ? v : '/dashboard/agenda');
+
+/** Confirmar, concluir (credita os pontos), marcar falta ou cancelar um agendamento. */
+export async function bookingAction(formData: FormData) {
+  const restaurant = await requireActiveRestaurant();
+  const id = String(formData.get('id') ?? '');
+  const op = String(formData.get('op') ?? '');
+  const back = safeBack(formData.get('back'));
+  const sep = back.includes('?') ? '&' : '?';
+  let notice = '';
+  try {
+    if (op === 'confirm') await confirmBooking(id, restaurant.id);
+    else if (op === 'complete') {
+      const r = await completeBooking(id, restaurant.id);
+      notice = r.points > 0 ? `ok=${encodeURIComponent(`Concluído. ${r.points.toLocaleString('pt-BR')} pontos creditados ao cliente.`)}` : 'ok=Concluído.';
+    } else if (op === 'noshow') await markNoShow(id, restaurant.id);
+    else if (op === 'cancel') await cancelByOwner(id, restaurant.id);
+    else notice = 'erro=Ação inválida.';
+  } catch (e) {
+    if (!(e instanceof BusinessError)) throw e;
+    notice = `erro=${encodeURIComponent(e.message)}`;
+  }
+  revalidatePath('/dashboard', 'layout');
+  redirect(notice ? `${back}${sep}${notice}` : back);
 }

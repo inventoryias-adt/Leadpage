@@ -261,3 +261,16 @@ Objetivo: clientes e estabelecimentos (restaurantes, barbearias, clínicas de es
 4. **Pontos compartilhados entre lugares** (flags já existem; falta a regra de conversão e de quem arca com o prêmio).
 
 Decisões em aberto: modelo de recebimento (Stripe Connect com Pix e repasse a cada estabelecimento, taxas e quem assume estorno), conciliação/nota fiscal, política de cancelamento e no-show por estabelecimento, e a ordem de entrega (sugestão: 1 → 2 → 3).
+
+## Agenda e reservas (fase 1 do ecossistema)
+
+- **Cadastro** (Regras → "Agenda e serviços"): serviços (nome, duração, preço, "é reserva de mesa"), **equipe e vagas** (profissional, cadeira ou mesas; "ao mesmo tempo" = capacidade) e regras
+  (confirmar automaticamente ou manualmente, antecedência mínima, até quantos dias à frente, até quantas horas antes o cliente cancela). Ao cadastrar o 1º serviço cria a vaga "Atendimento".
+  O horário de funcionamento de **cada unidade** (seção Unidades) define quando dá para marcar. Modelos: `Service`, `Resource`, `Booking` (migration `0017_agenda_e_reservas`).
+- **Cliente**: na página do lugar, botão **Agendar** → serviço → unidade → dia → horário → confirmar (`/lugar/[id]/agendar`). Reserva de mesa pergunta o número de pessoas. Os horários livres vêm de
+  `src/lib/booking.ts` (puro e testado: expediente, madrugada, capacidade, antecedência, escolha do profissional com menos carga). A reserva usa um **cadeado por estabelecimento** no banco, então
+  dois clientes nunca pegam o mesmo horário (testado com pedidos simultâneos). **Meus agendamentos** (`/perfil/agendamentos`) lista próximos e anteriores e cancela dentro do prazo; o início mostra o próximo horário.
+- **Dono** (`/dashboard/agenda`, aba "Agenda" só aparece com serviços cadastrados, com bolinha de pedidos aguardando): agenda por dia, **Confirmar**, **Concluir**, **Faltou** e **Cancelar** (avisa o cliente).
+  **Concluir credita os pontos sozinho** (valor do serviço × pontos por real) reaproveitando o crédito do caixa (`creditClaimWith`): campanhas, indicação e desafios valem igual, a venda entra nos números do
+  painel, e fechar duas vezes não credita duas vezes. Serviço sem preço conclui sem pontos.
+- Fuso: tudo em Brasília (UTC−3). Pagamento no local por enquanto; **próximas fases**: pontos como desconto no serviço e pagamento antecipado pela plataforma.
