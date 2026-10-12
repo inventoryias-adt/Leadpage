@@ -302,3 +302,14 @@ Decisões em aberto: modelo de recebimento (Stripe Connect com Pix e repasse a c
   **Configuração (uma vez)**: gere um segredo longo, cadastre-o na Vercel como `CRON_SECRET` (Sensitive) e no GitHub em Settings → Secrets and variables → Actions → `CRON_SECRET`; faça redeploy.
   Sem o segredo a rota responde 503 e o workflow acusa erro. Para outro domínio, crie a variável `APP_URL` no GitHub. Observação: o GitHub pode atrasar execuções agendadas em horários de pico; a janela de 5 a 30 minutos absorve isso.
 - Ainda não feito: notificação do sistema (push; no iPhone só com o app instalado), pagamento antecipado e reembolso ao cancelar/reagendar.
+
+## Pontos compartilhados em uso (fase 4 do ecossistema, migration `0021_pontos_compartilhados_uso`)
+
+- **Chaves** (Regras → Pontos compartilhados): "pontos daqui valem em outros lugares" (`pointsShareOut`) e "aceito pontos de outros lugares" (`pointsAcceptIn`). Valem para prêmios; desconto em serviço continua só com os pontos do próprio lugar.
+- **Como o cliente usa**: na sacola de prêmios de um lugar que aceita (`/lugar/[id]/premios`) aparece **"Completar com pontos de outros lugares (+X pts)"**, com o valor de cada carteira convertido. Só é usado o que faltar,
+  começando pelas carteiras que mais rendem. O resgate registra o custo cheio do prêmio; o extrato mostra "Usados em …" (saída na origem) e "Pontos vindos de …" (entrada no destino).
+- **Conversão pelo valor** (`src/lib/shared-points.ts`, testado): um ponto vale 1/`pointsPerReal` reais de consumo no lugar. 100 pontos de quem dá 10 por real (R$ 10) valem 50 pontos de quem dá 5 por real. Arredondamento a favor do cliente (alguns pontos no máximo).
+- **Sem acerto entre lugares**: o Fidelize não move dinheiro; quem entrega o prêmio arca com ele. Fica como decisão futura se for necessário compensar (ex.: crédito entre lugares).
+- **Segurança**: tudo é recalculado no servidor, na mesma transação, com **todas as carteiras do cliente travadas em ordem de id** (resgates simultâneos nunca gastam duas vezes nem se travam entre si; testado com 6 pedidos ao mesmo tempo).
+  Só entram carteiras de lugares ativos com a chave ligada; lugar que não aceita ignora a opção.
+- **Números do dono**: as conversões são movimentações próprias (`SHARED_OUT` / `SHARED_IN`), por isso **não** entram em "pontos emitidos" nem em "resgatados" (só `EARN` e `REDEEM`).

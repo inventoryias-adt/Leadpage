@@ -53,7 +53,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
     if (s.type === 'EARN') {
       cur.earned += s._sum.points ?? 0;
       cur.visits += s._count;
-    } else cur.redeemed += s._sum.points ?? 0;
+    } else if (s.type === 'REDEEM') cur.redeemed += s._sum.points ?? 0;
     const last = s._max.createdAt ?? undefined;
     if (last && (!cur.last || last > cur.last)) cur.last = last;
     byWallet.set(s.walletId, cur);

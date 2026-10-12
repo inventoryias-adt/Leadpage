@@ -7,6 +7,7 @@ import { formatPoints, formatPrice } from '@/lib/points';
 import { Icon } from './Icons';
 import { RewardImage } from './Visual';
 
+export type SharedInfo = { total: number; places: { name: string; points: number; equiv: number }[] };
 export type BagReward = { id: string; name: string; description: string | null; pointsCost: number; cashCents: number; imageUrl: string | null };
 
 /**
@@ -20,6 +21,7 @@ export function RewardBag({
   remainingThisMonth,
   limit,
   hoursText,
+  shared,
 }: {
   restaurantId: string;
   rewards: BagReward[];
@@ -27,10 +29,13 @@ export function RewardBag({
   remainingThisMonth: number;
   limit: number;
   hoursText: string | null;
+  shared?: SharedInfo | null;
 }) {
   const [state, action, pending] = useActionState(redeemBagAction, {});
   const [qty, setQty] = useState<Record<string, number>>({});
   const [confirming, setConfirming] = useState(false);
+  const [useShared, setUseShared] = useState(false);
+  const available = balance + (useShared && shared ? shared.total : 0); // saldo daqui + o que as outras carteiras rendem
 
   const { count, total } = useMemo(() => {
     let c = 0;
@@ -43,7 +48,7 @@ export function RewardBag({
     return { count: c, total: t };
   }, [qty, rewards]);
 
-  const left = balance - total;
+  const left = available - total;
   const itemsLeft = remainingThisMonth - count;
 
   const add = (r: BagReward) => {
@@ -94,11 +99,23 @@ export function RewardBag({
         </p>
       </div>
 
+      {shared && (
+        <label className="glass-panel-sm flex cursor-pointer items-start gap-3 p-4">
+          <input type="checkbox" className="mt-1 h-4 w-4 rounded accent-electric-500" checked={useShared} onChange={(e) => { setUseShared(e.target.checked); setConfirming(false); if (!e.target.checked) setQty({}); }} />
+          <span className="min-w-0 text-sm">
+            <span className="block font-bold text-slate-800">Completar com pontos de outros lugares (+{formatPoints(shared.total)} pts)</span>
+            <span className="block text-xs text-slate-600">
+              Só entra o que faltar. {shared.places.map((p) => `${p.name}: ${formatPoints(p.points)} pts valem ${formatPoints(p.equiv)} aqui`).join(' · ')}.
+            </span>
+          </span>
+        </label>
+      )}
+
       <ul className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
         {rewards.map((r) => {
           const q = qty[r.id] ?? 0;
           const canAdd = r.pointsCost <= left && itemsLeft > 0;
-          const missing = r.pointsCost - balance;
+          const missing = r.pointsCost - available;
           return (
             <li key={r.id} className="glass-panel-sm p-3">
               <div className="flex gap-3">
@@ -139,6 +156,7 @@ export function RewardBag({
           className={`${count > 0 ? 'fixed inset-x-0 bottom-24 z-20 mx-auto w-full max-w-md px-4' : 'hidden'} lg:static lg:top-24 lg:mx-0 lg:block lg:max-w-none lg:px-0 lg:sticky`}
         >
           <input type="hidden" name="restaurantId" value={restaurantId} />
+          <input type="hidden" name="useShared" value={useShared ? '1' : '0'} />
           <input type="hidden" name="items" value={JSON.stringify(Object.entries(qty).filter(([, n]) => n > 0).map(([rewardId, n]) => ({ rewardId, qty: n })))} />
           <div className="glass-panel space-y-3 p-4 shadow-2xl lg:shadow-none">
             {count === 0 ? (
@@ -155,7 +173,7 @@ export function RewardBag({
               </p>
               <p className="text-right text-sm">
                 <span className="font-extrabold text-slate-900">{formatPoints(total)} pts</span>
-                <span className="block text-xs text-slate-500">sobram {formatPoints(left)} pts</span>
+                <span className="block text-xs text-slate-500">{useShared && total > balance ? `${formatPoints(total - balance)} pts de outros lugares` : `sobram ${formatPoints(left)} pts`}</span>
               </p>
             </div>
             {state.error && <p role="alert" className="glass-error">{state.error}</p>}

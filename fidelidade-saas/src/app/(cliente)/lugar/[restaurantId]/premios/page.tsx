@@ -7,6 +7,7 @@ import { prisma } from '@/lib/db';
 import { hoursText as unitsHoursText } from '@/lib/units-text';
 import { imageUrl } from '@/lib/images';
 import { startOfMonthBR } from '@/lib/points';
+import { toDestPoints } from '@/lib/shared-points';
 import { getCustomer } from '@/lib/session';
 
 export const metadata = { title: 'Prêmios' };
@@ -18,7 +19,7 @@ export default async function PremiosPage({ params }: { params: Promise<{ restau
   const customer = await getCustomer();
 
   const ofWallet = customer ? { customerId: customer.id, restaurantId } : null;
-  const [restaurant, rewards, wallet, usedThisMonth] = await Promise.all([
+  const [restaurant, rewards, wallet, usedThisMonth, otherWallets] = await Promise.all([
     prisma.restaurant.findUnique({
       where: { id: restaurantId },
       select: {
@@ -27,16 +28,29 @@ export default async function PremiosPage({ params }: { params: Promise<{ restau
         subscriptionStatus: true,
         onboardedAt: true,
         maxRedeemsPerMonth: true,
+        pointsAcceptIn: true,
+        pointsPerReal: true,
         units: { where: { active: true }, orderBy: { createdAt: 'asc' }, select: { name: true, openingSchedule: true } },
       },
     }),
     prisma.reward.findMany({ where: { restaurantId, active: true }, orderBy: { pointsCost: 'asc' } }),
     ofWallet ? prisma.wallet.findUnique({ where: { customerId_restaurantId: ofWallet } }) : null,
     ofWallet ? prisma.redemption.count({ where: { ...ofWallet, createdAt: { gte: startOfMonthBR() } } }) : 0,
+    customer
+      ? prisma.wallet.findMany({
+          where: { customerId: customer.id, restaurantId: { not: restaurantId }, balance: { gt: 0 }, restaurant: { pointsShareOut: true, subscriptionStatus: 'ACTIVE' } },
+          select: { balance: true, restaurant: { select: { name: true, pointsPerReal: true } } },
+        })
+      : [],
   ]);
   if (!restaurant || restaurant.subscriptionStatus !== 'ACTIVE' || !restaurant.onboardedAt) notFound();
 
   const hoursText = unitsHoursText(restaurant.units);
+  // Pontos de outros lugares que este aceita, já convertidos para os pontos daqui.
+  const places = restaurant.pointsAcceptIn
+    ? otherWallets.map((w) => ({ name: w.restaurant.name, points: w.balance, equiv: toDestPoints(w.balance, w.restaurant.pointsPerReal, restaurant.pointsPerReal) })).filter((p) => p.equiv > 0)
+    : [];
+  const shared = places.length > 0 ? { total: places.reduce((n, p) => n + p.equiv, 0), places } : null;
   const back = (
     <Link href={`/lugar/${restaurantId}`} className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-electric-600 hover:text-primary">
       <Icon name="back" size={16} /> {restaurant.name}
@@ -69,6 +83,7 @@ export default async function PremiosPage({ params }: { params: Promise<{ restau
           remainingThisMonth={Math.max(0, restaurant.maxRedeemsPerMonth - usedThisMonth)}
           limit={restaurant.maxRedeemsPerMonth}
           hoursText={hoursText}
+          shared={shared}
           rewards={rewards.map((r) => ({ id: r.id, name: r.name, description: r.description, pointsCost: r.pointsCost, cashCents: r.cashCents, imageUrl: imageUrl(r.imageId) }))}
         />
       )}
