@@ -231,3 +231,20 @@ Recuperação por e-mail ainda não existe (precisa de um serviço de envio, com
 - **Pontos compartilhados** (migration `0015_pontos_compartilhados`): em Regras → "Pontos compartilhados" cada estabelecimento liga/desliga `pointsShareOut` ("meus pontos valem em outros
   lugares") e `pointsAcceptIn` ("aceito pontos de outros lugares"), ambos desligados por padrão. No Perfil o cliente vê cada carteira como *Compartilhada* ou *Individual* e a lista de lugares
   que aceitam pontos de outros. **A troca de pontos entre lugares ainda não está ativa**: falta definir a regra de conversão e de quem arca com o prêmio.
+
+## Piloto: suporte, e-mail, termos e Stripe real
+
+- **Suporte**: o **e-mail é o canal principal** (`SUPPORT_EMAIL`) e o WhatsApp (`SUPPORT_WHATSAPP`) complementa. Aparecem juntos nos avisos de erro (assinatura, categoria), nos Termos e na Privacidade,
+  sempre com assunto e mensagem prontos (`src/lib/support.ts`, `src/components/SupportLinks.tsx`). Trocar para um e-mail com domínio próprio é só mudar a variável.
+- **E-mail de recuperação de senha** (`src/lib/mailer.ts`): **SMTP** (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM`) tem prioridade e **não exige domínio** (Gmail com "senha de app":
+  `smtp.gmail.com`, porta 465); sem SMTP usa o **Resend** (`RESEND_API_KEY`), que sem domínio verificado só entrega para o e-mail dono da conta. Com domínio próprio, verifique-o no Resend e troque `EMAIL_FROM`.
+- **Termos de Uso e Política de Privacidade**: páginas `/termos` e `/privacidade` (texto em `src/app/termos` e `src/app/privacidade`; versão em `src/lib/legal.ts`). Os cadastros (dono, cliente e criação de
+  acesso do cliente antigo) exigem a caixa "Li e concordo" e gravam `termsAcceptedAt` e `termsVersion` (migration `0016_aceite_termos`). **Ao mudar os textos, mude `TERMS_VERSION`.** `LEGAL_NAME` e
+  `LEGAL_CNPJ` (opcionais) passam a aparecer nos documentos. Os textos são um modelo para o piloto: peça revisão a um advogado antes de escalar.
+- **Pedido de exclusão de dados (LGPD)**: hoje por e-mail/WhatsApp ao suporte (descrito na Política); a exclusão é feita pelo administrador.
+- **Virada para o Stripe real** (hoje tudo está em modo de teste; contas de teste/piloto são ativadas pelo painel de administração, sem cobrança):
+  1. Ativar a conta no Stripe (dados do negócio e conta bancária).
+  2. Autorizar a conta real na sessão do assistente (Stripe MCP) para recriar produto, preço (R$ 197/mês), portal do cliente e webhook em modo real.
+  3. Criar a chave secreta real e colocá-la no Vercel (`STRIPE_SECRET_KEY`, Sensitive); atualizar `STRIPE_PRICE_ID` e `STRIPE_WEBHOOK_SECRET` com os valores reais.
+  4. Redeploy e **uma compra real de teste** (R$ 197, depois cancelar e pedir o reembolso pelo painel do Stripe).
+  Contas antigas com cliente do Stripe de teste (ex.: "Teste Test") mostram o aviso amigável ao abrir o portal: limpe `paymentCustomerId` delas se necessário.

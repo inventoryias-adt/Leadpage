@@ -9,6 +9,7 @@ import { createCheckoutUrl, createPortalUrl } from '@/lib/payments';
 import { endRestaurantSession, requireRestaurant, startRestaurantSession } from '@/lib/session';
 import { fail, type FormState } from '@/lib/form';
 import { DEFAULT_UNIT_NAME } from '@/lib/units';
+import { TERMS_REQUIRED_MESSAGE, termsAccepted, termsRecord } from '@/lib/legal';
 import { TOO_MANY, allow, clientIp } from '@/lib/rate-limit';
 
 const signupSchema = z.object({
@@ -22,6 +23,7 @@ export async function signup(_: FormState, formData: FormData): Promise<FormStat
   const parsed = signupSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return fail(parsed.error.issues[0].message, formData);
   const { name, email, phone, password } = parsed.data;
+  if (!termsAccepted(formData)) return fail(TERMS_REQUIRED_MESSAGE, formData);
 
   if (!(await allow(`signup:${await clientIp()}`, 10, 3600))) return fail(TOO_MANY, formData);
 
@@ -35,6 +37,7 @@ export async function signup(_: FormState, formData: FormData): Promise<FormStat
       email,
       phone: normalizePhone(phone)!,
       passwordHash: await hashPassword(password),
+      ...termsRecord(),
       // Toda marca começa com uma unidade; o dono completa endereço e horário no onboarding.
       units: { create: { name: DEFAULT_UNIT_NAME } },
       // Sugestões iniciais de interação — o dono ajusta no onboarding.

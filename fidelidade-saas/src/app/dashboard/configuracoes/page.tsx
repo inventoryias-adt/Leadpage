@@ -19,7 +19,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { RewardImage } from '@/components/Visual';
 import { describeChallenge } from '@/lib/challenges';
 import { prisma } from '@/lib/db';
-import { supportLink } from '@/lib/support';
+import { getSupport } from '@/lib/support-env';
 import { imageUrl } from '@/lib/images';
 import { formatBRL, formatPoints, formatPrice } from '@/lib/points';
 import { promoBadge, promoStatus, promoWhen } from '@/lib/promos';
@@ -118,7 +118,7 @@ export default async function ConfiguracoesPage() {
       <Section id="identidade" n={2} title="Identidade da marca" hint="Como seu restaurante aparece para os clientes no app.">
         <IdentityForm
           placeName={restaurant.name}
-          supportWhatsapp={process.env.SUPPORT_WHATSAPP}
+          supportEnv={{ email: process.env.SUPPORT_EMAIL, whatsapp: process.env.SUPPORT_WHATSAPP }}
           defaults={{
             category: restaurant.category ?? '',
             categoryOther: restaurant.categoryOther ?? '',
@@ -294,7 +294,7 @@ export default async function ConfiguracoesPage() {
 
       <Section id="conta" n={11} title="Minha conta" hint="Troque a senha de acesso ao painel. Use uma senha que só você conheça.">
         <PasswordForm />
-        {restaurant.paymentCustomerId && <BillingPortalForm supportHref={supportLink(process.env.SUPPORT_WHATSAPP, `Olá! Sou do estabelecimento "${restaurant.name}" e não consegui abrir o gerenciamento da assinatura no Fidelize.`)} />}
+        {restaurant.paymentCustomerId && <BillingPortalForm support={getSupport('Assinatura no Fidelize', `Olá! Sou do estabelecimento "${restaurant.name}" e não consegui abrir o gerenciamento da assinatura no Fidelize.`)} />}
       </Section>
 
       {onboarding && (

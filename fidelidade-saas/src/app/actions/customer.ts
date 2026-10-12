@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { isValidCpf, normalizePhone, onlyDigits } from '@/lib/br';
 import { BusinessError, creditClaim, performCheckIn, redeemItems, redeemReward, type BagItem } from '@/lib/claims';
+import { TERMS_REQUIRED_MESSAGE, termsAccepted, termsRecord } from '@/lib/legal';
 import { emailConfigured } from '@/lib/mailer';
 import { dummyHash, hashPassword, verifyPassword } from '@/lib/password';
 import { newReferralCode } from '@/lib/tokens';
@@ -74,6 +75,7 @@ export async function customerSignup(_: FormState, formData: FormData): Promise<
   const { name, email, password } = parsed.data;
   const cpf = onlyDigits(parsed.data.cpf);
   const phone = normalizePhone(parsed.data.phone)!;
+  if (!termsAccepted(formData)) return fail(TERMS_REQUIRED_MESSAGE, formData);
 
   const ip = await clientIp();
   const [okIp, okCpf] = await Promise.all([allow(`cust:ip:${ip}`, 30, 900), allow(`cust:cpf:${cpf}`, 8, 900)]);
@@ -84,7 +86,7 @@ export async function customerSignup(_: FormState, formData: FormData): Promise<
   if (byEmail) return fail('Este e-mail já está em uso. Entre com ele ou use outro.', formData);
 
   const customer = await prisma.customer
-    .create({ data: { cpf, phone, name, email, passwordHash: await hashPassword(password), referralCode: newReferralCode() } })
+    .create({ data: { cpf, phone, name, email, passwordHash: await hashPassword(password), referralCode: newReferralCode(), ...termsRecord() } })
     .catch((e: { code?: string }) => (e.code === 'P2002' ? null : Promise.reject(e))); // corrida: outro cadastro igual no mesmo instante
   if (!customer) return fail('Este CPF ou e-mail já tem cadastro. Tente entrar.', formData);
   // Cadastro feito pelo link "Indique amigos": registra quem indicou (o prêmio sai na primeira compra).
@@ -107,6 +109,7 @@ export async function customerRecover(_: FormState, formData: FormData): Promise
   const { email, password } = parsed.data;
   const cpf = onlyDigits(parsed.data.cpf);
   const phone = normalizePhone(parsed.data.phone)!;
+  if (!termsAccepted(formData)) return fail(TERMS_REQUIRED_MESSAGE, formData);
 
   const ip = await clientIp();
   const [okIp, okCpf] = await Promise.all([allow(`cust:ip:${ip}`, 30, 900), allow(`cust:cpf:${cpf}`, 8, 900)]);
@@ -120,7 +123,7 @@ export async function customerRecover(_: FormState, formData: FormData): Promise
   const taken = await prisma.customer.findUnique({ where: { email }, select: { id: true } });
   if (taken && taken.id !== customer.id) return fail('Este e-mail já está em uso por outra conta.', formData);
 
-  await prisma.customer.update({ where: { id: customer.id }, data: { email, passwordHash: await hashPassword(password) } });
+  await prisma.customer.update({ where: { id: customer.id }, data: { email, passwordHash: await hashPassword(password), ...termsRecord() } });
   return finishLogin(customer.id, formData);
 }
 

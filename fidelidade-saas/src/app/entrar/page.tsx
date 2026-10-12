@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { Brand } from '@/components/Brand';
 import { CustomerAuthForm } from '@/components/AuthForms';
 import { InstallApp } from '@/components/InstallApp';
+import { LegalLinks } from '@/components/LegalLinks';
 import { safeNext } from '@/lib/form';
 import { getCustomer } from '@/lib/session';
 
@@ -20,6 +21,7 @@ export default async function EntrarPage({ searchParams }: { searchParams: Promi
         <p className="mb-6 text-sm text-slate-500">Entre com seu e-mail e senha ou crie sua conta em um minuto.</p>
         <CustomerAuthForm next={next} cta="Entrar" />
       </div>
+      <LegalLinks />
     </main>
   );
 }

@@ -56,6 +56,8 @@ model Restaurant {
   guideDoneAt     DateTime? // passo a passo inicial concluído ou dispensado
   internalNote    String? // anotação interna da administração (o dono não vê)
   isTest          Boolean @default(false) // conta de teste da administração: fora da receita e dos números de assinantes
+  termsAcceptedAt DateTime? // aceite dos Termos de Uso e da Política de Privacidade (null = conta anterior ao aceite)
+  termsVersion    String? // versão aceita (ver src/lib/legal.ts)
 
   // Assinatura
   subscriptionStatus    SubscriptionStatus @default(PENDING)
@@ -139,6 +141,8 @@ model Customer {
   email        String?  @unique // minúsculo; null até o cliente criar o acesso com e-mail e senha
   passwordHash String?
   referralCode String?  @unique // código do link "Indique amigos"
+  termsAcceptedAt DateTime? // aceite dos Termos de Uso e da Política de Privacidade (null = conta anterior ao aceite)
+  termsVersion    String? // versão aceita (ver src/lib/legal.ts)
   createdAt    DateTime @default(now())
 
   wallets           Wallet[]

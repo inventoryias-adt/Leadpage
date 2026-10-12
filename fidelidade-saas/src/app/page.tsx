@@ -184,6 +184,10 @@ export default function LandingPage() {
           <Link href="/login" className="hover:text-electric-600">Entrar</Link>
           <SignupCta className="hover:text-electric-600">Assinar</SignupCta>
         </div>
+        <p className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+          <Link href="/termos" className="hover:text-electric-600">Termos de Uso</Link>
+          <Link href="/privacidade" className="hover:text-electric-600">Política de Privacidade</Link>
+        </p>
         <p>© {new Date().getFullYear()} Fidelize. Todos os direitos reservados.</p>
       </footer>
     </main>
