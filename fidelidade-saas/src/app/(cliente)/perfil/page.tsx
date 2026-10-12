@@ -21,7 +21,7 @@ export const dynamic = 'force-dynamic';
 export default async function PerfilPage() {
   const customer = await requireCustomer('/perfil');
 
-  const [wallets, pending, usedCount, acceptors, movements] = await Promise.all([
+  const [wallets, pending, usedCount, acceptors, movements, upcomingBookings] = await Promise.all([
     prisma.wallet.findMany({
       where: { customerId: customer.id },
       include: { restaurant: { select: { id: true, name: true, logoImageId: true, referralPoints: true, subscriptionStatus: true, pointsShareOut: true } } },
@@ -41,6 +41,7 @@ export default async function PerfilPage() {
       orderBy: { createdAt: 'desc' },
       take: 3000,
     }),
+    prisma.booking.count({ where: { customerId: customer.id, status: { in: ['PENDING', 'CONFIRMED'] }, endsAt: { gt: new Date() } } }),
   ]);
   const rows = movements.map((m) => ({ at: m.createdAt, type: m.type, points: m.points }));
   const activity = Object.fromEntries(PERIODS.map((p) => [p, activitySeries(rows, p)])) as Record<Period, Activity>;
@@ -86,6 +87,14 @@ export default async function PerfilPage() {
               <span className="min-w-0 flex-1">
                 <span className="block font-bold text-slate-800">Histórico de pontos</span>
                 <span className="block text-xs text-slate-500">Tudo o que você ganhou e usou</span>
+              </span>
+              <Icon name="chevron" size={18} className="text-slate-400" />
+            </Link>
+            <Link href="/perfil/agendamentos" className="glass-panel-sm card-link flex items-center gap-3 p-4">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#E8EEFB] text-electric-600"><Icon name="clock" size={22} /></span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-bold text-slate-800">Meus agendamentos</span>
+                <span className="block text-xs text-slate-500">{upcomingBookings > 0 ? `${upcomingBookings} ${upcomingBookings === 1 ? 'horário marcado' : 'horários marcados'}` : 'Marque um horário nos lugares'}</span>
               </span>
               <Icon name="chevron" size={18} className="text-slate-400" />
             </Link>

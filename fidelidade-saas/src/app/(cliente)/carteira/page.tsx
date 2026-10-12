@@ -7,6 +7,7 @@ import { PlaceAvatar, RewardImage } from '@/components/Visual';
 import { prisma } from '@/lib/db';
 import { affordableRewards, nextReward, pendingVouchers } from '@/lib/customer-rewards';
 import { imageUrl } from '@/lib/images';
+import { formatBookingWhen } from '@/lib/booking';
 import { formatPoints, formatPrice } from '@/lib/points';
 import { requireCustomer } from '@/lib/session';
 
@@ -16,7 +17,7 @@ export const dynamic = 'force-dynamic';
 export default async function CarteiraPage() {
   const customer = await requireCustomer('/carteira');
 
-  const [wallets, vouchers, affordable, next, places] = await Promise.all([
+  const [wallets, vouchers, affordable, next, places, nextBooking] = await Promise.all([
     prisma.wallet.findMany({
       where: { customerId: customer.id },
       include: { restaurant: { select: { id: true, name: true, logoImageId: true, subscriptionStatus: true } } },
@@ -26,6 +27,11 @@ export default async function CarteiraPage() {
     affordableRewards(customer.id, { perPlace: 4 }),
     nextReward(customer.id),
     prisma.restaurant.count({ where: { subscriptionStatus: 'ACTIVE', listed: true } }),
+    prisma.booking.findFirst({
+      where: { customerId: customer.id, status: { in: ['PENDING', 'CONFIRMED'] }, endsAt: { gt: new Date() } },
+      orderBy: { startsAt: 'asc' },
+      include: { restaurant: { select: { name: true } } },
+    }),
   ]);
   const total = wallets.reduce((n, w) => n + w.balance, 0);
 
@@ -38,6 +44,18 @@ export default async function CarteiraPage() {
         <h1 className="mt-5 text-2xl font-extrabold md:mt-0 md:text-3xl tracking-tight text-primary">Olá, {customer.name.split(' ')[0]}</h1>
         <p className="text-sm text-slate-600">Seus pontos e prêmios em um só lugar.</p>
       </header>
+
+      {nextBooking && (
+        <Link href="/perfil/agendamentos" className="glass-panel card-link flex items-center gap-3 p-4">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#E8EEFB] text-electric-600"><Icon name="clock" size={22} /></span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-xs font-bold uppercase tracking-wider text-slate-500">Seu próximo horário</span>
+            <span className="block truncate font-bold text-slate-800">{nextBooking.serviceName} · {formatBookingWhen(nextBooking.startsAt)}</span>
+            <span className="block truncate text-xs text-slate-500">{nextBooking.restaurant.name}{nextBooking.status === 'PENDING' ? ' · aguardando confirmação' : ''}</span>
+          </span>
+          <Icon name="chevron" size={18} className="text-slate-400" />
+        </Link>
+      )}
 
       <section aria-labelledby="carteiras">
         <div className="mb-3 flex items-baseline justify-between gap-3">

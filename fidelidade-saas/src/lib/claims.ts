@@ -78,7 +78,12 @@ async function awardChallenges(tx: Tx, customerId: string, restaurantId: string,
 
 /** Credita na carteira os pontos de um QR Code — uma única vez, de forma atômica. */
 export async function creditClaim(token: string, customerId: string) {
-  return prisma.$transaction(async (tx) => {
+  return prisma.$transaction((tx) => creditClaimWith(tx, token, customerId));
+}
+
+/** O mesmo crédito, dentro de uma transação já aberta (o agendamento concluído usa para creditar pontos e fechar de uma vez). */
+export async function creditClaimWith(tx: Tx, token: string, customerId: string) {
+  {
     const claim = await tx.claim.findUnique({ where: { token } });
     if (!claim) throw new BusinessError('QR Code inválido.');
     if (claim.redeemedAt) throw new BusinessError('Este QR Code já foi utilizado.');
@@ -137,7 +142,7 @@ export async function creditClaim(token: string, customerId: string) {
 
     const bonuses = await awardChallenges(tx, customerId, claim.restaurantId, 'PURCHASES', now);
     return { restaurantId: claim.restaurantId, points, bonuses };
-  });
+  }
 }
 
 async function rewardReferrer(tx: Tx, referredId: string, restaurantId: string, now: Date) {

@@ -16,6 +16,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const ready = restaurant.subscriptionStatus === 'ACTIVE' && !!restaurant.onboardedAt;
   const admin = await getAdmin();
   const { unit, units } = ready ? await currentUnit(restaurant.id) : { unit: null, units: [] };
+  // A aba Agenda só aparece para quem cadastrou serviços (ou já tem agendamentos); a bolinha conta os pedidos aguardando.
+  const [serviceCount, pendingBookings] = ready
+    ? await Promise.all([prisma.service.count({ where: { restaurantId: restaurant.id } }), prisma.booking.count({ where: { restaurantId: restaurant.id, status: 'PENDING', endsAt: { gt: new Date() } } })])
+    : [0, 0];
 
   // Passo a passo inicial: só para quem já pagou. O progresso mostra o que já está feito.
   const paid = restaurant.subscriptionStatus === 'ACTIVE';
@@ -44,7 +48,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <span className="hidden h-6 w-px bg-slate-300 sm:block" />
           <p className="hidden truncate text-sm font-semibold text-slate-600 sm:block">{restaurant.name}</p>
         </div>
-        {ready && <DashboardNav variant="top" />}
+        {ready && <DashboardNav variant="top" agenda={serviceCount > 0} pending={pendingBookings} />}
         <div className="flex items-center gap-2">
           {unit && units.length > 1 && <UnitSwitcher units={units.map((u) => ({ id: u.id, name: u.name }))} currentId={unit.id} />}
         {guide && (
@@ -71,7 +75,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       {/* Barra inferior no celular: o caixa usa o painel com uma mão só. */}
       {ready && (
         <div className="safe-bottom fixed inset-x-0 bottom-0 z-20 px-4 pt-2 md:hidden">
-          <DashboardNav variant="bottom" />
+          <DashboardNav variant="bottom" agenda={serviceCount > 0} pending={pendingBookings} />
         </div>
       )}
     </div>
