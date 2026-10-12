@@ -20,6 +20,8 @@ import { RewardImage } from '@/components/Visual';
 import { describeChallenge } from '@/lib/challenges';
 import { prisma } from '@/lib/db';
 import { getSupport } from '@/lib/support-env';
+import { removeResource, removeService } from '@/app/actions/agenda';
+import { AddResourceForm, AddServiceForm, BookingPolicyForm } from '@/components/AgendaSettings';
 import { imageUrl } from '@/lib/images';
 import { formatBRL, formatPoints, formatPrice } from '@/lib/points';
 import { promoBadge, promoStatus, promoWhen } from '@/lib/promos';
@@ -64,18 +66,21 @@ const SECTIONS = [
   ['desafios', 'Desafios'],
   ['campanhas', 'Campanhas'],
   ['produtos', 'Produtos'],
+  ['agenda', 'Agenda e serviços'],
   ['compartilhar', 'Pontos compartilhados'],
   ['conta', 'Minha conta'],
 ] as const;
 
 export default async function ConfiguracoesPage() {
   const restaurant = await requirePaidRestaurant();
-  const [interactions, rewards, challenges, units, promotions] = await Promise.all([
+  const [interactions, rewards, challenges, units, promotions, resources, services] = await Promise.all([
     prisma.interactionRule.findMany({ where: { restaurantId: restaurant.id, active: true }, orderBy: { createdAt: 'asc' } }),
     prisma.reward.findMany({ where: { restaurantId: restaurant.id, active: true }, orderBy: { pointsCost: 'asc' } }),
     prisma.challenge.findMany({ where: { restaurantId: restaurant.id }, orderBy: { createdAt: 'asc' } }),
     prisma.unit.findMany({ where: { restaurantId: restaurant.id }, orderBy: [{ active: 'desc' }, { createdAt: 'asc' }] }),
     prisma.promotion.findMany({ where: { restaurantId: restaurant.id }, orderBy: { createdAt: 'desc' } }),
+    prisma.resource.findMany({ where: { restaurantId: restaurant.id, active: true }, orderBy: { createdAt: 'asc' } }),
+    prisma.service.findMany({ where: { restaurantId: restaurant.id, active: true }, orderBy: { createdAt: 'asc' } }),
   ]);
   const nowDate = new Date();
   const activeCount = units.filter((u) => u.active).length;
@@ -288,11 +293,61 @@ export default async function ConfiguracoesPage() {
         <AddRewardForm />
       </Section>
 
-      <Section id="compartilhar" n={10} title="Pontos compartilhados" hint="Uma rede entre lugares: o cliente junta pontos em um e pode usar em outros que participam.">
+      <Section id="agenda" n={10} title="Agenda e serviços" hint="Barbearia, clínica, salão, restaurante… O cliente marca pelo app e, quando o atendimento é concluído, os pontos entram sozinhos.">
+        <div className="space-y-7">
+          <div>
+            <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-slate-500">Serviços</h3>
+            <ul className="mb-4 space-y-2">
+              {services.length === 0 && <li className="py-2 text-sm text-slate-500">Nenhum serviço cadastrado. O horário de funcionamento de cada unidade (seção Unidades) define quando dá para marcar.</li>}
+              {services.map((sv) => (
+                <li key={sv.id} className="glass-inset flex items-center gap-3 p-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold text-slate-800">{sv.name}</p>
+                    <p className="truncate text-xs text-slate-500">
+                      {sv.durationMin} min · {sv.priceCents > 0 ? formatBRL(sv.priceCents) : 'sem cobrança'}
+                      {sv.resourceId ? ` · ${resources.find((r) => r.id === sv.resourceId)?.name ?? ''}` : ''}
+                      {sv.askPartySize ? ' · reserva de mesa' : ''}
+                    </p>
+                  </div>
+                  <RemoveButton action={removeService} id={sv.id} label={sv.name} />
+                </li>
+              ))}
+            </ul>
+            <AddServiceForm resources={resources.map((r) => ({ id: r.id, name: r.name }))} />
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-slate-500">Equipe e vagas</h3>
+            <ul className="mb-4 space-y-2">
+              {resources.length === 0 && <li className="py-2 text-sm text-slate-500">Ao cadastrar o primeiro serviço criamos a vaga “Atendimento” (uma pessoa por vez). Adicione profissionais ou mesas quando precisar.</li>}
+              {resources.map((r) => (
+                <li key={r.id} className="glass-inset flex items-center gap-3 p-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold text-slate-800">{r.name}</p>
+                    <p className="truncate text-xs text-slate-500">
+                      {r.capacity === 1 ? '1 atendimento por vez' : `${r.capacity} ao mesmo tempo`}
+                      {r.unitId ? ` · ${units.find((u) => u.id === r.unitId)?.name ?? ''}` : units.filter((u) => u.active).length > 1 ? ' · todas as unidades' : ''}
+                    </p>
+                  </div>
+                  <RemoveButton action={removeResource} id={r.id} label={r.name} />
+                </li>
+              ))}
+            </ul>
+            <AddResourceForm units={units.filter((u) => u.active).map((u) => ({ id: u.id, name: u.name }))} />
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-slate-500">Regras de agendamento</h3>
+            <BookingPolicyForm defaults={{ auto: restaurant.bookingAutoConfirm, minNotice: restaurant.bookingMinNoticeMin, maxAhead: restaurant.bookingMaxDaysAhead, cancelHours: restaurant.bookingCancelHours }} />
+          </div>
+        </div>
+      </Section>
+
+      <Section id="compartilhar" n={11} title="Pontos compartilhados" hint="Uma rede entre lugares: o cliente junta pontos em um e pode usar em outros que participam.">
         <SharingForm defaults={{ pointsShareOut: restaurant.pointsShareOut, pointsAcceptIn: restaurant.pointsAcceptIn }} />
       </Section>
 
-      <Section id="conta" n={11} title="Minha conta" hint="Troque a senha de acesso ao painel. Use uma senha que só você conheça.">
+      <Section id="conta" n={12} title="Minha conta" hint="Troque a senha de acesso ao painel. Use uma senha que só você conheça.">
         <PasswordForm />
         {restaurant.paymentCustomerId && <BillingPortalForm support={getSupport('Assinatura no Fidelize', `Olá! Sou do estabelecimento "${restaurant.name}" e não consegui abrir o gerenciamento da assinatura no Fidelize.`)} />}
       </Section>

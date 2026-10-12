@@ -39,6 +39,14 @@ enum RedemptionStatus {
   USED // balcão validou e entregou o prêmio
 }
 
+enum BookingStatus {
+  PENDING // aguardando o estabelecimento confirmar (quando a confirmação é manual)
+  CONFIRMED
+  COMPLETED // atendimento feito; os pontos foram creditados
+  CANCELED
+  NO_SHOW // o cliente não compareceu
+}
+
 /// Restaurante = conta do SaaS (quem paga a assinatura).
 model Restaurant {
   id           String @id @default(uuid())
@@ -70,6 +78,12 @@ model Restaurant {
   checkInPoints      Int @default(1) // pontos por check-in no local (0 desliga)
   referralPoints     Int @default(100) // pontos para quem indica um amigo que compra (0 desliga)
 
+  // Agenda e reservas
+  bookingAutoConfirm  Boolean @default(true) // false: o estabelecimento confirma cada pedido
+  bookingMinNoticeMin Int     @default(60) // antecedência mínima para marcar, em minutos
+  bookingMaxDaysAhead Int     @default(30) // até quantos dias à frente o cliente pode marcar
+  bookingCancelHours  Int     @default(2) // o cliente cancela sozinho até X horas antes
+
   // Pontos compartilhados entre lugares (ecossistema). Os dois começam desligados.
   pointsShareOut Boolean @default(false) // clientes podem usar em outros lugares os pontos ganhos aqui
   pointsAcceptIn Boolean @default(false) // aceita pontos que o cliente ganhou em outros lugares
@@ -99,6 +113,9 @@ model Restaurant {
   checkIns         CheckIn[]
   referrals        Referral[]
   images           Image[]
+  resources        Resource[]
+  services         Service[]
+  bookings         Booking[]
 }
 
 /// Pontuação fixa por interação (foto no Instagram, avaliação 5★ no Google...).
@@ -154,6 +171,7 @@ model Customer {
   referralsReceived Referral[]            @relation("referred")
   notifications     Notification[]
   promotionUses     PromotionUse[]
+  bookings          Booking[]
 }
 
 /// Uma carteira por cliente por restaurante.
@@ -192,6 +210,7 @@ model Claim {
   customer    Customer?    @relation(fields: [customerId], references: [id])
   unit        Unit?        @relation(fields: [unitId], references: [id], onDelete: SetNull)
   transaction Transaction?
+  booking     Booking?
 
   @@index([restaurantId, createdAt])
 }
@@ -353,6 +372,8 @@ model Unit {
   claims     Claim[]
   checkIns   CheckIn[]
   deliveries Redemption[] @relation("delivered")
+  resources  Resource[]
+  bookings   Booking[]
 
   @@index([restaurantId])
 }
@@ -472,4 +493,78 @@ model PasswordReset {
   createdAt DateTime  @default(now())
 
   @@index([kind, subjectId])
+}
+
+/// Profissional, cadeira ou mesa que atende. `capacity` = atendimentos ao mesmo tempo (1 para uma pessoa; várias para um salão de mesas).
+model Resource {
+  id           String   @id @default(uuid())
+  restaurantId String
+  unitId       String? // vazio = atende em todas as unidades
+  name         String
+  capacity     Int      @default(1)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  unit       Unit?      @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  services   Service[]
+  bookings   Booking[]
+
+  @@index([restaurantId])
+}
+
+/// O que o cliente pode marcar: corte, limpeza de pele, reserva de mesa…
+model Service {
+  id           String   @id @default(uuid())
+  restaurantId String
+  resourceId   String? // se preenchido, só esse profissional/vaga atende
+  name         String
+  description  String?
+  durationMin  Int
+  priceCents   Int      @default(0)
+  askPartySize Boolean  @default(false) // reserva de mesa: pergunta quantas pessoas
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  resource   Resource?  @relation(fields: [resourceId], references: [id], onDelete: SetNull)
+  bookings   Booking[]
+
+  @@index([restaurantId])
+}
+
+model Booking {
+  id           String        @id @default(uuid())
+  restaurantId String
+  unitId       String
+  customerId   String
+  serviceId    String?
+  resourceId   String?
+  startsAt     DateTime
+  endsAt       DateTime
+  status       BookingStatus @default(PENDING)
+  // Cópias do que foi marcado, para o histórico não mudar se o serviço for editado ou removido.
+  serviceName  String
+  durationMin  Int
+  priceCents   Int           @default(0)
+  partySize    Int?
+  note         String?
+  pointsAwarded Int          @default(0)
+  claimId      String?       @unique // lançamento que creditou os pontos (ao concluir)
+  createdAt    DateTime      @default(now())
+  confirmedAt  DateTime?
+  completedAt  DateTime?
+  canceledAt   DateTime?
+  canceledBy   String? // CUSTOMER ou OWNER
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  unit       Unit       @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  customer   Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  service    Service?   @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  resource   Resource?  @relation(fields: [resourceId], references: [id], onDelete: SetNull)
+  claim      Claim?     @relation(fields: [claimId], references: [id], onDelete: SetNull)
+
+  @@index([restaurantId, startsAt])
+  @@index([customerId, startsAt])
+  @@index([resourceId, startsAt])
 }
