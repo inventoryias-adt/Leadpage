@@ -83,6 +83,7 @@ model Restaurant {
   bookingMinNoticeMin Int     @default(60) // antecedência mínima para marcar, em minutos
   bookingMaxDaysAhead Int     @default(30) // até quantos dias à frente o cliente pode marcar
   bookingCancelHours  Int     @default(2) // o cliente cancela sozinho até X horas antes
+  pointsPerRealOff    Int     @default(100) // quantos pontos valem R$ 1,00 de desconto num serviço (padrão: ganha 10 por real, 100 pontos = R$ 1,00)
 
   // Pontos compartilhados entre lugares (ecossistema). Os dois começam desligados.
   pointsShareOut Boolean @default(false) // clientes podem usar em outros lugares os pontos ganhos aqui
@@ -523,6 +524,7 @@ model Service {
   durationMin  Int
   priceCents   Int      @default(0)
   askPartySize Boolean  @default(false) // reserva de mesa: pergunta quantas pessoas
+  pointsDiscountMaxPct Int @default(0) // até quantos % do preço o cliente pode pagar com pontos (0 = não aceita)
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())
 
@@ -550,6 +552,8 @@ model Booking {
   partySize    Int?
   note         String?
   pointsAwarded Int          @default(0)
+  pointsUsed   Int           @default(0) // pontos gastos como desconto neste agendamento (voltam se cancelar)
+  discountCents Int          @default(0) // desconto em R$ correspondente aos pontos usados
   claimId      String?       @unique // lançamento que creditou os pontos (ao concluir)
   createdAt    DateTime      @default(now())
   confirmedAt  DateTime?

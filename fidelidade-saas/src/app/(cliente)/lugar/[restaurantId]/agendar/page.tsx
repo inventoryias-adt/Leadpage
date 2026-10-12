@@ -7,6 +7,7 @@ import { slotsForDay } from '@/lib/booking-db';
 import { prisma } from '@/lib/db';
 import { DAY_SHORT, parseSchedule } from '@/lib/hours';
 import { formatBRL, formatPoints } from '@/lib/points';
+import { maxDiscount } from '@/lib/points-discount';
 import { getCustomer } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
@@ -68,7 +69,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-bold text-slate-800">{s.name}</p>
                   {s.description && <p className="truncate text-xs text-slate-500">{s.description}</p>}
-                  <p className="text-xs text-slate-500">{s.durationMin} min{s.priceCents > 0 ? ` · ${formatBRL(s.priceCents)}` : ''}</p>
+                  <p className="text-xs text-slate-500">{s.durationMin} min{s.priceCents > 0 ? ` · ${formatBRL(s.priceCents)}` : ''}{s.pointsDiscountMaxPct > 0 && s.priceCents > 0 ? ' · aceita pontos' : ''}</p>
                 </div>
                 <Icon name="chevron" size={18} className="text-slate-400" />
               </Link>
@@ -91,6 +92,9 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
   const chosen = sp.hora ? slots.find((s) => s.time === sp.hora) ?? null : null;
   const label = (key: string, i: number) => (i === 0 ? 'Hoje' : i === 1 ? 'Amanhã' : DAY_SHORT[weekdayOf(key)]);
   const points = bookingPoints(service.priceCents, restaurant.pointsPerReal);
+  const wallet = customer && service.pointsDiscountMaxPct > 0 && service.priceCents > 0 ? await prisma.wallet.findUnique({ where: { customerId_restaurantId: { customerId: customer.id, restaurantId } } }) : null;
+  const balance = wallet?.balance ?? 0;
+  const discount = maxDiscount({ priceCents: service.priceCents, maxPct: service.pointsDiscountMaxPct, rate: restaurant.pointsPerRealOff, balance });
 
   return (
     <main className="space-y-5 p-4 sm:p-6 md:pt-8">
@@ -102,6 +106,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
           <Link href={url({ servico: undefined, hora: undefined })} className="link-inline text-xs">trocar</Link>
         </p>
         {points > 0 && <p className="mt-1 text-xs font-semibold text-emerald-700">Ao concluir você ganha {formatPoints(points)} pontos aqui.</p>}
+        {service.pointsDiscountMaxPct > 0 && service.priceCents > 0 && <p className="mt-1 text-xs font-semibold text-electric-600">Aceita pontos como desconto, até {service.pointsDiscountMaxPct}% do preço.</p>}
       </header>
 
       {units.length > 1 && (
@@ -179,7 +184,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
             <p className="text-xs text-slate-500">{unit.address ?? restaurant.name} · pagamento no local</p>
           </div>
           {customer ? (
-            <BookingForm hidden={{ restaurantId, serviceId: service.id, unitId: unit.id, date, time: chosen.time }} askPartySize={service.askPartySize} />
+            <BookingForm hidden={{ restaurantId, serviceId: service.id, unitId: unit.id, date, time: chosen.time }} askPartySize={service.askPartySize} discount={{ priceCents: service.priceCents, balance, rate: restaurant.pointsPerRealOff, maxPoints: discount.maxPoints, maxPct: service.pointsDiscountMaxPct }} />
           ) : (
             <Link href={`/entrar?next=${encodeURIComponent(url({ data: date, hora: chosen.time }))}`} className="glass-button w-full">Entrar para confirmar</Link>
           )}
