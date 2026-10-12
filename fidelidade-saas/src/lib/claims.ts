@@ -7,6 +7,7 @@ import { nearestUnit } from './units';
 import { startOfMonthBR } from './points';
 import { newVoucherCode } from './tokens';
 import { notify, notifyPoints } from './notifications';
+import { planShared } from './shared-points';
 import { applyPromos, promoBadge, qualifiesForAudience } from './promos';
 
 /** Erro de regra de negócio, seguro para exibir ao usuário. */
@@ -200,7 +201,12 @@ export type BagItem = { rewardId: string; qty: number };
  * Tudo numa transação: saldo e limite mensal por CPF são checados com a carteira travada.
  * Cada unidade gera um voucher próprio, que o balcão valida individualmente.
  */
-export async function redeemItems(customerId: string, restaurantId: string, rawItems: BagItem[]) {
+/**
+ * Troca pontos por prêmios. Com `useShared`, o que faltar na carteira do lugar é completado com pontos de outras carteiras
+ * do cliente (lugares com "pontos daqui valem em outros lugares" ligado), convertidos pelo valor de cada ponto
+ * quando este lugar aceita pontos de outros. Tudo na mesma transação, com as carteiras travadas em ordem fixa.
+ */
+export async function redeemItems(customerId: string, restaurantId: string, rawItems: BagItem[], opts: { useShared?: boolean } = {}) {
   const merged = new Map<string, number>();
   for (const it of rawItems) {
     const qty = Math.floor(Number(it.qty));
@@ -219,11 +225,15 @@ export async function redeemItems(customerId: string, restaurantId: string, rawI
     const rewards = await tx.reward.findMany({ where: { id: { in: items.map((i) => i.rewardId) }, restaurantId, active: true } });
     if (rewards.length !== items.length) throw new BusinessError('Algum prêmio da sacola não está mais disponível. Atualize a página.');
 
-    const found = await tx.wallet.findUnique({ where: { customerId_restaurantId: { customerId, restaurantId } } });
-    if (!found) throw new BusinessError('Saldo insuficiente.');
+    const useShared = Boolean(opts.useShared) && restaurant.pointsAcceptIn;
+    let found = await tx.wallet.findUnique({ where: { customerId_restaurantId: { customerId, restaurantId } } });
+    if (!found && !useShared) throw new BusinessError('Saldo insuficiente.');
+    if (!found) found = await tx.wallet.create({ data: { customerId, restaurantId } }); // só vive se o resgate completar
 
-    // Trava a carteira: resgates simultâneos do mesmo cliente passam um de cada vez.
-    await tx.$queryRaw(Prisma.sql`SELECT id FROM "Wallet" WHERE id = ${found.id} FOR UPDATE`);
+    // Trava a carteira: resgates simultâneos do mesmo cliente passam um de cada vez. Com pontos de outros lugares
+    // travamos todas as carteiras do cliente, sempre em ordem de id, para dois resgates cruzados não se travarem.
+    if (useShared) await tx.$queryRaw(Prisma.sql`SELECT id FROM "Wallet" WHERE "customerId" = ${customerId} ORDER BY id FOR UPDATE`);
+    else await tx.$queryRaw(Prisma.sql`SELECT id FROM "Wallet" WHERE id = ${found.id} FOR UPDATE`);
     const wallet = await tx.wallet.findUniqueOrThrow({ where: { id: found.id } });
 
     const usedThisMonth = await tx.redemption.count({
@@ -240,7 +250,27 @@ export async function redeemItems(customerId: string, restaurantId: string, rawI
 
     const byId = new Map(rewards.map((r) => [r.id, r]));
     const totalCost = items.reduce((sum, i) => sum + byId.get(i.rewardId)!.pointsCost * i.qty, 0);
-    if (wallet.balance < totalCost) throw new BusinessError('Saldo insuficiente.');
+    const usedShared: { name: string; take: number }[] = [];
+    if (wallet.balance < totalCost) {
+      if (!useShared) throw new BusinessError('Saldo insuficiente.');
+      const others = await tx.wallet.findMany({
+        where: { customerId, restaurantId: { not: restaurantId }, balance: { gt: 0 }, restaurant: { pointsShareOut: true, subscriptionStatus: 'ACTIVE' } },
+        include: { restaurant: { select: { id: true, name: true, pointsPerReal: true } } },
+      });
+      const plan = planShared(
+        totalCost - wallet.balance,
+        others.map((w) => ({ walletId: w.id, restaurantId: w.restaurantId, name: w.restaurant.name, balance: w.balance, pointsPerReal: w.restaurant.pointsPerReal })),
+        restaurant.pointsPerReal,
+      );
+      if (!plan.ok) throw new BusinessError('Saldo insuficiente, mesmo somando os pontos de outros lugares.');
+      for (const part of plan.parts) {
+        await tx.wallet.update({ where: { id: part.walletId }, data: { balance: { decrement: part.take } } });
+        await tx.transaction.create({ data: { walletId: part.walletId, type: 'SHARED_OUT', points: part.take, description: `Usados em ${restaurant.name}: completar um resgate` } });
+        await tx.wallet.update({ where: { id: wallet.id }, data: { balance: { increment: part.gives } } });
+        await tx.transaction.create({ data: { walletId: wallet.id, type: 'SHARED_IN', points: part.gives, description: `Pontos vindos de ${part.name}` } });
+        usedShared.push({ name: part.name, take: part.take });
+      }
+    }
 
     await tx.wallet.update({ where: { id: wallet.id }, data: { balance: { decrement: totalCost } } });
 
@@ -283,7 +313,7 @@ export async function redeemItems(customerId: string, restaurantId: string, rawI
       customerId,
       restaurantId,
       title: `${created.length === 1 ? 'Prêmio resgatado' : 'Prêmios resgatados'} · ${restaurant.name}`,
-      body: `${created.map((c) => c.rewardName).join(', ')}. Mostre ${created.length === 1 ? 'o código' : 'os códigos'} no balcão para retirar.`,
+      body: `${created.map((c) => c.rewardName).join(', ')}. Mostre ${created.length === 1 ? 'o código' : 'os códigos'} no balcão para retirar.${usedShared.length ? ` Completamos com pontos de ${usedShared.map((u) => u.name).join(', ')}.` : ''}`,
       href: `/carteira/${restaurantId}`,
     });
     return created;

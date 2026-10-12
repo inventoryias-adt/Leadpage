@@ -343,7 +343,7 @@ export function SharingForm({ defaults }: { defaults: { pointsShareOut: boolean;
         </span>
       </label>
       <p className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-        Os dois começam desligados e você pode mudar quando quiser. Hoje isso já aparece para o cliente (carteira “compartilhada” ou “individual” e a lista de quem aceita); a troca de pontos entre lugares será liberada em seguida.
+        Os dois começam desligados e você pode mudar quando quiser. Como funciona: quando um cliente quer um prêmio num lugar que aceita pontos de outros e não tem pontos suficientes ali, ele pode completar com pontos de lugares que compartilham. A conversão é pelo valor: quem dá 10 pontos por real e quem dá 5 têm pontos de valores diferentes, e a troca respeita isso. O Fidelize não faz acerto de dinheiro entre os lugares: quem entrega o prêmio arca com ele.
       </p>
       <FormMessage state={state} />
       <SubmitButton pendingText="Salvando…">Salvar</SubmitButton>

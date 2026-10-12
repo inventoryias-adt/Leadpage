@@ -36,14 +36,14 @@ export default async function PerfilPage() {
       take: 12,
     }),
     prisma.transaction.findMany({
-      where: { wallet: { customerId: customer.id }, createdAt: { gte: activitySince() } },
+      where: { wallet: { customerId: customer.id }, type: { in: ['EARN', 'REDEEM'] }, createdAt: { gte: activitySince() } },
       select: { createdAt: true, type: true, points: true },
       orderBy: { createdAt: 'desc' },
       take: 3000,
     }),
     prisma.booking.count({ where: { customerId: customer.id, status: { in: ['PENDING', 'CONFIRMED'] }, endsAt: { gt: new Date() } } }),
   ]);
-  const rows = movements.map((m) => ({ at: m.createdAt, type: m.type, points: m.points }));
+  const rows = movements.map((m) => ({ at: m.createdAt, type: m.type as 'EARN' | 'REDEEM', points: m.points }));
   const activity = Object.fromEntries(PERIODS.map((p) => [p, activitySeries(rows, p)])) as Record<Period, Activity>;
   const balance = wallets.reduce((n, w) => n + w.balance, 0);
 
@@ -151,7 +151,7 @@ export default async function PerfilPage() {
                   ))}
                 </ul>
               )}
-              <p className="mt-3 text-xs text-slate-500">Em breve você poderá trocar pontos de carteiras compartilhadas nesses lugares.</p>
+              <p className="mt-3 text-xs text-slate-500">Nesses lugares, na hora de montar a sacola de prêmios, você pode completar o que faltar com os pontos das carteiras compartilhadas. O valor é convertido de um lugar para o outro.</p>
             </div>
           </div>
         </section>

@@ -17,6 +17,8 @@ enum SubscriptionStatus {
 enum TransactionType {
   EARN
   REDEEM
+  SHARED_OUT // pontos que saíram desta carteira para completar um resgate em outro lugar
+  SHARED_IN // pontos equivalentes que entraram nesta carteira vindos de outro lugar
 }
 
 enum ChallengeKind {

@@ -137,8 +137,8 @@ export default async function WalletPage({
                 <p className="truncate text-slate-800">{t.description}</p>
                 <p className="text-xs text-slate-500">{day(t.createdAt)}</p>
               </div>
-              <span className={`shrink-0 font-bold ${t.type === 'EARN' ? 'text-emerald-600' : 'text-slate-500'}`}>
-                {t.type === 'EARN' ? '+' : '−'}{formatPoints(t.points)}
+              <span className={`shrink-0 font-bold ${t.type === 'EARN' || t.type === 'SHARED_IN' ? 'text-emerald-600' : 'text-slate-500'}`}>
+                {t.type === 'EARN' || t.type === 'SHARED_IN' ? '+' : '−'}{formatPoints(t.points)}
               </span>
             </div>
           ))}

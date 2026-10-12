@@ -204,7 +204,8 @@ export async function redeemBagAction(_: BagState, formData: FormData): Promise<
   }
 
   try {
-    const redemptions = await redeemItems(customer.id, restaurantId, items);
+    const redemptions = await redeemItems(customer.id, restaurantId, items, { useShared: formData.get('useShared') === '1' });
+    revalidatePath('/perfil');
     revalidatePath(`/lugar/${restaurantId}`, 'layout');
     revalidatePath(`/carteira/${restaurantId}`);
     revalidatePath('/carteira');
