@@ -248,3 +248,16 @@ Recuperação por e-mail ainda não existe (precisa de um serviço de envio, com
   3. Criar a chave secreta real e colocá-la no Vercel (`STRIPE_SECRET_KEY`, Sensitive); atualizar `STRIPE_PRICE_ID` e `STRIPE_WEBHOOK_SECRET` com os valores reais.
   4. Redeploy e **uma compra real de teste** (R$ 197, depois cancelar e pedir o reembolso pelo painel do Stripe).
   Contas antigas com cliente do Stripe de teste (ex.: "Teste Test") mostram o aviso amigável ao abrir o portal: limpe `paymentCustomerId` delas se necessário.
+
+## Roadmap: o Fidelize como ecossistema (visão do dono, ainda não construído)
+
+Objetivo: clientes e estabelecimentos (restaurantes, barbearias, clínicas de estética, serviços…) resolvem tudo na plataforma e o ponto vira o fio condutor, no lugar de várias ferramentas soltas.
+
+1. **Agendamento e reservas**: serviços com duração e preço por estabelecimento, agenda por profissional/unidade, o cliente marca pelo app (restaurantes/bares: reserva e encomenda para dia e hora). Pontos creditados
+   automaticamente quando o atendimento é concluído, ou ao pagar pela plataforma.
+2. **Pontos como desconto no serviço/produto**: o estabelecimento marca quais itens aceitam desconto em pontos; ao escolher o item, o cliente soma os pontos e vê o valor final já com desconto.
+3. **Pagamento antecipado pela plataforma (Pix/cartão)**: o dono habilita o recebimento, o cliente paga adiantado, o ponto cai na hora; no balcão, quem pagou pela plataforma tem o "check" para o dono conferir e dar o ok.
+   Fora da plataforma (maquininha/Pix direto) segue o QR Code ou o CPF no caixa.
+4. **Pontos compartilhados entre lugares** (flags já existem; falta a regra de conversão e de quem arca com o prêmio).
+
+Decisões em aberto: modelo de recebimento (Stripe Connect com Pix e repasse a cada estabelecimento, taxas e quem assume estorno), conciliação/nota fiscal, política de cancelamento e no-show por estabelecimento, e a ordem de entrega (sugestão: 1 → 2 → 3).
