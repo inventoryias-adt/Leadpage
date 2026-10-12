@@ -1,0 +1,190 @@
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { BookingForm } from '@/components/BookingForm';
+import { Icon } from '@/components/Icons';
+import { addDaysKey, bookingPoints, formatBookingWhen, parseDateKey, todayKey, weekdayOf } from '@/lib/booking';
+import { slotsForDay } from '@/lib/booking-db';
+import { prisma } from '@/lib/db';
+import { DAY_SHORT, parseSchedule } from '@/lib/hours';
+import { formatBRL, formatPoints } from '@/lib/points';
+import { getCustomer } from '@/lib/session';
+
+export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Agendar' };
+
+type SP = { servico?: string; unidade?: string; data?: string; hora?: string };
+
+export default async function AgendarPage({ params, searchParams }: { params: Promise<{ restaurantId: string }>; searchParams: Promise<SP> }) {
+  const { restaurantId } = await params;
+  const sp = await searchParams;
+  if (!/^[0-9a-f-]{36}$/.test(restaurantId)) notFound();
+
+  const customer = await getCustomer();
+  const [restaurant, services, units] = await Promise.all([
+    prisma.restaurant.findUnique({ where: { id: restaurantId } }),
+    prisma.service.findMany({ where: { restaurantId, active: true }, orderBy: { createdAt: 'asc' } }),
+    prisma.unit.findMany({ where: { restaurantId, active: true }, orderBy: { createdAt: 'asc' } }),
+  ]);
+  if (!restaurant || restaurant.subscriptionStatus !== 'ACTIVE' || !restaurant.onboardedAt) notFound();
+
+  const base = `/lugar/${restaurantId}/agendar`;
+  const back = (
+    <Link href={`/lugar/${restaurantId}`} className="inline-flex items-center gap-1 text-sm font-semibold text-electric-600"><Icon name="back" size={16} /> {restaurant.name}</Link>
+  );
+
+  if (services.length === 0 || units.length === 0) {
+    return (
+      <main className="space-y-5 p-4 sm:p-6 md:pt-8">
+        {back}
+        <h1 className="text-2xl font-extrabold tracking-tight text-primary">Agendar</h1>
+        <p className="glass-panel-sm p-4 text-sm text-slate-600">Este lugar ainda não recebe agendamentos pelo app.</p>
+      </main>
+    );
+  }
+
+  const service = services.find((s) => s.id === sp.servico) ?? null;
+  const unit = units.find((u) => u.id === sp.unidade) ?? units[0];
+  const url = (over: Partial<SP>) => {
+    const q = new URLSearchParams();
+    const merged = { servico: service?.id, unidade: units.length > 1 ? unit.id : undefined, data: sp.data, ...over };
+    for (const [k, v] of Object.entries(merged)) if (v) q.set(k, v);
+    const s = q.toString();
+    return s ? `${base}?${s}` : base;
+  };
+
+  // Passo 1: escolher o serviço.
+  if (!service) {
+    return (
+      <main className="space-y-5 p-4 sm:p-6 md:pt-8">
+        {back}
+        <header>
+          <h1 className="text-2xl font-extrabold tracking-tight text-primary">Agendar</h1>
+          <p className="text-sm text-slate-600">O que você quer marcar?</p>
+        </header>
+        <ul className="space-y-3">
+          {services.map((s) => (
+            <li key={s.id}>
+              <Link href={`${base}?servico=${s.id}`} className="glass-panel-sm card-link flex items-center gap-3 p-4">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-bold text-slate-800">{s.name}</p>
+                  {s.description && <p className="truncate text-xs text-slate-500">{s.description}</p>}
+                  <p className="text-xs text-slate-500">{s.durationMin} min{s.priceCents > 0 ? ` · ${formatBRL(s.priceCents)}` : ''}</p>
+                </div>
+                <Icon name="chevron" size={18} className="text-slate-400" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </main>
+    );
+  }
+
+  // Passo 2: dia e horário.
+  const now = new Date();
+  const today = todayKey(now);
+  const wanted = sp.data && parseDateKey(sp.data) ? sp.data : today;
+  const maxKey = addDaysKey(today, restaurant.bookingMaxDaysAhead);
+  const date = wanted < today ? today : wanted > maxKey ? maxKey : wanted;
+  const schedule = parseSchedule(unit.openingSchedule);
+  const { slots } = await slotsForDay(prisma, { restaurantId, policy: restaurant, service, unit, date, now });
+  const days = Array.from({ length: Math.min(14, restaurant.bookingMaxDaysAhead + 1) }, (_, i) => addDaysKey(today, i));
+  const chosen = sp.hora ? slots.find((s) => s.time === sp.hora) ?? null : null;
+  const label = (key: string, i: number) => (i === 0 ? 'Hoje' : i === 1 ? 'Amanhã' : DAY_SHORT[weekdayOf(key)]);
+  const points = bookingPoints(service.priceCents, restaurant.pointsPerReal);
+
+  return (
+    <main className="space-y-5 p-4 sm:p-6 md:pt-8">
+      {back}
+      <header>
+        <h1 className="text-2xl font-extrabold tracking-tight text-primary">Agendar</h1>
+        <p className="flex flex-wrap items-center gap-x-2 text-sm text-slate-600">
+          <span className="font-semibold text-slate-800">{service.name}</span> · {service.durationMin} min{service.priceCents > 0 ? ` · ${formatBRL(service.priceCents)}` : ''}
+          <Link href={url({ servico: undefined, hora: undefined })} className="link-inline text-xs">trocar</Link>
+        </p>
+        {points > 0 && <p className="mt-1 text-xs font-semibold text-emerald-700">Ao concluir você ganha {formatPoints(points)} pontos aqui.</p>}
+      </header>
+
+      {units.length > 1 && (
+        <nav aria-label="Unidade" className="chip-row">
+          {units.map((u) => (
+            <Link key={u.id} href={url({ unidade: u.id, hora: undefined })} aria-current={u.id === unit.id ? 'true' : undefined} className={`chip-link shrink-0 ${u.id === unit.id ? 'chip-link-active' : ''}`}>
+              <Icon name="pin" size={14} className="mr-1" /> {u.name}
+            </Link>
+          ))}
+        </nav>
+      )}
+
+      <section aria-labelledby="dia">
+        <h2 id="dia" className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Escolha o dia</h2>
+        <ul className="chip-row">
+          {days.map((key, i) => {
+            const closed = !schedule || schedule.find((d) => d.day === weekdayOf(key))?.closed;
+            const day = Number(key.slice(8));
+            const on = key === date;
+            return (
+              <li key={key} className="shrink-0">
+                {closed ? (
+                  <span className="flex w-14 flex-col items-center rounded-md border border-slate-200 bg-slate-50 py-1.5 text-slate-300" aria-label={`${label(key, i)} ${day}: fechado`}>
+                    <span className="text-[11px] font-semibold">{label(key, i)}</span>
+                    <span className="text-lg font-bold">{day}</span>
+                  </span>
+                ) : (
+                  <Link href={url({ data: key, hora: undefined })} aria-current={on ? 'date' : undefined} className={`flex w-14 flex-col items-center rounded-md border py-1.5 ${on ? 'border-electric-500 bg-electric-500 text-white' : 'border-slate-300 bg-white text-slate-700 hover:border-electric-500'}`}>
+                    <span className="text-[11px] font-semibold">{label(key, i)}</span>
+                    <span className="text-lg font-bold">{day}</span>
+                  </Link>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+        {restaurant.bookingMaxDaysAhead > 13 && (
+          <form method="get" action={base} className="mt-3 flex flex-wrap items-end gap-2">
+            {service && <input type="hidden" name="servico" value={service.id} />}
+            {units.length > 1 && <input type="hidden" name="unidade" value={unit.id} />}
+            <div>
+              <label className="glass-label" htmlFor="bk-date">Outra data</label>
+              <input id="bk-date" name="data" type="date" min={today} max={maxKey} defaultValue={date} className="glass-input !w-auto" />
+            </div>
+            <button className="glass-button-ghost btn-sm">Ver horários</button>
+          </form>
+        )}
+      </section>
+
+      <section aria-labelledby="hora">
+        <h2 id="hora" className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Horários de {formatBookingWhen(new Date(`${date}T15:00:00Z`)).split(' às ')[0]}</h2>
+        {slots.length === 0 ? (
+          <p className="glass-panel-sm p-4 text-sm text-slate-600">Sem horários livres neste dia. Escolha outro dia.</p>
+        ) : (
+          <ul className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+            {slots.map((s) => (
+              <li key={s.time}>
+                <Link href={url({ data: date, hora: s.time })} aria-current={chosen?.time === s.time ? 'true' : undefined} className={`block rounded-md border py-2 text-center text-sm font-semibold ${chosen?.time === s.time ? 'border-electric-500 bg-electric-500 text-white' : 'border-slate-300 bg-white text-slate-800 hover:border-electric-500'}`}>
+                  {s.time}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {chosen && (
+        <section aria-labelledby="confirmar" className="glass-panel space-y-4 p-4">
+          <div>
+            <h2 id="confirmar" className="text-lg font-bold text-primary">Confirmar</h2>
+            <p className="text-sm text-slate-700">
+              <strong>{service.name}</strong> em <strong>{formatBookingWhen(chosen.startsAt)}</strong>
+              {units.length > 1 ? <> · {unit.name}</> : null}
+            </p>
+            <p className="text-xs text-slate-500">{unit.address ?? restaurant.name} · pagamento no local</p>
+          </div>
+          {customer ? (
+            <BookingForm hidden={{ restaurantId, serviceId: service.id, unitId: unit.id, date, time: chosen.time }} askPartySize={service.askPartySize} />
+          ) : (
+            <Link href={`/entrar?next=${encodeURIComponent(url({ data: date, hora: chosen.time }))}`} className="glass-button w-full">Entrar para confirmar</Link>
+          )}
+        </section>
+      )}
+    </main>
+  );
+}
