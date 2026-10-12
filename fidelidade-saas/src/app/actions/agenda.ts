@@ -19,12 +19,13 @@ const policySchema = z.object({
   bookingMinNoticeMin: z.coerce.number().int().min(0).max(7 * 24 * 60),
   bookingMaxDaysAhead: z.coerce.number().int().min(1).max(180),
   bookingCancelHours: z.coerce.number().int().min(0).max(14 * 24),
+  pointsPerRealOff: z.coerce.number().int().min(10, 'Use ao menos 10 pontos por R$ 1,00 de desconto.').max(10_000),
 });
 
 export async function saveBookingPolicy(_: FormState, formData: FormData): Promise<FormState> {
   const restaurant = await requirePaidRestaurant();
   const parsed = policySchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return fail('Confira os números das regras de agendamento.', formData);
+  if (!parsed.success) return fail(parsed.error.issues[0].message.startsWith('Use ao menos') ? parsed.error.issues[0].message : 'Confira os números das regras de agendamento.', formData);
   await prisma.restaurant.update({
     where: { id: restaurant.id },
     data: { ...parsed.data, bookingAutoConfirm: formData.get('bookingAutoConfirm') === 'on' },
@@ -74,6 +75,7 @@ const serviceSchema = z.object({
   durationMin: z.coerce.number().int('Use um número inteiro.').min(5, 'A duração mínima é 5 minutos.').max(600, 'A duração máxima é 10 horas.'),
   price: z.string().default(''),
   resourceId: z.string().default(''),
+  pointsDiscountMaxPct: z.coerce.number().int().refine((n) => [0, 10, 20, 30, 50, 100].includes(n), 'Escolha uma porcentagem da lista.').default(0),
 });
 
 export async function addService(_: FormState, formData: FormData): Promise<FormState> {
@@ -84,6 +86,7 @@ export async function addService(_: FormState, formData: FormData): Promise<Form
     durationMin: formData.get('durationMin') ?? '',
     price: formData.get('price') ?? '',
     resourceId: formData.get('resourceId') ?? '',
+    pointsDiscountMaxPct: formData.get('pointsDiscountMaxPct') ?? '0',
   });
   if (!parsed.success) return fail(firstIssue(parsed.error), formData);
   const priceCents = parsed.data.price.trim() ? parseMoneyToCents(parsed.data.price) : 0;
@@ -108,6 +111,7 @@ export async function addService(_: FormState, formData: FormData): Promise<Form
       priceCents,
       resourceId,
       askPartySize: formData.get('askPartySize') === 'on',
+      pointsDiscountMaxPct: priceCents > 0 ? parsed.data.pointsDiscountMaxPct : 0,
     },
   });
   refresh();

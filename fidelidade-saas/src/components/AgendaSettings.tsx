@@ -1,7 +1,8 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { addResource, addService, saveBookingPolicy } from '@/app/actions/agenda';
+import { cashbackPct } from '@/lib/points-discount';
 import { FormMessage, SubmitButton } from './ui';
 
 const NOTICE: [number, string][] = [[0, 'Sem antecedência'], [30, '30 minutos'], [60, '1 hora'], [120, '2 horas'], [240, '4 horas'], [720, '12 horas'], [1440, '1 dia']];
@@ -11,8 +12,9 @@ const CANCEL: [number, string][] = [[0, 'Até a hora marcada'], [1, '1 hora ante
 /** Escolhe a opção da lista mais próxima do valor salvo (o valor pode ter vindo de uma versão anterior). */
 const pick = (list: [number, string][], v: number) => list.reduce((best, o) => (Math.abs(o[0] - v) < Math.abs(best[0] - v) ? o : best))[0];
 
-export function BookingPolicyForm({ defaults }: { defaults: { auto: boolean; minNotice: number; maxAhead: number; cancelHours: number } }) {
+export function BookingPolicyForm({ defaults }: { defaults: { auto: boolean; minNotice: number; maxAhead: number; cancelHours: number; pointsPerRealOff: number; earnPerReal: number } }) {
   const [state, action] = useActionState(saveBookingPolicy, {});
+  const [rate, setRate] = useState(String(defaults.pointsPerRealOff));
   return (
     <form action={action} className="space-y-4">
       <label className="flex items-start gap-3">
@@ -41,6 +43,14 @@ export function BookingPolicyForm({ defaults }: { defaults: { auto: boolean; min
             {CANCEL.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
         </div>
+      </div>
+      <div>
+        <label className="glass-label" htmlFor="ag-rate">Pontos que valem R$ 1,00 de desconto</label>
+        <input id="ag-rate" name="pointsPerRealOff" type="number" min={10} max={10000} inputMode="numeric" className="glass-input sm:!w-48" value={rate} onChange={(e) => setRate(e.target.value)} required />
+        <p className="mt-1 text-xs text-slate-500">
+          Vale para os serviços que aceitam pontos. Hoje o cliente ganha {defaults.earnPerReal} pontos a cada R$ 1,00 gasto
+          {Number(rate) >= 10 ? <>: com {rate} pontos valendo R$ 1,00, voltam cerca de <strong>{cashbackPct(defaults.earnPerReal, Number(rate))}%</strong> do valor gasto em desconto.</> : '.'}
+        </p>
       </div>
       <FormMessage state={state} />
       <SubmitButton pendingText="Salvando…">Salvar regras</SubmitButton>
@@ -104,6 +114,13 @@ export function AddServiceForm({ resources }: { resources: { id: string; name: s
             </select>
           </div>
         )}
+        <div>
+          <label className="glass-label" htmlFor="sv-pts">Aceita pontos como desconto</label>
+          <select id="sv-pts" name="pointsDiscountMaxPct" className="glass-input" defaultValue={state.values?.pointsDiscountMaxPct ?? '0'}>
+            <option value="0">Não aceita</option>
+            {[10, 20, 30, 50, 100].map((n) => <option key={n} value={n}>Até {n}% do preço</option>)}
+          </select>
+        </div>
         <div className="sm:col-span-2">
           <label className="glass-label" htmlFor="sv-desc">Descrição (opcional)</label>
           <input id="sv-desc" name="description" className="glass-input" placeholder="O que está incluso" defaultValue={state.values?.description} maxLength={200} />

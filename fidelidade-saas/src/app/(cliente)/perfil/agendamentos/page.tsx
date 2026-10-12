@@ -47,7 +47,7 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
           <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold ${st.cls}`}>{st.label}</span>
         </div>
         <p className="text-xs text-slate-500">
-          {b.durationMin} min{b.priceCents > 0 ? ` · ${formatBRL(b.priceCents)}` : ''}{b.partySize ? ` · ${b.partySize} ${b.partySize === 1 ? 'pessoa' : 'pessoas'}` : ''}
+          {b.durationMin} min{b.priceCents > 0 ? ` · ${formatBRL(b.priceCents - b.discountCents)}${b.discountCents > 0 ? ` (desconto de ${formatBRL(b.discountCents)} com ${formatPoints(b.pointsUsed)} pts)` : ''}` : ''}{b.partySize ? ` · ${b.partySize} ${b.partySize === 1 ? 'pessoa' : 'pessoas'}` : ''}
           {b.pointsAwarded > 0 ? ` · +${formatPoints(b.pointsAwarded)} pts` : ''}
         </p>
         {withCancel && (

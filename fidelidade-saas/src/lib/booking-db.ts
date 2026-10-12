@@ -5,6 +5,7 @@ import { BusinessError, creditClaimWith } from './claims';
 import { availableSlots, bookingPoints, dayStartUtc, formatBookingWhen, hmOf, parseDateKey, pickResource, type BusyRange, type Slot } from './booking';
 import { parseSchedule } from './hours';
 import { notify } from './notifications';
+import { applyPoints } from './points-discount';
 import { formatBRL } from './points';
 import { newClaimToken } from './tokens';
 
@@ -55,7 +56,7 @@ export async function slotsForDay(
   return { slots, busy };
 }
 
-export type BookInput = { restaurantId: string; serviceId: string; unitId: string; date: string; time: string; partySize?: number | null; note?: string };
+export type BookInput = { restaurantId: string; serviceId: string; unitId: string; date: string; time: string; partySize?: number | null; note?: string; usePoints?: number };
 
 const MAX_ACTIVE_PER_PLACE = 5;
 
@@ -96,6 +97,23 @@ export async function bookSlot(customerId: string, input: BookInput) {
       const active = await tx.booking.count({ where: { customerId, restaurantId: restaurant.id, status: { in: ['PENDING', 'CONFIRMED'] }, startsAt: { gt: new Date() } } });
       if (active >= MAX_ACTIVE_PER_PLACE) throw new BusinessError(`Você já tem ${MAX_ACTIVE_PER_PLACE} agendamentos em aberto neste lugar. Conclua ou cancele algum para marcar outro.`);
 
+      // Pontos como desconto: tudo é conferido aqui, com o saldo travado (nada vem pronto do navegador).
+      let pointsUsed = 0;
+      let discountCents = 0;
+      const wanted = Math.floor(Number(input.usePoints ?? 0));
+      if (wanted > 0) {
+        const found = await tx.wallet.findUnique({ where: { customerId_restaurantId: { customerId, restaurantId: restaurant.id } } });
+        if (!found) throw new BusinessError('Você ainda não tem pontos neste lugar.');
+        await tx.$queryRaw`SELECT id FROM "Wallet" WHERE id = ${found.id} FOR UPDATE`;
+        const wallet = await tx.wallet.findUniqueOrThrow({ where: { id: found.id } });
+        const applied = applyPoints(wanted, { priceCents: service.priceCents, maxPct: service.pointsDiscountMaxPct, rate: restaurant.pointsPerRealOff, balance: wallet.balance });
+        if ('error' in applied) throw new BusinessError(applied.error);
+        pointsUsed = applied.points;
+        discountCents = applied.discountCents;
+        await tx.wallet.update({ where: { id: wallet.id }, data: { balance: { decrement: pointsUsed } } });
+        await tx.transaction.create({ data: { walletId: wallet.id, type: 'REDEEM', points: pointsUsed, description: `Desconto no agendamento: ${service.name}` } });
+      }
+
       const auto = restaurant.bookingAutoConfirm;
       const booking = await tx.booking.create({
         data: {
@@ -113,13 +131,15 @@ export async function bookSlot(customerId: string, input: BookInput) {
           priceCents: service.priceCents,
           partySize,
           note: input.note?.trim().slice(0, 300) || null,
+          pointsUsed,
+          discountCents,
         },
       });
       await notify(tx, {
         customerId,
         restaurantId: restaurant.id,
         title: auto ? 'Agendamento confirmado' : 'Pedido de agendamento enviado',
-        body: `${service.name} · ${formatBookingWhen(slot.startsAt)} · ${restaurant.name}${auto ? '' : '. O lugar vai confirmar em breve.'}`,
+        body: `${service.name} · ${formatBookingWhen(slot.startsAt)} · ${restaurant.name}${discountCents > 0 ? ` · desconto de ${formatBRL(discountCents)} com ${pointsUsed.toLocaleString('pt-BR')} pontos` : ''}${auto ? '' : '. O lugar vai confirmar em breve.'}`,
         href: '/perfil/agendamentos',
       });
       return booking;
@@ -128,16 +148,26 @@ export async function bookSlot(customerId: string, input: BookInput) {
   );
 }
 
-/** O cliente cancela o próprio agendamento (regra de antecedência é conferida por quem chama). */
+/** Cancela um agendamento em aberto; os pontos usados como desconto voltam para a carteira (uma única vez). */
 export async function cancelBooking(id: string, by: 'CUSTOMER' | 'OWNER', where: { customerId?: string; restaurantId?: string }) {
-  const booking = await prisma.booking.findFirst({ where: { id, ...where, status: { in: ['PENDING', 'CONFIRMED'] } } });
-  if (!booking) throw new BusinessError('Agendamento não encontrado ou já encerrado.');
-  const done = await prisma.booking.updateMany({
-    where: { id, status: { in: ['PENDING', 'CONFIRMED'] } },
-    data: { status: 'CANCELED', canceledAt: new Date(), canceledBy: by },
+  return prisma.$transaction(async (tx) => {
+    const booking = await tx.booking.findFirst({ where: { id, ...where, status: { in: ['PENDING', 'CONFIRMED'] } } });
+    if (!booking) throw new BusinessError('Agendamento não encontrado ou já encerrado.');
+    const done = await tx.booking.updateMany({
+      where: { id, status: { in: ['PENDING', 'CONFIRMED'] } },
+      data: { status: 'CANCELED', canceledAt: new Date(), canceledBy: by },
+    });
+    if (done.count !== 1) throw new BusinessError('Agendamento não encontrado ou já encerrado.');
+    if (booking.pointsUsed > 0) {
+      const wallet = await tx.wallet.upsert({
+        where: { customerId_restaurantId: { customerId: booking.customerId, restaurantId: booking.restaurantId } },
+        create: { customerId: booking.customerId, restaurantId: booking.restaurantId, balance: booking.pointsUsed },
+        update: { balance: { increment: booking.pointsUsed } },
+      });
+      await tx.transaction.create({ data: { walletId: wallet.id, type: 'EARN', points: booking.pointsUsed, description: `Pontos devolvidos: ${booking.serviceName} cancelado` } });
+    }
+    return booking;
   });
-  if (done.count !== 1) throw new BusinessError('Agendamento não encontrado ou já encerrado.');
-  return booking;
 }
 
 /**
@@ -155,8 +185,10 @@ export async function completeBooking(id: string, restaurantId: string) {
     const marked = await tx.booking.updateMany({ where: { id, status: { in: ['PENDING', 'CONFIRMED'] } }, data: { status: 'COMPLETED', completedAt: new Date(), confirmedAt: booking.confirmedAt ?? new Date() } });
     if (marked.count !== 1) throw new BusinessError('Agendamento já encerrado.');
 
-    const points = bookingPoints(booking.priceCents, restaurant.pointsPerReal);
-    if (booking.priceCents <= 0 || points <= 0) return { points: 0 };
+    // Os pontos ganhos contam sobre o que o cliente realmente pagou (preço menos o desconto em pontos).
+    const paidCents = Math.max(0, booking.priceCents - booking.discountCents);
+    const points = bookingPoints(paidCents, restaurant.pointsPerReal);
+    if (paidCents <= 0 || points <= 0) return { points: 0 };
 
     const token = newClaimToken();
     const claim = await tx.claim.create({
@@ -164,10 +196,10 @@ export async function completeBooking(id: string, restaurantId: string) {
         token,
         restaurantId,
         unitId: booking.unitId,
-        amountCents: booking.priceCents,
+        amountCents: paidCents,
         points,
         billPoints: points,
-        description: `Atendimento: ${booking.serviceName} (${formatBRL(booking.priceCents)})`,
+        description: `Atendimento: ${booking.serviceName} (${formatBRL(paidCents)}${booking.discountCents > 0 ? `, com ${formatBRL(booking.discountCents)} de desconto em pontos` : ''})`,
         expiresAt: new Date(Date.now() + 60 * 60 * 1000),
       },
     });
@@ -205,7 +237,7 @@ export async function cancelByOwner(id: string, restaurantId: string) {
     customerId: booking.customerId,
     restaurantId,
     title: 'Agendamento cancelado pelo lugar',
-    body: `${booking.serviceName} · ${formatBookingWhen(booking.startsAt)} · ${restaurant?.name ?? ''}. Você pode marcar outro horário.`,
+    body: `${booking.serviceName} · ${formatBookingWhen(booking.startsAt)} · ${restaurant?.name ?? ''}.${booking.pointsUsed > 0 ? ` Seus ${booking.pointsUsed.toLocaleString('pt-BR')} pontos voltaram para a carteira.` : ''} Você pode marcar outro horário.`,
     href: `/lugar/${restaurantId}/agendar`,
   });
 }

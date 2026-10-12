@@ -307,6 +307,7 @@ export default async function ConfiguracoesPage() {
                       {sv.durationMin} min · {sv.priceCents > 0 ? formatBRL(sv.priceCents) : 'sem cobrança'}
                       {sv.resourceId ? ` · ${resources.find((r) => r.id === sv.resourceId)?.name ?? ''}` : ''}
                       {sv.askPartySize ? ' · reserva de mesa' : ''}
+                      {sv.pointsDiscountMaxPct > 0 ? ` · aceita pontos (até ${sv.pointsDiscountMaxPct}%)` : ''}
                     </p>
                   </div>
                   <RemoveButton action={removeService} id={sv.id} label={sv.name} />
@@ -338,7 +339,7 @@ export default async function ConfiguracoesPage() {
 
           <div>
             <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-slate-500">Regras de agendamento</h3>
-            <BookingPolicyForm defaults={{ auto: restaurant.bookingAutoConfirm, minNotice: restaurant.bookingMinNoticeMin, maxAhead: restaurant.bookingMaxDaysAhead, cancelHours: restaurant.bookingCancelHours }} />
+            <BookingPolicyForm defaults={{ auto: restaurant.bookingAutoConfirm, minNotice: restaurant.bookingMinNoticeMin, maxAhead: restaurant.bookingMaxDaysAhead, cancelHours: restaurant.bookingCancelHours, pointsPerRealOff: restaurant.pointsPerRealOff, earnPerReal: restaurant.pointsPerReal }} />
           </div>
         </div>
       </Section>

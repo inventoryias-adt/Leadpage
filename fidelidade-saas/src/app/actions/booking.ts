@@ -18,6 +18,7 @@ const schema = z.object({
   date: z.string(),
   time: z.string(),
   partySize: z.string().default(''),
+  usePoints: z.string().default('0'),
   note: z.string().max(300, 'O recado pode ter até 300 caracteres.').default(''),
 });
 
@@ -32,6 +33,7 @@ export async function createBooking(_: FormState, formData: FormData): Promise<F
     date: formData.get('date') ?? '',
     time: formData.get('time') ?? '',
     partySize: formData.get('partySize') ?? '',
+    usePoints: formData.get('usePoints') ?? '0',
     note: formData.get('note') ?? '',
   });
   if (!parsed.success) return fail(parsed.error.issues[0].message.includes('300') ? parsed.error.issues[0].message : 'Não foi possível ler o horário. Escolha de novo.', formData);
@@ -40,7 +42,7 @@ export async function createBooking(_: FormState, formData: FormData): Promise<F
   const d = parsed.data;
   let id: string;
   try {
-    const booking = await bookSlot(customer.id, { ...d, partySize: d.partySize ? Number(d.partySize) : null });
+    const booking = await bookSlot(customer.id, { ...d, partySize: d.partySize ? Number(d.partySize) : null, usePoints: Number(d.usePoints) || 0 });
     id = booking.id;
   } catch (e) {
     if (e instanceof BusinessError) return fail(e.message, formData);

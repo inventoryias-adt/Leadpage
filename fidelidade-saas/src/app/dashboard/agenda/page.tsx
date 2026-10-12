@@ -62,12 +62,17 @@ function Item({ b, back, showDay }: { b: Row; back: string; showDay?: boolean })
             {b.customer.name} · <a href={`https://wa.me/55${b.customer.phone}`} target="_blank" rel="noopener noreferrer" className="link-inline !font-medium">{formatPhone(b.customer.phone)}</a>
           </p>
           <p className="truncate text-xs text-slate-500">
-            {[b.resource?.name, b.unit.name, b.partySize ? `${b.partySize} ${b.partySize === 1 ? 'pessoa' : 'pessoas'}` : null, b.priceCents > 0 ? formatBRL(b.priceCents) : null].filter(Boolean).join(' · ')}
+            {[b.resource?.name, b.unit.name, b.partySize ? `${b.partySize} ${b.partySize === 1 ? 'pessoa' : 'pessoas'}` : null, b.priceCents > 0 ? `a cobrar ${formatBRL(b.priceCents - b.discountCents)}` : null].filter(Boolean).join(' · ')}
           </p>
           {b.note && <p className="mt-1 rounded-md bg-slate-50 px-2 py-1 text-xs text-slate-600">“{b.note}”</p>}
         </div>
         <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold ${st.cls}`}>{st.label}</span>
       </div>
+      {b.discountCents > 0 && (
+        <p className="text-xs font-semibold text-electric-600">
+          Desconto de {formatBRL(b.discountCents)} com {formatPoints(b.pointsUsed)} pontos do cliente{b.status === 'CANCELED' ? ' (devolvidos)' : ''}. Valor cheio: {formatBRL(b.priceCents)}.
+        </p>
+      )}
       {b.status === 'COMPLETED' && b.pointsAwarded > 0 && <p className="text-xs font-semibold text-emerald-700">+{formatPoints(b.pointsAwarded)} pontos creditados</p>}
       <Actions b={b} back={back} />
     </li>

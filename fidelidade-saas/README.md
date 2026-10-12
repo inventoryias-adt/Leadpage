@@ -274,3 +274,13 @@ Decisões em aberto: modelo de recebimento (Stripe Connect com Pix e repasse a c
   **Concluir credita os pontos sozinho** (valor do serviço × pontos por real) reaproveitando o crédito do caixa (`creditClaimWith`): campanhas, indicação e desafios valem igual, a venda entra nos números do
   painel, e fechar duas vezes não credita duas vezes. Serviço sem preço conclui sem pontos.
 - Fuso: tudo em Brasília (UTC−3). Pagamento no local por enquanto; **próximas fases**: pontos como desconto no serviço e pagamento antecipado pela plataforma.
+
+## Pontos como desconto no serviço (fase 2 do ecossistema)
+
+- **Regra do estabelecimento** (Regras → Agenda e serviços): "Pontos que valem R$ 1,00 de desconto" (`Restaurant.pointsPerRealOff`, padrão 100 = 1 ponto vale 1 centavo) com a dica de quanto volta
+  (ganha X pontos por real ÷ taxa de desconto, ex.: 10 ÷ 100 = 10%). **Por serviço**: "Aceita pontos como desconto" até 10/20/30/50/100% do preço (`Service.pointsDiscountMaxPct`, 0 = não aceita; serviço sem preço não aceita).
+- **Cliente**: ao confirmar o horário aparece "Usar meus pontos como desconto" com controle deslizante, "Usar o máximo" e o resumo "Valor do serviço − desconto = A pagar no local".
+  Os pontos saem da carteira **na hora** (movimentação "Desconto no agendamento") e o desconto fica no agendamento (`pointsUsed`, `discountCents`). O servidor refaz toda a conta com o saldo travado
+  (`src/lib/points-discount.ts`, testado): pedir mais do que o permitido é recusado.
+- **Cancelar** (cliente ou dono) **devolve os pontos**, uma única vez (testado com cancelamentos simultâneos). **Faltou** não devolve. Concluir credita os pontos ganhos **sobre o valor realmente pago** (preço − desconto)
+  e a venda registrada é o valor pago. O dono vê "a cobrar R$ X (desconto de R$ Y com Z pontos)" na agenda. Migration `0018_pontos_como_desconto`.
