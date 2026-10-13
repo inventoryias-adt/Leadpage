@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CampaignItem } from '@/lib/campaigns';
 import { formatPoints } from '@/lib/points';
 import { Carousel } from './Carousel';
@@ -17,10 +17,28 @@ const LOOK: Record<CampaignItem['kind'], { label: string; icon: IconName }> = {
   promocao: { label: 'Campanha', icon: 'spark' },
 };
 
-/** Campanhas de pontos rolando agora. Tocar no card abre a pergunta "quer participar?" com o nome do estabelecimento. */
+const headline = (c: CampaignItem) => (c.badge ? c.badge : `+${formatPoints(c.points)} pts`);
+
+type Group = { placeId: string; placeName: string; logoUrl: string | null; items: CampaignView[] };
+
+/**
+ * Campanhas rolando, uma por estabelecimento: cada cartão diz quantas o lugar tem e, ao tocar,
+ * abre a lista das campanhas daquele lugar (com o "como funciona" e o convite para participar).
+ */
 export function CampaignCards({ items, loggedIn }: { items: CampaignView[]; loggedIn: boolean }) {
-  const [open, setOpen] = useState<CampaignView | null>(null);
+  const [open, setOpen] = useState<Group | null>(null);
   const primary = useRef<HTMLAnchorElement>(null);
+
+  const groups = useMemo(() => {
+    const by = new Map<string, Group>();
+    for (const c of items) {
+      const g = by.get(c.placeId) ?? { placeId: c.placeId, placeName: c.placeName, logoUrl: c.logoUrl, items: [] };
+      g.items.push(c);
+      by.set(c.placeId, g);
+    }
+    // Quem tem campanha valendo agora e mais campanhas aparece primeiro.
+    return [...by.values()].sort((a, b) => Number(b.items.some((i) => i.live)) - Number(a.items.some((i) => i.live)) || b.items.length - a.items.length);
+  }, [items]);
 
   useEffect(() => {
     if (!open) return;
@@ -30,39 +48,36 @@ export function CampaignCards({ items, loggedIn }: { items: CampaignView[]; logg
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
-  if (items.length === 0) return null;
-  const shown = items.slice(0, 12);
+  if (groups.length === 0) return null;
 
   return (
     <section aria-labelledby="campanhas" className="space-y-3">
       <div className="flex items-end justify-between">
-        <h2 id="campanhas" className="font-bold text-slate-800">Campanhas rolando agora</h2>
-        <span className="text-sm text-slate-500">{items.length} {items.length === 1 ? 'campanha' : 'campanhas'}</span>
+        <h2 id="campanhas" className="font-bold text-slate-800">Campanhas por lugar</h2>
+        <span className="text-sm text-slate-500">{groups.length} {groups.length === 1 ? 'lugar' : 'lugares'}</span>
       </div>
 
-      <Carousel label="Campanhas">
-        {shown.map((c) => {
-          const look = LOOK[c.kind];
+      <Carousel label="Campanhas por lugar">
+        {groups.slice(0, 16).map((g) => {
+          const top = g.items.find((i) => i.live) ?? g.items[0];
           return (
-            <li key={`${c.placeId}-${c.id}`} className="w-[15.5rem] shrink-0 snap-start">
+            <li key={g.placeId} className="w-[14.5rem] shrink-0 snap-start">
               <button
                 type="button"
-                onClick={() => setOpen(c)}
-                className="card-link relative flex h-full min-h-[10rem] w-full flex-col justify-between gap-3 rounded-xl border border-slate-200 border-t-2 border-t-electric-500 bg-white p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600"
-                aria-label={`${look.label} de ${c.placeName}: ${c.title}, ${c.badge ?? `mais ${c.points} pontos`}. Toque para ver`}
+                onClick={() => setOpen(g)}
+                className="card-link flex h-full min-h-[9.5rem] w-full flex-col justify-between gap-3 rounded-[22px] border border-slate-200 bg-white p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600"
+                aria-label={`${g.placeName}: ${g.items.length} ${g.items.length === 1 ? 'campanha' : 'campanhas'} rolando. Toque para ver`}
               >
-                <span className="relative inline-flex w-fit items-center gap-1.5 rounded-md bg-slate-100 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-                  <Icon name={look.icon} size={13} /> {look.label}{c.live ? ' · agora' : ''}
+                <span className="flex items-center gap-2.5">
+                  <PlaceAvatar name={g.placeName} src={g.logoUrl} size={40} />
+                  <span className="min-w-0 truncate text-sm font-bold text-slate-900">{g.placeName}</span>
                 </span>
-                <span className="relative">
-                  <span className="block text-3xl font-semibold leading-none text-primary">
-                    {c.badge ? c.badge.replace(/ pontos$/, '') : `+${formatPoints(c.points)}`} <span className="text-base font-medium text-slate-500">pts</span>
-                  </span>
-                  <span className="mt-1.5 line-clamp-2 block text-sm font-medium leading-snug text-slate-700">{c.title}</span>
+                <span>
+                  <span className="block text-2xl font-bold leading-none text-primary">{headline(top)}</span>
+                  <span className="mt-1 line-clamp-1 block text-xs font-medium text-slate-600">{top.title}</span>
                 </span>
-                <span className="relative flex items-center gap-2">
-                  <PlaceAvatar name={c.placeName} src={c.logoUrl} size={24} />
-                  <span className="truncate text-xs font-medium text-slate-600">{c.placeName}</span>
+                <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-[#E8EEFB] px-3 py-1 text-xs font-bold text-electric-600">
+                  {g.items.length} {g.items.length === 1 ? 'campanha' : 'campanhas'} <Icon name="chevron" size={13} />
                 </span>
               </button>
             </li>
@@ -77,38 +92,39 @@ export function CampaignCards({ items, loggedIn }: { items: CampaignView[]; logg
             aria-modal="true"
             aria-labelledby="campanha-titulo"
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md animate-fade-in rounded-t-xl bg-white p-5 shadow-2xl md:rounded-xl"
+            className="flex max-h-[88vh] w-full max-w-md animate-fade-in flex-col rounded-t-[28px] bg-white p-5 shadow-2xl md:rounded-[28px]"
           >
             <div className="mb-4 flex items-center gap-3">
               <PlaceAvatar name={open.placeName} src={open.logoUrl} size={52} />
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{LOOK[open.kind].label} de</p>
-                <p className="truncate text-lg font-extrabold text-primary">{open.placeName}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{open.items.length} {open.items.length === 1 ? 'campanha' : 'campanhas'} em</p>
+                <p id="campanha-titulo" className="truncate text-lg font-extrabold text-primary">{open.placeName}</p>
               </div>
-              <button type="button" onClick={() => setOpen(null)} className="glass-button-ghost btn-sm !px-3" aria-label="Fechar">✕</button>
+              <button type="button" onClick={() => setOpen(null)} className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200" aria-label="Fechar">✕</button>
             </div>
 
-            <div className="mb-4 rounded-lg border border-slate-200 border-l-4 border-l-electric-500 bg-slate-50 p-4">
-              <p className="text-3xl font-semibold leading-none text-primary">{open.badge ?? `+${formatPoints(open.points)} pontos`}</p>
-              <p id="campanha-titulo" className="mt-1.5 text-sm font-medium text-slate-700">{open.title}</p>
-            </div>
+            <ul className="-mx-1 mb-4 min-h-0 flex-1 space-y-3 overflow-y-auto px-1">
+              {open.items.map((c) => {
+                const look = LOOK[c.kind];
+                return (
+                  <li key={c.id} className="rounded-2xl border border-slate-200 border-l-4 border-l-electric-500 bg-slate-50 p-4">
+                    <span className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+                      <Icon name={look.icon} size={13} /> {look.label}{c.live ? ' · agora' : ''}
+                    </span>
+                    <p className="text-2xl font-bold leading-none text-primary">{headline(c)}</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-800">{c.title}</p>
+                    <p className="mt-1 text-xs text-slate-600">{c.how}</p>
+                    <Link href={loggedIn ? `/lugar/${open.placeId}#${c.anchor}` : `/entrar?next=${encodeURIComponent(`/lugar/${open.placeId}`)}`} className="link-inline mt-2 inline-flex items-center gap-1 text-sm" onClick={() => setOpen(null)}>
+                      {loggedIn ? 'Quero participar' : 'Entrar para participar'} <Icon name="chevron" size={14} />
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
 
-            <p className="mb-5 text-sm text-slate-600">{open.how}</p>
-
-            <p className="mb-2 text-center text-sm font-bold text-slate-800">Quer participar da campanha do {open.placeName}?</p>
-            <div className="space-y-2">
-              <Link
-                ref={primary}
-                href={loggedIn ? `/lugar/${open.placeId}#${open.anchor}` : `/entrar?next=${encodeURIComponent(`/lugar/${open.placeId}`)}`}
-                className="glass-button"
-                onClick={() => setOpen(null)}
-              >
-                {loggedIn ? 'Quero participar' : 'Entrar para participar'}
-              </Link>
-              <div className="grid grid-cols-2 gap-2">
-                <Link href={`/lugar/${open.placeId}`} className="glass-button-ghost btn-sm">Ver o lugar</Link>
-                <button type="button" onClick={() => setOpen(null)} className="glass-button-ghost btn-sm">Agora não</button>
-              </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Link ref={primary} href={`/lugar/${open.placeId}`} className="glass-button !rounded-full" onClick={() => setOpen(null)}>Ver o lugar</Link>
+              <button type="button" onClick={() => setOpen(null)} className="glass-button-ghost !rounded-full">Fechar</button>
             </div>
           </div>
         </div>

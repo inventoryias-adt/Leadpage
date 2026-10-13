@@ -37,10 +37,16 @@ module.exports = {
           from: { opacity: '0', transform: 'translateY(8px)' },
           to: { opacity: '1', transform: 'translateY(0)' },
         },
+        // Convite a deslizar: a setinha do carrossel balança até a primeira rolagem.
+        nudge: {
+          '0%, 100%': { transform: 'translate(0, -50%)' },
+          '50%': { transform: 'translate(6px, -50%)' },
+        },
       },
       animation: {
         blob: 'blob 14s ease-in-out infinite',
         'fade-in': 'fade-in 0.35s ease-out both',
+        nudge: 'nudge 1.4s ease-in-out infinite',
       },
     },
   },

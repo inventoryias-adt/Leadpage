@@ -324,3 +324,16 @@ Decisões em aberto: modelo de recebimento (Stripe Connect com Pix e repasse a c
 - **Mapa** (Leaflet): por padrão usa os azulejos públicos do OpenStreetMap, ok para o piloto. **Em produção com muito acesso, use um provedor próprio** (MapTiler, Stadia, Mapbox…) definindo `NEXT_PUBLIC_MAP_TILES` com a URL no formato `https://.../{z}/{x}/{y}.png` (a política do OSM proíbe uso intenso).
   A busca de endereço (reverso e por CEP) usa o Nominatim a partir do navegador do cliente, com a mesma ressalva de uso moderado; para escalar, trocar por um geocodificador pago.
 - A vitrine também ganhou o filtro **Em promoção** (lugares com promoção ativa).
+
+## Início e Lugares mais limpos, campanhas do app (migration `0023_campanhas_do_app`)
+
+- **Início** (`/carteira`): só o essencial. "Olá" com o total de pontos, o próximo horário (se houver), o carrossel de **campanhas do app**, **"Seus pontos por lugar"** (um cartão por estabelecimento com selos "N para retirar" e "Pode resgatar"; tocar abre a página do lugar com os códigos e os prêmios)
+  e um atalho para explorar lugares. A lista de códigos, o "Você pode resgatar agora" e as dicas saíram do Início.
+- **Lugares**: título sozinho (sem frase), faixa "Onde está?", busca que **abre em tela própria** (campo já com o cursor, categorias e resultados; "Ver na lista" aplica a busca), filtros em pílula (incluindo **Em promoção**), categorias **antes** das campanhas e
+  **campanhas por lugar**: cada cartão mostra o estabelecimento e quantas campanhas ele tem; tocar abre a janela com as campanhas daquele lugar. Cada lugar da lista também mostra "N campanhas". Chips, filtros e busca ovais.
+- **Carrosséis que mostram que deslizam** (`Carousel`): o próximo cartão aparece cortado, uma sombra esmaece a borda, setinha redonda (também no celular, balançando até a primeira rolagem), barrinha de posição e o aviso "Deslize para ver mais" até a primeira rolagem.
+- **Campanhas do app**: a plataforma propõe e cada estabelecimento adota ou não.
+  - **Administração** (`/admin/campanhas`): cria e edita (nome, descrição, multiplicador ou pontos extras, dias da semana, horário, período, valor mínimo), liga e desliga, e vê quantos estabelecimentos adotaram.
+  - **Estabelecimento** (Regras → Campanhas → "Campanhas do app"): **Participar** cria uma promoção dele ligada à campanha (`Promotion.appCampaignId`), então caixa, QR Code, relatórios e cartões da vitrine funcionam como qualquer campanha. **Sair** apaga a promoção.
+    Quando o administrador edita, as promoções de quem adotou acompanham; ligar/desligar a campanha liga/desliga as promoções, mas editar **não reativa** o que o dono pausou.
+  - **Cliente**: o carrossel do Início só mostra campanhas ativas, dentro do prazo e adotadas por ao menos um lugar da vitrine; tocar abre `/campanhas/[id]` com a descrição, quando vale e a lista de quem participa.

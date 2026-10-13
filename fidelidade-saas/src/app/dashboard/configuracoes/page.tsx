@@ -1,3 +1,5 @@
+import { setAppCampaign } from '@/app/actions/app-campaigns';
+import { campaignBadge, campaignWhen } from '@/lib/app-campaigns';
 import { removeChallenge, removeInteraction, removePromotion, removeReward, removeUnit, togglePromotion } from '@/app/actions/restaurant';
 import {
   AddChallengeForm,
@@ -74,7 +76,7 @@ const SECTIONS = [
 
 export default async function ConfiguracoesPage() {
   const restaurant = await requirePaidRestaurant();
-  const [interactions, rewards, challenges, units, promotions, resources, services] = await Promise.all([
+  const [interactions, rewards, challenges, units, promotions, resources, services, appCampaigns] = await Promise.all([
     prisma.interactionRule.findMany({ where: { restaurantId: restaurant.id, active: true }, orderBy: { createdAt: 'asc' } }),
     prisma.reward.findMany({ where: { restaurantId: restaurant.id, active: true }, orderBy: { pointsCost: 'asc' } }),
     prisma.challenge.findMany({ where: { restaurantId: restaurant.id }, orderBy: { createdAt: 'asc' } }),
@@ -82,7 +84,9 @@ export default async function ConfiguracoesPage() {
     prisma.promotion.findMany({ where: { restaurantId: restaurant.id }, orderBy: { createdAt: 'desc' } }),
     prisma.resource.findMany({ where: { restaurantId: restaurant.id, active: true }, orderBy: { createdAt: 'asc' }, include: { offers: true } }),
     prisma.service.findMany({ where: { restaurantId: restaurant.id, active: true }, orderBy: { createdAt: 'asc' } }),
+    prisma.appCampaign.findMany({ where: { active: true, OR: [{ endsAt: null }, { endsAt: { gt: new Date() } }] }, orderBy: { createdAt: 'desc' } }),
   ]);
+  const adopted = new Set(promotions.map((p) => p.appCampaignId).filter(Boolean));
   const nowDate = new Date();
   const activeCount = units.filter((u) => u.active).length;
   const onboarding = !restaurant.onboardedAt;
@@ -236,6 +240,35 @@ export default async function ConfiguracoesPage() {
       </Section>
 
       <Section id="campanhas" n={8} title="Campanhas de pontos" hint="Pontos em dobro na terça, +50 pontos acima de R$ 40… Valem no caixa e aparecem como card na vitrine dos clientes.">
+        {appCampaigns.length > 0 && (
+          <div className="mb-5">
+            <h3 className="mb-2 text-sm font-bold text-slate-800">Campanhas do app</h3>
+            <p className="mb-3 text-xs text-slate-500">O Fidelize propõe e você escolhe. Quem participa ganha a campanha no caixa e aparece para os clientes no app.</p>
+            <ul className="space-y-3">
+              {appCampaigns.map((c) => {
+                const on = adopted.has(c.id);
+                return (
+                  <li key={c.id} className="glass-inset p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-slate-800">{c.title}</p>
+                        {c.description && <p className="text-xs text-slate-600">{c.description}</p>}
+                        <p className="text-xs text-slate-500">{campaignWhen(c)}</p>
+                      </div>
+                      <span className="glass-chip shrink-0">{campaignBadge(c)}</span>
+                    </div>
+                    <form action={setAppCampaign} className="mt-2">
+                      <input type="hidden" name="id" value={c.id} />
+                      <input type="hidden" name="join" value={on ? '0' : '1'} />
+                      <button className={on ? 'glass-button-ghost btn-sm' : 'glass-button btn-sm'}>{on ? 'Participando · sair da campanha' : 'Participar da campanha'}</button>
+                    </form>
+                  </li>
+                );
+              })}
+            </ul>
+            <h3 className="mb-2 mt-6 text-sm font-bold text-slate-800">Suas campanhas</h3>
+          </div>
+        )}
         <ul className="mb-4 space-y-3">
           {promotions.length === 0 && (
             <li>
@@ -249,7 +282,7 @@ export default async function ConfiguracoesPage() {
               <li key={p.id} className="glass-inset p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-semibold text-slate-800">{p.title}</p>
+                    <p className="font-semibold text-slate-800">{p.title}{p.appCampaignId && <span className="ml-2 rounded-full bg-[#E8EEFB] px-2 py-0.5 text-[11px] font-semibold text-electric-600">Campanha do app</span>}</p>
                     <p className="text-xs text-slate-500">{promoWhen(p, formatBRL)}</p>
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1.5">

@@ -442,12 +442,36 @@ model Promotion {
   audience       PromoAudience @default(ALL)
   inactiveDays   Int? // só para audience = INACTIVE
   active         Boolean   @default(true)
+  appCampaignId  String? // preenchido quando o estabelecimento adotou uma campanha do app
   createdAt      DateTime  @default(now())
 
-  restaurant Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  uses       PromotionUse[]
+  restaurant  Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  appCampaign AppCampaign?   @relation(fields: [appCampaignId], references: [id], onDelete: SetNull)
+  uses        PromotionUse[]
 
+  @@unique([restaurantId, appCampaignId])
   @@index([restaurantId])
+  @@index([appCampaignId])
+}
+
+/// Campanha proposta pela plataforma (ex.: pontos em dobro terça e quinta). Cada estabelecimento adota ou não.
+model AppCampaign {
+  id             String    @id @default(uuid())
+  title          String
+  description    String    @default("")
+  kind           PromoKind
+  multiplier     Float?
+  bonusPoints    Int?
+  minAmountCents Int       @default(0)
+  weekdays       Int[]
+  startTime      String?
+  endTime        String?
+  startsAt       DateTime?
+  endsAt         DateTime? // exclusivo
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+
+  promotions Promotion[]
 }
 
 enum PromoAudience {

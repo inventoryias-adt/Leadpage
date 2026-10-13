@@ -5,7 +5,7 @@ import { formatDateTimeBR } from '@/lib/points';
 
 export const metadata = { title: 'Registro' };
 
-const LABEL: Record<string, string> = { status: 'Status', editar: 'Dados', senha: 'Senha', guia: 'Guia', nota: 'Anotação', impersonar: 'Suporte', convite: 'Convite' };
+const LABEL: Record<string, string> = { status: 'Status', editar: 'Dados', senha: 'Senha', guia: 'Guia', nota: 'Anotação', impersonar: 'Suporte', convite: 'Convite', campanha: 'Campanha' };
 
 export default async function Registro() {
   const logs = await prisma.adminLog.findMany({ orderBy: { createdAt: 'desc' }, take: 200 });
