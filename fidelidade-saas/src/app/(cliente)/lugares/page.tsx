@@ -1,7 +1,9 @@
+import type { SavedAddress } from '@/app/actions/location';
 import { Brand } from '@/components/Brand';
 import { PlacesExplorer, type PlaceCard } from '@/components/PlacesExplorer';
 import { buildCampaigns } from '@/lib/campaigns';
 import { CATEGORIES, CATEGORY_HINT, categoryLabel } from '@/lib/categories';
+import { savedText } from '@/lib/customer-location';
 import { prisma } from '@/lib/db';
 import { isOpenNow, parseSchedule } from '@/lib/hours';
 import { imageUrl } from '@/lib/images';
@@ -13,7 +15,7 @@ export const dynamic = 'force-dynamic';
 export default async function LugaresPage() {
   const customer = await getCustomer();
 
-  const [restaurants, wallets] = await Promise.all([
+  const [restaurants, wallets, addresses] = await Promise.all([
     prisma.restaurant.findMany({
       where: { subscriptionStatus: 'ACTIVE', onboardedAt: { not: null }, listed: true },
       select: {
@@ -36,7 +38,9 @@ export default async function LugaresPage() {
       take: 300,
     }),
     customer ? prisma.wallet.findMany({ where: { customerId: customer.id }, select: { restaurantId: true, balance: true } }) : Promise.resolve([]),
+    customer ? prisma.customerAddress.findMany({ where: { customerId: customer.id }, orderBy: { createdAt: 'desc' } }) : Promise.resolve([]),
   ]);
+  const savedAddresses: SavedAddress[] = addresses.map((a) => ({ id: a.id, label: a.label, ...savedText(a), lat: a.latitude, lng: a.longitude }));
 
   const balances = new Map(wallets.map((w) => [w.restaurantId, w.balance]));
   const places: PlaceCard[] = restaurants
@@ -71,7 +75,7 @@ export default async function LugaresPage() {
         <h1 className="mt-5 text-2xl font-extrabold md:mt-0 md:text-3xl tracking-tight text-primary">Lugares</h1>
         <p className="text-sm text-slate-600">Encontre onde ganhar pontos e o que você pode resgatar.</p>
       </header>
-      <PlacesExplorer places={places} categories={CATEGORIES.map((c) => ({ value: c.value, label: c.label, hint: CATEGORY_HINT[c.value] }))} loggedIn={!!customer} />
+      <PlacesExplorer places={places} categories={CATEGORIES.map((c) => ({ value: c.value, label: c.label, hint: CATEGORY_HINT[c.value] }))} loggedIn={!!customer} savedAddresses={savedAddresses} />
     </main>
   );
 }
