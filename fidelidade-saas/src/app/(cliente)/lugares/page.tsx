@@ -73,7 +73,6 @@ export default async function LugaresPage() {
       <header className="mb-5">
         <div className="md:hidden"><Brand href="/carteira" /></div>
         <h1 className="mt-5 text-2xl font-extrabold md:mt-0 md:text-3xl tracking-tight text-primary">Lugares</h1>
-        <p className="text-sm text-slate-600">Encontre onde ganhar pontos e o que você pode resgatar.</p>
       </header>
       <PlacesExplorer places={places} categories={CATEGORIES.map((c) => ({ value: c.value, label: c.label, hint: CATEGORY_HINT[c.value] }))} loggedIn={!!customer} savedAddresses={savedAddresses} />
     </main>

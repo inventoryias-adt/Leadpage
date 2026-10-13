@@ -49,7 +49,15 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses }:
   const [filter, setFilter] = useState<Filter>('all');
   const [category, setCategory] = useState<string | null>(null);
   const [allOpen, setAllOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [pos, setPos] = useState<Pos | null>(null);
+
+  useEffect(() => {
+    if (!searchOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setSearchOpen(false);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [searchOpen]);
 
   useEffect(() => {
     if (!allOpen) return;
@@ -99,48 +107,35 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses }:
     <div className="space-y-4">
       <LocationBar saved={savedAddresses} loggedIn={loggedIn} onChange={(c) => setPos(c ? { lat: c.lat, lng: c.lng } : null)} />
       <div className="relative">
-        <Icon name="search" size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar lugar ou categoria"
-          aria-label="Buscar lugares"
-          autoComplete="off"
-          data-lpignore="true"
-          data-1p-ignore="true"
-          data-form-type="other"
-          className="glass-input !pl-11"
-        />
+        <button
+          type="button"
+          onClick={() => setSearchOpen(true)}
+          aria-haspopup="dialog"
+          className={`flex w-full items-center gap-3 !rounded-full border border-slate-200 !bg-white py-3 pl-5 text-left text-sm !shadow-sm ${query ? 'pr-14' : 'pr-5'}`}
+        >
+          <Icon name="search" size={18} className="shrink-0 text-slate-400" />
+          <span className={`min-w-0 flex-1 truncate ${query ? 'font-semibold text-slate-800' : 'text-slate-400'}`}>{query || 'Buscar lugar ou categoria'}</span>
+        </button>
+        {query && (
+          <button type="button" aria-label="Limpar busca" onClick={() => setQuery('')} className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center !rounded-full !bg-slate-100 text-xs font-bold text-slate-600 !shadow-none hover:!bg-slate-200">✕</button>
+        )}
       </div>
-
-      {pos ? (
-        <p className="flex items-center gap-2 text-sm font-medium text-emerald-700">
-          <Icon name="pin" size={16} /> Mostrando do mais perto para o mais longe
-        </p>
-      ) : (
-        <p className="text-sm text-slate-600">Escolha onde você está para ver o que tem perto e a distância de cada lugar.</p>
-      )}
 
       {/* Filtros */}
-      <div className="chip-row" role="tablist" aria-label="Filtros">
+      <Carousel label="Filtros" hint={false}>
         {FILTERS.filter((f) => loggedIn || f.id !== 'saldo').map((f) => (
-          <button
-            key={f.id}
-            type="button"
-            role="tab"
-            aria-selected={filter === f.id}
-            onClick={() => setFilter(f.id)}
-            className={`shrink-0 !w-auto !rounded-md !px-4 !py-1.5 !text-sm ${filter === f.id ? 'glass-button' : 'glass-button-ghost'}`}
-          >
-            {f.label}
-          </button>
+          <li key={f.id} className="shrink-0">
+            <button
+              type="button"
+              aria-pressed={filter === f.id}
+              onClick={() => setFilter(f.id)}
+              className={`!w-auto !rounded-full !px-4 !py-1.5 !text-sm ${filter === f.id ? 'glass-button' : 'glass-button-ghost'}`}
+            >
+              {f.label}
+            </button>
+          </li>
         ))}
-      </div>
-      <CampaignCards
-        loggedIn={loggedIn}
-        items={list.flatMap((p) => p.campaigns.map((c) => ({ ...c, placeId: p.id, placeName: p.name, logoUrl: p.logoUrl })))}
-      />
+      </Carousel>
 
       {/* Categorias em carrossel. "Todos" abre a lista completa. */}
       <Carousel label="Categorias">
@@ -173,7 +168,7 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses }:
       </Carousel>
 
       {category && (
-        <button type="button" onClick={() => setCategory(null)} className="glass-button-ghost btn-sm" aria-label="Limpar categoria">
+        <button type="button" onClick={() => setCategory(null)} className="glass-button-ghost btn-sm !rounded-full" aria-label="Limpar categoria">
           Categoria: {categories.find((c) => c.value === category)?.label} ✕
         </button>
       )}
@@ -185,6 +180,11 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses }:
           <p className="text-xs text-slate-500">Mostra os lugares que descreveram o que são (ex.: “Outros · Doceria”).</p>
         </div>
       )}
+
+      <CampaignCards
+        loggedIn={loggedIn}
+        items={list.flatMap((p) => p.campaigns.map((c) => ({ ...c, placeId: p.id, placeName: p.name, logoUrl: p.logoUrl })))}
+      />
 
       {allOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 md:items-center md:p-6" onClick={() => setAllOpen(false)}>
@@ -257,40 +257,105 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses }:
         <ul className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0 lg:grid-cols-3">
           {list.map((p) => (
             <li key={p.id}>
-              <Link href={p.units.length > 1 ? `/lugar/${p.id}?unidade=${p.unit.id}` : `/lugar/${p.id}`} className="glass-panel-sm card-link flex items-center gap-3.5 p-3.5">
-                <PlaceAvatar name={p.name} src={p.logoUrl} size={60} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="truncate font-bold text-slate-900">{p.name}</p>
-                    {p.meters != null && <span className="shrink-0 text-xs font-semibold text-electric-600">{formatDistance(p.meters)}</span>}
-                  </div>
-                  <p className="truncate text-xs text-slate-500">{[p.categoryLabel, p.units.length > 1 ? p.unit.name : null, p.unit.address].filter(Boolean).join(' · ')}</p>
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {p.unit.openNow != null && (
-                      <span className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${p.unit.openNow ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-                        {p.unit.openNow ? 'Aberto agora' : 'Fechado agora'}
-                      </span>
-                    )}
-                    {p.units.length > 1 && (
-                      <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">{p.units.length} unidades</span>
-                    )}
-                    <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">{p.pointsPerReal} pts por R$ 1</span>
-                    {p.balance != null && p.balance > 0 && (
-                      <span className="rounded-md bg-[#E8EEFB] px-2 py-0.5 text-[11px] font-medium text-electric-600">Você tem {formatPoints(p.balance)} pts</span>
-                    )}
-                    {p.challenges > 0 && (
-                      <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
-                        {p.challenges} {p.challenges === 1 ? 'desafio' : 'desafios'}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <Icon name="chevron" size={18} className="text-slate-400" />
-              </Link>
+              <PlaceRow p={p} />
             </li>
           ))}
         </ul>
       )}
+
+      {searchOpen && (
+        <div role="dialog" aria-modal="true" aria-label="Buscar lugares" className="fixed inset-0 z-50 flex flex-col bg-white md:items-center md:bg-slate-900/50 md:p-6">
+          <div className="mx-auto flex h-full w-full max-w-lg flex-col bg-white md:h-[min(46rem,92vh)] md:rounded-[28px] md:shadow-2xl">
+            <div className="flex items-center gap-3 p-4">
+              <button type="button" onClick={() => setSearchOpen(false)} aria-label="Voltar" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200">
+                <Icon name="back" size={20} />
+              </button>
+              <div className="relative min-w-0 flex-1">
+                <Icon name="search" size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  autoFocus
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && setSearchOpen(false)}
+                  placeholder="Buscar lugar ou categoria"
+                  aria-label="Buscar lugares"
+                  enterKeyHint="search"
+                  autoComplete="off"
+                  data-lpignore="true"
+                  data-1p-ignore="true"
+                  data-form-type="other"
+                  className="glass-input !rounded-full !pl-11"
+                />
+              </div>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
+              {query.trim() === '' ? (
+                <>
+                  <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Categorias</p>
+                  <ul className="flex flex-wrap gap-2">
+                    {categories.map((c) => (
+                      <li key={c.value}>
+                        <button type="button" onClick={() => { setCategory(c.value); setSearchOpen(false); }} className="!w-auto !rounded-full border border-slate-200 !bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:!bg-slate-50">{c.label}</button>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : list.length === 0 ? (
+                <p className="py-8 text-center text-sm text-slate-500">Nada encontrado para “{query.trim()}”.</p>
+              ) : (
+                <>
+                  <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">{list.length} {list.length === 1 ? 'resultado' : 'resultados'}</p>
+                  <ul className="space-y-3">
+                    {list.slice(0, 30).map((p) => (
+                      <li key={p.id}><PlaceRow p={p} /></li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
+            <div className="border-t border-slate-100 p-4">
+              <button type="button" onClick={() => setSearchOpen(false)} className="glass-button !rounded-full">{query.trim() ? 'Ver na lista' : 'Fechar'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+type Row = PlaceCard & { unit: PlaceUnit; meters: number | null };
+
+/** Cartão de um lugar na lista: distância, aberto/fechado e quantas campanhas rolam lá. */
+function PlaceRow({ p }: { p: Row }) {
+  return (
+    <Link href={p.units.length > 1 ? `/lugar/${p.id}?unidade=${p.unit.id}` : `/lugar/${p.id}`} className="glass-panel-sm card-link flex items-center gap-3.5 !rounded-[22px] p-3.5">
+      <PlaceAvatar name={p.name} src={p.logoUrl} size={60} />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <p className="truncate font-bold text-slate-900">{p.name}</p>
+          {p.meters != null && <span className="shrink-0 text-xs font-semibold text-electric-600">{formatDistance(p.meters)}</span>}
+        </div>
+        <p className="truncate text-xs text-slate-500">{[p.categoryLabel, p.units.length > 1 ? p.unit.name : null, p.unit.address].filter(Boolean).join(' · ')}</p>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {p.unit.openNow != null && (
+            <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${p.unit.openNow ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+              {p.unit.openNow ? 'Aberto agora' : 'Fechado agora'}
+            </span>
+          )}
+          {p.campaigns.length > 0 && (
+            <span className="rounded-full bg-[#E8EEFB] px-2.5 py-0.5 text-[11px] font-bold text-electric-600">
+              {p.campaigns.length} {p.campaigns.length === 1 ? 'campanha' : 'campanhas'}
+            </span>
+          )}
+          {p.balance != null && p.balance > 0 && (
+            <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">Você tem {formatPoints(p.balance)} pts</span>
+          )}
+          {p.units.length > 1 && <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-700">{p.units.length} unidades</span>}
+          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-700">{p.pointsPerReal} pts por R$ 1</span>
+        </div>
+      </div>
+      <Icon name="chevron" size={18} className="text-slate-400" />
+    </Link>
   );
 }
