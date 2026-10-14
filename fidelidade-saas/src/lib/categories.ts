@@ -37,6 +37,10 @@ export const CATEGORY_HINT: Record<string, string> = {
   outros: 'não achou a sua? Escreva qual é',
 };
 
+/** Categorias que normalmente atendem com hora marcada: a Agenda aparece no painel e é sugerida nas Regras. */
+const BOOKING_CATEGORIES = new Set<string>(['barbearia', 'estetica', 'pet', 'servicos', 'academia']);
+export const suggestsBooking = (value: string | null | undefined) => !!value && BOOKING_CATEGORIES.has(value);
+
 export type CategoryValue = (typeof CATEGORIES)[number]['value'];
 
 /** Nome da categoria; em "Outros" mostra o texto livre do estabelecimento (ex.: "Outros · Doceria"). */

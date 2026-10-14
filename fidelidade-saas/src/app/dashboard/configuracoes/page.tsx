@@ -22,6 +22,7 @@ import { Icon } from '@/components/Icons';
 import { PlaceAvatar, RewardImage } from '@/components/Visual';
 import { describeChallenge } from '@/lib/challenges';
 import { prisma } from '@/lib/db';
+import { suggestsBooking } from '@/lib/categories';
 import { getSupport } from '@/lib/support-env';
 import { parseSchedule } from '@/lib/hours';
 import { removeResource, removeService } from '@/app/actions/agenda';
@@ -112,7 +113,8 @@ const SECTIONS = [
 
 export default async function ConfiguracoesPage({ searchParams }: { searchParams: Promise<{ abrir?: string }> }) {
   const restaurant = await requirePaidRestaurant();
-  const abrirTudo = (await searchParams).abrir === 'tudo';
+  const abrir = (await searchParams).abrir;
+  const abrirTudo = abrir === 'tudo';
   const [interactions, rewards, challenges, units, promotions, resources, services, appCampaigns] = await Promise.all([
     prisma.interactionRule.findMany({ where: { restaurantId: restaurant.id, active: true }, orderBy: { createdAt: 'asc' } }),
     prisma.reward.findMany({ where: { restaurantId: restaurant.id, active: true }, orderBy: { pointsCost: 'asc' } }),
@@ -127,6 +129,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
   const nowDate = new Date();
   const activeCount = units.filter((u) => u.active).length;
   const onboarding = !restaurant.onboardedAt;
+  const bookingSuggested = suggestsBooking(restaurant.category);
   const openAll = abrirTudo || onboarding; // no primeiro acesso mostramos tudo aberto
 
   return (
@@ -394,7 +397,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
       </Section>
 
       <Section id="agenda" n={4} title="Agenda e serviços" hint="Barbearia, clínica, salão, restaurante… O cliente marca pelo app e, quando o atendimento é concluído, os pontos entram sozinhos.">
-      <Optional id="agenda-conteudo" title="Configurar a agenda" hint="Só se o seu negócio atende com hora marcada ou reserva." status={services.length > 0 ? `${services.length} ${services.length === 1 ? 'serviço' : 'serviços'}` : 'Opcional'} open={openAll || services.length > 0}>
+      <Optional id="agenda-conteudo" title="Configurar a agenda" hint={bookingSuggested ? 'Seu tipo de negócio costuma atender com hora marcada: cadastre os serviços para o cliente agendar pelo app.' : 'Só se o seu negócio atende com hora marcada ou reserva.'} status={services.length > 0 ? `${services.length} ${services.length === 1 ? 'serviço' : 'serviços'}` : bookingSuggested ? 'Recomendado' : 'Opcional'} open={openAll || abrir === 'agenda' || bookingSuggested || services.length > 0}>
         <div className="space-y-7">
           <div>
             <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-slate-500">Serviços</h3>
