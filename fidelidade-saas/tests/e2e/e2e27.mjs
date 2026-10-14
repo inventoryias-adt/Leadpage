@@ -74,11 +74,11 @@ console.log('7. edição do admin não reativa o que o dono pausou OK');
 
 // 8. admin desliga: promoção desativada e some do cliente; religar reativa
 sql(`update "Promotion" set active=true where "appCampaignId"='${camp}'`);
-await a.goto(BASE + '/admin/campanhas'); await a.click(`li:has-text("triplo") button:has-text("Desligar")`);
-await a.waitForSelector('li:has-text("triplo") button:has-text("Ligar")');
+await a.goto(BASE + '/admin/campanhas'); await a.click(`li:has-text("triplo") button:text-is("Desligar")`);
+await a.waitForSelector('li:has-text("triplo") button:text-is("Ligar")');
 assert.equal(sql(`select active from "Promotion" where "appCampaignId"='${camp}'`), 'f');
 await c.goto(BASE + '/carteira'); assert.equal(await c.locator('text=Campanhas do app').count(), 0);
-await a.click(`li:has-text("triplo") button:has-text("Ligar")`); await a.waitForSelector('li:has-text("triplo") button:has-text("Desligar")');
+await a.click(`li:has-text("triplo") button:text-is("Ligar")`); await a.waitForSelector('li:has-text("triplo") button:text-is("Desligar")');
 assert.equal(sql(`select active from "Promotion" where "appCampaignId"='${camp}'`), 't');
 console.log('8. desligar/ligar a campanha acompanha nas promoções e na vitrine do cliente OK');
 

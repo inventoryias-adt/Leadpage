@@ -67,8 +67,9 @@ assert.ok(all.t.includes(`"'=HYPERLINK(""x"")"`), 'fórmula neutralizada');
 const only = await get(csvUrl('&prof=' + lucas));
 assert.ok(only.t.includes('Lucas') && !only.t.includes(';Ana;'));
 assert.match(only.r.headers()['content-disposition'], /agenda-lucas-/);
-const anon = await (await b.newContext()).request.get(csvUrl(''));
-assert.equal(anon.status(), 401);
+const anon = await (await b.newContext()).request.get(csvUrl(''), { maxRedirects: 0 });
+assert.ok([307, 401].includes(anon.status()), 'sem login: o middleware manda para a entrada (ou 401)');
+assert.ok(!(anon.headers()['content-type'] || '').includes('text/csv'));
 console.log('5. CSV com filtro, BOM, proteção de fórmula e login exigido OK');
 
 // 6. profissional de OUTRO estabelecimento não vaza por ?prof=

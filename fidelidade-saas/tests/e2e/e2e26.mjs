@@ -107,7 +107,8 @@ console.log('5. lista de endereços: trocar e apagar OK');
 // 7. endereço apagado em outro aparelho deixa de valer ao reabrir
 sql(`delete from "CustomerAddress"`);
 await p.reload(); await p.waitForSelector('[data-testid=loc-title]');
-assert.equal(await p.locator('[data-testid=loc-title]').innerText(), 'Onde está?');
+// o GPS já estava liberado: sem o endereço apagado, a vitrine volta a usar a localização do aparelho
+await p.waitForFunction(() => document.querySelector('[data-testid=loc-title]')?.textContent === 'Minha localização');
 console.log('6. endereço salvo que sumiu do servidor é descartado OK');
 console.log('ALL OK (localização do cliente)');
 await b.close();

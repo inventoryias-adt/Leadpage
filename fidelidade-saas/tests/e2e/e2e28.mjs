@@ -40,7 +40,7 @@ console.log('2. Lugares sem as frases de cima OK');
 await p.click('button:has-text("Buscar lugar ou categoria")');
 await p.waitForSelector('[role=dialog][aria-label="Buscar lugares"]');
 assert.equal(await p.evaluate(() => document.activeElement?.getAttribute('aria-label')), 'Buscar lugares', 'o campo já abre com o cursor');
-assert.ok(await p.locator('[role=dialog] >> text=Categorias').count());
+assert.ok(await p.locator('[role=dialog] >> text=Explorar por categoria').count());
 await p.keyboard.type('burger');
 await p.waitForSelector('[role=dialog] a:has-text("Burger do Zé")');
 await p.click('[role=dialog] button:has-text("Ver na lista")');
