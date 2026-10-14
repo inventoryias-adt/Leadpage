@@ -1,0 +1,99 @@
+name: ci
+
+# Roda em todo pull request que mexe no app: tipos, testes unitários, build e os testes de tela (Playwright) contra um Postgres de verdade.
+on:
+  pull_request:
+    paths:
+      - "fidelidade-saas/**"
+      - ".github/workflows/ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "fidelidade-saas/**"
+      - ".github/workflows/ci.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: fidelidade-saas
+
+jobs:
+  qualidade:
+    name: Tipos e testes unitários
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: fidelidade-saas/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  telas:
+    name: Testes de tela (e2e)
+    needs: qualidade
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: fidelidade
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fidelidade?schema=public
+      SESSION_SECRET: ci-session-secret-0123456789abcdef
+      APP_URL: http://localhost:3000
+      PAYMENT_PROVIDER: mock
+      CRON_SECRET: segredo-de-teste-1234567890
+      SUPPORT_EMAIL: suporte@exemplo.com
+      SUPPORT_WHATSAPP: "5511975944834"
+      RESEND_API_KEY: re_fake
+      DEV_MAIL_FILE: /tmp/dev-mail.jsonl
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: fidelidade-saas/package-lock.json
+      - run: npm ci
+      - name: Navegador do Playwright
+        run: npx playwright-core install --with-deps chromium
+      - name: Criar as tabelas (migrações)
+        run: npx prisma migrate deploy
+      - name: Build
+        run: npm run build
+      - name: Subir o app
+        run: |
+          nohup npx next start -p 3000 > /tmp/app.log 2>&1 &
+          for i in $(seq 1 60); do curl -fsS -o /dev/null http://localhost:3000/entrar && exit 0; sleep 2; done
+          echo "O app não subiu:"; cat /tmp/app.log; exit 1
+      - name: Testes de tela
+        run: tests/e2e/run.sh
+      - name: Guardar prints e registros se falhou
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-saida
+          path: |
+            fidelidade-saas/tests/e2e/out/*.log
+            fidelidade-saas/tests/e2e/out/*.png
+            /tmp/app.log
+          if-no-files-found: ignore
+          retention-days: 7
