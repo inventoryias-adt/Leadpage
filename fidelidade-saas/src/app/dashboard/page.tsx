@@ -5,7 +5,7 @@ import { Icon } from '@/components/Icons';
 import { prisma } from '@/lib/db';
 import { dailySeries, deltaPct, heatmap, peakSlot, suggestions, WEEKDAYS } from '@/lib/insights';
 import { loadCustomerRows } from '@/lib/insights-db';
-import { formatBRL, formatPoints } from '@/lib/points';
+import { compactBRL, compactNumber, formatBRL, formatPoints } from '@/lib/points';
 import { requireActiveRestaurant } from '@/lib/session';
 
 export const metadata = { title: 'Início' };
@@ -142,14 +142,14 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
       )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard label="Vendas lançadas" value={formatBRL(revenue)} hint={`${cur.length} ${cur.length === 1 ? 'compra' : 'compras'}`} delta={deltaPct(revenue, revenuePrev)} />
-        <KpiCard label="Ticket médio" value={formatBRL(ticket)} hint="por compra" delta={deltaPct(ticket, ticketPrev)} />
-        <Link href="/dashboard/pontos" className="card-link rounded-2xl"><KpiCard label="Pontos emitidos" value={formatPoints(pointsIssued)} hint="creditados aos clientes" delta={deltaPct(pointsIssued, sum(prev, 'points'))} /></Link>
-        <Link href="/dashboard/resgates#mes" className="card-link rounded-2xl"><KpiCard label="Resgates" value={formatPoints(redCur.length)} hint={`${pending} ${pending === 1 ? 'prêmio a entregar' : 'prêmios a entregar'}`} delta={deltaPct(redCur.length, redPrev)} /></Link>
-        <Link href="/dashboard/clientes" className="card-link rounded-2xl"><KpiCard label="Clientes na carteira" value={formatPoints(wallets._count)} hint="ver todos →" /></Link>
-        <Link href="/dashboard/clientes?seg=novos" className="card-link rounded-2xl"><KpiCard label="Clientes novos" value={formatPoints(newCustomers)} hint={`nos últimos ${days} dias`} /></Link>
+        <KpiCard label="Vendas lançadas" value={compactBRL(revenue)} exact={formatBRL(revenue)} hint={`${cur.length} ${cur.length === 1 ? 'compra' : 'compras'}`} delta={deltaPct(revenue, revenuePrev)} />
+        <KpiCard label="Ticket médio" value={compactBRL(ticket)} exact={formatBRL(ticket)} hint="por compra" delta={deltaPct(ticket, ticketPrev)} />
+        <Link href="/dashboard/pontos" className="card-link rounded-2xl"><KpiCard label="Pontos emitidos" value={compactNumber(pointsIssued)} exact={formatPoints(pointsIssued)} hint="creditados aos clientes" delta={deltaPct(pointsIssued, sum(prev, 'points'))} /></Link>
+        <Link href="/dashboard/resgates#mes" className="card-link rounded-2xl"><KpiCard label="Resgates" value={compactNumber(redCur.length)} hint={`${pending} ${pending === 1 ? 'prêmio a entregar' : 'prêmios a entregar'}`} delta={deltaPct(redCur.length, redPrev)} /></Link>
+        <Link href="/dashboard/clientes" className="card-link rounded-2xl"><KpiCard label="Clientes na carteira" value={compactNumber(wallets._count)} hint="ver todos →" /></Link>
+        <Link href="/dashboard/clientes?seg=novos" className="card-link rounded-2xl"><KpiCard label="Clientes novos" value={compactNumber(newCustomers)} hint={`nos últimos ${days} dias`} /></Link>
         <KpiCard label="Taxa de retorno" value={`${returnRate}%`} hint="clientes com 2+ compras" />
-        <KpiCard label="Pontos em circulação" value={formatPoints(wallets._sum.balance ?? 0)} hint="saldo ainda não resgatado" />
+        <KpiCard label="Pontos em circulação" value={compactNumber(wallets._sum.balance ?? 0)} exact={formatPoints(wallets._sum.balance ?? 0)} hint="saldo ainda não resgatado" />
       </div>
 
       <section className="glass-panel p-5 sm:p-6" aria-labelledby="vendas-dia">

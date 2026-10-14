@@ -141,16 +141,16 @@ export function RewardPhotoForm({ id, hasPhoto, name, edit }: { id: string; hasP
   const working = busy || pending;
   return (
     <div className="mt-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <label htmlFor={fileId} className={`glass-button-ghost btn-sm ${working ? 'pointer-events-none opacity-60' : ''}`}>
-          <Icon name="camera" size={15} /> {working ? 'Salvando…' : hasPhoto ? 'Trocar foto' : 'Adicionar foto'}
+      <div className="grid grid-cols-3 gap-2">
+        <label htmlFor={fileId} className={`action-tile ${working ? 'pointer-events-none opacity-60' : ''}`}>
+          <Icon name="camera" size={18} /> {working ? 'Salvando…' : hasPhoto ? 'Trocar foto' : 'Pôr foto'}
         </label>
         <input id={fileId} type="file" accept="image/*" className="sr-only" onChange={onFile} disabled={working} />
-        <button type="button" className="glass-button-ghost btn-sm" onClick={() => setSearching((v) => !v)} aria-expanded={searching} disabled={working}>
-          <Icon name="search" size={15} /> Buscar na web
+        <button type="button" className="action-tile" onClick={() => setSearching((v) => !v)} aria-expanded={searching} disabled={working}>
+          <Icon name="search" size={18} /> Buscar foto
         </button>
-        <button type="button" className="glass-button-ghost btn-sm" onClick={() => setEditing((v) => !v)} aria-expanded={editing}>
-          <Icon name="cog" size={15} /> Editar produto
+        <button type="button" className="action-tile" onClick={() => setEditing((v) => !v)} aria-expanded={editing}>
+          <Icon name="cog" size={18} /> Editar
         </button>
       </div>
       {editing && <EditRewardForm id={id} name={name} {...edit} onDone={() => setEditing(false)} />}

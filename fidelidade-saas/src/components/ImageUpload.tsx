@@ -77,20 +77,20 @@ export function ImageUpload({
             <Icon name="camera" size={26} />
           )}
         </div>
-        <div className="min-w-0">
-          <label htmlFor={id} className="glass-button-ghost btn-sm cursor-pointer">
-            {busy ? 'Preparando…' : preview ? 'Trocar foto' : 'Escolher foto'}
+        <div className={`grid min-w-0 flex-1 gap-2 sm:max-w-[16rem] ${webSearch ? 'grid-cols-2' : 'grid-cols-1 sm:max-w-[8rem]'}`}>
+          <label htmlFor={id} className="action-tile">
+            <Icon name="camera" size={18} /> {busy ? 'Preparando…' : preview ? 'Trocar foto' : 'Escolher foto'}
           </label>
           <input id={id} type="file" accept="image/*" className="sr-only" onChange={onFile} />
           {webSearch && (
-            <button type="button" className="glass-button-ghost btn-sm ml-2" onClick={() => setSearching((v) => !v)} aria-expanded={searching}>
-              <Icon name="search" size={15} /> Buscar na web
+            <button type="button" className="action-tile" onClick={() => setSearching((v) => !v)} aria-expanded={searching}>
+              <Icon name="search" size={18} /> Buscar foto
             </button>
           )}
-          {hint && <p className="mt-1.5 text-xs text-slate-500">{hint}</p>}
-          {error && <p role="alert" className="mt-1.5 text-xs text-red-600">{error}</p>}
         </div>
       </div>
+      {hint && <p className="mt-2 text-xs text-slate-500">{hint}</p>}
+      {error && <p role="alert" className="mt-1.5 text-xs text-red-600">{error}</p>}
       <input type="hidden" name={name} value={data} />
       {webSearch && <input type="hidden" name="imageWebUrl" value={web?.image ?? ''} />}
       {webSearch && <input type="hidden" name="imageWebAlt" value={web?.alt ?? ''} />}

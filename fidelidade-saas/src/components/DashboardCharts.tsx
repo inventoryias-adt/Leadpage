@@ -5,18 +5,20 @@ import { WEEKDAYS, type DayBucket } from '@/lib/insights';
 import { formatBRL, formatPoints } from '@/lib/points';
 
 /** Cartão de número com variação em relação ao período anterior. */
-export function KpiCard({ label, value, hint, delta }: { label: string; value: string; hint?: string; delta?: number | null }) {
+export function KpiCard({ label, value, hint, delta, exact }: { label: string; value: string; hint?: string; delta?: number | null; exact?: string }) {
+  // Valor grande não pode quebrar nem vazar do cartão no celular (duas colunas).
+  const size = value.length > 9 ? 'text-xl sm:text-2xl' : value.length > 6 ? 'text-2xl sm:text-3xl' : 'text-[1.75rem] sm:text-3xl';
   return (
-    <div className="glass-panel-sm h-full p-4">
+    <div className="glass-panel-sm h-full min-w-0 p-4" title={exact}>
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-semibold text-slate-600">{label}</p>
+        <p className="min-w-0 text-sm font-semibold leading-snug text-slate-600">{label}</p>
         {delta != null && (
           <span className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-bold ${delta >= 0 ? 'bg-blue-100 text-electric-600' : 'bg-rose-100 text-rose-600'}`} title="Em relação ao período anterior">
             {delta > 0 ? '+' : ''}{delta}%
           </span>
         )}
       </div>
-      <p className="mt-1 text-3xl font-extrabold leading-tight text-primary">{value}</p>
+      <p className={`mt-1 whitespace-nowrap font-extrabold leading-tight tracking-tight text-primary tabular-nums ${size}`}>{value}</p>
       {hint && <p className="mt-0.5 text-xs text-slate-500">{hint}</p>}
     </div>
   );
