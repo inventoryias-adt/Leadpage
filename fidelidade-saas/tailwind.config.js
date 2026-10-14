@@ -22,6 +22,8 @@ module.exports = {
           600: '#1A3FA3',
         },
         ice: '#F4F8FF',
+        // Lima da marca: só em pontos-chave (botão principal do caixa, aba ativa no celular, destaques), nunca em fundos grandes.
+        lima: { DEFAULT: '#C6F432', deep: '#B3E01C' },
       },
       backgroundImage: {
         'liquid-bg':

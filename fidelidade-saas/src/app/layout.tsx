@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import { NoAutofill } from '@/components/NoAutofill';
 import { RegisterSW } from '@/components/RegisterSW';
+import { Splash } from '@/components/Splash';
+import { SPLASH_GATE } from '@/lib/splash-gate';
 import '@fontsource-variable/inter';
 import '@fontsource-variable/dm-sans';
 import './globals.css';
@@ -39,10 +41,14 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
       <body>
         {/* O Chrome dispara o convite de instalação cedo, antes do React carregar: guarda o evento para o botão usar. */}
         <Script id="fz-install-capture" strategy="beforeInteractive">{`window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__fzInstall=e;});`}</Script>
+        <Script id="fz-splash-gate" strategy="beforeInteractive">{SPLASH_GATE}</Script>
+        {/* Sem JavaScript as entradas por rolagem não disparam: mostra tudo direto. */}
+        <noscript><style>{'.rv{opacity:1!important;transform:none!important}.splash{display:none!important}'}</style></noscript>
+        <Splash />
         <RegisterSW />
         <NoAutofill />
         {children}

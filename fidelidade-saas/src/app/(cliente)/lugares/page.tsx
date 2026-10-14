@@ -1,5 +1,6 @@
 import type { SavedAddress } from '@/app/actions/location';
 import { Brand } from '@/components/Brand';
+import { Reveal } from '@/components/Reveal';
 import { PlacesExplorer, type PlaceCard } from '@/components/PlacesExplorer';
 import { buildCampaigns } from '@/lib/campaigns';
 import { CATEGORIES, CATEGORY_HINT, categoryLabel } from '@/lib/categories';
@@ -70,10 +71,10 @@ export default async function LugaresPage() {
 
   return (
     <main className="p-4 sm:p-6 md:pt-8">
-      <header className="mb-5">
+      <Reveal as="header" from="top" className="mb-5">
         <div className="md:hidden"><Brand href="/carteira" /></div>
         <h1 className="mt-5 text-2xl font-extrabold md:mt-0 md:text-3xl tracking-tight text-primary">Lugares</h1>
-      </header>
+      </Reveal>
       <PlacesExplorer places={places} categories={CATEGORIES.map((c) => ({ value: c.value, label: c.label, hint: CATEGORY_HINT[c.value] }))} loggedIn={!!customer} savedAddresses={savedAddresses} />
     </main>
   );

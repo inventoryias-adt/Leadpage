@@ -4,6 +4,7 @@ import { Brand } from '@/components/Brand';
 import { Carousel } from '@/components/Carousel';
 import { Icon } from '@/components/Icons';
 import { Illustration } from '@/components/Illustrations';
+import { Reveal } from '@/components/Reveal';
 import { IntroSlides } from '@/components/IntroSlides';
 import { PlaceAvatar } from '@/components/Visual';
 import { campaignsForCustomers } from '@/lib/app-campaigns-db';
@@ -45,17 +46,18 @@ export default async function CarteiraPage() {
     <main className="space-y-7 p-4 sm:p-6 md:pt-8">
       <IntroSlides />
 
-      <header>
+      <Reveal as="header" from="top">
         <div className="md:hidden"><Brand href="/carteira" /></div>
         <h1 className="mt-5 text-2xl font-extrabold md:mt-0 md:text-3xl tracking-tight text-primary">Olá, {customer.name.split(' ')[0]}</h1>
         {wallets.length > 0 && (
           <p className="text-sm text-slate-600">
-            <span className="font-bold text-primary">{formatPoints(total)} pontos</span> em {wallets.length} {wallets.length === 1 ? 'lugar' : 'lugares'}
+            <span className="mark-lime font-bold text-primary">{formatPoints(total)} pontos</span> em {wallets.length} {wallets.length === 1 ? 'lugar' : 'lugares'}
           </p>
         )}
-      </header>
+      </Reveal>
 
       {nextBooking && (
+        <Reveal from="left">
         <Link href="/perfil/agendamentos" className="glass-panel card-link flex items-center gap-3 !rounded-[22px] p-4">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E8EEFB] text-electric-600"><Icon name="clock" size={22} /></span>
           <span className="min-w-0 flex-1">
@@ -65,10 +67,12 @@ export default async function CarteiraPage() {
           </span>
           <Icon name="chevron" size={18} className="text-slate-400" />
         </Link>
+        </Reveal>
       )}
 
-      <AppCampaignStrip campaigns={appCampaigns} />
+      {appCampaigns.length > 0 && <Reveal from="right"><AppCampaignStrip campaigns={appCampaigns} /></Reveal>}
 
+      <Reveal from="bottom" delay={60}>
       <section aria-labelledby="carteiras">
         <h2 id="carteiras" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Seus pontos por lugar</h2>
         {wallets.length === 0 ? (
@@ -96,7 +100,7 @@ export default async function CarteiraPage() {
                     </p>
                     <span className="mt-auto flex min-h-[1.5rem] flex-wrap gap-1.5">
                       {pick > 0 && <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-bold text-amber-800">{pick} para retirar</span>}
-                      {can && <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">Pode resgatar</span>}
+                      {can && <span className="rounded-full bg-lima px-2.5 py-0.5 text-[11px] font-bold text-primary">Pode resgatar</span>}
                     </span>
                   </Link>
                 </li>
@@ -105,12 +109,15 @@ export default async function CarteiraPage() {
           </Carousel>
         )}
       </section>
+      </Reveal>
 
+      <Reveal from="zoom">
       <Link href="/lugares" className="glass-panel-sm card-link flex items-center gap-3 !rounded-full px-5 py-3">
         <Icon name="compass" size={20} className="shrink-0 text-electric-600" />
         <span className="min-w-0 flex-1 text-sm font-bold text-slate-800">Explorar lugares perto de você</span>
         <Icon name="chevron" size={18} className="text-slate-400" />
       </Link>
+      </Reveal>
     </main>
   );
 }

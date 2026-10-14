@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import { Brand } from '@/components/Brand';
+import { Brand, Coin } from '@/components/Brand';
 import { Icon, type IconName } from '@/components/Icons';
+import { Reveal } from '@/components/Reveal';
 import { SignupCta } from '@/components/SignupCta';
 import { LandingMock } from '@/components/LandingMock';
 import { SignupForm } from '@/components/AuthForms';
@@ -83,6 +84,9 @@ const faqs = [
   { q: 'Tenho mais de uma loja. Posso usar?', a: 'Pode. Cada unidade tem endereço, horário e localização próprios, e os pontos valem em todas.' },
 ];
 
+/** Atraso (ms) da animação de abertura da página, para o hero entrar escalonado. */
+const d = (ms: number) => ({ '--d': `${ms}ms` }) as React.CSSProperties;
+
 /** Linha fina entre as seções. */
 function Hatch() {
   return <div aria-hidden className="h-px bg-[#E5E7EB]" />;
@@ -114,17 +118,17 @@ export default function LandingPage() {
       {/* Hero + cadastro */}
       <section className="grid items-center gap-10 px-5 py-12 sm:px-8 md:grid-cols-[1.1fr_1fr] md:py-16">
         <div>
-          <span className="glass-chip mb-6 !px-3 !py-1.5 !text-[13px]">
+          <span className="glass-chip enter-top mb-6 !px-3 !py-1.5 !text-[13px]" style={d(0)}>
             Clube de pontos para restaurantes, salões, clínicas e comércios
           </span>
-          <h1 className="mb-5 text-4xl font-semibold leading-[1.05] text-primary md:text-6xl">
+          <h1 className="enter-top mb-5 text-4xl font-semibold leading-[1.05] text-primary md:text-6xl" style={d(120)}>
             Seu cliente volta,
-            <span className="block text-electric-500">gasta mais e indica amigos.</span>
+            <span className="block text-electric-500">gasta mais e <span className="mark-lime text-primary">indica amigos.</span></span>
           </h1>
-          <p className="mb-8 max-w-xl text-lg text-slate-600">
+          <p className="enter-top mb-8 max-w-xl text-lg text-slate-600" style={d(240)}>
             Cada compra vira pontos na carteira do cliente, e os pontos viram prêmios que você escolhe. Você lança pelo CPF ou por QR Code, e o cliente acompanha tudo pelo celular, sem baixar app.
           </p>
-          <div className="flex flex-wrap items-center gap-5">
+          <div className="enter-top flex flex-wrap items-center gap-5" style={d(360)}>
             <Cta>Começar agora</Cta>
             <p className="text-sm text-slate-500">
               <span className="text-2xl font-semibold text-primary">{PLAN_PRICE}</span> / mês · sem taxa de adesão
@@ -132,7 +136,7 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div id="assinar" className="glass-panel p-6 sm:p-8">
+        <div id="assinar" className="glass-panel enter-right p-6 sm:p-8" style={d(300)}>
           <h2 className="mb-1 text-2xl font-semibold text-primary">Crie sua conta</h2>
           <p className="mb-6 text-sm text-slate-500">Leva 1 minuto. Depois você segue para o pagamento seguro.</p>
           <SignupForm />
@@ -141,54 +145,58 @@ export default function LandingPage() {
 
       {/* Vitrine do produto */}
       <section className="relative overflow-hidden border-y border-[#E5E7EB] bg-[#F6F7F9] px-5 py-14 sm:px-8">
-        <div className="relative">
+        <Reveal from="zoom" className="relative">
           <LandingMock />
-        </div>
+        </Reveal>
       </section>
 
       <Hatch />
 
       {/* Como funciona */}
       <section className="px-5 py-14 sm:px-8">
-        <span className="glass-chip mb-4">Como funciona</span>
-        <h2 className="mb-3 max-w-2xl text-3xl font-semibold text-primary md:text-4xl">Do balcão à carteira do cliente, em 4 passos.</h2>
-        <p className="mb-10 max-w-2xl text-slate-600">Você configura uma vez. Depois, é só lançar a conta de cada cliente e deixar os pontos trabalharem.</p>
+        <Reveal from="top">
+          <span className="glass-chip mb-4">Como funciona</span>
+          <h2 className="mb-3 max-w-2xl text-3xl font-semibold text-primary md:text-4xl">Do balcão à carteira do cliente, em 4 passos.</h2>
+          <p className="mb-10 max-w-2xl text-slate-600">Você configura uma vez. Depois, é só lançar a conta de cada cliente e deixar os pontos trabalharem.</p>
+        </Reveal>
         <ol className="grid gap-5 md:grid-cols-2">
-          {steps.map((s) => (
-            <li key={s.n} className="flex gap-4 rounded-xl border border-[#E5E7EB] bg-white p-5">
+          {steps.map((s, i) => (
+            <Reveal as="li" key={s.n} from={i % 2 === 0 ? 'left' : 'right'} delay={Math.floor(i / 2) * 120} className="flex gap-4 rounded-xl border border-[#E5E7EB] bg-white p-5">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-electric-500 text-lg font-bold text-white">{s.n}</span>
               <div>
                 <h3 className="mb-1 flex items-center gap-2 text-lg font-semibold text-primary"><Icon name={s.icon} size={18} className="text-electric-500" /> {s.title}</h3>
                 <p className="text-sm text-slate-600">{s.text}</p>
               </div>
-            </li>
+            </Reveal>
           ))}
         </ol>
-        <div className="mt-6 rounded-xl border border-electric-500/30 bg-electric-500/5 p-5">
+        <Reveal from="bottom" className="mt-6 rounded-xl border border-electric-500/30 bg-electric-500/5 p-5">
           <p className="mb-1 text-xs font-bold uppercase tracking-wide text-electric-600">Exemplo</p>
           <p className="text-sm text-slate-700">
             Você define R$ 1 = 10 pontos e um prêmio de 1.500 pontos. A Maria gasta R$ 80 e ganha 800 pontos. Na próxima visita, mais R$ 80 e o saldo vai a 1.600: ela troca por um prêmio e já sai com um motivo para voltar de novo.
           </p>
-        </div>
+        </Reveal>
       </section>
 
       <Hatch />
 
       {/* Por que funciona */}
       <section id="por-que-funciona" className="bg-[#F6F7F9] px-5 py-14 sm:px-8">
-        <span className="glass-chip mb-4">Por que um clube de pontos funciona</span>
-        <h2 className="mb-3 max-w-2xl text-3xl font-semibold text-primary md:text-4xl">Manter o cliente custa menos do que conquistar outro.</h2>
-        <p className="mb-10 max-w-2xl text-slate-600">O que dizem pesquisas e instituições sobre fidelização, com a fonte de cada número.</p>
+        <Reveal from="left">
+          <span className="glass-chip mb-4">Por que um clube de pontos funciona</span>
+          <h2 className="mb-3 max-w-2xl text-3xl font-semibold text-primary md:text-4xl">Manter o cliente custa menos do que conquistar outro.</h2>
+          <p className="mb-10 max-w-2xl text-slate-600">O que dizem pesquisas e instituições sobre fidelização, com a fonte de cada número.</p>
+        </Reveal>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {facts.map((f) => (
-            <figure key={f.big} className="flex flex-col rounded-xl border border-[#E5E7EB] bg-white p-5">
+          {facts.map((f, i) => (
+            <Reveal as="figure" key={f.big} from="zoom" delay={(i % 3) * 110} className="flex flex-col rounded-xl border border-[#E5E7EB] bg-white p-5">
               <p className="mb-2 text-4xl font-semibold tracking-tight text-electric-500">{f.big}</p>
               <blockquote className="flex-1 text-sm text-slate-700">{f.text}</blockquote>
               <figcaption className="mt-3 text-xs text-slate-500">
                 Fonte:{' '}
                 <a href={f.href} target="_blank" rel="noopener noreferrer" className="link-inline !font-medium">{f.source}</a>
               </figcaption>
-            </figure>
+            </Reveal>
           ))}
         </div>
         <p className="mt-6 max-w-3xl text-xs text-slate-500">
@@ -200,56 +208,63 @@ export default function LandingPage() {
 
       {/* Benefícios */}
       <section className="px-5 py-14 sm:px-8">
-        <span className="glass-chip mb-4">Para os dois lados do balcão</span>
-        <h2 className="mb-10 max-w-2xl text-3xl font-semibold text-primary md:text-4xl">O cliente tem motivos para voltar. Você tem controle e resultado.</h2>
+        <Reveal from="right">
+          <span className="glass-chip mb-4">Para os dois lados do balcão</span>
+          <h2 className="mb-10 max-w-2xl text-3xl font-semibold text-primary md:text-4xl">O cliente tem motivos para voltar. Você tem controle e resultado.</h2>
+        </Reveal>
 
         <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-500">O que o seu cliente ganha</h3>
         <div className="mb-10 grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
-          {forCustomer.map((b) => (
-            <div key={b.title} className="border-l-2 border-electric-500 pl-5">
+          {forCustomer.map((b, i) => (
+            <Reveal key={b.title} from="top" delay={i * 90} className="border-l-2 border-electric-500 pl-5">
               <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-electric-500/10 text-electric-600"><Icon name={b.icon} size={22} /></span>
               <h4 className="mb-1 text-base font-semibold text-primary">{b.title}</h4>
               <p className="text-sm text-slate-600">{b.text}</p>
-            </div>
+            </Reveal>
           ))}
         </div>
 
         <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-500">O que você ganha</h3>
         <div className="grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
-          {forYou.map((b) => (
-            <div key={b.title} className="border-l-2 border-electric-500 pl-5">
+          {forYou.map((b, i) => (
+            <Reveal key={b.title} from="bottom" delay={(i % 3) * 90} className="border-l-2 border-electric-500 pl-5">
               <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-electric-500/10 text-electric-600"><Icon name={b.icon} size={22} /></span>
               <h4 className="mb-1 text-base font-semibold text-primary">{b.title}</h4>
               <p className="text-sm text-slate-600">{b.text}</p>
-            </div>
+            </Reveal>
           ))}
         </div>
       </section>
 
       {/* Preço */}
       <section className="bg-dots-dark relative overflow-hidden bg-primary px-5 py-16 text-center sm:px-8">
-        <h2 className="mx-auto mb-3 max-w-2xl text-3xl font-semibold text-white md:text-4xl">
-          Um plano, tudo incluso. <span className="text-[#9DB7F5]">{PLAN_PRICE} por mês.</span>
-        </h2>
-        <p className="mx-auto mb-8 max-w-xl text-slate-300">Sem taxa de adesão e sem fidelidade. Cancele quando quiser.</p>
+        <Reveal from="flip" className="mb-5 flex justify-center"><Coin size={72} /></Reveal>
+        <Reveal from="zoom">
+          <h2 className="mx-auto mb-3 max-w-2xl text-3xl font-semibold text-white md:text-4xl">
+            Um plano, tudo incluso. <span className="text-lima">{PLAN_PRICE} por mês.</span>
+          </h2>
+          <p className="mx-auto mb-8 max-w-xl text-slate-300">Sem taxa de adesão e sem fidelidade. Cancele quando quiser.</p>
+        </Reveal>
         <div className="mx-auto mb-8 max-w-xl rounded-xl border border-white/15 bg-white/5 p-5 text-left sm:p-6">
           <p className="mb-3 text-sm font-semibold text-slate-300">O que está incluso</p>
           <ul className="space-y-2.5">
-            {included.map((i) => (
-              <li key={i} className="flex items-start gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white">
-                <Icon name="check" size={18} className="mt-0.5 shrink-0 text-[#9DB7F5]" /> {i}
-              </li>
+            {included.map((i, n) => (
+              <Reveal as="li" key={i} from="left" delay={n * 80} className="flex items-start gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white">
+                <Icon name="check" size={18} className="mt-0.5 shrink-0 text-lima" /> {i}
+              </Reveal>
             ))}
           </ul>
         </div>
-        <SignupCta className="glass-button !w-auto !border-white !bg-white !px-6 !py-3 !text-primary hover:!bg-slate-100">Quero fidelizar meus clientes</SignupCta>
+        <SignupCta className="glass-button-lime !w-auto !px-6 !py-3">Quero fidelizar meus clientes</SignupCta>
       </section>
 
       {/* FAQ */}
       <section className="px-5 py-14 sm:px-8">
-        <h2 className="mb-3 max-w-2xl text-3xl font-semibold text-primary md:text-4xl">Tem dúvidas? Relaxa, nós temos as respostas.</h2>
-        <p className="mb-8 max-w-xl text-slate-600">Separamos as perguntas que mais recebemos.</p>
-        <div className="divide-y divide-[#E5E7EB] border-y border-[#E5E7EB]">
+        <Reveal from="top">
+          <h2 className="mb-3 max-w-2xl text-3xl font-semibold text-primary md:text-4xl">Tem dúvidas? Relaxa, nós temos as respostas.</h2>
+          <p className="mb-8 max-w-xl text-slate-600">Separamos as perguntas que mais recebemos.</p>
+        </Reveal>
+        <Reveal from="bottom" className="divide-y divide-[#E5E7EB] border-y border-[#E5E7EB]">
           {faqs.map((f) => (
             <details key={f.q} className="group py-1">
               <summary className="flex list-none items-center gap-4 py-4 font-semibold text-primary transition-colors hover:text-electric-600">
@@ -259,7 +274,7 @@ export default function LandingPage() {
               <p className="pb-4 pl-[2.1rem] text-slate-600">{f.a}</p>
             </details>
           ))}
-        </div>
+        </Reveal>
       </section>
 
       <Hatch />
