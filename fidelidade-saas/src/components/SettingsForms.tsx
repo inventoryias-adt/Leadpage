@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { startTransition, useActionState, useEffect, useId, useRef, useState } from 'react';
 import {
   addChallenge,
@@ -19,6 +20,7 @@ import {
 } from '@/app/actions/restaurant';
 import { changePassword, openBillingPortal } from '@/app/actions/auth';
 import { UFS, cepDigits, maskCep, parseViaCep } from '@/lib/address';
+import { suggestsBooking } from '@/lib/categories';
 import { CATEGORIES, CATEGORY_HINT } from '@/lib/categories';
 import { categoryRequestMessage, buildSupport, type SupportContact } from '@/lib/support';
 import { SupportLinks } from './SupportLinks';
@@ -309,6 +311,12 @@ export function IdentityForm({ defaults, placeName, supportEnv }: { defaults: Id
             ))}
           </select>
           {category !== 'outros' && catNote}
+          {suggestsBooking(category) && (
+            <p className="mt-2 rounded-lg border border-[#C3D2F4] bg-[#EEF3FD] p-3 text-xs text-slate-700">
+              Esse tipo de negócio costuma atender com <strong>hora marcada</strong>. A aba <strong>Agenda</strong> já está liberada no menu: cadastre seus serviços para o cliente agendar pelo app.{' '}
+              <Link href="/dashboard/configuracoes?abrir=agenda#agenda" className="link-inline">Configurar a agenda</Link>
+            </p>
+          )}
         </div>
         <div>
           <label className="glass-label" htmlFor="i-ig">Instagram</label>

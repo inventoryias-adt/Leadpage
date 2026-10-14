@@ -367,3 +367,10 @@ Decisões em aberto: modelo de recebimento (Stripe Connect com Pix e repasse a c
 - Corrigido: depois de "Salvar identidade" o React 19 reiniciava o formulário e a categoria voltava a "Selecione…" na tela (embora estivesse salva). O formulário agora devolve aos campos o que o dono escolheu depois de cada resposta do servidor.
 - Teste: `e2e31`.
 
+## Categoria libera a Agenda (migration: nenhuma)
+
+- A aba **Agenda** do painel passa a aparecer também para categorias que atendem com hora marcada (`suggestsBooking` em `src/lib/categories.ts`: barbearia, estética e saúde, pet shop, serviços, academia), mesmo antes de cadastrar o primeiro serviço. Antes ela só aparecia depois de haver serviços, e trocar a categoria não mudava nada.
+- Ao escolher uma dessas categorias em Regras → Identidade da marca, aparece na hora um aviso ao lado do campo com o link "Configurar a agenda" (`?abrir=agenda#agenda`), a seção "Agenda e serviços" vem aberta e marcada como **Recomendado**, e a página da Agenda orienta cadastrar o primeiro serviço.
+- Quem tem outra categoria (ex.: restaurante, para reservas de mesa) continua configurando pela seção "Agenda e serviços", que segue como "Opcional".
+- Teste: `e2e32`. O `e2e18` passou a achar o botão de remover pelo `aria-label` (o botão virou ícone no PR #44).
+
