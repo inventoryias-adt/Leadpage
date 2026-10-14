@@ -58,7 +58,7 @@ export default async function ConvitePage({ params }: { params: Promise<{ restau
 
       <ul className="mb-6 space-y-2 text-sm text-slate-700">
         <li className="flex items-center gap-2.5"><Icon name="check" size={18} className="text-emerald-600" /> {restaurant.pointsPerReal} pontos a cada R$ 1 gasto</li>
-        <li className="flex items-center gap-2.5"><Icon name="check" size={18} className="text-emerald-600" /> Sem baixar aplicativo: leia o QR Code do caixa</li>
+        <li className="flex items-center gap-2.5"><Icon name="check" size={18} className="text-emerald-600" /> Sem baixar aplicativo: informe o CPF no caixa ou leia o QR Code</li>
         {restaurant.referralPoints > 0 && (
           <li className="flex items-center gap-2.5"><Icon name="check" size={18} className="text-emerald-600" /> {friend} ganha {formatPoints(restaurant.referralPoints)} pontos quando você fizer a primeira compra</li>
         )}

@@ -49,7 +49,7 @@ export default async function HistoricoPontosPage({ searchParams }: { searchPara
       )}
 
       {history.length === 0 ? (
-        <p className="glass-panel-sm p-4 text-sm text-slate-600">Ainda não há movimentações. Peça o QR Code no caixa depois de pagar.</p>
+        <p className="glass-panel-sm p-4 text-sm text-slate-600">Ainda não há movimentações. Depois de pagar, informe o seu CPF no caixa ou leia o QR Code.</p>
       ) : (
         <ul className="glass-panel-sm divide-y divide-slate-200/70">
           {history.map((t) => (

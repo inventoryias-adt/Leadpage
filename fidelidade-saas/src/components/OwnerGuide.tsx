@@ -82,8 +82,8 @@ const STEPS: Step[] = [
     id: 'caixa',
     icon: 'receipt',
     title: 'Lance pontos no caixa',
-    text: 'Depois que o cliente pagar a conta, gere o QR Code dos pontos dele.',
-    bullets: ['Digite o valor da conta e marque as interações que ele fez', 'Toque em “Gerar QR Code”', 'O cliente lê o QR com a câmera do celular, ou você envia o link pelo WhatsApp', 'Cada QR vale uma vez e expira em 24 horas'],
+    text: 'Depois que o cliente pagar a conta, lance os pontos: direto pelo CPF dele ou por QR Code.',
+    bullets: ['Digite o valor da conta e marque as interações que ele fez', 'Se ele já tem conta, digite o CPF e toque em “Lançar”: os pontos caem na hora', 'Se não tem, toque em “Gerar QR Code”', 'O cliente lê o QR com a câmera do celular, ou você envia o link pelo WhatsApp', 'Cada QR vale uma vez e expira em 24 horas'],
     cta: { label: 'Abrir o Caixa', href: '/dashboard/caixa' },
   },
   {

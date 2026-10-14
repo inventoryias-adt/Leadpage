@@ -18,12 +18,12 @@ export function LogoMark({ size = 36 }: { size?: number }) {
   );
 }
 
-/** Marca completa: símbolo + nome em minúsculas. */
-export function Brand({ href = '/', size = 36 }: { href?: string; size?: number }) {
+/** Marca completa: símbolo + nome em minúsculas. `compact` esconde o nome no celular (barras apertadas). */
+export function Brand({ href = '/', size = 36, compact = false }: { href?: string; size?: number; compact?: boolean }) {
   return (
-    <Link href={href} className="inline-flex items-center gap-2.5" aria-label="Fidelize — início">
+    <Link href={href} className="inline-flex shrink-0 items-center gap-2.5" aria-label="Fidelize — início">
       <LogoMark size={size} />
-      <span className="text-[1.25rem] font-bold leading-none tracking-[-0.04em] text-primary">fidelize</span>
+      <span className={`text-[1.25rem] font-bold leading-none tracking-[-0.04em] text-primary ${compact ? 'max-sm:hidden' : ''}`}>fidelize</span>
     </Link>
   );
 }

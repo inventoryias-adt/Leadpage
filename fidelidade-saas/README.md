@@ -337,3 +337,17 @@ Decisões em aberto: modelo de recebimento (Stripe Connect com Pix e repasse a c
   - **Estabelecimento** (Regras → Campanhas → "Campanhas do app"): **Participar** cria uma promoção dele ligada à campanha (`Promotion.appCampaignId`), então caixa, QR Code, relatórios e cartões da vitrine funcionam como qualquer campanha. **Sair** apaga a promoção.
     Quando o administrador edita, as promoções de quem adotou acompanham; ligar/desligar a campanha liga/desliga as promoções, mas editar **não reativa** o que o dono pausou.
   - **Cliente**: o carrossel do Início só mostra campanhas ativas, dentro do prazo e adotadas por ao menos um lugar da vitrine; tocar abre `/campanhas/[id]` com a descrição, quando vale e a lista de quem participa.
+
+## Preço, CPF no caixa, dois termos, Regras em 6 etapas, landing e logo (migration: nenhuma)
+
+- **Preço R$ 69,90/mês**: constante única em `src/lib/plan.ts` (landing, pagamento, termos). O valor cobrado vem do Stripe (`STRIPE_PRICE_ID`): foi criado um novo Price de R$ 69,90 no mesmo produto (modo de teste) e a variável da Vercel foi trocada. Preços do Stripe não mudam de valor: o antigo (R$ 197) deve ser arquivado depois do deploy.
+  **Na virada para o Stripe real, crie o Price de R$ 69,90 na conta real.**
+- **Lançar pontos pelo CPF** (Caixa): campo "CPF do cliente". Com 11 dígitos válidos, o caixa vê se já existe conta (nome abreviado, ex.: "Lucas S."). Se existe, "Lançar na conta" credita na hora (`creditByCpf`, mesma regra do QR: campanhas, indicação e desafios valem; o cliente recebe aviso no app).
+  Se não existe, o fluxo de QR Code/WhatsApp continua igual. Proteções: consulta limitada por estabelecimento (60 a cada 10 min), lançamentos limitados, e o mesmo lançamento (mesmo cliente e valor) não repete em 20 s.
+- **Dois termos de uso**: `/termos/estabelecimento` (quem contrata: assinatura, prêmios, dados dos clientes, lançar por CPF, campanhas do app e pontos compartilhados) e `/termos/cliente` (quem ganha pontos: conta, pontos, resgates, compartilhados, agenda, localização); `/termos` é o índice.
+  Cada cadastro aceita o termo certo e cada tela mostra o termo de quem está nela. Versão em `TERMS_VERSION` (`src/lib/legal.ts`): **mude ao alterar os textos**. Os textos são um modelo: peça revisão a um advogado antes de escalar.
+- **Regras em 6 etapas** (antes 12): Seu negócio, Ganhar pontos, Prêmios, Agenda, Rede de lugares, Minha conta. Blocos opcionais (check-in e indicação, interações, desafios, campanhas, agenda) abrem sozinhos quando já têm algo configurado; `?abrir=tudo` abre todos.
+  "Comece por aqui" mostra o que falta do essencial (logo e categoria, endereço e horário, ao menos um prêmio).
+- **Landing**: passo a passo em 4 etapas (inclui lançar por CPF ou QR Code), exemplo numérico, o que o cliente e o dono ganham e dados de fidelização **com fonte e link** (HBR 2014, Bain, McKinsey, ABEMF/TSI 2025, Sebrae). São estudos de terceiros e a página avisa que não são promessa de resultado.
+  Confira os links e os números antes de divulgar, e atualize quando saírem pesquisas novas.
+- **Logo novo**: "F" geométrico com um ponto final em lima (o "ponto" do clube), azul da marca. Fontes em `public/logo.svg` e `src/app/icon.svg`; ícones PNG, favicon, ícone mascarável e imagem de compartilhamento regerados. O nome passa a ser escrito em minúsculas ("fidelize").
