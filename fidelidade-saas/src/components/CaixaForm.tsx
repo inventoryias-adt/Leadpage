@@ -179,11 +179,11 @@ export function CaixaForm({ pointsPerReal, rules, promos = [], placeName }: { po
         {(state.error || direct.error) && <p role="alert" className="glass-error">{direct.error ?? state.error}</p>}
         {found ? (
           <>
-            <SubmitButton formAction={directAction} pendingText="Lançando…">Lançar na conta de {found.name}</SubmitButton>
+            <SubmitButton variant="lime" formAction={directAction} pendingText="Lançando…">Lançar na conta de {found.name}</SubmitButton>
             <SubmitButton variant="ghost" pendingText="Gerando…">Gerar QR Code em vez disso</SubmitButton>
           </>
         ) : (
-          <SubmitButton pendingText="Gerando…">Gerar QR Code</SubmitButton>
+          <SubmitButton variant="lime" pendingText="Gerando…">Gerar QR Code</SubmitButton>
         )}
         {claim && (
           <button

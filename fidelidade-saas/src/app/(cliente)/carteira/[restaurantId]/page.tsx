@@ -57,16 +57,16 @@ export default async function WalletPage({
       <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-6">
       <div>
       {/* Saldo */}
-      <section className="glass-panel relative mb-6 overflow-hidden p-6">
-        <div aria-hidden className="absolute right-0 top-0 h-32 w-32 -translate-y-10 translate-x-10 rounded-full bg-white/70 blur-2xl" />
-        <p className="mb-1 font-medium text-slate-600">Seu saldo atual</p>
+      <section className="glass-panel relative mb-6 overflow-hidden !border-primary !bg-primary p-6">
+        <div aria-hidden className="absolute right-0 top-0 h-32 w-32 -translate-y-10 translate-x-10 rounded-full bg-lima/20 blur-2xl" />
+        <p className="mb-1 font-medium text-slate-300">Seu saldo atual</p>
         <p className="flex items-end gap-2">
-          <span className="text-5xl font-extrabold text-primary">{formatPoints(wallet.balance)}</span>
-          <span className="mb-1 text-lg font-semibold text-electric-600">pts</span>
+          <span className="text-5xl font-extrabold text-lima">{formatPoints(wallet.balance)}</span>
+          <span className="mb-1 text-lg font-semibold text-slate-200">pts</span>
         </p>
-        <p className="mt-3 text-xs text-slate-500">Para ganhar mais, informe o seu CPF no caixa ou leia o QR Code que ele gerar na sua próxima conta.</p>
+        <p className="mt-3 text-xs text-slate-400">Para ganhar mais, informe o seu CPF no caixa ou leia o QR Code que ele gerar na sua próxima conta.</p>
         <div className="mt-4 grid grid-cols-2 gap-2">
-          <Link href={`/lugar/${restaurantId}/premios`} className="glass-button btn-sm !w-full">Montar sacola</Link>
+          <Link href={`/lugar/${restaurantId}/premios`} className="glass-button-lime btn-sm !w-full">Montar sacola</Link>
           <Link href={`/lugar/${restaurantId}`} className="glass-button-ghost btn-sm !w-full">Ver o lugar</Link>
         </div>
       </section>

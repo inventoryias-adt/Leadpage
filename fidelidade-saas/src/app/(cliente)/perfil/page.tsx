@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { customerLogout } from '@/app/actions/customer';
 import { Brand } from '@/components/Brand';
 import { PointsActivity } from '@/components/PointsActivity';
+import { Reveal } from '@/components/Reveal';
 import { Icon } from '@/components/Icons';
 import { LegalLinks } from '@/components/LegalLinks';
 import { ShareButtons } from '@/components/ShareButtons';
@@ -56,7 +57,7 @@ export default async function PerfilPage() {
 
   return (
     <main className="space-y-6 p-4 sm:p-6 md:pt-8 lg:grid lg:grid-cols-5 lg:items-start lg:gap-6 lg:space-y-0">
-      <header className="lg:col-span-5">
+      <Reveal as="header" from="top" className="lg:col-span-5">
         <div className="md:hidden"><Brand href="/carteira" /></div>
         <div className="mt-5 flex items-center gap-4">
           <span
@@ -71,14 +72,17 @@ export default async function PerfilPage() {
             <p className="text-sm text-slate-500">CPF {maskCpf(customer.cpf)} · {formatPhone(customer.phone)}</p>
           </div>
         </div>
-      </header>
+      </Reveal>
 
-      <section aria-labelledby="atividade" className="lg:col-span-5">
+      <Reveal from="zoom" className="lg:col-span-5">
+      <section aria-labelledby="atividade">
         <h2 id="atividade" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Seus pontos</h2>
         <PointsActivity data={activity} balance={balance} places={wallets.length} />
       </section>
+      </Reveal>
 
       <div className="space-y-6 lg:order-2 lg:col-span-3">
+        <Reveal from="left">
         <section aria-labelledby="atalhos">
           <h2 id="atalhos" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Seu movimento</h2>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -110,7 +114,9 @@ export default async function PerfilPage() {
             </Link>
           </div>
         </section>
+        </Reveal>
 
+        <Reveal from="bottom">
         <section aria-labelledby="compartilhados">
           <h2 id="compartilhados" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Pontos compartilhados</h2>
           <div className="glass-panel-sm space-y-4 p-4">
@@ -155,9 +161,11 @@ export default async function PerfilPage() {
             </div>
           </div>
         </section>
+        </Reveal>
       </div>
 
       <div className="space-y-6 lg:order-1 lg:col-span-2">
+      <Reveal from="right">
       <section aria-labelledby="indique">
         <h2 id="indique" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Indique amigos</h2>
         {invites.length === 0 ? (
@@ -181,13 +189,16 @@ export default async function PerfilPage() {
           </ul>
         )}
       </section>
+      </Reveal>
 
+      <Reveal from="bottom" delay={80}>
       <section className="space-y-3">
         <Link href="/lugares" className="glass-button-ghost"><Icon name="compass" size={18} /> Explorar lugares</Link>
         <form action={customerLogout}>
           <button className="btn-danger">Sair da conta</button>
         </form>
       </section>
+      </Reveal>
       <LegalLinks audience="cliente" className="pt-2" />
       </div>
     </main>

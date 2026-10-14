@@ -10,7 +10,7 @@ export default async function ClienteLayout({ children }: { children: React.Reac
   return (
     <>
       <CustomerNav unread={unread} />
-      <div className="mx-auto min-h-screen w-full max-w-md pb-32 md:max-w-5xl md:pb-16">
+      <div className="mx-auto min-h-screen w-full max-w-md overflow-x-clip pb-32 md:max-w-5xl md:pb-16">
         <div className="px-4 pt-4 sm:px-6 empty:hidden"><InstallApp /></div>
         {children}
       </div>

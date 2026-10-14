@@ -12,6 +12,7 @@ import { CategoryArt } from './CategoryArt';
 import { Icon } from './Icons';
 import { Illustration } from './Illustrations';
 import { LocationBar } from './LocationBar';
+import { Reveal } from './Reveal';
 import { PlaceAvatar } from './Visual';
 
 export type PlaceUnit = { id: string; name: string; address: string | null; lat: number | null; lng: number | null; openNow: boolean | null };
@@ -106,7 +107,7 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses }:
   return (
     <div className="space-y-4">
       <LocationBar saved={savedAddresses} loggedIn={loggedIn} onChange={(c) => setPos(c ? { lat: c.lat, lng: c.lng } : null)} />
-      <div className="relative">
+      <Reveal from="left" className="relative">
         <button
           type="button"
           onClick={() => setSearchOpen(true)}
@@ -119,9 +120,10 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses }:
         {query && (
           <button type="button" aria-label="Limpar busca" onClick={() => setQuery('')} className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center !rounded-full !bg-slate-100 text-xs font-bold text-slate-600 !shadow-none hover:!bg-slate-200">✕</button>
         )}
-      </div>
+      </Reveal>
 
       {/* Filtros */}
+      <Reveal from="right">
       <Carousel label="Filtros" hint={false}>
         {FILTERS.filter((f) => loggedIn || f.id !== 'saldo').map((f) => (
           <li key={f.id} className="shrink-0">
@@ -136,8 +138,10 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses }:
           </li>
         ))}
       </Carousel>
+      </Reveal>
 
       {/* Categorias em carrossel. "Todos" abre a lista completa. */}
+      <Reveal from="bottom">
       <Carousel label="Categorias">
         <li className="shrink-0 snap-start">
           <button type="button" onClick={() => setAllOpen(true)} aria-haspopup="dialog" className="group flex w-[4.5rem] flex-col items-center gap-1.5 !bg-transparent !p-0 !shadow-none">
@@ -166,6 +170,7 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses }:
           );
         })}
       </Carousel>
+      </Reveal>
 
       {category && (
         <button type="button" onClick={() => setCategory(null)} className="glass-button-ghost btn-sm !rounded-full" aria-label="Limpar categoria">
@@ -255,10 +260,10 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses }:
         </div>
       ) : (
         <ul className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0 lg:grid-cols-3">
-          {list.map((p) => (
-            <li key={p.id}>
+          {list.map((p, i) => (
+            <Reveal as="li" key={p.id} from={i % 2 === 0 ? 'left' : 'right'} delay={(i % 4) * 50}>
               <PlaceRow p={p} />
-            </li>
+            </Reveal>
           ))}
         </ul>
       )}

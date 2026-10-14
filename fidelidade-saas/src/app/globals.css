@@ -78,6 +78,7 @@ body {
   /* Botões: retos, sólidos e previsíveis. Hover escurece (sem inverter). */
   /* ---------------------------------------------------------------- */
   .glass-button,
+  .glass-button-lime,
   .glass-button-ghost,
   .btn-danger {
     @apply inline-flex w-full select-none items-center justify-center gap-2 rounded-lg border px-5 py-2.5 text-sm font-semibold leading-tight;
@@ -86,6 +87,7 @@ body {
     transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   }
   .glass-button:focus-visible,
+  .glass-button-lime:focus-visible,
   .glass-button-ghost:focus-visible,
   .btn-danger:focus-visible,
   .nav-tab:focus-visible,
@@ -94,6 +96,7 @@ body {
     outline-offset: 2px;
   }
   .glass-button:disabled,
+  .glass-button-lime:disabled,
   .glass-button-ghost:disabled,
   .btn-danger:disabled,
   .glass-button[aria-disabled='true'] {
@@ -109,6 +112,17 @@ body {
   .glass-button:not(:disabled):hover {
     border-color: #1a3fa3;
     background-color: #1a3fa3;
+  }
+
+  /* Botão principal em destaque: lima da marca com texto marinho. */
+  .glass-button-lime {
+    color: #0b1b3a;
+    border-color: #c6f432;
+    background-color: #c6f432;
+  }
+  .glass-button-lime:not(:disabled):hover {
+    border-color: #b3e01c;
+    background-color: #b3e01c;
   }
 
   .glass-button-ghost {
@@ -151,6 +165,21 @@ body {
   }
   .nav-tab-active:hover {
     @apply border-electric-500 bg-[#DCE6F9] text-electric-600;
+  }
+
+  /* Aba ativa das barras do celular: pílula lima com ícone e texto marinhos. */
+  .nav-tab-active.nav-tab-lime,
+  .nav-tab-active.nav-tab-lime:hover {
+    @apply border-transparent text-primary;
+    background-color: #c6f432;
+  }
+
+  /* Destaque de marca-texto lima atrás de uma palavra (texto continua marinho). */
+  .mark-lime {
+    background-image: linear-gradient(transparent 58%, #c6f432 58%, #c6f432 92%, transparent 92%);
+    padding: 0 0.12em;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
   }
 
   /* Rótulo/etiqueta (não clicável) e etiqueta clicável. */
@@ -477,4 +506,84 @@ label:has(input[type='radio']) {
     animation: none;
     box-shadow: 0 0 0 4px rgba(33, 80, 201, 0.35);
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* Abertura do app (Splash.tsx)                                       */
+/* ------------------------------------------------------------------ */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #0b1b3a;
+  pointer-events: none;
+  animation: splash-out 0.5s ease-in 2.1s forwards;
+}
+html[data-splash='off'] .splash {
+  display: none;
+}
+.splash-stage {
+  display: block;
+  /* Desenhado 4× maior e reduzido a 25%, para o zoom na moeda continuar nítido. */
+  width: 704px;
+  height: 704px;
+  flex: none;
+  /* centro da moeda dentro do símbolo (42,5 / 64 e 47 / 64) */
+  transform-origin: 66.4% 73.4%;
+  animation: splash-zoom 2.1s both;
+}
+@keyframes splash-zoom {
+  0% { opacity: 0; transform: scale(0.15); animation-timing-function: cubic-bezier(0.2, 0.9, 0.2, 1.15); }
+  24% { opacity: 1; transform: scale(0.25); }
+  42% { opacity: 1; transform: scale(0.25); animation-timing-function: cubic-bezier(0.75, 0, 0.9, 0.35); }
+  100% { opacity: 1; transform: scale(32.5); }
+}
+@keyframes splash-out {
+  from { opacity: 1; background: #2150c9; }
+  to { opacity: 0; background: #2150c9; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .splash { display: none; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Entrada por rolagem (Reveal.tsx) e na abertura da página (.enter)  */
+/* ------------------------------------------------------------------ */
+.rv {
+  opacity: 0;
+  transition:
+    opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) var(--rv-delay, 0ms),
+    transform 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) var(--rv-delay, 0ms);
+}
+.rv-top { transform: translateY(-3rem); }
+.rv-bottom { transform: translateY(3rem); }
+.rv-left { transform: translateX(-4rem); }
+.rv-right { transform: translateX(4rem); }
+.rv-zoom { transform: scale(0.84); }
+.rv-flip { transform: perspective(600px) rotateY(-180deg) scale(0.7); }
+.rv[data-in] { opacity: 1; transform: none; }
+@media (max-width: 640px) {
+  .rv-left { transform: translateX(-2rem); }
+  .rv-right { transform: translateX(2rem); }
+}
+
+/* Abertura da página: cai de cima / entra pela direita, escalonado por --d. */
+.enter-top { animation: enter-top 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms) both; }
+.enter-right { animation: enter-right 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms) both; }
+@keyframes enter-top {
+  from { opacity: 0; transform: translateY(-2.5rem); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes enter-right {
+  from { opacity: 0; transform: translateX(4rem); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rv { opacity: 1; transform: none; transition: none; }
+  .enter-top, .enter-right { animation: none; }
 }
