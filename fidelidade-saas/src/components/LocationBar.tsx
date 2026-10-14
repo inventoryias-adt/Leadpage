@@ -7,7 +7,7 @@ import { Icon } from './Icons';
 import { LocationPicker } from './LocationPicker';
 
 /**
- * Faixa "Onde está?" no topo da vitrine. Guarda a escolha no aparelho (localStorage) e avisa a vitrine,
+ * Cartão "Sua localização" no topo da vitrine (azul-claro, para não se confundir com a busca). Guarda a escolha no aparelho (localStorage) e avisa a vitrine,
  * que ordena os lugares por distância. Se o cliente já liberou o GPS antes e ainda não escolheu nada, usa o GPS direto.
  */
 export function LocationBar({ saved, loggedIn, onChange }: { saved: SavedAddress[]; loggedIn: boolean; onChange: (c: Chosen | null) => void }) {
@@ -44,13 +44,22 @@ export function LocationBar({ saved, loggedIn, onChange }: { saved: SavedAddress
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" aria-label={chosen ? `Localização: ${chosen.title}. Trocar` : 'Onde está? Escolher localização'} className="flex w-full min-w-0 items-center gap-2 !bg-transparent !p-0 text-left !shadow-none">
-        <Icon name="pin" size={20} className="shrink-0 text-electric-600" />
-        <span className="min-w-0">
-          <span className="block truncate text-base font-extrabold text-slate-900" data-testid="loc-title">{chosen ? chosen.title : 'Onde está?'}</span>
-          {chosen?.sub && <span className="block truncate text-xs text-slate-500">{chosen.sub}</span>}
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-haspopup="dialog"
+        aria-label={chosen ? `Localização: ${chosen.title}. Trocar` : 'Onde está? Escolher localização'}
+        className="flex w-full min-w-0 items-center gap-3 !rounded-2xl !border !border-[#C3D2F4] !bg-[#EEF3FD] !px-3.5 !py-2.5 text-left !shadow-none"
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-electric-600 shadow-sm">
+          <Icon name="pin" size={20} />
         </span>
-        <Icon name="down" size={16} className="shrink-0 text-slate-500" />
+        <span className="min-w-0 flex-1">
+          <span className="block text-[11px] font-bold uppercase tracking-wider text-electric-600">Sua localização</span>
+          <span className="block truncate text-base font-extrabold leading-tight text-slate-900" data-testid="loc-title">{chosen ? chosen.title : 'Onde está?'}</span>
+          <span className="block truncate text-xs text-slate-500">{chosen?.sub ?? 'Veja a distância dos lugares'}</span>
+        </span>
+        <span className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-bold text-electric-600 shadow-sm">{chosen ? 'Alterar' : 'Informar'}</span>
       </button>
       {open && (
         <LocationPicker
