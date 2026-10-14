@@ -5,6 +5,7 @@ import { Illustration } from '@/components/Illustrations';
 import { SignupCta } from '@/components/SignupCta';
 import { LandingMock } from '@/components/LandingMock';
 import { SignupForm } from '@/components/AuthForms';
+import { PLAN_PRICE } from '@/lib/plan';
 
 const steps = [
   { n: '1', variant: 'caixa' as const, title: 'O caixa lança a conta', text: 'Ele digita o valor gasto e marca se o cliente avaliou no Google ou postou no Instagram.' },
@@ -31,7 +32,7 @@ const included = [
 
 const faqs = [
   { q: 'Preciso instalar algum aplicativo?', a: 'Não. O cliente usa um web app (PWA) pelo navegador e pode adicioná-lo à tela inicial se quiser.' },
-  { q: 'Como funciona a cobrança?', a: 'Assinatura mensal de R$ 197,00, sem taxa de adesão. Você pode cancelar quando quiser.' },
+  { q: 'Como funciona a cobrança?', a: `Assinatura mensal de ${PLAN_PRICE}, sem taxa de adesão. Você pode cancelar quando quiser.` },
   { q: 'Em quanto tempo começo a usar?', a: 'Assim que o pagamento é confirmado você configura o estabelecimento em poucos minutos e já pode pontuar.' },
   { q: 'Funciona para outros negócios além de restaurante?', a: 'Sim. Cafeterias, padarias, açaí, sorveterias, barbearias e qualquer lugar com balcão podem usar.' },
   { q: 'Tenho mais de uma loja. Posso usar?', a: 'Pode. Cada unidade tem endereço, horário e localização próprios, e os pontos valem em todas.' },
@@ -81,7 +82,7 @@ export default function LandingPage() {
           <div className="flex flex-wrap items-center gap-5">
             <Cta>Começar agora</Cta>
             <p className="text-sm text-slate-500">
-              <span className="text-2xl font-semibold text-primary">R$ 197,00</span> / mês · sem taxa de adesão
+              <span className="text-2xl font-semibold text-primary">{PLAN_PRICE}</span> / mês · sem taxa de adesão
             </p>
           </div>
         </div>
@@ -142,7 +143,7 @@ export default function LandingPage() {
       {/* Preço */}
       <section className="bg-dots-dark relative overflow-hidden bg-primary px-5 py-16 text-center sm:px-8">
         <h2 className="mx-auto mb-3 max-w-2xl text-3xl font-semibold text-white md:text-4xl">
-          Um plano, tudo incluso. <span className="text-[#9DB7F5]">R$ 197,00 por mês.</span>
+          Um plano, tudo incluso. <span className="text-[#9DB7F5]">{PLAN_PRICE} por mês.</span>
         </h2>
         <p className="mx-auto mb-8 max-w-xl text-slate-300">Sem taxa de adesão e sem fidelidade. Cancele quando quiser.</p>
         <div className="mx-auto mb-8 max-w-xl rounded-xl border border-white/15 bg-white/5 p-5 text-left sm:p-6">

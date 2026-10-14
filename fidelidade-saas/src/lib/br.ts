@@ -46,3 +46,9 @@ export function formatPhone(phone: string): string {
   if (d.length === 10) return d.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3');
   return phone;
 }
+
+/** "Lucas Silva Souza" → "Lucas S." (o caixa vê quem é sem expor o nome completo). */
+export function shortName(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.` : parts[0];
+}

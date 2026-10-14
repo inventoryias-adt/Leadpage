@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { LegalPage, SupportContactLine, operatorLine } from '@/components/LegalPage';
+import { PLAN_PRICE } from '@/lib/plan';
 
 export const metadata = { title: 'Termos de Uso', description: 'Regras de uso do Fidelize para estabelecimentos e clientes.' };
 
@@ -32,7 +33,7 @@ export default function TermosPage() {
 
       <h2>4. Assinatura, preço e pagamento (estabelecimentos)</h2>
       <ul>
-        <li>O plano é mensal, por assinatura recorrente, no valor exibido no momento da contratação (hoje R$ 197,00 por mês), sem taxa de adesão e sem fidelidade.</li>
+        <li>O plano é mensal, por assinatura recorrente, no valor exibido no momento da contratação (hoje {PLAN_PRICE} por mês), sem taxa de adesão e sem fidelidade.</li>
         <li>A cobrança é feita pelo Stripe, processador de pagamentos. O Fidelize não armazena os dados completos do seu cartão.</li>
         <li>Reajustes de preço serão comunicados com pelo menos 30 dias de antecedência, e você poderá cancelar antes de passarem a valer.</li>
         <li>Se o pagamento falhar, o acesso ao painel e às funções que dependem da assinatura pode ser suspenso até a regularização.</li>

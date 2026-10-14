@@ -33,7 +33,7 @@ export function stripe() {
   return (stripeClient ??= new Stripe(key));
 }
 
-/** Devolve a URL para onde o restaurante deve ser enviado para pagar os R$ 197,00/mês. */
+/** Devolve a URL para onde o restaurante deve ser enviado para pagar o plano mensal. */
 export async function createCheckoutUrl(restaurant: { id: string; email: string; name: string }) {
   if (paymentProvider() === 'mock') return '/pagamento/simulado';
 

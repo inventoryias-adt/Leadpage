@@ -1,6 +1,6 @@
 # Fidelize — SaaS de pontos para restaurantes
 
-Next.js 15 (App Router) · React 19 · Tailwind 3 · Prisma 6 · PostgreSQL · Stripe (assinatura de R$ 197,00/mês).
+Next.js 15 (App Router) · React 19 · Tailwind 3 · Prisma 6 · PostgreSQL · Stripe (assinatura de R$ 69,90/mês).
 Design **Liquid Glass** azul/branco (`src/app/globals.css`, `tailwind.config.js`).
 
 ## Rodando localmente
@@ -15,7 +15,7 @@ npm test                    # CPF, telefone, dinheiro e cálculo de pontos
 ```
 
 Com `PAYMENT_PROVIDER=mock` (apenas dev) o checkout é simulado em `/pagamento/simulado`.
-Para produção use `PAYMENT_PROVIDER=stripe`, crie um preço recorrente de R$ 197,00 e aponte o
+Para produção use `PAYMENT_PROVIDER=stripe`, crie um preço recorrente de R$ 69,90 e aponte o
 webhook para `/api/webhooks/stripe` (eventos `checkout.session.completed`,
 `customer.subscription.updated`, `customer.subscription.deleted`).
 
@@ -137,7 +137,7 @@ teste** deixa a conta fora da receita e dos números de assinantes; ela aparece 
 atalho **Entrar**, para validar novidades antes de liberar aos clientes. O dono troca a própria senha em
 Regras → Minha conta.
 
-## Stripe (assinatura de R$ 197/mês)
+## Stripe (assinatura de R$ 69,90/mês)
 
 Checkout hospedado em modo assinatura, Customer Portal (trocar cartão, faturas, cancelar; botão em Regras → Minha conta) e
 webhook em `/api/webhooks/stripe` (`checkout.session.completed`, `customer.subscription.updated|deleted`, `invoice.paid`,
@@ -244,7 +244,7 @@ Recuperação por e-mail ainda não existe (precisa de um serviço de envio, com
 - **Pedido de exclusão de dados (LGPD)**: hoje por e-mail/WhatsApp ao suporte (descrito na Política); a exclusão é feita pelo administrador.
 - **Virada para o Stripe real** (hoje tudo está em modo de teste; contas de teste/piloto são ativadas pelo painel de administração, sem cobrança):
   1. Ativar a conta no Stripe (dados do negócio e conta bancária).
-  2. Autorizar a conta real na sessão do assistente (Stripe MCP) para recriar produto, preço (R$ 197/mês), portal do cliente e webhook em modo real.
+  2. Autorizar a conta real na sessão do assistente (Stripe MCP) para recriar produto, preço (R$ 69,90/mês), portal do cliente e webhook em modo real.
   3. Criar a chave secreta real e colocá-la no Vercel (`STRIPE_SECRET_KEY`, Sensitive); atualizar `STRIPE_PRICE_ID` e `STRIPE_WEBHOOK_SECRET` com os valores reais.
   4. Redeploy e **uma compra real de teste** (R$ 197, depois cancelar e pedir o reembolso pelo painel do Stripe).
   Contas antigas com cliente do Stripe de teste (ex.: "Teste Test") mostram o aviso amigável ao abrir o portal: limpe `paymentCustomerId` delas se necessário.

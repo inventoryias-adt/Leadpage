@@ -3,10 +3,10 @@
 import { QRCodeSVG } from 'qrcode.react';
 import { useRouter } from 'next/navigation';
 import { useActionState, useEffect, useMemo, useState } from 'react';
-import { createClaim, type CaixaState } from '@/app/actions/restaurant';
+import { createClaim, creditByCpf, lookupCpf, type CaixaState, type CpfLookup } from '@/app/actions/restaurant';
 import { calculatePoints, formatPoints, parseMoneyToCents } from '@/lib/points';
 import { applyPromos, promoActiveAt, promoBadge, type PromoLike } from '@/lib/promos';
-import { normalizePhone } from '@/lib/br';
+import { formatCpf, isValidCpf, normalizePhone, onlyDigits } from '@/lib/br';
 import { Icon } from './Icons';
 import { PrintTicket } from './PrintTicket';
 import { SubmitButton, maskPhoneInput } from './ui';
@@ -17,6 +17,9 @@ export type PromoData = Omit<PromoLike, 'startsAt' | 'endsAt'> & { id: string; s
 
 export function CaixaForm({ pointsPerReal, rules, promos = [], placeName }: { pointsPerReal: number; rules: Rule[]; promos?: PromoData[]; placeName: string }) {
   const [state, action] = useActionState<CaixaState, FormData>(createClaim, {});
+  const [direct, directAction] = useActionState<CaixaState, FormData>(creditByCpf, {});
+  const [cpf, setCpf] = useState('');
+  const [lookup, setLookup] = useState<CpfLookup | 'loading' | null>(null);
   const [amount, setAmount] = useState('');
   const [checked, setChecked] = useState<string[]>([]);
   const [phone, setPhone] = useState('');
@@ -33,6 +36,21 @@ export function CaixaForm({ pointsPerReal, rules, promos = [], placeName }: { po
     const extras = rules.filter((r) => checked.includes(r.id)).reduce((n, r) => n + r.points, 0);
     return applyPromos(calculatePoints(cents, pointsPerReal), cents, promoList.filter((p) => p.audience === 'ALL')).points + extras;
   }, [amount, checked, pointsPerReal, rules, promoList]);
+
+  // Ao completar um CPF válido, vê se o cliente já tem conta (nome abreviado).
+  useEffect(() => {
+    const digits = onlyDigits(cpf);
+    if (digits.length < 11) return setLookup(null);
+    if (!isValidCpf(digits)) return setLookup({ status: 'invalid' });
+    setLookup('loading');
+    let alive = true;
+    lookupCpf(digits).then((r) => alive && setLookup(r)).catch(() => alive && setLookup(null));
+    return () => {
+      alive = false;
+    };
+  }, [cpf]);
+  const found = typeof lookup === 'object' && lookup?.status === 'found' ? lookup : null;
+  const credited = direct.credited;
 
   const toggle = (id: string) => setChecked((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id]));
   const claim = state.claim;
@@ -81,6 +99,20 @@ export function CaixaForm({ pointsPerReal, rules, promos = [], placeName }: { po
         }}
         className="space-y-5"
       >
+        <div className="glass-inset space-y-2 p-3">
+          <label className="glass-label !mb-0" htmlFor="cpf">
+            CPF do cliente <span className="font-normal text-slate-500">(opcional: lança os pontos direto na conta dele)</span>
+          </label>
+          <input id="cpf" name="cpf" inputMode="numeric" autoComplete="off" className="glass-input" placeholder="000.000.000-00" value={cpf} onChange={(e) => setCpf(formatCpf(e.target.value))} />
+          <div aria-live="polite" className="min-h-[1.25rem] text-sm">
+            {lookup === 'loading' && <span className="text-slate-500">Procurando…</span>}
+            {found && <span className="font-semibold text-emerald-700">✓ {found.name} já tem conta no Fidelize. Dá para lançar direto.</span>}
+            {typeof lookup === 'object' && lookup?.status === 'new' && <span className="text-slate-600">Este CPF ainda não tem conta. Gere o QR Code e envie por WhatsApp para ele criar a conta e receber os pontos.</span>}
+            {typeof lookup === 'object' && lookup?.status === 'invalid' && <span className="text-red-600">CPF inválido. Confira os números.</span>}
+            {typeof lookup === 'object' && lookup?.status === 'limit' && <span className="text-red-600">Muitas consultas seguidas. Aguarde alguns minutos.</span>}
+          </div>
+        </div>
+
         <div>
           <label className="glass-label" htmlFor="amount">Valor da conta (R$)</label>
           <input
@@ -144,8 +176,15 @@ export function CaixaForm({ pointsPerReal, rules, promos = [], placeName }: { po
           <span className="text-3xl font-extrabold text-electric-600">{formatPoints(preview)} pts</span>
         </p>
 
-        {state.error && <p role="alert" className="glass-error">{state.error}</p>}
-        <SubmitButton pendingText="Gerando…">Gerar QR Code</SubmitButton>
+        {(state.error || direct.error) && <p role="alert" className="glass-error">{direct.error ?? state.error}</p>}
+        {found ? (
+          <>
+            <SubmitButton formAction={directAction} pendingText="Lançando…">Lançar na conta de {found.name}</SubmitButton>
+            <SubmitButton variant="ghost" pendingText="Gerando…">Gerar QR Code em vez disso</SubmitButton>
+          </>
+        ) : (
+          <SubmitButton pendingText="Gerando…">Gerar QR Code</SubmitButton>
+        )}
         {claim && (
           <button
             type="button"
@@ -155,12 +194,23 @@ export function CaixaForm({ pointsPerReal, rules, promos = [], placeName }: { po
               setChecked([]);
               setPhone('');
               setCustomerName('');
+              setCpf('');
             }}
           >
             Limpar para novo lançamento
           </button>
         )}
       </form>
+
+      {credited && (
+        <div role="status" className="animate-fade-in mt-8 rounded-3xl bg-emerald-50 p-6 text-center">
+          <p className="text-4xl">✓</p>
+          <p className="mt-2 text-lg font-bold text-emerald-800">{formatPoints(credited.points)} pontos lançados para {credited.name}</p>
+          <p className="text-sm text-emerald-700">{credited.description}</p>
+          <p className="mt-2 text-sm text-slate-600">Saldo dele agora: <strong>{formatPoints(credited.balance)} pts</strong>. Ele recebeu um aviso no app.</p>
+          <button type="button" className="glass-button-ghost mt-4" onClick={() => { setAmount(''); setChecked([]); setPhone(''); setCustomerName(''); setCpf(''); }}>Novo lançamento</button>
+        </div>
+      )}
 
       {claim && (
         <div className="animate-fade-in mt-8 flex flex-col items-center rounded-3xl bg-white p-6 shadow-inner">

@@ -12,7 +12,9 @@ import { parseSchedule, scheduleSchema } from '@/lib/hours';
 import { isCategory } from '@/lib/categories';
 import { validCoords } from '@/lib/geo';
 import { UFS, cepDigits, composeAddress } from '@/lib/address';
-import { BusinessError } from '@/lib/claims';
+import { BusinessError, creditClaimWith } from '@/lib/claims';
+import { isValidCpf, onlyDigits, shortName } from '@/lib/br';
+import { TOO_MANY, allow } from '@/lib/rate-limit';
 import { saveImageFromDataUrl } from '@/lib/images';
 import { downloadWithFallback } from '@/lib/product-images';
 import { describeChallenge } from '@/lib/challenges';
@@ -544,6 +546,8 @@ export async function finishGuide() {
 export type CaixaState = {
   error?: string;
   claim?: { url: string; points: number; amountCents: number; description: string; createdAt: string; expiresAt: string; phone?: string };
+  /** Pontos lançados direto na conta do cliente (pelo CPF). */
+  credited?: { name: string; points: number; balance: number; description: string };
 };
 
 const caixaSchema = z.object({
@@ -551,16 +555,28 @@ const caixaSchema = z.object({
   phone: z.string().default(''),
 });
 
-export async function createClaim(_: CaixaState, formData: FormData): Promise<CaixaState> {
+export type CpfLookup = { status: 'invalid' } | { status: 'new' } | { status: 'found'; name: string } | { status: 'limit' };
+
+/** O caixa digitou um CPF: o cliente já tem conta? (nome abreviado; limite de consultas para não virar listagem de CPFs) */
+export async function lookupCpf(cpfRaw: string): Promise<CpfLookup> {
   const restaurant = await requireActiveRestaurant();
+  const cpf = onlyDigits(cpfRaw);
+  if (!isValidCpf(cpf)) return { status: 'invalid' };
+  if (!(await allow(`cpflookup:${restaurant.id}`, 60, 600))) return { status: 'limit' };
+  const customer = await prisma.customer.findUnique({ where: { cpf }, select: { name: true } });
+  return customer ? { status: 'found', name: shortName(customer.name) } : { status: 'new' };
+}
+
+/** Conta do lançamento: pontos, descrição e unidade, com as regras gravadas no banco (nada vem do navegador). */
+async function buildLaunch(restaurant: { id: string; pointsPerReal: number }, formData: FormData) {
   const parsed = caixaSchema.parse({
     amount: formData.get('amount') ?? '',
     phone: formData.get('phone') ?? '',
   });
 
   const amountCents = parsed.amount.trim() ? parseMoneyToCents(parsed.amount) : 0;
-  if (amountCents === null) return { error: 'Valor inválido. Exemplo: 150,00' };
-  if (amountCents > MAX_BILL_CENTS) return { error: 'Valor acima do limite permitido por lançamento.' };
+  if (amountCents === null) return { error: 'Valor inválido. Exemplo: 150,00' } as const;
+  if (amountCents > MAX_BILL_CENTS) return { error: 'Valor acima do limite permitido por lançamento.' } as const;
 
   const ids = formData.getAll('interaction').map(String);
   const interactions = ids.length
@@ -570,36 +586,77 @@ export async function createClaim(_: CaixaState, formData: FormData): Promise<Ca
       })
     : [];
 
-  // Os pontos são calculados aqui, com as regras gravadas no banco — nada vem do cliente.
   // Campanhas valendo agora (multiplicador / pontos extras) incidem só sobre a parte da conta, não sobre as interações.
-  // Campanhas para um público específico (primeira compra, quem sumiu) só são aplicadas quando o cliente lê o QR,
-  // porque só então sabemos quem ele é (ver creditClaim).
+  // Campanhas para um público específico (primeira compra, quem sumiu) são aplicadas quando o cliente é identificado
+  // (ver creditClaimWith), seja pelo QR ou direto pelo CPF.
   const promos = await prisma.promotion.findMany({ where: { restaurantId: restaurant.id, active: true, audience: 'ALL' } });
   const billPoints = calculatePoints(amountCents, restaurant.pointsPerReal);
   const promoResult = applyPromos(billPoints, amountCents, promos);
   const points = promoResult.points + interactions.reduce((n, i) => n + i.points, 0);
-  if (points <= 0) return { error: 'Informe o valor da conta ou marque ao menos uma interação.' };
+  if (points <= 0) return { error: 'Informe o valor da conta ou marque ao menos uma interação.' } as const;
 
   const promoNote = promoResult.applied.length ? ` (${promoResult.applied.map((p) => `${promoBadge(p)} · ${p.title}`).join(' + ')})` : '';
   const parts = [amountCents > 0 ? `Compra de ${formatBRL(amountCents)}${promoNote}` : null, ...interactions.map((i) => i.label)];
   const description = parts.filter(Boolean).join(' + ');
+  const { unit } = await currentUnit(restaurant.id);
+  return { amountCents, points, billPoints, description, unitId: unit?.id ?? null, phone: parsed.phone } as const;
+}
+
+/** Lança os pontos direto na conta do cliente, pelo CPF, sem QR Code. Campanhas, indicação e desafios valem igual. */
+export async function creditByCpf(_: CaixaState, formData: FormData): Promise<CaixaState> {
+  const restaurant = await requireActiveRestaurant();
+  const cpf = onlyDigits(String(formData.get('cpf') ?? ''));
+  if (!isValidCpf(cpf)) return { error: 'CPF inválido. Confira os números.' };
+  const launch = await buildLaunch(restaurant, formData);
+  if ('error' in launch) return { error: launch.error };
+
+  const customer = await prisma.customer.findUnique({ where: { cpf }, select: { id: true, name: true } });
+  if (!customer) return { error: 'Este CPF ainda não tem conta. Gere o QR Code e envie por WhatsApp para ele criar a conta.' };
+  if (!(await allow(`cpfcredit:${restaurant.id}`, 120, 600))) return { error: TOO_MANY };
+  // Segurança contra clique duplo: o mesmo lançamento (mesmo cliente e mesmos pontos) não repete em 20 segundos.
+  if (!(await allow(`cpfdup:${restaurant.id}:${customer.id}:${launch.points}:${launch.amountCents}`, 1, 20))) {
+    return { error: 'Este mesmo lançamento acabou de ser feito. Confira em "Últimos lançamentos" antes de repetir.' };
+  }
+
+  const token = newClaimToken();
+  const expiresAt = new Date(Date.now() + CLAIM_TTL_HOURS * 60 * 60 * 1000);
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      await tx.claim.create({
+        data: { token, restaurantId: restaurant.id, unitId: launch.unitId, amountCents: launch.amountCents, points: launch.points, billPoints: launch.billPoints, description: launch.description, expiresAt },
+      });
+      const credited = await creditClaimWith(tx, token, customer.id);
+      const wallet = await tx.wallet.findUniqueOrThrow({ where: { customerId_restaurantId: { customerId: customer.id, restaurantId: restaurant.id } } });
+      return { points: credited.points, balance: wallet.balance, bonuses: credited.bonuses };
+    });
+    revalidatePath('/dashboard', 'layout');
+    return { credited: { name: shortName(customer.name), points: result.points, balance: result.balance, description: launch.description } };
+  } catch (e) {
+    if (!(e instanceof BusinessError)) throw e;
+    return { error: e.message };
+  }
+}
+
+export async function createClaim(_: CaixaState, formData: FormData): Promise<CaixaState> {
+  const restaurant = await requireActiveRestaurant();
+  const launch = await buildLaunch(restaurant, formData);
+  if ('error' in launch) return { error: launch.error };
+
   const expiresAt = new Date(Date.now() + CLAIM_TTL_HOURS * 60 * 60 * 1000);
   const token = newClaimToken();
-  const { unit } = await currentUnit(restaurant.id);
-
   await prisma.claim.create({
-    data: { token, restaurantId: restaurant.id, unitId: unit?.id ?? null, amountCents, points, billPoints, description, expiresAt },
+    data: { token, restaurantId: restaurant.id, unitId: launch.unitId, amountCents: launch.amountCents, points: launch.points, billPoints: launch.billPoints, description: launch.description, expiresAt },
   });
   // Sem revalidatePath aqui: o QR Code aparece na hora e a lista de lançamentos atualiza em segundo plano (router.refresh no cliente).
   return {
     claim: {
       url: `${appUrl()}/r/${token}`,
-      points,
-      amountCents,
-      description,
+      points: launch.points,
+      amountCents: launch.amountCents,
+      description: launch.description,
       createdAt: new Date().toISOString(),
       expiresAt: expiresAt.toISOString(),
-      phone: parsed.phone || undefined,
+      phone: launch.phone || undefined,
     },
   };
 }
