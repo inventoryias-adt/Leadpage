@@ -44,16 +44,17 @@ export function HoursGrid({ days, setDays, idPrefix }: { days: Schedule; setDays
         {DISPLAY_ORDER.map((dayNumber) => {
           const d = days.find((x) => x.day === dayNumber)!;
           const name = DAY_NAMES[dayNumber];
-          const short = name.replace('-feira', '');
           return (
-            <li key={dayNumber} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-3 py-2.5 sm:flex sm:gap-4">
-              <span className="order-1 min-w-0 whitespace-nowrap text-sm font-semibold text-slate-800 sm:w-[7rem] sm:shrink-0">
-                <span className="sm:hidden">{short}</span>
-                <span className="hidden sm:inline">{name}</span>
-              </span>
+            <li key={dayNumber} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-3 py-3 sm:flex sm:gap-4 sm:py-2.5">
+              <span className="order-1 truncate text-[15px] font-semibold text-slate-800 sm:w-[7rem] sm:shrink-0 sm:text-sm">{name}</span>
+
+              <label className="order-2 flex min-h-[36px] cursor-pointer items-center gap-2 whitespace-nowrap text-sm text-slate-600 sm:order-3">
+                <input type="checkbox" className="h-4 w-4 rounded accent-electric-500" checked={d.closed} onChange={(e) => update(dayNumber, { closed: e.target.checked })} />
+                Fechado
+              </label>
 
               {d.closed ? (
-                <p className="order-3 col-span-2 text-sm text-slate-500 sm:order-2 sm:flex-1">Não abre neste dia</p>
+                <p className="order-3 col-span-2 rounded-lg bg-slate-50 px-3 py-2.5 text-sm text-slate-500 sm:order-2 sm:flex-1 sm:bg-transparent sm:px-0">Não abre neste dia</p>
               ) : (
                 <div className="order-3 col-span-2 flex min-w-0 items-center gap-2 text-sm text-slate-500 sm:order-2 sm:flex-1">
                   <label className="sr-only" htmlFor={`${idPrefix}o-${dayNumber}`}>Abre — {name}</label>
@@ -64,20 +65,14 @@ export function HoursGrid({ days, setDays, idPrefix }: { days: Schedule; setDays
                 </div>
               )}
 
-              <div className="order-2 flex items-center gap-3 sm:order-3 sm:shrink-0">
-                <label className="flex min-h-[36px] cursor-pointer items-center gap-2 whitespace-nowrap text-sm text-slate-600">
-                  <input type="checkbox" className="h-4 w-4 rounded accent-electric-500" checked={d.closed} onChange={(e) => update(dayNumber, { closed: e.target.checked })} />
-                  Fechado
-                </label>
-                <button
-                  type="button"
-                  onClick={() => applyToAll(dayNumber)}
-                  className="inline-flex min-h-[36px] items-center gap-1.5 whitespace-nowrap rounded-md border border-[#C3D2F4] bg-[#F3F6FD] px-2.5 text-xs font-semibold text-electric-600 hover:bg-[#E8EEFB]"
-                  aria-label={`Repetir o horário de ${name} em todos os dias da semana`}
-                >
-                  <Icon name="copy" size={14} /> Repetir em todos<span className="hidden sm:inline"> os dias</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => applyToAll(dayNumber)}
+                className="order-4 col-span-2 inline-flex min-h-[32px] items-center gap-1.5 justify-self-start whitespace-nowrap rounded-md px-1 text-[13px] font-semibold text-electric-600 hover:bg-[#F3F6FD] sm:col-span-1 sm:shrink-0 sm:border sm:border-[#C3D2F4] sm:bg-[#F3F6FD] sm:px-2.5 sm:text-xs"
+                aria-label={`Repetir o horário de ${name} em todos os dias da semana`}
+              >
+                <Icon name="copy" size={14} /> <span className="sm:hidden">Repetir este horário em todos os dias</span><span className="hidden sm:inline">Repetir em todos</span>
+              </button>
             </li>
           );
         })}

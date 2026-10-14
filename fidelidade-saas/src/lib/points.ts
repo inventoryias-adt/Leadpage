@@ -43,6 +43,22 @@ export function formatPoints(points: number): string {
   return points.toLocaleString('pt-BR');
 }
 
+/** Número curto para cartões de resumo: 2.090 · 12,5 mil · 1,2 mi. */
+export function compactNumber(n: number): string {
+  const abs = Math.abs(n);
+  if (abs < 10_000) return n.toLocaleString('pt-BR');
+  if (abs < 1_000_000) return `${(n / 1000).toLocaleString('pt-BR', { maximumFractionDigits: abs < 100_000 ? 1 : 0 })} mil`;
+  return `${(n / 1_000_000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mi`;
+}
+
+/** Dinheiro curto para cartões de resumo: R$ 265 · R$ 53,50 · R$ 12,5 mil (o valor exato fica no detalhe). */
+export function compactBRL(cents: number): string {
+  const reais = cents / 100;
+  if (Math.abs(reais) >= 10_000) return `R$ ${compactNumber(Math.round(reais))}`;
+  const whole = Number.isInteger(reais) || Math.abs(reais) >= 1000;
+  return `R$ ${reais.toLocaleString('pt-BR', { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: whole ? 0 : 2 })}`;
+}
+
 export type Interaction = { id: string; label: string; points: number };
 
 /** Pontos = floor(R$ × taxa) + soma das interações marcadas. */

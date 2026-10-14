@@ -158,6 +158,25 @@ body {
     background-color: #fef2f2;
   }
 
+  /* Botão-ícone de ação (foto, buscar, editar): mesmo tamanho lado a lado, ícone em cima do texto. */
+  .action-tile {
+    @apply flex min-h-[3.5rem] cursor-pointer select-none flex-col items-center justify-center gap-1 rounded-lg border bg-white px-1 py-2 text-center text-xs font-semibold leading-tight text-slate-800 transition-colors;
+    border-color: #cbd2dc;
+  }
+  .action-tile:hover {
+    border-color: #94a3b8;
+    background-color: #e9edf3;
+  }
+  .action-tile[aria-expanded='true'] {
+    border-color: #2150c9;
+    background-color: #f3f6fd;
+    color: #2150c9;
+  }
+  .action-tile:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
   /* Tamanho compacto (botões dentro de listas, buscas, linhas). */
   .btn-sm {
     @apply !w-auto !gap-1.5 !rounded-md !px-3 !py-1.5 !text-[13px];
