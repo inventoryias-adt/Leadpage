@@ -373,4 +373,5 @@ Decisões em aberto: modelo de recebimento (Stripe Connect com Pix e repasse a c
 - Ao escolher uma dessas categorias em Regras → Identidade da marca, aparece na hora um aviso ao lado do campo com o link "Configurar a agenda" (`?abrir=agenda#agenda`), a seção "Agenda e serviços" vem aberta e marcada como **Recomendado**, e a página da Agenda orienta cadastrar o primeiro serviço.
 - Quem tem outra categoria (ex.: restaurante, para reservas de mesa) continua configurando pela seção "Agenda e serviços", que segue como "Opcional".
 - Teste: `e2e32`. O `e2e18` passou a achar o botão de remover pelo `aria-label` (o botão virou ícone no PR #44).
+- **Sem funcionários cadastrados = um atendente só**: se o estabelecimento não tem nenhum profissional/vaga ativo (nunca cadastrou, ou removeu a vaga padrão), o agendamento cria sozinho a vaga única "Atendimento" (`ensureDefaultStaff` em `src/lib/booking-db.ts`, com cadeado por estabelecimento) e o cliente agenda normalmente, sem escolher ninguém. Com um atendente só, o horário ocupado some para os outros. Teste: `e2e33`.
 

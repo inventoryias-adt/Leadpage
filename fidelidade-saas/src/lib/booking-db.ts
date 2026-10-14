@@ -18,9 +18,27 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 type Policy = { bookingMinNoticeMin: number; bookingMaxDaysAhead: number };
 type ServiceLike = { id: string; durationMin: number; resourceId: string | null };
 
+/**
+ * Quem não cadastrou nenhum profissional tem um atendente só: cria a vaga única "Atendimento" na hora, para o cliente agendar normalmente.
+ * (Cobre o caso de a vaga padrão ter sido removida ou nunca ter existido.) Com cadeado por estabelecimento, para não criar duas.
+ */
+export async function ensureDefaultStaff(restaurantId: string) {
+  await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${restaurantId}))`;
+    if (!(await tx.resource.count({ where: { restaurantId, active: true } }))) {
+      await tx.resource.create({ data: { restaurantId, name: 'Atendimento', capacity: 1 } });
+    }
+  });
+}
+
 /** Profissionais que podem fazer o serviço nesta unidade, com a duração e a escala de cada um. */
 export async function staffFor(db: Db, args: { restaurantId: string; service: ServiceLike; unitId: string; resourceId?: string | null }) {
   const { restaurantId, service, unitId } = args;
+  if (!args.resourceId && !(await db.resource.count({ where: { restaurantId, active: true } }))) {
+    // Dentro do agendamento (transação) o cadeado do estabelecimento já está nas nossas mãos: cria direto, sem esperar outra transação.
+    if ('$transaction' in db) await ensureDefaultStaff(restaurantId);
+    else await db.resource.create({ data: { restaurantId, name: 'Atendimento', capacity: 1 } });
+  }
   const links = await db.resourceService.findMany({ where: { serviceId: service.id }, select: { resourceId: true, durationMin: true } });
   const linked = new Map(links.map((l) => [l.resourceId, l.durationMin]));
   const legacy = service.resourceId ? [service.resourceId] : null;
