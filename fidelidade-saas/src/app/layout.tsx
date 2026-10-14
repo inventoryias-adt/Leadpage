@@ -7,25 +7,25 @@ import '@fontsource-variable/dm-sans';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: { default: 'Fidelize — Programa de pontos para o seu negócio', template: '%s · Fidelize' },
+  title: { default: 'Fidelize — Clube de pontos para o seu negócio', template: '%s · Fidelize' },
   description:
-    'Programa de pontos e prêmios para restaurantes, lojas, salões e qualquer estabelecimento: faça o cliente voltar, receba mais avaliações no Google e posts no Instagram.',
+    'Clube de pontos para restaurantes, salões, clínicas, lojas e qualquer estabelecimento: o cliente volta, gasta mais e indica amigos. Lance pontos pelo CPF ou QR Code, sem app para baixar.',
   applicationName: 'Fidelize',
   metadataBase: new URL(process.env.APP_URL ?? 'https://fidelize-nu.vercel.app'),
   icons: {
     icon: [
-      { url: '/icon-48.png?v=2', sizes: '48x48', type: 'image/png' },
-      { url: '/icon-96.png?v=2', sizes: '96x96', type: 'image/png' },
-      { url: '/icon-192.png?v=2', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-48.png?v=3', sizes: '48x48', type: 'image/png' },
+      { url: '/icon-96.png?v=3', sizes: '96x96', type: 'image/png' },
+      { url: '/icon-192.png?v=3', sizes: '192x192', type: 'image/png' },
     ],
-    apple: [{ url: '/apple-touch-icon.png?v=2', sizes: '180x180', type: 'image/png' }],
+    apple: [{ url: '/apple-touch-icon.png?v=3', sizes: '180x180', type: 'image/png' }],
   },
   openGraph: {
     type: 'website',
     siteName: 'Fidelize',
     locale: 'pt_BR',
-    title: 'Fidelize — Programa de pontos para o seu negócio',
-    description: 'Faça seus clientes voltarem: pontos, prêmios e avaliações no Google, para qualquer estabelecimento.',
+    title: 'Fidelize — Clube de pontos para o seu negócio',
+    description: 'Faça seus clientes voltarem: pontos, prêmios, campanhas e agenda, para qualquer estabelecimento.',
   },
   twitter: { card: 'summary_large_image' },
   appleWebApp: { capable: true, title: 'Fidelize', statusBarStyle: 'default' },

@@ -127,7 +127,7 @@ export function InstallApp({ className = '' }: { className?: string }) {
       <section aria-label="Adicionar à tela inicial" className={`glass-panel p-4 ${className}`}>
         <div className="flex items-start gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icon-96.png?v=2" alt="" width={48} height={48} className="h-12 w-12 shrink-0 rounded-xl" />
+          <img src="/icon-96.png?v=3" alt="" width={48} height={48} className="h-12 w-12 shrink-0 rounded-xl" />
           <div className="min-w-0 flex-1">
             <p className="font-semibold text-primary">Tenha o Fidelize na tela inicial</p>
             <p className="mt-0.5 text-sm text-slate-600">Abra seus pontos com um toque, como um app — sem baixar nada na loja.</p>
@@ -208,7 +208,7 @@ function InstallIntro({ onInstall, onClose }: { onInstall: () => void; onClose: 
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/60 p-5" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-labelledby="install-intro-title" className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl" onClick={(e) => e.stopPropagation()}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/icon-192.png?v=2" alt="" width={72} height={72} className="mx-auto h-[72px] w-[72px] rounded-2xl" />
+        <img src="/icon-192.png?v=3" alt="" width={72} height={72} className="mx-auto h-[72px] w-[72px] rounded-2xl" />
         <h2 id="install-intro-title" className="mt-4 text-xl font-bold text-primary">Instale o Fidelize no seu celular</h2>
         <p className="mt-2 text-sm leading-relaxed text-slate-600">
           Veja seus pontos e prêmios com um toque, direto da tela inicial — como um app, sem baixar nada na loja.
