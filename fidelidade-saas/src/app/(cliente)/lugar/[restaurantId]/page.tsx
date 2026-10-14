@@ -9,6 +9,7 @@ import { categoryLabel } from '@/lib/categories';
 import { challengeCount } from '@/lib/claims';
 import { describeChallenge, periodRange } from '@/lib/challenges';
 import { prisma } from '@/lib/db';
+import { ensureDefaultService } from '@/lib/booking-db';
 import { isOpenNow, parseSchedule, todayLabel } from '@/lib/hours';
 import { imageUrl } from '@/lib/images';
 import { appUrl } from '@/lib/payments';
@@ -63,6 +64,8 @@ export default async function LugarPage({
   ]);
   const nowDate = new Date();
   if (!restaurant || restaurant.subscriptionStatus !== 'ACTIVE' || !restaurant.onboardedAt) notFound();
+  // Barbearia, estética etc. sem nenhum serviço cadastrado: já oferece o serviço padrão, para o cliente poder agendar.
+  const canBook = serviceCount > 0 || (await ensureDefaultService(restaurant));
 
   const progress = await Promise.all(
     challenges.map(async (c) => {
@@ -133,7 +136,7 @@ export default async function LugarPage({
             {schedule && <span className="flex items-center gap-1 text-slate-600"><Icon name="clock" size={15} /> {todayLabel(schedule).replace('Hoje: ', 'Hoje ')}</span>}
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            {serviceCount > 0 && units.length > 0 && (
+            {canBook && units.length > 0 && (
               <Link href={`${here}/agendar${multi && unit ? `?unidade=${unit.id}` : ''}`} className="glass-button btn-sm">
                 <Icon name="clock" size={16} /> Agendar
               </Link>

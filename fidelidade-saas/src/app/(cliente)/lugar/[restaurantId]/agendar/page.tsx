@@ -5,7 +5,7 @@ import { Icon } from '@/components/Icons';
 import { PlaceAvatar } from '@/components/Visual';
 import { imageUrl } from '@/lib/images';
 import { addDaysKey, bookingPoints, formatBookingWhen, parseDateKey, todayKey, weekdayOf } from '@/lib/booking';
-import { slotsForDay, staffFor } from '@/lib/booking-db';
+import { ensureDefaultService, slotsForDay, staffFor } from '@/lib/booking-db';
 import { prisma } from '@/lib/db';
 import { DAY_SHORT, parseSchedule } from '@/lib/hours';
 import { formatBRL, formatPoints } from '@/lib/points';
@@ -23,12 +23,16 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
   if (!/^[0-9a-f-]{36}$/.test(restaurantId)) notFound();
 
   const customer = await getCustomer();
-  const [restaurant, services, units] = await Promise.all([
+  const [restaurant, firstServices, units] = await Promise.all([
     prisma.restaurant.findUnique({ where: { id: restaurantId } }),
     prisma.service.findMany({ where: { restaurantId, active: true }, orderBy: { createdAt: 'asc' } }),
     prisma.unit.findMany({ where: { restaurantId, active: true }, orderBy: { createdAt: 'asc' } }),
   ]);
   if (!restaurant || restaurant.subscriptionStatus !== 'ACTIVE' || !restaurant.onboardedAt) notFound();
+  // Categoria que atende com hora marcada, ainda sem serviços: oferece o serviço padrão.
+  const services = firstServices.length === 0 && (await ensureDefaultService(restaurant))
+    ? await prisma.service.findMany({ where: { restaurantId, active: true }, orderBy: { createdAt: 'asc' } })
+    : firstServices;
 
   const base = `/lugar/${restaurantId}/agendar`;
   const back = (

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
+import { ensureDefaultService } from '@/lib/booking-db';
 import { appUrl } from '@/lib/payments';
 import { requireActiveRestaurant, requirePaidRestaurant } from '@/lib/session';
 import { MAX_BILL_CENTS, CLAIM_TTL_HOURS, calculatePoints, formatBRL, parseMoneyToCents } from '@/lib/points';
@@ -368,6 +369,7 @@ export async function saveIdentity(_: FormState, formData: FormData): Promise<Fo
     throw e;
   }
   revalidatePath('/dashboard', 'layout');
+  await ensureDefaultService({ ...restaurant, category: parsed.category || null });
   return { ok: 'Identidade da marca salva.' };
 }
 
@@ -384,6 +386,8 @@ export async function saveCategory(category: string, categoryOther: string): Pro
   });
   revalidatePath('/dashboard', 'layout');
   revalidatePath('/lugares');
+  // Escolheu uma categoria que atende com hora marcada e ainda não tem serviço: já deixa o serviço padrão para o cliente agendar.
+  await ensureDefaultService({ ...restaurant, category: cat || null });
   return { ok: 'Categoria salva.' };
 }
 
