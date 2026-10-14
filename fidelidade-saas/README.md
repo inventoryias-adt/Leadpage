@@ -360,3 +360,10 @@ Decisões em aberto: modelo de recebimento (Stripe Connect com Pix e repasse a c
 - **Lima (`#C6F432`) só em pontos-chave** (cor `lima` no Tailwind, nunca em fundos grandes): botão principal do Caixa e "Montar sacola" (`.glass-button-lime`, `SubmitButton variant="lime"`), aba ativa das barras do celular (`.nav-tab-lime`), selo "Pode resgatar", marca-texto atrás de "N pontos" no Início e de "indica amigos" na landing (`.mark-lime`), saldo em lima no cartão marinho da carteira do lugar, e preço, ícones e botão da seção de preço da landing.
 - **"Adicionar à tela inicial"**: em todo o app o convite para pôr o app na tela do celular usa "Adicionar à tela inicial" (não "Instalar"); o guia só cita "Instalar app" como o nome que alguns navegadores dão ao mesmo botão.
 - Teste: `e2e30` (abertura, tipos de entrada, reduzir movimento, sem JS, app sem rolagem lateral).
+
+## Categoria salva na hora (migration: nenhuma)
+
+- Em Regras → Identidade da marca, escolher a **categoria** agora salva na hora (`saveCategory` em `src/app/actions/restaurant.ts`), com o aviso "Salvando…" / "✓ Categoria salva" logo abaixo do campo. Em "Outros", o texto do tipo de negócio salva ao sair do campo. O botão "Salvar identidade" continua valendo para logo, capa, Instagram e "Aparecer em Lugares".
+- Corrigido: depois de "Salvar identidade" o React 19 reiniciava o formulário e a categoria voltava a "Selecione…" na tela (embora estivesse salva). O formulário agora devolve aos campos o que o dono escolheu depois de cada resposta do servidor.
+- Teste: `e2e31`.
+

@@ -1,6 +1,6 @@
 'use client';
 
-import { startTransition, useActionState, useEffect, useId, useState } from 'react';
+import { startTransition, useActionState, useEffect, useId, useRef, useState } from 'react';
 import {
   addChallenge,
   addInteraction,
@@ -8,6 +8,7 @@ import {
   addReward,
   finishOnboarding,
   saveBasics,
+  saveCategory,
   saveEngagement,
   saveSharing,
   saveIdentity,
@@ -249,6 +250,36 @@ export function IdentityForm({ defaults, placeName, supportEnv }: { defaults: Id
   const [category, setCategory] = useState(state.values?.category ?? defaults.category);
   const [other, setOther] = useState(state.values?.categoryOther ?? defaults.categoryOther);
   const help = buildSupport(supportEnv, 'Categoria no Fidelize', categoryRequestMessage(placeName, category === 'outros' ? other : ''));
+  const catRef = useRef<HTMLSelectElement>(null);
+  const otherRef = useRef<HTMLInputElement>(null);
+  const [catStatus, setCatStatus] = useState<{ kind: 'idle' | 'saving' | 'saved' | 'error'; msg?: string }>({ kind: 'idle' });
+  // O React 19 reinicia o formulário depois de salvar e isso apagava a opção escolhida na tela (embora estivesse salva):
+  // depois de cada resposta do servidor, devolve aos campos o que o dono escolheu.
+  useEffect(() => {
+    if (catRef.current) catRef.current.value = category;
+    if (otherRef.current) otherRef.current.value = other;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
+
+  /** Categoria salva na hora, com aviso ao lado do campo (o botão "Salvar identidade" continua valendo para o resto). */
+  function persistCategory(cat: string, otherText: string) {
+    setCatStatus({ kind: 'saving' });
+    startTransition(async () => {
+      try {
+        const r = await saveCategory(cat, otherText);
+        setCatStatus(r.error ? { kind: 'error', msg: r.error } : { kind: 'saved' });
+      } catch {
+        setCatStatus({ kind: 'error', msg: 'Não foi possível salvar. Tente de novo.' });
+      }
+    });
+  }
+  const catNote = (
+    <p role="status" aria-live="polite" className={`mt-1 min-h-[1.25rem] text-xs font-semibold ${catStatus.kind === 'error' ? 'text-rose-600' : catStatus.kind === 'saved' ? 'text-emerald-600' : 'text-slate-500'}`}>
+      {catStatus.kind === 'saving' && 'Salvando…'}
+      {catStatus.kind === 'saved' && '✓ Categoria salva'}
+      {catStatus.kind === 'error' && catStatus.msg}
+    </p>
+  );
 
   return (
     <form action={action} className="space-y-5">
@@ -260,12 +291,24 @@ export function IdentityForm({ defaults, placeName, supportEnv }: { defaults: Id
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="glass-label" htmlFor="i-cat">Categoria</label>
-          <select id="i-cat" name="category" className="glass-input" value={category} onChange={(e) => setCategory(e.target.value)}>
+          <select
+            id="i-cat"
+            ref={catRef}
+            name="category"
+            className="glass-input"
+            value={category}
+            onChange={(e) => {
+              const v = e.target.value;
+              setCategory(v);
+              persistCategory(v, v === 'outros' ? other : '');
+            }}
+          >
             <option value="">Selecione…</option>
             {CATEGORIES.map((c) => (
               <option key={c.value} value={c.value}>{CATEGORY_HINT[c.value] && c.value !== 'outros' ? `${c.label} (${CATEGORY_HINT[c.value]})` : c.label}</option>
             ))}
           </select>
+          {category !== 'outros' && catNote}
         </div>
         <div>
           <label className="glass-label" htmlFor="i-ig">Instagram</label>
@@ -276,7 +319,8 @@ export function IdentityForm({ defaults, placeName, supportEnv }: { defaults: Id
       {category === 'outros' && (
         <div>
           <label className="glass-label" htmlFor="i-other">Qual é o seu tipo de negócio?</label>
-          <input id="i-other" name="categoryOther" value={other} onChange={(e) => setOther(e.target.value)} className="glass-input" placeholder="Ex.: doceria, ateliê, chaveiro" maxLength={60} />
+          <input id="i-other" ref={otherRef} name="categoryOther" value={other} onChange={(e) => setOther(e.target.value)} onBlur={() => persistCategory('outros', other)} className="glass-input" placeholder="Ex.: doceria, ateliê, chaveiro" maxLength={60} />
+          {catNote}
           <p className="mt-1 text-xs text-slate-500">Os clientes encontram você por esse texto em Lugares → Outros. Se quiser uma categoria própria, peça ao suporte.</p>
         </div>
       )}

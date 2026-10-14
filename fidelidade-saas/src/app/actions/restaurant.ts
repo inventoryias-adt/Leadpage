@@ -371,6 +371,22 @@ export async function saveIdentity(_: FormState, formData: FormData): Promise<Fo
   return { ok: 'Identidade da marca salva.' };
 }
 
+/** Salva só a categoria (e o texto de "Outros"), na hora em que o dono escolhe, sem esperar o botão do formulário. */
+export async function saveCategory(category: string, categoryOther: string): Promise<FormState> {
+  const restaurant = await requirePaidRestaurant();
+  const cat = String(category ?? '').trim();
+  const other = String(categoryOther ?? '').trim();
+  if (cat && !isCategory(cat)) return { error: 'Categoria inválida.' };
+  if (other.length > 60) return { error: 'Descreva o tipo de negócio em até 60 caracteres.' };
+  await prisma.restaurant.update({
+    where: { id: restaurant.id },
+    data: { category: cat || null, categoryOther: cat === 'outros' && other ? other : null },
+  });
+  revalidatePath('/dashboard', 'layout');
+  revalidatePath('/lugares');
+  return { ok: 'Categoria salva.' };
+}
+
 const engagementSchema = z.object({
   checkInPoints: z.coerce.number().int('Use um número inteiro.').min(0).max(10_000),
   referralPoints: z.coerce.number().int('Use um número inteiro.').min(0).max(100_000),
