@@ -23,6 +23,7 @@ import { categoryRequestMessage, buildSupport, type SupportContact } from '@/lib
 import { SupportLinks } from './SupportLinks';
 import { defaultSchedule, parseSchedule, type Schedule } from '@/lib/hours';
 import { HoursGrid } from './HoursGrid';
+import { UnitLocationField } from './UnitLocationField';
 import { Icon } from './Icons';
 import { ImageUpload, shrinkImage } from './ImageUpload';
 import { WebImageSearch } from './WebImageSearch';
@@ -326,25 +327,36 @@ export function EngagementForm({ defaults }: { defaults: { checkInPoints: number
 
 export function SharingForm({ defaults }: { defaults: { pointsShareOut: boolean; pointsAcceptIn: boolean } }) {
   const [state, action] = useActionState(saveSharing, {});
+  const option = 'flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:border-slate-300 has-[:checked]:border-electric-500 has-[:checked]:bg-[#F3F6FD]';
   return (
-    <form action={action} className="space-y-4">
-      <label className="flex items-start gap-3">
-        <input type="checkbox" name="pointsShareOut" defaultChecked={defaults.pointsShareOut} className="mt-0.5 h-5 w-5 rounded accent-electric-500" />
-        <span className="text-sm text-slate-700">
-          <span className="font-semibold">Meus pontos valem em outros lugares</span>
-          <span className="block text-xs text-slate-500">Seus clientes poderão usar os pontos ganhos aqui em estabelecimentos que aceitam pontos de outros.</span>
+    <form action={action} className="space-y-3">
+      <label className={option}>
+        <input type="checkbox" name="pointsShareOut" defaultChecked={defaults.pointsShareOut} className="mt-0.5 h-5 w-5 shrink-0 rounded accent-electric-500" />
+        <span className="min-w-0">
+          <span className="block font-semibold text-slate-800">Meus pontos valem em outros lugares</span>
+          <span className="mt-0.5 block text-sm text-slate-500">Seus clientes usam os pontos ganhos aqui nos lugares que aceitam pontos de outros.</span>
         </span>
       </label>
-      <label className="flex items-start gap-3">
-        <input type="checkbox" name="pointsAcceptIn" defaultChecked={defaults.pointsAcceptIn} className="mt-0.5 h-5 w-5 rounded accent-electric-500" />
-        <span className="text-sm text-slate-700">
-          <span className="font-semibold">Aceito pontos de outros lugares</span>
-          <span className="block text-xs text-slate-500">Clientes de outros estabelecimentos poderão usar aqui os pontos que ganharam lá. Seu nome aparece na lista de quem aceita.</span>
+      <label className={option}>
+        <input type="checkbox" name="pointsAcceptIn" defaultChecked={defaults.pointsAcceptIn} className="mt-0.5 h-5 w-5 shrink-0 rounded accent-electric-500" />
+        <span className="min-w-0">
+          <span className="block font-semibold text-slate-800">Aceito pontos de outros lugares</span>
+          <span className="mt-0.5 block text-sm text-slate-500">Clientes de outros lugares usam aqui os pontos que ganharam lá. Seu nome aparece na lista de quem aceita.</span>
         </span>
       </label>
-      <p className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-        Os dois começam desligados e você pode mudar quando quiser. Como funciona: quando um cliente quer um prêmio num lugar que aceita pontos de outros e não tem pontos suficientes ali, ele pode completar com pontos de lugares que compartilham. A conversão é pelo valor: quem dá 10 pontos por real e quem dá 5 têm pontos de valores diferentes, e a troca respeita isso. O Fidelize não faz acerto de dinheiro entre os lugares: quem entrega o prêmio arca com ele.
-      </p>
+      <details className="group rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+        <summary className="flex cursor-pointer list-none items-center gap-2 font-semibold text-slate-700">
+          <Icon name="info" size={16} className="shrink-0 text-electric-600" />
+          <span className="flex-1">Como funciona</span>
+          <Icon name="down" size={16} className="shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
+        </summary>
+        <ul className="mt-2 list-disc space-y-1.5 pl-5">
+          <li>Os dois começam desligados e você muda quando quiser.</li>
+          <li>Se o cliente não tem pontos suficientes num lugar que aceita pontos de outros, ele completa com pontos de lugares que compartilham.</li>
+          <li>A troca é pelo valor: quem dá 10 pontos por real e quem dá 5 têm pontos de valores diferentes, e a conversão respeita isso.</li>
+          <li>O Fidelize não faz acerto de dinheiro entre os lugares: quem entrega o prêmio arca com ele.</li>
+        </ul>
+      </details>
       <FormMessage state={state} />
       <SubmitButton pendingText="Salvando…">Salvar</SubmitButton>
     </form>
@@ -517,8 +529,6 @@ export function UnitForm({ unit, uid }: { unit: UnitFormData; uid: string }) {
     lat: state.values?.latitude ?? (unit.latitude != null ? String(unit.latitude) : ''),
     lng: state.values?.longitude ?? (unit.longitude != null ? String(unit.longitude) : ''),
   });
-  const [geo, setGeo] = useState<'idle' | 'loading' | 'error'>('idle');
-  const [geoError, setGeoError] = useState('');
   const isNew = unit.id === null;
 
   // Endereço: o CEP preenche rua, bairro, cidade e UF; número e complemento o dono completa.
@@ -534,7 +544,6 @@ export function UnitForm({ unit, uid }: { unit: UnitFormData; uid: string }) {
   });
   const setField = (k: keyof typeof addr) => (e: { target: { value: string } }) => setAddr((a) => ({ ...a, [k]: e.target.value }));
   const [cepStatus, setCepStatus] = useState<{ kind: 'idle' | 'loading' | 'ok' | 'error'; msg?: string }>({ kind: 'idle' });
-  const [locating, setLocating] = useState<{ kind: 'idle' | 'loading' | 'ok' | 'error'; msg?: string }>({ kind: 'idle' });
 
   async function lookupCep(raw: string) {
     const digits = cepDigits(raw);
@@ -552,50 +561,6 @@ export function UnitForm({ unit, uid }: { unit: UnitFormData; uid: string }) {
     } catch {
       setCepStatus({ kind: 'error', msg: 'Não foi possível consultar o CEP agora. Preencha o endereço abaixo.' });
     }
-  }
-
-  /** Acha as coordenadas pelo endereço (aproximado), para quem não está na unidade na hora de cadastrar. */
-  async function locateByAddress() {
-    setLocating({ kind: 'loading' });
-    const base = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=br&accept-language=pt-BR';
-    const attempts = [
-      `${base}&street=${encodeURIComponent(`${addr.number} ${addr.street}`.trim())}&city=${encodeURIComponent(addr.city)}&state=${encodeURIComponent(addr.state)}`,
-      `${base}&street=${encodeURIComponent(addr.street)}&city=${encodeURIComponent(addr.city)}&state=${encodeURIComponent(addr.state)}`,
-      ...(cepDigits(addr.cep).length === 8 ? [`${base}&postalcode=${encodeURIComponent(maskCep(addr.cep))}`] : []),
-    ];
-    try {
-      for (const url of attempts) {
-        const hits = (await (await fetch(url)).json()) as { lat: string; lon: string }[];
-        if (hits[0]) {
-          setCoords({ lat: Number(hits[0].lat).toFixed(6), lng: Number(hits[0].lon).toFixed(6) });
-          setLocating({ kind: 'ok', msg: 'Localização definida pelo endereço (aproximada). Confira no mapa; para mais precisão use o GPS dentro da unidade.' });
-          return;
-        }
-      }
-      setLocating({ kind: 'error', msg: 'Não encontramos esse endereço no mapa. Use o GPS dentro da unidade.' });
-    } catch {
-      setLocating({ kind: 'error', msg: 'Não foi possível consultar o mapa agora. Tente de novo ou use o GPS.' });
-    }
-  }
-
-  function useMyLocation() {
-    if (!('geolocation' in navigator)) {
-      setGeo('error');
-      setGeoError('Seu navegador não permite obter a localização.');
-      return;
-    }
-    setGeo('loading');
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCoords({ lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6) });
-        setGeo('idle');
-      },
-      (err) => {
-        setGeo('error');
-        setGeoError(err.code === err.PERMISSION_DENIED ? 'Permissão negada. Libere a localização no navegador e tente de novo.' : 'Não foi possível obter a localização. Tente de novo.');
-      },
-      { enableHighAccuracy: true, timeout: 15000 },
-    );
   }
 
   return (
@@ -681,46 +646,7 @@ export function UnitForm({ unit, uid }: { unit: UnitFormData; uid: string }) {
         </p>
       </div>
 
-      <div className="glass-inset space-y-3 p-4">
-        <div className="flex items-start gap-3">
-          <Icon name="pin" className="mt-0.5 text-electric-600" />
-          <div>
-            <p className="font-semibold text-slate-800">Localização da unidade</p>
-            <p className="text-xs text-slate-500">
-              Usada no check-in (o cliente precisa estar a até 200 m) e para a unidade aparecer em “Lugares perto de você”. Estando na unidade, use o GPS (mais preciso). Se não estiver, localize pelo endereço.
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <button type="button" onClick={useMyLocation} disabled={geo === 'loading'} className="glass-button-ghost btn-sm">
-            {geo === 'loading' ? 'Obtendo localização…' : 'Usar minha localização atual'}
-          </button>
-          <button
-            type="button"
-            onClick={locateByAddress}
-            disabled={locating.kind === 'loading' || !addr.street.trim() || !addr.city.trim() || !addr.state}
-            className="glass-button-ghost btn-sm"
-          >
-            {locating.kind === 'loading' ? 'Procurando…' : 'Localizar pelo endereço'}
-          </button>
-          {coords.lat && coords.lng ? (
-            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700">
-              <Icon name="check" size={16} /> Localização definida ({Number(coords.lat).toFixed(4)}, {Number(coords.lng).toFixed(4)})
-            </span>
-          ) : (
-            <span className="text-sm text-slate-500">Ainda não definida</span>
-          )}
-        </div>
-        {geo === 'error' && <p role="alert" className="text-xs text-red-600">{geoError}</p>}
-        {locating.kind !== 'idle' && locating.kind !== 'loading' && (
-          <p role={locating.kind === 'error' ? 'alert' : 'status'} className={`text-xs ${locating.kind === 'error' ? 'text-red-600' : 'text-slate-600'}`}>
-            {locating.msg}
-            {locating.kind === 'ok' && coords.lat && (
-              <> <a className="link-inline" href={`https://www.google.com/maps?q=${coords.lat},${coords.lng}`} target="_blank" rel="noopener noreferrer">Ver no mapa</a></>
-            )}
-          </p>
-        )}
-      </div>
+      <UnitLocationField coords={coords} setCoords={setCoords} addr={addr} />
 
       <div>
         <p className="glass-label">Horário de funcionamento</p>

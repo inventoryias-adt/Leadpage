@@ -20,6 +20,19 @@
 
 html {
   -webkit-tap-highlight-color: transparent;
+  /* Sem isso o iPhone aumenta a fonte ao girar e a página "vaza" para o lado. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* iPhone dá zoom em qualquer campo com fonte menor que 16px e a tela fica ampliada e torta para o lado
+   mesmo depois de sair do campo. No celular, todo campo de texto usa 16px. */
+@media (max-width: 767px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
 /* Títulos: fonte de display com espaçamento fechado, como no estilo de referência. */
@@ -184,7 +197,7 @@ body {
 
   /* Rótulo/etiqueta (não clicável) e etiqueta clicável. */
   .glass-chip {
-    @apply inline-flex items-center rounded-md border bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700;
+    @apply inline-flex items-center whitespace-nowrap rounded-md border bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700;
     border-color: #e2e5eb;
   }
   .chip-link {
