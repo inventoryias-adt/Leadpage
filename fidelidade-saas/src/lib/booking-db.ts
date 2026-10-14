@@ -3,6 +3,7 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from './db';
 import { BusinessError, creditClaimWith } from './claims';
 import { REMINDER_LEAD_MIN, REMINDER_MIN_AHEAD_MIN, availableSlots, bookingPoints, dayStartUtc, formatBookingWhen, hmOf, parseDateKey, pickResource, reminderDue, type BusyRange, type Slot } from './booking';
+import { suggestsBooking } from './categories';
 import { parseSchedule } from './hours';
 import { sendEmail } from './mailer';
 import { notify } from './notifications';
@@ -17,6 +18,21 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 type Policy = { bookingMinNoticeMin: number; bookingMaxDaysAhead: number };
 type ServiceLike = { id: string; durationMin: number; resourceId: string | null };
+
+/**
+ * Lugar de categoria que atende com hora marcada (barbearia, estética…) e ainda sem nenhum serviço: cria o serviço padrão
+ * "Atendimento" (30 min, sem preço), para o cliente já poder agendar. O dono troca por serviços de verdade quando quiser.
+ * Devolve true se criou. Com cadeado por estabelecimento, para não criar dois.
+ */
+export async function ensureDefaultService(restaurant: { id: string; category: string | null; subscriptionStatus: string; onboardedAt: Date | null }) {
+  if (!suggestsBooking(restaurant.category) || restaurant.subscriptionStatus !== 'ACTIVE' || !restaurant.onboardedAt) return false;
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${restaurant.id}))`;
+    if (await tx.service.count({ where: { restaurantId: restaurant.id, active: true } })) return false;
+    await tx.service.create({ data: { restaurantId: restaurant.id, name: 'Atendimento', durationMin: 30, priceCents: 0 } });
+    return true;
+  });
+}
 
 /**
  * Quem não cadastrou nenhum profissional tem um atendente só: cria a vaga única "Atendimento" na hora, para o cliente agendar normalmente.
