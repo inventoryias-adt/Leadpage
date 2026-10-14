@@ -57,7 +57,11 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses }:
     if (!searchOpen) return;
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setSearchOpen(false);
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden'; // a página de trás não rola nem "vaza" para o lado
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
   }, [searchOpen]);
 
   useEffect(() => {
@@ -269,9 +273,9 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses }:
       )}
 
       {searchOpen && (
-        <div role="dialog" aria-modal="true" aria-label="Buscar lugares" className="fixed inset-0 z-50 flex flex-col bg-white md:items-center md:bg-slate-900/50 md:p-6">
-          <div className="mx-auto flex h-full w-full max-w-lg flex-col bg-white md:h-[min(46rem,92vh)] md:rounded-[28px] md:shadow-2xl">
-            <div className="flex items-center gap-3 p-4">
+        <div role="dialog" aria-modal="true" aria-label="Buscar lugares" className="fixed inset-0 z-50 flex justify-center overflow-hidden bg-white md:items-center md:bg-slate-900/50 md:p-6">
+          <div className="flex h-full w-full min-w-0 max-w-lg flex-col overflow-hidden bg-white md:h-[min(46rem,92vh)] md:rounded-[28px] md:shadow-2xl">
+            <div className="flex items-center gap-3 border-b border-slate-100 p-4" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
               <button type="button" onClick={() => setSearchOpen(false)} aria-label="Voltar" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200">
                 <Icon name="back" size={20} />
               </button>
@@ -297,11 +301,19 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses }:
             <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
               {query.trim() === '' ? (
                 <>
-                  <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Categorias</p>
-                  <ul className="flex flex-wrap gap-2">
+                  <p className="mb-1 mt-1 text-xs font-bold uppercase tracking-wider text-slate-500">Explorar por categoria</p>
+                  <ul className="divide-y divide-slate-100">
                     {categories.map((c) => (
                       <li key={c.value}>
-                        <button type="button" onClick={() => { setCategory(c.value); setSearchOpen(false); }} className="!w-auto !rounded-full border border-slate-200 !bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:!bg-slate-50">{c.label}</button>
+                        <button
+                          type="button"
+                          onClick={() => { setCategory(c.value); setQuery(''); setSearchOpen(false); }}
+                          className="flex w-full items-center gap-3 !rounded-none !bg-transparent py-2.5 text-left !shadow-none hover:!bg-slate-50"
+                        >
+                          <CategoryArt name={c.value} size={40} />
+                          <span className="min-w-0 flex-1 truncate text-[15px] font-semibold text-slate-800">{c.label}</span>
+                          <Icon name="chevron" size={18} className="shrink-0 text-slate-300" />
+                        </button>
                       </li>
                     ))}
                   </ul>
@@ -319,7 +331,7 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses }:
                 </>
               )}
             </div>
-            <div className="border-t border-slate-100 p-4">
+            <div className="border-t border-slate-100 p-4" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
               <button type="button" onClick={() => setSearchOpen(false)} className="glass-button !rounded-full">{query.trim() ? 'Ver na lista' : 'Fechar'}</button>
             </div>
           </div>

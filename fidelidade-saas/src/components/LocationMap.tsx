@@ -29,7 +29,11 @@ export default function LocationMap({ target, onMove }: { target: MapTarget; onM
     });
     map.current = m;
     cb.current({ lat: target.lat, lng: target.lng });
+    // Dentro de um bloco que abre e fecha o mapa nasce sem tamanho; recalcula quando aparece.
+    const ro = new ResizeObserver(() => m.invalidateSize());
+    ro.observe(box.current);
     return () => {
+      ro.disconnect();
       m.remove();
       map.current = null;
     };

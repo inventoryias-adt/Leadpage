@@ -18,6 +18,7 @@ import {
   UnitForm,
 } from '@/components/SettingsForms';
 import { EmptyState } from '@/components/EmptyState';
+import { Icon } from '@/components/Icons';
 import { PlaceAvatar, RewardImage } from '@/components/Visual';
 import { describeChallenge } from '@/lib/challenges';
 import { prisma } from '@/lib/db';
@@ -65,15 +66,13 @@ function Block({ id, title, hint, children }: { id: string; title: string; hint?
 function Optional({ id, title, hint, status, open, children }: { id: string; title: string; hint?: string; status: string; open: boolean; children: React.ReactNode }) {
   return (
     <details id={id} open={open} className="group scroll-mt-4 rounded-2xl border border-slate-200 bg-white/60 p-4 open:bg-white">
-      <summary className="flex cursor-pointer list-none items-start justify-between gap-3">
-        <span className="min-w-0">
-          <span className="block text-base font-bold text-slate-800">{title}</span>
-          {hint && <span className="block text-sm text-slate-500">{hint}</span>}
+      <summary className="cursor-pointer list-none">
+        <span className="flex items-center gap-3">
+          <span className="min-w-0 flex-1 text-base font-bold leading-snug text-slate-800">{title}</span>
+          <span className="shrink-0 whitespace-nowrap rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 group-open:bg-[#E8EEFB] group-open:text-electric-600">{status}</span>
+          <Icon name="down" size={18} className="shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
         </span>
-        <span className="flex shrink-0 items-center gap-2">
-          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 group-open:bg-[#E8EEFB] group-open:text-electric-600">{status}</span>
-          <span aria-hidden className="text-slate-400 transition-transform group-open:rotate-180">⌄</span>
-        </span>
+        {hint && <span className="mt-1 block pr-8 text-sm text-slate-500">{hint}</span>}
       </summary>
       <div className="mt-4 border-t border-slate-200/70 pt-4">{children}</div>
     </details>
@@ -82,12 +81,23 @@ function Optional({ id, title, hint, status, open, children }: { id: string; tit
 
 function RemoveButton({ action, id, label }: { action: (fd: FormData) => Promise<void>; id: string; label: string }) {
   return (
-    <form action={action}>
+    <form action={action} className="shrink-0">
       <input type="hidden" name="id" value={id} />
-      <button className="btn-danger btn-sm" aria-label={`Remover ${label}`}>
-        Remover
+      <button className="flex h-9 w-9 items-center justify-center rounded-lg border border-transparent text-slate-400 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600" aria-label={`Remover ${label}`} title="Remover">
+        <Icon name="trash" size={18} />
       </button>
     </form>
+  );
+}
+
+/** Linha de lista "texto + pontos + remover", sem espremer o texto no celular. */
+function PointsRow({ text, points, remove }: { text: string; points: number; remove: React.ReactNode }) {
+  return (
+    <li className="flex items-center gap-3 py-3">
+      <span className="flex h-10 min-w-[3.5rem] shrink-0 items-center justify-center rounded-lg bg-[#E8EEFB] px-2 text-sm font-bold tabular-nums text-electric-600">+{formatPoints(points)}</span>
+      <span className="min-w-0 flex-1 text-sm leading-snug text-slate-800">{text}</span>
+      {remove}
+    </li>
   );
 }
 
@@ -271,15 +281,10 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
         <ul className="mb-4 divide-y divide-slate-200/70">
           {interactions.length === 0 && <li className="py-2 text-sm text-slate-500">Nenhuma interação cadastrada.</li>}
           {interactions.map((i) => (
-            <li key={i.id} className="flex items-center justify-between gap-3 py-2.5">
-              <span className="text-sm text-slate-800">{i.label}</span>
-              <span className="flex items-center gap-2">
-                <span className="glass-chip">+{formatPoints(i.points)} pts</span>
-                <RemoveButton action={removeInteraction} id={i.id} label={i.label} />
-              </span>
-            </li>
+            <PointsRow key={i.id} text={i.label} points={i.points} remove={<RemoveButton action={removeInteraction} id={i.id} label={i.label} />} />
           ))}
         </ul>
+        <p className="mb-2 text-sm font-bold text-slate-800">Nova interação</p>
         <AddInteractionForm />
       </Optional>
 
@@ -287,15 +292,10 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
         <ul className="mb-4 divide-y divide-slate-200/70">
           {challenges.length === 0 && <li className="py-2 text-sm text-slate-500">Nenhum desafio criado.</li>}
           {challenges.map((c) => (
-            <li key={c.id} className="flex items-center justify-between gap-3 py-2.5">
-              <span className="text-sm text-slate-800">{describeChallenge(c)}</span>
-              <span className="flex items-center gap-2">
-                <span className="glass-chip">+{formatPoints(c.bonusPoints)} pts</span>
-                <RemoveButton action={removeChallenge} id={c.id} label={c.title} />
-              </span>
-            </li>
+            <PointsRow key={c.id} text={describeChallenge(c)} points={c.bonusPoints} remove={<RemoveButton action={removeChallenge} id={c.id} label={c.title} />} />
           ))}
         </ul>
+        <p className="mb-2 text-sm font-bold text-slate-800">Novo desafio</p>
         <AddChallengeForm />
       </Optional>
 
@@ -373,20 +373,23 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
           {rewards.length === 0 && <li className="py-2 text-sm text-slate-500">Cadastre ao menos um produto.</li>}
           {rewards.map((r) => (
             <li key={r.id} className="glass-inset p-3">
-              <div className="flex items-center gap-3">
-                <RewardImage src={imageUrl(r.imageId)} name={r.name} className="h-14 w-14 shrink-0 rounded-xl" />
+              <div className="flex items-start gap-3">
+                <RewardImage src={imageUrl(r.imageId)} name={r.name} className="h-16 w-16 shrink-0 rounded-xl" />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-slate-800">{r.name}</p>
-                  {r.description && <p className="truncate text-xs text-slate-500">{r.description}</p>}
+                  <p className="font-semibold leading-snug text-slate-800 [overflow-wrap:anywhere]">{r.name}</p>
+                  {r.description && <p className="line-clamp-2 text-xs text-slate-500">{r.description}</p>}
+                  <span className="glass-chip mt-1.5">{formatPrice(r.pointsCost, r.cashCents)}</span>
                 </div>
-                <span className="glass-chip shrink-0">{formatPrice(r.pointsCost, r.cashCents)}</span>
                 <RemoveButton action={removeReward} id={r.id} label={r.name} />
               </div>
               <RewardPhotoForm id={r.id} hasPhoto={!!r.imageId} name={r.name} edit={{ description: r.description ?? '', pointsCost: r.pointsCost, cashCents: r.cashCents }} />
             </li>
           ))}
         </ul>
-        <AddRewardForm />
+        <div className="rounded-xl border border-dashed border-slate-300 p-4">
+          <h4 className="mb-3 text-sm font-bold text-slate-800">Novo produto</h4>
+          <AddRewardForm />
+        </div>
       </Block>
       </Section>
 
