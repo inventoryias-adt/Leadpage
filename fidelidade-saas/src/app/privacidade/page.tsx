@@ -8,7 +8,7 @@ export default function PrivacidadePage() {
     <LegalPage title="Política de Privacidade">
       <p>
         Esta política explica como {operatorLine()} trata dados pessoais ao operar o Fidelize, em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018, LGPD).
-        Ela vale para estabelecimentos (donos e equipes) e para clientes. Leia também os <Link href="/termos" className="link-inline">Termos de Uso</Link>.
+        Ela vale para estabelecimentos (donos e equipes) e para clientes. Leia também os <Link href="/termos/estabelecimento" className="link-inline">Termos de Uso para Estabelecimentos</Link> e os <Link href="/termos/cliente" className="link-inline">Termos de Uso do Cliente</Link>.
       </p>
 
       <h2>1. Quem é o controlador e como falar conosco</h2>

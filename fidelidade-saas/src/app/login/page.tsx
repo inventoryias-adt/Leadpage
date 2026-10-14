@@ -17,7 +17,7 @@ export default async function LoginPage() {
         <p className="mt-6 text-center text-sm text-slate-600">
           Ainda não tem conta? <Link href="/#assinar" className="font-semibold text-electric-600">Assinar</Link>
         </p>
-        <LegalLinks className="mt-4" />
+        <LegalLinks audience="estabelecimento" className="mt-4" />
       </div>
     </main>
   );
