@@ -21,7 +21,7 @@ export default function PrivacidadePage() {
         <li>Nome, CPF, telefone, e-mail e senha (guardada somente em forma de hash, nunca em texto).</li>
         <li>Carteiras e histórico: pontos ganhos e usados, compras lançadas (valor e data), prêmios resgatados, desafios, check-ins (data, unidade e distância até o local) e indicações de amigos.</li>
         <li>Localização aproximada <strong>apenas no momento</strong> em que você usa o check-in ou “Lugares perto de você”. Não guardamos o seu trajeto: do check-in fica registrado só o dia, a unidade e a distância.</li>
-        <li>Preferências no aparelho (por exemplo, se você já viu o tutorial ou o aviso de instalação).</li>
+        <li>Preferências no aparelho (por exemplo, se você já viu o tutorial ou o aviso para adicionar o app à tela inicial).</li>
       </ul>
       <p><strong>Estabelecimentos</strong></p>
       <ul>
@@ -71,7 +71,7 @@ export default function PrivacidadePage() {
 
       <h2>8. Cookies e armazenamento no aparelho</h2>
       <p>
-        Usamos um cookie de sessão, essencial para você continuar conectado, e o armazenamento local do navegador para lembrar preferências simples (tutorial visto, aviso de instalação).
+        Usamos um cookie de sessão, essencial para você continuar conectado, e o armazenamento local do navegador para lembrar preferências simples (tutorial visto, aviso para adicionar o app à tela inicial).
         Não usamos cookies de publicidade nem ferramentas de rastreamento de terceiros.
       </p>
 

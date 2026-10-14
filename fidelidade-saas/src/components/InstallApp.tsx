@@ -170,8 +170,8 @@ function InstallGuide({ platform, inApp, safari, onClose }: { platform: InstallP
         ]
       : [
           { n: 1, text: <>Toque no menu <strong>⋮</strong> do navegador (canto superior direito).</> },
-          { n: 2, text: <>Escolha <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>.</> },
-          { n: 3, text: <>Confirme em <strong>Instalar</strong>. Pronto!</> },
+          { n: 2, text: <>Escolha <strong>Adicionar à tela inicial</strong> (em alguns aparelhos aparece como <strong>Instalar app</strong>).</> },
+          { n: 3, text: <>Confirme em <strong>Adicionar</strong>. Pronto!</> },
         ];
 
   return (
@@ -209,7 +209,7 @@ function InstallIntro({ onInstall, onClose }: { onInstall: () => void; onClose: 
       <div role="dialog" aria-modal="true" aria-labelledby="install-intro-title" className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl" onClick={(e) => e.stopPropagation()}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/icon-192.png?v=4" alt="" width={72} height={72} className="mx-auto h-[72px] w-[72px] rounded-2xl" />
-        <h2 id="install-intro-title" className="mt-4 text-xl font-bold text-primary">Instale o Fidelize no seu celular</h2>
+        <h2 id="install-intro-title" className="mt-4 text-xl font-bold text-primary">Adicione o Fidelize à tela inicial do seu celular</h2>
         <p className="mt-2 text-sm leading-relaxed text-slate-600">
           Veja seus pontos e prêmios com um toque, direto da tela inicial — como um app, sem baixar nada na loja.
         </p>

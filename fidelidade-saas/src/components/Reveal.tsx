@@ -35,7 +35,8 @@ export function Reveal({
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
-          if (e.isIntersecting) {
+          // Já passou por cima da tela (ex.: a página reabriu rolada): aparece direto, sem esperar o usuário voltar.
+          if (e.isIntersecting || e.boundingClientRect.bottom < 0) {
             e.target.setAttribute('data-in', '');
             io.unobserve(e.target);
           }
