@@ -350,4 +350,4 @@ Decisões em aberto: modelo de recebimento (Stripe Connect com Pix e repasse a c
   "Comece por aqui" mostra o que falta do essencial (logo e categoria, endereço e horário, ao menos um prêmio).
 - **Landing**: passo a passo em 4 etapas (inclui lançar por CPF ou QR Code), exemplo numérico, o que o cliente e o dono ganham e dados de fidelização **com fonte e link** (HBR 2014, Bain, McKinsey, ABEMF/TSI 2025, Sebrae). São estudos de terceiros e a página avisa que não são promessa de resultado.
   Confira os links e os números antes de divulgar, e atualize quando saírem pesquisas novas.
-- **Logo novo**: "F" geométrico com um ponto final em lima (o "ponto" do clube), azul da marca. Fontes em `public/logo.svg` e `src/app/icon.svg`; ícones PNG, favicon, ícone mascarável e imagem de compartilhamento regerados. O nome passa a ser escrito em minúsculas ("fidelize").
+- **Logo novo**: "F" marinho geométrico com um ponto final azul (o "ponto" do clube), sobre fundo lima. Fontes em `public/logo.svg` e `src/app/icon.svg`; ícones PNG, favicon, ícone mascarável e imagem de compartilhamento regerados. O nome passa a ser escrito em minúsculas ("fidelize").

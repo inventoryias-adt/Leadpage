@@ -14,11 +14,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL ?? 'https://fidelize-nu.vercel.app'),
   icons: {
     icon: [
-      { url: '/icon-48.png?v=3', sizes: '48x48', type: 'image/png' },
-      { url: '/icon-96.png?v=3', sizes: '96x96', type: 'image/png' },
-      { url: '/icon-192.png?v=3', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-48.png?v=4', sizes: '48x48', type: 'image/png' },
+      { url: '/icon-96.png?v=4', sizes: '96x96', type: 'image/png' },
+      { url: '/icon-192.png?v=4', sizes: '192x192', type: 'image/png' },
     ],
-    apple: [{ url: '/apple-touch-icon.png?v=3', sizes: '180x180', type: 'image/png' }],
+    apple: [{ url: '/apple-touch-icon.png?v=4', sizes: '180x180', type: 'image/png' }],
   },
   openGraph: {
     type: 'website',

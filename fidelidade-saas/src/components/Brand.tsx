@@ -2,17 +2,17 @@ import Link from 'next/link';
 
 /**
  * Símbolo do Fidelize: um "F" geométrico seguido de um ponto, como um ponto final, que é o "ponto" do clube de pontos.
- * Azul da marca, F branco e ponto em lima. Mantenha igual a public/logo.svg e src/app/icon.svg.
+ * Fundo lima, F marinho e ponto azul. Mantenha igual a public/logo.svg e src/app/icon.svg.
  */
 export function LogoMark({ size = 36 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden className="shrink-0">
-      <rect width="64" height="64" rx="16" fill="#2150C9" />
+      <rect width="64" height="64" rx="16" fill="#C6F432" />
       <g transform="translate(-1 0)">
-        <rect x="18" y="12" width="10" height="40" rx="5" fill="#fff" />
-        <rect x="18" y="12" width="30" height="10" rx="5" fill="#fff" />
-        <rect x="18" y="27" width="21" height="10" rx="5" fill="#fff" />
-        <circle cx="43.5" cy="47" r="5" fill="#C6F432" />
+        <rect x="18" y="12" width="10" height="40" rx="5" fill="#0B1B3A" />
+        <rect x="18" y="12" width="30" height="10" rx="5" fill="#0B1B3A" />
+        <rect x="18" y="27" width="21" height="10" rx="5" fill="#0B1B3A" />
+        <circle cx="43.5" cy="47" r="5" fill="#2150C9" />
       </g>
     </svg>
   );
