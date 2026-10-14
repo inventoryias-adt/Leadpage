@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 
 const BASE = 'http://localhost:3000';
 const sql = (q) => execSync(`psql postgresql://postgres:postgres@localhost:5432/fidelidade -At -c ${JSON.stringify(q)}`).toString().trim();
-sql('TRUNCATE "Restaurant","Customer" CASCADE');
+sql('TRUNCATE "Restaurant","Customer","RateLimit" CASCADE');
 
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });
 const shot = (page, name) => page.screenshot({ path: `${name}.png`, fullPage: true });
@@ -69,6 +69,8 @@ await r.fill('input[name=name][placeholder^="Ex.: Sobremesa"]', 'Sobremesa grát
 await r.fill('input[name=pointsCost]', '500');
 await r.click('text=Adicionar produto');
 await r.waitForSelector('li:has-text("Sobremesa grátis")');
+// o formulário é reiniciado depois de salvar: espera isso acabar antes de digitar o próximo (em produção a tela é rápida e o reinício apagava o texto)
+await r.waitForFunction(() => document.querySelector('input[name=name][placeholder^="Ex.: Sobremesa"]')?.value === '');
 await r.fill('input[name=name][placeholder^="Ex.: Sobremesa"]', 'Combo Hambúrguer + Fritas');
 await r.fill('input[name=pointsCost]', '1200');
 await r.click('text=Adicionar produto');

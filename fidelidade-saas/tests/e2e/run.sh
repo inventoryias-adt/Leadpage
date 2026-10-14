@@ -12,7 +12,8 @@ fail=0
 for n in "${files[@]}"; do
   echo "=== $n"
   # e2e17 e e2e22 já tratam o aceite dos termos sozinhos; nos demais o preload marca a caixa "Li e concordo".
-  if [ "$n" = e2e17 ] || [ "$n" = e2e22 ]; then pre=(); else pre=(--import "$PWD/$E/terms-preload.mjs"); fi
+  pre=(--import "$PWD/$E/hydrate-preload.mjs")
+  if [ "$n" != e2e17 ] && [ "$n" != e2e22 ]; then pre+=(--import "$PWD/$E/terms-preload.mjs"); fi
   timeout 400 node "${pre[@]}" "$E/$n.mjs" > "$n.log" 2>&1
   code=$?
   tail -25 "$n.log"
