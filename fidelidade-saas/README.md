@@ -1,6 +1,6 @@
 # Fidelize — SaaS de pontos para restaurantes
 
-Next.js 15 (App Router) · React 19 · Tailwind 3 · Prisma 6 · PostgreSQL · Stripe (assinatura de R$ 197,00/mês).
+Next.js 15 (App Router) · React 19 · Tailwind 3 · Prisma 6 · PostgreSQL · Stripe (assinatura de R$ 69,90/mês).
 Design **Liquid Glass** azul/branco (`src/app/globals.css`, `tailwind.config.js`).
 
 ## Rodando localmente
@@ -15,7 +15,7 @@ npm test                    # CPF, telefone, dinheiro e cálculo de pontos
 ```
 
 Com `PAYMENT_PROVIDER=mock` (apenas dev) o checkout é simulado em `/pagamento/simulado`.
-Para produção use `PAYMENT_PROVIDER=stripe`, crie um preço recorrente de R$ 197,00 e aponte o
+Para produção use `PAYMENT_PROVIDER=stripe`, crie um preço recorrente de R$ 69,90 e aponte o
 webhook para `/api/webhooks/stripe` (eventos `checkout.session.completed`,
 `customer.subscription.updated`, `customer.subscription.deleted`).
 
@@ -137,7 +137,7 @@ teste** deixa a conta fora da receita e dos números de assinantes; ela aparece 
 atalho **Entrar**, para validar novidades antes de liberar aos clientes. O dono troca a própria senha em
 Regras → Minha conta.
 
-## Stripe (assinatura de R$ 197/mês)
+## Stripe (assinatura de R$ 69,90/mês)
 
 Checkout hospedado em modo assinatura, Customer Portal (trocar cartão, faturas, cancelar; botão em Regras → Minha conta) e
 webhook em `/api/webhooks/stripe` (`checkout.session.completed`, `customer.subscription.updated|deleted`, `invoice.paid`,
@@ -244,7 +244,7 @@ Recuperação por e-mail ainda não existe (precisa de um serviço de envio, com
 - **Pedido de exclusão de dados (LGPD)**: hoje por e-mail/WhatsApp ao suporte (descrito na Política); a exclusão é feita pelo administrador.
 - **Virada para o Stripe real** (hoje tudo está em modo de teste; contas de teste/piloto são ativadas pelo painel de administração, sem cobrança):
   1. Ativar a conta no Stripe (dados do negócio e conta bancária).
-  2. Autorizar a conta real na sessão do assistente (Stripe MCP) para recriar produto, preço (R$ 197/mês), portal do cliente e webhook em modo real.
+  2. Autorizar a conta real na sessão do assistente (Stripe MCP) para recriar produto, preço (R$ 69,90/mês), portal do cliente e webhook em modo real.
   3. Criar a chave secreta real e colocá-la no Vercel (`STRIPE_SECRET_KEY`, Sensitive); atualizar `STRIPE_PRICE_ID` e `STRIPE_WEBHOOK_SECRET` com os valores reais.
   4. Redeploy e **uma compra real de teste** (R$ 197, depois cancelar e pedir o reembolso pelo painel do Stripe).
   Contas antigas com cliente do Stripe de teste (ex.: "Teste Test") mostram o aviso amigável ao abrir o portal: limpe `paymentCustomerId` delas se necessário.
@@ -337,3 +337,17 @@ Decisões em aberto: modelo de recebimento (Stripe Connect com Pix e repasse a c
   - **Estabelecimento** (Regras → Campanhas → "Campanhas do app"): **Participar** cria uma promoção dele ligada à campanha (`Promotion.appCampaignId`), então caixa, QR Code, relatórios e cartões da vitrine funcionam como qualquer campanha. **Sair** apaga a promoção.
     Quando o administrador edita, as promoções de quem adotou acompanham; ligar/desligar a campanha liga/desliga as promoções, mas editar **não reativa** o que o dono pausou.
   - **Cliente**: o carrossel do Início só mostra campanhas ativas, dentro do prazo e adotadas por ao menos um lugar da vitrine; tocar abre `/campanhas/[id]` com a descrição, quando vale e a lista de quem participa.
+
+## Preço, CPF no caixa, dois termos, Regras em 6 etapas, landing e logo (migration: nenhuma)
+
+- **Preço R$ 69,90/mês**: constante única em `src/lib/plan.ts` (landing, pagamento, termos). O valor cobrado vem do Stripe (`STRIPE_PRICE_ID`): foi criado um novo Price de R$ 69,90 no mesmo produto (modo de teste) e a variável da Vercel foi trocada. Preços do Stripe não mudam de valor: o antigo (R$ 197) deve ser arquivado depois do deploy.
+  **Na virada para o Stripe real, crie o Price de R$ 69,90 na conta real.**
+- **Lançar pontos pelo CPF** (Caixa): campo "CPF do cliente". Com 11 dígitos válidos, o caixa vê se já existe conta (nome abreviado, ex.: "Lucas S."). Se existe, "Lançar na conta" credita na hora (`creditByCpf`, mesma regra do QR: campanhas, indicação e desafios valem; o cliente recebe aviso no app).
+  Se não existe, o fluxo de QR Code/WhatsApp continua igual. Proteções: consulta limitada por estabelecimento (60 a cada 10 min), lançamentos limitados, e o mesmo lançamento (mesmo cliente e valor) não repete em 20 s.
+- **Dois termos de uso**: `/termos/estabelecimento` (quem contrata: assinatura, prêmios, dados dos clientes, lançar por CPF, campanhas do app e pontos compartilhados) e `/termos/cliente` (quem ganha pontos: conta, pontos, resgates, compartilhados, agenda, localização); `/termos` é o índice.
+  Cada cadastro aceita o termo certo e cada tela mostra o termo de quem está nela. Versão em `TERMS_VERSION` (`src/lib/legal.ts`): **mude ao alterar os textos**. Os textos são um modelo: peça revisão a um advogado antes de escalar.
+- **Regras em 6 etapas** (antes 12): Seu negócio, Ganhar pontos, Prêmios, Agenda, Rede de lugares, Minha conta. Blocos opcionais (check-in e indicação, interações, desafios, campanhas, agenda) abrem sozinhos quando já têm algo configurado; `?abrir=tudo` abre todos.
+  "Comece por aqui" mostra o que falta do essencial (logo e categoria, endereço e horário, ao menos um prêmio).
+- **Landing**: passo a passo em 4 etapas (inclui lançar por CPF ou QR Code), exemplo numérico, o que o cliente e o dono ganham e dados de fidelização **com fonte e link** (HBR 2014, Bain, McKinsey, ABEMF/TSI 2025, Sebrae). São estudos de terceiros e a página avisa que não são promessa de resultado.
+  Confira os links e os números antes de divulgar, e atualize quando saírem pesquisas novas.
+- **Logo novo**: "F" geométrico com um ponto final em lima (o "ponto" do clube), azul da marca. Fontes em `public/logo.svg` e `src/app/icon.svg`; ícones PNG, favicon, ícone mascarável e imagem de compartilhamento regerados. O nome passa a ser escrito em minúsculas ("fidelize").

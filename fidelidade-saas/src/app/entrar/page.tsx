@@ -21,7 +21,7 @@ export default async function EntrarPage({ searchParams }: { searchParams: Promi
         <p className="mb-6 text-sm text-slate-500">Entre com seu e-mail e senha ou crie sua conta em um minuto.</p>
         <CustomerAuthForm next={next} cta="Entrar" />
       </div>
-      <LegalLinks />
+      <LegalLinks audience="cliente" />
     </main>
   );
 }

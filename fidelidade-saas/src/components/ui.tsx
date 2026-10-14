@@ -8,16 +8,20 @@ export function SubmitButton({
   pendingText = 'Aguarde…',
   variant = 'primary',
   className = '',
+  formAction,
 }: {
   children: React.ReactNode;
   pendingText?: string;
   variant?: 'primary' | 'ghost';
   className?: string;
+  /** Faz este botão enviar o formulário para outra ação (ex.: lançar direto em vez de gerar QR Code). */
+  formAction?: (formData: FormData) => void;
 }) {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
+      formAction={formAction}
       disabled={pending}
       className={`${variant === 'primary' ? 'glass-button' : 'glass-button-ghost'} ${className}`}
     >

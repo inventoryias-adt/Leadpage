@@ -44,7 +44,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       )}
       <header className="glass-panel-sm mb-6 flex items-center justify-between gap-3 px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
-          <Brand href="/dashboard" />
+          <Brand href="/dashboard" compact />
           <span className="hidden h-6 w-px bg-slate-300 sm:block" />
           <p className="hidden truncate text-sm font-semibold text-slate-600 sm:block">{restaurant.name}</p>
         </div>

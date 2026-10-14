@@ -9,7 +9,7 @@ const slides = [
   {
     variant: 'qr' as const,
     title: 'Cada compra vira pontos',
-    text: 'Depois de pagar, leia o QR Code do caixa. Os pontos entram na sua carteira na hora, sem baixar nenhum aplicativo.',
+    text: 'Depois de pagar, informe o seu CPF no caixa ou leia o QR Code. Os pontos entram na sua carteira na hora, sem baixar nenhum aplicativo.',
   },
   {
     variant: 'places' as const,

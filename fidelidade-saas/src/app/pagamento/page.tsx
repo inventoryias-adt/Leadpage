@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { startCheckout, logout } from '@/app/actions/auth';
 import { SubmitButton } from '@/components/ui';
 import { requireRestaurant } from '@/lib/session';
+import { PLAN_PRICE_DEC, PLAN_PRICE_INT } from '@/lib/plan';
 
 export const metadata = { title: 'Pagamento' };
 
@@ -21,7 +22,7 @@ export default async function PagamentoPage() {
         <h1 className="mb-2 text-2xl font-bold text-primary">Olá, {restaurant.name}!</h1>
         <p className="mb-6 text-slate-600">{copy[restaurant.subscriptionStatus]}</p>
         <p className="mb-6 text-4xl font-extrabold text-electric-600">
-          R$ 197<span className="text-lg text-slate-500">,00/mês</span>
+          {PLAN_PRICE_INT}<span className="text-lg text-slate-500">{PLAN_PRICE_DEC}/mês</span>
         </p>
         <form action={startCheckout}>
           <SubmitButton pendingText="Abrindo pagamento…">Ir para pagamento seguro</SubmitButton>

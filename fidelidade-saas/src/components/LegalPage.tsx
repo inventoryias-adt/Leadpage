@@ -38,7 +38,8 @@ export function LegalPage({ title, children }: { title: string; children: React.
         {children}
       </article>
       <nav aria-label="Documentos" className="mt-12 flex flex-wrap gap-x-5 gap-y-2 border-t border-[#E5E7EB] pt-6 text-sm font-semibold">
-        <Link href="/termos" className="link-inline">Termos de Uso</Link>
+        <Link href="/termos/estabelecimento" className="link-inline">Termos para Estabelecimentos</Link>
+        <Link href="/termos/cliente" className="link-inline">Termos do Cliente</Link>
         <Link href="/privacidade" className="link-inline">Política de Privacidade</Link>
         <Link href="/" className="link-inline">Voltar ao início</Link>
       </nav>

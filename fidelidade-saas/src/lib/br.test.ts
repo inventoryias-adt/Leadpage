@@ -64,3 +64,10 @@ test('intervalo do mês em Brasília e navegação', () => {
   assert.equal(jan.isCurrent, false);
   assert.equal(monthRangeBR('lixo', new Date('2026-10-07T12:00:00Z')).key, '2026-10');
 });
+
+test('nome abreviado para o caixa', async () => {
+  const { shortName } = await import('./br');
+  assert.equal(shortName('Lucas Silva Souza'), 'Lucas S.');
+  assert.equal(shortName('  maria   oliveira '), 'maria O.');
+  assert.equal(shortName('Madonna'), 'Madonna');
+});

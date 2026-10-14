@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { mockPaymentsAllowed, paymentProvider } from '@/lib/payments';
 import { requireRestaurant } from '@/lib/session';
 import { SubmitButton } from '@/components/ui';
+import { PLAN_PRICE } from '@/lib/plan';
 
 export const metadata = { title: 'Pagamento simulado' };
 export const dynamic = 'force-dynamic';
@@ -31,7 +32,7 @@ export default async function SimuladoPage() {
         <h1 className="mb-2 text-2xl font-bold text-primary">Pagamento simulado</h1>
         <p className="mb-6 text-slate-600">Nenhuma cobrança real será feita. Configure o Stripe para produção.</p>
         <form action={approve}>
-          <SubmitButton>Simular pagamento de R$ 197,00</SubmitButton>
+          <SubmitButton>Simular pagamento de {PLAN_PRICE}</SubmitButton>
         </form>
       </div>
     </main>

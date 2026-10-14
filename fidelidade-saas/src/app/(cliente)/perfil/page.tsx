@@ -188,7 +188,7 @@ export default async function PerfilPage() {
           <button className="btn-danger">Sair da conta</button>
         </form>
       </section>
-      <LegalLinks className="pt-2" />
+      <LegalLinks audience="cliente" className="pt-2" />
       </div>
     </main>
   );

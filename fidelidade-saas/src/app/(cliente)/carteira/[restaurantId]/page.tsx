@@ -64,7 +64,7 @@ export default async function WalletPage({
           <span className="text-5xl font-extrabold text-primary">{formatPoints(wallet.balance)}</span>
           <span className="mb-1 text-lg font-semibold text-electric-600">pts</span>
         </p>
-        <p className="mt-3 text-xs text-slate-500">Para ganhar mais, escaneie o QR Code que o caixa gerar na sua próxima conta.</p>
+        <p className="mt-3 text-xs text-slate-500">Para ganhar mais, informe o seu CPF no caixa ou leia o QR Code que ele gerar na sua próxima conta.</p>
         <div className="mt-4 grid grid-cols-2 gap-2">
           <Link href={`/lugar/${restaurantId}/premios`} className="glass-button btn-sm !w-full">Montar sacola</Link>
           <Link href={`/lugar/${restaurantId}`} className="glass-button-ghost btn-sm !w-full">Ver o lugar</Link>

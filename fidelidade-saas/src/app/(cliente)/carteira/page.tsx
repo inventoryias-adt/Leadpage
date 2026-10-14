@@ -76,7 +76,7 @@ export default async function CarteiraPage() {
             <Illustration variant="qr" size={170} />
             <p className="text-lg font-extrabold text-primary">Seu primeiro cartão começa numa compra</p>
             <p className="mb-5 mt-1 max-w-xs text-sm text-slate-600">
-              Peça o QR Code no caixa depois de pagar. A carteira de cada lugar aparece aqui sozinha.
+              Depois de pagar, informe o seu CPF no caixa ou leia o QR Code. A carteira de cada lugar aparece aqui sozinha.
             </p>
             <Link href="/lugares" className="glass-button !rounded-full"><Icon name="compass" size={18} /> Explorar lugares</Link>
           </div>

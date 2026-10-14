@@ -167,7 +167,7 @@ export default async function LugarPage({
 
         {welcome && (
           <p role="status" className="glass-success">
-            Conta criada! Depois de pagar a conta, peça o QR Code no caixa para começar a ganhar pontos aqui.
+            Conta criada! Depois de pagar a conta, informe o seu CPF no caixa (ou leia o QR Code) para começar a ganhar pontos aqui.
           </p>
         )}
 
