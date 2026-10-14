@@ -1,18 +1,10 @@
-// Espera a página terminar de carregar (rede ociosa) depois de cada navegação, antes de o teste mexer nela.
-// Em produção o HTML aparece antes de o React "ligar" os botões; um clique nesse intervalo se perde. Um usuário real não é tão rápido.
+// Espera a página terminar de carregar (rede ociosa) depois de cada navegação, antes de o teste mexer nela, e dá mais tempo a cada ação
+// (o servidor de desenvolvimento compila cada rota na primeira visita). Quando um teste falha, guarda um print de cada aba.
 import { chromium } from 'playwright-core';
 const orig = chromium.launch.bind(chromium);
-// Pronta = rede ociosa e os controles da tela já foram hidratados pelo React.
+// Pronta = rede ociosa (no máximo 8 s de espera).
 const settle = async (page) => {
-  await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
-  // Cada botão, formulário e campo que o React controla ganha uma chave __reactProps… quando é hidratado (a hidratação de cada ilha é independente).
-  await page
-    .waitForFunction(
-      () => [...document.querySelectorAll('button, form, input, select, textarea')].every((el) => Object.keys(el).some((k) => k.startsWith('__reactProps'))),
-      null,
-      { timeout: 15000 },
-    )
-    .catch(() => {});
+  await page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {});
 };
 const pages = [];
 const patch = (page) => {

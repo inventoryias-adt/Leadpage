@@ -5,7 +5,7 @@
 # Variáveis: CHROMIUM_PATH (navegador; vazio = o do Playwright), DEV_MAIL_FILE (onde o app grava os e-mails de teste).
 # Os prints saem em tests/e2e/out/ (ignorada pelo git).
 cd "$(dirname "$0")" || exit 1
-mkdir -p out && cd out || exit 1
+mkdir -p out && cp fixtures/* out/ && cd out || exit 1
 E=..
 if [ $# -gt 0 ]; then files=("$@"); else files=(e2e $(ls $E/e2e[0-9]*.mjs | xargs -n1 basename | sed 's/\.mjs$//' | sort -V)); fi
 fail=0
