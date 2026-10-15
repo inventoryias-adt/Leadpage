@@ -10,7 +10,7 @@ assert.ok(restaurantId, 'rode o e2e.mjs antes (cria o restaurante e o cliente Lu
 
 const SE = { latitude: -23.5505, longitude: -46.6333 }; // restaurante
 const NEAR = { latitude: -23.55053, longitude: -46.63332 }; // ~4 m (dentro da loja)
-const STREET = { latitude: -23.5507, longitude: -46.6335 }; // ~25 m (na calçada: não vale)
+const STREET = { latitude: -23.5507, longitude: -46.6335 }; // ~30 m (na calçada: não vale)
 const FAR = { latitude: -23.4500, longitude: -46.5000 }; // ~17 km
 
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });
@@ -118,7 +118,7 @@ await f.waitForSelector('text=Faça o check-in estando dentro do local');
 assert.equal(sql('select count(*) from "CheckIn"'), '1');
 assert.doesNotMatch(await f.locator('.glass-error').innerText(), /\d\s?(km|m)\b/, 'a recusa não mostra distância');
 await fctx.close();
-// check-in a ~25 m (na calçada): também recusado, sem dizer quantos metros faltam
+// check-in a ~30 m (na calçada): também recusado, sem dizer quantos metros faltam
 const sctx = await ctx(STREET);
 const sp = await sctx.newPage();
 await login(sp, '529.982.247-25', '11999998888');

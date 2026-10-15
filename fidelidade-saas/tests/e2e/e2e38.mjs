@@ -7,7 +7,7 @@ const DB = 'postgresql://postgres:postgres@localhost:5432/fidelidade';
 const sql = (q) => execFileSync('psql', [DB, '-At', '-c', q]).toString().trim();
 const wait = (p, t) => p.waitForTimeout(t);
 const SE = { lat: -23.5505, lng: -46.6333 }; // ponto da unidade
-const STREET = { latitude: -23.5507, longitude: -46.6335 }; // ~25 m dele (calçada)
+const STREET = { latitude: -23.5507, longitude: -46.6335 }; // ~30 m dele (calçada)
 sql('truncate "RateLimit"');
 const rid = sql(`select id from "Restaurant" where email='ze@burger.com'`);
 sql(`update "Restaurant" set "checkInPoints"=5, "checkInRadiusM"=10, listed=true, "onboardedAt"=coalesce("onboardedAt",now()) where id='${rid}'`);
@@ -32,7 +32,7 @@ const setRadius = async (value) => {
   assert.equal(radius(), String(value));
 };
 
-// cliente, na calçada (~25 m)
+// cliente, na calçada (~30 m)
 const cctx = await b.newContext({ viewport: { width: 420, height: 900 }, geolocation: STREET, permissions: ['geolocation'] }); await cctx.addInitScript(init);
 const c = await cctx.newPage(); c.on('pageerror', (e) => console.log('PAGEERROR', e.message));
 await c.goto(BASE + '/entrar'); await c.fill('#c-email', 'lucas@teste.com'); await c.fill('#c-password', 'senha-cliente-1');
@@ -44,7 +44,7 @@ const tryCheckIn = async () => {
   return (await c.locator('.glass-success, .glass-error').first().innerText()).trim();
 };
 
-// 1. padrão 10 m: o campo existe no painel e o cliente a ~25 m é recusado, sem número nenhum
+// 1. padrão 10 m: o campo existe no painel e o cliente a ~30 m é recusado, sem número nenhum
 await o.goto(BASE + '/dashboard/configuracoes?abrir=tudo'); await o.waitForSelector('#e-rad');
 assert.equal(await o.locator('#e-rad').inputValue(), '10');
 const opts = await o.locator('#e-rad option').allInnerTexts();
@@ -52,21 +52,21 @@ assert.ok(opts.length >= 5 && opts.some((t) => t.startsWith('10 m')) && opts.som
 let msg = await tryCheckIn();
 assert.match(msg, /dentro do local/); assert.doesNotMatch(msg, /\d/);
 assert.equal(sql(`select count(*) from "CheckIn" where "restaurantId"='${rid}'`), '0');
-console.log('1. padrão 10 m: a ~25 m é recusado, sem número na mensagem OK');
+console.log('1. padrão 10 m: a ~30 m é recusado, sem número na mensagem OK');
 
-// 2. o dono aumenta para 30 m: o mesmo cliente agora consegue
-await setRadius(30);
+// 2. o dono aumenta para 50 m: o mesmo cliente agora consegue
+await setRadius(50);
 msg = await tryCheckIn();
 assert.match(msg, /Check-in feito/);
 assert.equal(sql(`select count(*) from "CheckIn" where "restaurantId"='${rid}'`), '1');
-console.log('2. dono escolhe 30 m: o mesmo cliente agora faz o check-in OK');
+console.log('2. dono escolhe 50 m: o mesmo cliente agora faz o check-in OK');
 
 // 3. volta para 10 m: recusa de novo (e o cliente continua sem ver o raio)
 clearCheckins();
 await setRadius(10);
 msg = await tryCheckIn();
 assert.match(msg, /dentro do local/);
-for (const t of ['text=/\\b10 ?m\\b/', 'text=/\\b30 ?m\\b/']) assert.equal(await c.locator(t).count(), 0, 'cliente não vê o raio');
+for (const t of ['text=/\\b10 ?m\\b/', 'text=/\\b50 ?m\\b/']) assert.equal(await c.locator(t).count(), 0, 'cliente não vê o raio');
 console.log('3. de volta aos 10 m: recusa de novo e o cliente não vê o raio OK');
 
 sql(`update "Restaurant" set "checkInRadiusM"=10 where id='${rid}'`);
