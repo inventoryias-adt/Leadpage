@@ -41,6 +41,14 @@ enum RedemptionStatus {
   USED // balcão validou e entregou o prêmio
 }
 
+enum OrderStatus {
+  RECEIVED // o cliente fez o pedido, o lugar ainda não viu
+  PREPARING
+  READY // pronto para retirar
+  PICKED_UP // retirado e pago no balcão (é aqui que os pontos entram)
+  CANCELED
+}
+
 enum BookingStatus {
   PENDING // aguardando o estabelecimento confirmar (quando a confirmação é manual)
   CONFIRMED
@@ -89,6 +97,10 @@ model Restaurant {
   pointsPerRealOff    Int     @default(100) // quantos pontos valem R$ 1,00 de desconto num serviço (padrão: ganha 10 por real, 100 pontos = R$ 1,00)
   bookingNotifyEmail  String? // e-mail que recebe cada novo agendamento (vazio = o e-mail da conta)
 
+  // Pedidos pelo app (cardápio, sacola e retirada com pagamento no balcão). Começa desligado.
+  ordersEnabled Boolean @default(false)
+  orderPrepMin  Int     @default(15) // "pronto em X min", mostrado ao cliente
+
   // Pontos compartilhados entre lugares (ecossistema). Os dois começam desligados.
   pointsShareOut Boolean @default(false) // clientes podem usar em outros lugares os pontos ganhos aqui
   pointsAcceptIn Boolean @default(false) // aceita pontos que o cliente ganhou em outros lugares
@@ -121,6 +133,8 @@ model Restaurant {
   resources        Resource[]
   services         Service[]
   bookings         Booking[]
+  menuItems        MenuItem[]
+  orders           Order[]
 }
 
 /// Pontuação fixa por interação (foto no Instagram, avaliação 5★ no Google...).
@@ -179,6 +193,7 @@ model Customer {
   promotionUses     PromotionUse[]
   bookings          Booking[]
   photo             CustomerPhoto?
+  orders            Order[]
 }
 
 /// Foto de perfil do cliente. Fica em tabela própria para não pesar a consulta da sessão; só o próprio cliente a vê.
@@ -228,6 +243,7 @@ model Claim {
   unit        Unit?        @relation(fields: [unitId], references: [id], onDelete: SetNull)
   transaction Transaction?
   booking     Booking?
+  order       Order?
 
   @@index([restaurantId, createdAt])
 }
@@ -391,6 +407,7 @@ model Unit {
   deliveries Redemption[] @relation("delivered")
   resources  Resource[]
   bookings   Booking[]
+  orders     Order[]
 
   @@index([restaurantId])
 }
@@ -615,6 +632,73 @@ model ResourceService {
 
   @@unique([resourceId, serviceId])
   @@index([serviceId])
+}
+
+/// Item do cardápio vendido em R$ pelo app (retirada). Diferente de Reward, que é o prêmio trocado por pontos.
+model MenuItem {
+  id           String   @id @default(uuid())
+  restaurantId String
+  name         String
+  description  String?
+  priceCents   Int // preço cheio
+  promoCents   Int? // preço promocional (o cheio aparece riscado); null = sem promoção
+  category     String   @default("Cardápio")
+  imageId      String?
+  featured     Boolean  @default(false) // "Destaque da casa"
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  restaurant Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+
+  @@index([restaurantId, active])
+}
+
+/// Pedido para retirada. O pagamento e a retirada acontecem no balcão; os pontos entram quando o lugar marca como retirado.
+model Order {
+  id           String      @id @default(uuid())
+  restaurantId String
+  unitId       String?
+  customerId   String
+  code         String // o cliente mostra no balcão
+  status       OrderStatus @default(RECEIVED)
+  totalCents   Int
+  prepMin      Int // "pronto em X min" prometido na hora
+  note         String?
+  pointsAwarded Int        @default(0)
+  claimId      String?     @unique // lançamento que creditou os pontos (ao retirar)
+  createdAt    DateTime    @default(now())
+  readyAt      DateTime?
+  pickedUpAt   DateTime?
+  canceledAt   DateTime?
+  canceledBy   String? // CUSTOMER ou OWNER
+
+  restaurant Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  unit       Unit?       @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  customer   Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  claim      Claim?      @relation(fields: [claimId], references: [id], onDelete: SetNull)
+  items      OrderItem[]
+
+  @@unique([restaurantId, code])
+  @@index([restaurantId, status, createdAt])
+  @@index([customerId, createdAt])
+}
+
+/// Cópia do que foi pedido: o histórico não muda se o item for editado ou removido do cardápio.
+model OrderItem {
+  id         String  @id @default(uuid())
+  orderId    String
+  menuItemId String?
+  name       String
+  unitCents  Int // o que foi cobrado por unidade
+  listCents  Int // preço cheio (para mostrar o riscado)
+  qty        Int
+  imageId    String?
+
+  order    Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem MenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
 }
 
 model Booking {

@@ -18,7 +18,7 @@ import { isValidCpf, onlyDigits, shortName } from '@/lib/br';
 import { TOO_MANY, allow } from '@/lib/rate-limit';
 import { CHECKIN_RADIUS_OPTIONS } from '@/lib/geo';
 import { saveImageFromDataUrl } from '@/lib/images';
-import { downloadWithFallback } from '@/lib/product-images';
+import { imageField, photoFromForm } from '@/lib/form-photo';
 import { describeChallenge } from '@/lib/challenges';
 import { applyPromos, endOfDayBR, promoBadge, startOfDayBR, parseTime } from '@/lib/promos';
 import { fail, type FormState } from '@/lib/form';
@@ -206,25 +206,6 @@ function cashCentsFrom(input: string): number | 'invalid' {
   if (!input) return 0;
   const cents = parseMoneyToCents(input);
   return cents == null || cents > MAX_BILL_CENTS ? 'invalid' : cents;
-}
-
-/** Aceita só data URL de imagem; campo vazio = sem foto nova. */
-const imageField = (formData: FormData, key: string) => {
-  const v = String(formData.get(key) ?? '');
-  return v.startsWith('data:image/') ? v : null;
-};
-
-/** Foto enviada do computador (data URL) ou escolhida na busca da web (URL de host permitido, baixada aqui). */
-async function photoFromForm(formData: FormData): Promise<string | null> {
-  const file = imageField(formData, 'imageData');
-  if (file) return file;
-  const web = String(formData.get('imageWebUrl') ?? '');
-  if (!web) return null;
-  try {
-    return await downloadWithFallback(web, String(formData.get('imageWebAlt') ?? '') || undefined);
-  } catch (e) {
-    throw new BusinessError(e instanceof Error ? e.message : 'Não foi possível baixar a imagem.');
-  }
 }
 
 export async function addReward(_: FormState, formData: FormData): Promise<FormState> {

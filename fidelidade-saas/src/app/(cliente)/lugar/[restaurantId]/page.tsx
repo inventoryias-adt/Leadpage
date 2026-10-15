@@ -57,7 +57,7 @@ export default async function LugarPage({
   if (!/^[0-9a-f-]{36}$/.test(restaurantId)) notFound();
 
   const customer = await getCustomer();
-  const [restaurant, rewards, challenges, rules, wallet, completions, units, promotions, serviceCount] = await Promise.all([
+  const [restaurant, rewards, challenges, rules, wallet, completions, units, promotions, serviceCount, menuCount] = await Promise.all([
     prisma.restaurant.findUnique({ where: { id: restaurantId } }),
     prisma.reward.findMany({ where: { restaurantId, active: true }, orderBy: { pointsCost: 'asc' } }),
     prisma.challenge.findMany({ where: { restaurantId, active: true }, orderBy: { createdAt: 'asc' } }),
@@ -67,6 +67,7 @@ export default async function LugarPage({
     prisma.unit.findMany({ where: { restaurantId, active: true }, orderBy: { createdAt: 'asc' } }),
     prisma.promotion.findMany({ where: { restaurantId, active: true, OR: [{ endsAt: null }, { endsAt: { gt: new Date() } }] }, orderBy: { createdAt: 'desc' } }),
     prisma.service.count({ where: { restaurantId, active: true } }),
+    prisma.menuItem.count({ where: { restaurantId, active: true } }),
   ]);
   const nowDate = new Date();
   if (!restaurant || restaurant.subscriptionStatus !== 'ACTIVE' || !restaurant.onboardedAt) notFound();
@@ -142,6 +143,11 @@ export default async function LugarPage({
             {schedule && <span className="flex items-center gap-1 text-slate-600"><Icon name="clock" size={15} /> {todayLabel(schedule).replace('Hoje: ', 'Hoje ')}</span>}
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
+            {restaurant.ordersEnabled && menuCount > 0 && units.length > 0 && (
+              <Link href={`${here}/pedido${multi && unit ? `?unidade=${unit.id}` : ''}`} className="glass-button btn-sm" data-testid="make-order">
+                <Icon name="bag" size={16} /> Fazer pedido
+              </Link>
+            )}
             {canBook && units.length > 0 && (
               <Link href={`${here}/agendar${multi && unit ? `?unidade=${unit.id}` : ''}`} className="glass-button btn-sm">
                 <Icon name="clock" size={16} /> Agendar

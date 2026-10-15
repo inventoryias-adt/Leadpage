@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { setAppCampaign } from '@/app/actions/app-campaigns';
 import { campaignBadge, campaignWhen } from '@/lib/app-campaigns';
 import { removeChallenge, removeInteraction, removePromotion, removeReward, removeUnit, togglePromotion } from '@/app/actions/restaurant';
@@ -393,6 +394,11 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
           <h4 className="mb-3 text-sm font-bold text-slate-800">Novo produto</h4>
           <AddRewardForm />
         </div>
+      </Block>
+      <Block id="pedidos" title="Pedidos pelo app (cardápio)" hint="Venda em reais: o cliente escolhe do cardápio, monta a sacola e retira no balcão. Você cobra no balcão e os pontos entram sozinhos ao marcar como retirado.">
+        <Link href="/dashboard/cardapio" className="glass-button-ghost !w-auto">
+          {restaurant.ordersEnabled ? 'Abrir cardápio e pedidos' : 'Montar cardápio e ligar pedidos'}
+        </Link>
       </Block>
       </Section>
 
