@@ -72,7 +72,9 @@ console.log('4. cliente: filtro "Outros" aceita texto e acha "Outros · Doceria"
 // 5. trocar para categoria fixa limpa o texto
 await o.selectOption('#i-cat','estetica'); assert.equal(await o.locator('#i-other').count(), 0);
 await o.click('form:has(#i-cat) button[type=submit]'); await o.waitForSelector('text=Identidade da marca salva.');
-assert.equal(sql(`select category||'|'||coalesce("categoryOther",'-') from "Restaurant" where email='ze@burger.com'`), 'estetica|-');
+const catSql = `select category||'|'||coalesce("categoryOther",'-') from "Restaurant" where email='ze@burger.com'`;
+for (let i = 0; i < 40 && sql(catSql) !== 'estetica|-'; i++) await wait(o, 500); // a mensagem "salva" pode ser de um salvamento anterior
+assert.equal(sql(catSql), 'estetica|-');
 sql(`update "Restaurant" set category='hamburguer' where email='ze@burger.com'`);
 console.log('5. categoria fixa limpa o texto de "Outros" OK');
 await browser.close();

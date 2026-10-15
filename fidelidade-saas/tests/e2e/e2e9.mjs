@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import { execSync, execFileSync } from 'node:child_process';
 import assert from 'node:assert/strict';
@@ -16,7 +17,7 @@ const a = await ctx.newPage();
 a.on('pageerror',e=>console.log('PAGEERROR',e.message));
 
 // ---- convite criado pelo script
-const out = execSync(`cd /home/user/Leadpage/fidelidade-saas && DATABASE_URL=${DB}?schema=public APP_URL=${BASE} npx tsx scripts/admin-invite.ts admin@teste.com "Admin Teste"`).toString();
+const out = execSync(`cd ${fileURLToPath(new URL('../..', import.meta.url))} && DATABASE_URL=${DB}?schema=public APP_URL=${BASE} npx tsx scripts/admin-invite.ts admin@teste.com "Admin Teste"`).toString();
 const link = out.match(/http\S+\/admin\/convite\/\S+/)[0];
 assert.equal(sql(`select (select count(*) from "AdminUser" where email='admin@teste.com' and "passwordHash" is null and "inviteTokenHash" is not null)`),'1');
 assert.ok(!sql(`select "inviteTokenHash" from "AdminUser"`).includes(link.split('/').pop()), 'o token não pode estar no banco, só o hash');
