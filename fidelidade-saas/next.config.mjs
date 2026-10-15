@@ -11,6 +11,9 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
+  // Só no modo desenvolvimento (os testes de tela do CI): mantém as rotas já compiladas na memória em vez de descartá-las depois de um tempo parado,
+  // para a volta a uma tela não ter de compilar de novo (isso passava de 60 s no CI e estourava a navegação).
+  onDemandEntries: { maxInactiveAge: 60 * 60 * 1000, pagesBufferLength: 200 },
   // Fotos chegam como data URL já reduzida pelo navegador (~100 KB); folga para o corpo da Server Action.
   experimental: { serverActions: { bodySizeLimit: '2mb' } },
   async headers() {
