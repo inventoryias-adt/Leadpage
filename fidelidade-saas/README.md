@@ -400,3 +400,7 @@ Decisões em aberto: modelo de recebimento (Stripe Connect com Pix e repasse a c
 - **É dado pessoal, então não é pública**: `/api/perfil/foto` só entrega a foto ao próprio cliente logado (401 sem login, 404 sem foto). O endereço leva `?v=` com a hora da troca, então o navegador guarda a foto e baixa de novo ao trocar. Por enquanto só o próprio cliente a vê (no Perfil); se um dia o estabelecimento for mostrar a foto do cliente, isso é uma decisão nova de privacidade (e de texto na Política de Privacidade).
 - **Deploy**: a migração é só uma tabela nova, mas precisa estar no banco de produção **antes** do deploy do código.
 - Teste: `e2e36` (sem foto, escolher, recarregar, trocar, não pública, arquivo que não é imagem, remover).
+
+## Copiar o Instagram do lugar (migration: nenhuma)
+
+- Na página do lugar, a ação "Foto no Instagram marcando o…" ganhou o botão **"Copiar @perfil"** (`src/components/CopyButton.tsx`): copia o @ do lugar para o cliente colar e marcar na foto, e avisa "Copiado! Cole na sua foto". O botão "Abrir Instagram" continua ao lado. Sem Instagram cadastrado em Regras, a ação aparece sem botões. Teste: `e2e37`.

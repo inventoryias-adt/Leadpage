@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { CheckInButton } from '@/components/CheckInButton';
+import { CopyButton } from '@/components/CopyButton';
 import { Icon, type IconName } from '@/components/Icons';
 import { OpeningHours } from '@/components/OpeningHours';
 import { ShareButtons } from '@/components/ShareButtons';
@@ -30,12 +31,17 @@ export async function generateMetadata({ params }: { params: Promise<{ restauran
 function actionMeta(label: string, r: { googleReviewUrl: string | null; instagram: string | null }) {
   const t = label.toLowerCase();
   if (/google|avalia/.test(t)) {
-    return { icon: 'star' as IconName, cta: r.googleReviewUrl ? { href: r.googleReviewUrl, text: 'Avaliar no Google' } : null };
+    return { icon: 'star' as IconName, cta: r.googleReviewUrl ? { href: r.googleReviewUrl, text: 'Avaliar no Google' } : null, copy: null as string | null };
   }
   if (/instagram|story|stories|foto|post|marc/.test(t)) {
-    return { icon: 'camera' as IconName, cta: r.instagram ? { href: `https://instagram.com/${r.instagram}`, text: `Abrir @${r.instagram}` } : null };
+    // O cliente copia o @ do lugar para marcar na foto (ou abre o perfil).
+    return {
+      icon: 'camera' as IconName,
+      cta: r.instagram ? { href: `https://instagram.com/${r.instagram}`, text: 'Abrir Instagram' } : null,
+      copy: r.instagram ? `@${r.instagram}` : null,
+    };
   }
-  return { icon: 'spark' as IconName, cta: null };
+  return { icon: 'spark' as IconName, cta: null, copy: null as string | null };
 }
 
 export default async function LugarPage({
@@ -227,8 +233,11 @@ export default async function LugarPage({
                         <span className="glass-chip shrink-0">+{formatPoints(r.points)} pts</span>
                       </div>
                       <p className="text-sm text-slate-500">Faça e mostre ao caixa para receber os pontos.</p>
-                      {meta.cta && (
-                        <a href={meta.cta.href} target="_blank" rel="noopener noreferrer" className="glass-button-ghost btn-sm mt-3">{meta.cta.text}</a>
+                      {(meta.copy || meta.cta) && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {meta.copy && <CopyButton text={meta.copy} label={`Copiar ${meta.copy}`} copiedLabel="Copiado! Cole na sua foto" />}
+                          {meta.cta && <a href={meta.cta.href} target="_blank" rel="noopener noreferrer" className="glass-button-ghost btn-sm">{meta.cta.text}</a>}
+                        </div>
                       )}
                     </div>
                   </div>
