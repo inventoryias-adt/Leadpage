@@ -108,7 +108,7 @@ export default function LandingPage() {
       <nav className="flex items-center justify-between px-5 py-4 sm:px-8">
         <Brand />
         <div className="flex items-center gap-2 text-sm font-semibold">
-          <Link href="/entrar" className="nav-tab hidden sm:inline-block">Sou cliente</Link>
+          <Link href="/entrar" className="nav-tab">Sou cliente</Link>
           <Link href="/login" className="chip-link">Entrar</Link>
         </div>
       </nav>
