@@ -112,7 +112,7 @@ export function UnitLocationField({ coords, setCoords, addr }: { coords: Coords;
         <Icon name="pin" className="mt-0.5 shrink-0 text-electric-600" />
         <div className="min-w-0">
           <p className="font-semibold text-slate-800">Localização no mapa</p>
-          <p className="text-xs text-slate-500">Usada no check-in (o cliente precisa estar a até 200 m) e para a unidade aparecer em “Lugares perto de você”.</p>
+          <p className="text-xs text-slate-500">Usada no check-in (o cliente precisa estar dentro da loja, então marque o ponto exato) e para a unidade aparecer em “Lugares perto de você”.</p>
         </div>
       </div>
 

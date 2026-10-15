@@ -9,7 +9,8 @@ const restaurantId = sql('select id from "Restaurant" limit 1');
 assert.ok(restaurantId, 'rode o e2e.mjs antes (cria o restaurante e o cliente Lucas)');
 
 const SE = { latitude: -23.5505, longitude: -46.6333 }; // restaurante
-const NEAR = { latitude: -23.5506, longitude: -46.6334 }; // ~15 m
+const NEAR = { latitude: -23.55053, longitude: -46.63332 }; // ~4 m (dentro da loja)
+const STREET = { latitude: -23.5507, longitude: -46.6335 }; // ~25 m (na calçada: não vale)
 const FAR = { latitude: -23.4500, longitude: -46.5000 }; // ~17 km
 
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });
@@ -113,9 +114,20 @@ const f = await fctx.newPage();
 await login(f, '529.982.247-25', '11999998888');
 await f.goto(placeUrl); await wait(f, 2500);
 await f.click('button:has-text("Fazer check-in")');
-await f.waitForSelector('text=Chegue mais perto');
+await f.waitForSelector('text=Faça o check-in estando dentro do local');
 assert.equal(sql('select count(*) from "CheckIn"'), '1');
+assert.doesNotMatch(await f.locator('.glass-error').innerText(), /\d\s?(km|m)\b/, 'a recusa não mostra distância');
 await fctx.close();
+// check-in a ~25 m (na calçada): também recusado, sem dizer quantos metros faltam
+const sctx = await ctx(STREET);
+const sp = await sctx.newPage();
+await login(sp, '529.982.247-25', '11999998888');
+await sp.goto(placeUrl); await wait(sp, 2500);
+await sp.click('button:has-text("Fazer check-in")');
+await sp.waitForSelector('text=Faça o check-in estando dentro do local');
+assert.doesNotMatch(await sp.locator('.glass-error').innerText(), /\d\s?(km|m)\b/, 'sem distância');
+assert.equal(sql('select count(*) from "CheckIn"'), '1');
+await sctx.close();
 console.log('3. lugares perto + página do lugar + check-in por GPS OK');
 
 // ---------------------------------------------------------------- desafio: 2 compras ≥ R$ 42 na semana

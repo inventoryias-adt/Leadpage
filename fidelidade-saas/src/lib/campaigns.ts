@@ -1,5 +1,4 @@
 import { describeChallenge, type ChallengeLike } from './challenges';
-import { CHECKIN_RADIUS_M } from './geo';
 import { formatBRL } from './points';
 import { promoActiveAt, promoBadge, promoStatus, promoWhen, type PromoLike } from './promos';
 
@@ -57,7 +56,7 @@ export function buildCampaigns(restaurantId: string, s: Source): CampaignItem[] 
       kind: 'checkin',
       title: 'Check-in no local',
       points: s.checkInPoints,
-      how: `Chegue a até ${CHECKIN_RADIUS_M} m do lugar, toque em “Fazer check-in” e ganhe os pontos. Vale uma vez por dia.`,
+      how: 'Estando dentro do estabelecimento, toque em “Fazer check-in” e ganhe os pontos. Vale uma vez por dia.',
       anchor: 'acoes',
     });
   }

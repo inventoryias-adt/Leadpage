@@ -4,7 +4,11 @@ import { startTransition, useActionState, useState } from 'react';
 import { checkInAction } from '@/app/actions/customer';
 import { Icon } from './Icons';
 
-/** Pede a localização ao navegador e manda para o servidor conferir a distância até o restaurante. */
+const GOOD_ACCURACY_M = 12; // leitura boa: não precisa esperar mais
+const WEAK_ACCURACY_M = 50; // pior que isso: pede para tentar de novo em vez de enviar
+const MAX_WAIT_MS = 10_000;
+
+/** Pede a localização ao navegador (a melhor leitura em até 10 s) e manda para o servidor conferir se a pessoa está no local. */
 export function CheckInButton({ restaurantId, points }: { restaurantId: string; points: number }) {
   const [state, action, pending] = useActionState(checkInAction, {});
   const [locating, setLocating] = useState(false);
@@ -17,25 +21,51 @@ export function CheckInButton({ restaurantId, points }: { restaurantId: string; 
       return;
     }
     setLocating(true);
-    navigator.geolocation.getCurrentPosition(
+
+    // O raio do check-in é curto, então uma leitura só costuma vir imprecisa: acompanha o GPS por até 10 s
+    // e usa a melhor leitura (para cedo se já estiver boa). Com sinal fraco, orienta em vez de acusar "você não está aqui".
+    let best: GeolocationPosition | null = null;
+    let finished = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const watch = navigator.geolocation.watchPosition(
       (pos) => {
-        setLocating(false);
-        const fd = new FormData();
-        fd.set('restaurantId', restaurantId);
-        fd.set('lat', String(pos.coords.latitude));
-        fd.set('lng', String(pos.coords.longitude));
-        startTransition(() => action(fd)); // transição mantém o estado "pending" do botão
+        if (!best || pos.coords.accuracy < best.coords.accuracy) best = pos;
+        if (pos.coords.accuracy <= GOOD_ACCURACY_M) done();
       },
       (err) => {
-        setLocating(false);
+        if (best) return done();
+        finish();
         setGeoError(
           err.code === err.PERMISSION_DENIED
             ? 'Permissão de localização negada. Libere nas configurações do navegador para fazer check-in.'
             : 'Não foi possível obter sua localização. Tente de novo.',
         );
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10_000 },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
     );
+    timer = setTimeout(done, MAX_WAIT_MS);
+
+    function finish() {
+      finished = true;
+      clearTimeout(timer);
+      navigator.geolocation.clearWatch(watch);
+      setLocating(false);
+    }
+
+    function done() {
+      if (finished) return;
+      finish();
+      const pos = best as GeolocationPosition | null;
+      if (!pos) return setGeoError('Não foi possível obter sua localização. Tente de novo.');
+      if (pos.coords.accuracy > WEAK_ACCURACY_M) {
+        return setGeoError('Sinal de GPS fraco. Vá para perto de uma janela ou da porta, espere alguns segundos e tente de novo.');
+      }
+      const fd = new FormData();
+      fd.set('restaurantId', restaurantId);
+      fd.set('lat', String(pos.coords.latitude));
+      fd.set('lng', String(pos.coords.longitude));
+      startTransition(() => action(fd)); // transição mantém o estado "pending" do botão
+    }
   }
 
   const busy = locating || pending;

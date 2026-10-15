@@ -19,5 +19,9 @@ export function validCoords(lat: unknown, lng: unknown): lat is number {
   return typeof lat === 'number' && typeof lng === 'number' && Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
 }
 
-/** Raio (m) para valer o check-in. Folga para a imprecisão do GPS dentro de prédios/shoppings. */
-export const CHECKIN_RADIUS_M = 200;
+/**
+ * Raio (m) para valer o check-in: o cliente precisa estar dentro do estabelecimento (a partir do endereço marcado
+ * na unidade). Curto de propósito, para não valer quem só passa na frente; por isso o ponto da unidade no mapa
+ * precisa ser exato. O app NÃO mostra esse número nem a distância ao cliente (evita "chegar até a borda do raio").
+ */
+export const CHECKIN_RADIUS_M = 10;
