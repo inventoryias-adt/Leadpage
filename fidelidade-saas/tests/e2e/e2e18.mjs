@@ -26,7 +26,9 @@ assert.equal(sql(`select count(*) from "Service"`), '1');
 await o.reload(); await o.waitForSelector('#agenda');
 await o.fill('#sv-name', 'Reserva de mesa'); await o.fill('#sv-dur', '90'); await o.check('input[name=askPartySize]');
 await o.click('#agenda button:has-text("Adicionar serviço")'); await o.waitForSelector('#agenda >> text=reserva de mesa');
-assert.equal(sql(`select "askPartySize"::text from "Service" where name='Reserva de mesa'`), 'true');
+const askSql = `select "askPartySize"::text from "Service" where name='Reserva de mesa'`;
+for (let i = 0; i < 40 && sql(askSql) === ''; i++) await o.waitForTimeout(500); // o texto "reserva de mesa" já existe na página: espera gravar
+assert.equal(sql(askSql), 'true');
 // regras
 await o.selectOption('#ag-notice', '120'); await o.selectOption('#ag-ahead', '14'); await o.selectOption('#ag-cancel', '24'); await o.uncheck('input[name=bookingAutoConfirm]');
 await o.click('#agenda button:has-text("Salvar regras")'); await o.waitForSelector('#agenda >> text=Regras de agendamento salvas.');
