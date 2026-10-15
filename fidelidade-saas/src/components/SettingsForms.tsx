@@ -433,6 +433,7 @@ function RadiusSlider({ initial }: { initial: number }) {
         value={idx}
         onChange={(e) => setIdx(Number(e.target.value))}
         aria-valuetext={cur.label}
+        autoComplete="off"
         className="mt-3 h-2 w-full cursor-pointer accent-electric-500"
       />
       <div className="mt-1 flex justify-between text-[11px] font-medium text-slate-500" aria-hidden>
