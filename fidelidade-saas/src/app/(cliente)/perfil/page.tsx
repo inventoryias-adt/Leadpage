@@ -4,6 +4,7 @@ import { Brand } from '@/components/Brand';
 import { PointsActivity } from '@/components/PointsActivity';
 import { ProfilePhoto } from '@/components/ProfilePhoto';
 import { Reveal } from '@/components/Reveal';
+import { BirthdayCard } from '@/components/BirthdayCard';
 import { Icon } from '@/components/Icons';
 import { LegalLinks } from '@/components/LegalLinks';
 import { ShareButtons } from '@/components/ShareButtons';
@@ -119,6 +120,10 @@ export default async function PerfilPage() {
             </Link>
           </div>
         </section>
+        </Reveal>
+
+        <Reveal from="bottom">
+        <BirthdayCard initial={customer.birthDay != null && customer.birthMonth != null ? { day: customer.birthDay, month: customer.birthMonth } : null} />
         </Reveal>
 
         <Reveal from="bottom">

@@ -51,13 +51,20 @@ export function cleanCart(raw: unknown): CartLine[] {
 
 export const cartCount = (lines: { qty: number }[]) => lines.reduce((n, l) => n + l.qty, 0);
 
-type Priced = { priceCents: number; promoCents: number | null };
+type Priced = { priceCents: number; promoCents: number | null; offerEndsAt?: Date | null; offerStock?: number | null };
 
-/** O que se cobra por unidade: o promocional (se valer menos que o cheio) ou o cheio. */
-export const unitPrice = (i: Priced) => (i.promoCents != null && i.promoCents > 0 && i.promoCents < i.priceCents ? i.promoCents : i.priceCents);
-export const hasPromo = (i: Priced) => unitPrice(i) < i.priceCents;
-export const lineTotal = (i: Priced, qty: number) => unitPrice(i) * qty;
-export const orderTotal = (lines: { item: Priced; qty: number }[]) => lines.reduce((n, l) => n + lineTotal(l.item, l.qty), 0);
+/**
+ * O preço promocional vale só enquanto a oferta está de pé: dentro do prazo (`offerEndsAt`) e com estoque (`offerStock`;
+ * null = sem limite). Acabou o prazo ou o estoque, volta ao preço cheio sozinho.
+ */
+export const promoActive = (i: Priced, now: Date = new Date()) =>
+  i.promoCents != null && i.promoCents > 0 && i.promoCents < i.priceCents && (i.offerEndsAt == null || i.offerEndsAt > now) && (i.offerStock == null || i.offerStock > 0);
+
+/** O que se cobra por unidade: o promocional (se a oferta vale) ou o cheio. */
+export const unitPrice = (i: Priced, now: Date = new Date()) => (promoActive(i, now) ? (i.promoCents as number) : i.priceCents);
+export const hasPromo = (i: Priced, now: Date = new Date()) => promoActive(i, now);
+export const lineTotal = (i: Priced, qty: number, now: Date = new Date()) => unitPrice(i, now) * qty;
+export const orderTotal = (lines: { item: Priced; qty: number }[], now: Date = new Date()) => lines.reduce((n, l) => n + lineTotal(l.item, l.qty, now), 0);
 
 /** Pontos que o pedido rende quando é retirado (mesma regra do caixa: R$ × pontos por real, arredondando para baixo). */
 export const orderPoints = (totalCents: number, pointsPerReal: number) => (totalCents > 0 ? calculatePoints(totalCents, pointsPerReal) : 0);
@@ -75,4 +82,25 @@ export const PREP_OPTIONS = [5, 10, 15, 20, 30, 45, 60, 90, 120, 180, 240] as co
 export const validPrep = (n: number) => (PREP_OPTIONS as readonly number[]).includes(n);
 
 /** Percentual de desconto da promoção, para o selo "−43%". */
-export const promoPct = (i: Priced) => (hasPromo(i) ? Math.round(((i.priceCents - unitPrice(i)) / i.priceCents) * 100) : 0);
+export const promoPct = (i: Priced, now: Date = new Date()) => (hasPromo(i, now) ? Math.round(((i.priceCents - unitPrice(i, now)) / i.priceCents) * 100) : 0);
+
+const MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+const BR_OFFSET_MS = 3 * 60 * 60 * 1000; // Brasília = UTC−3, sem horário de verão
+
+/** "2026-10-19T23:59" (campo de data e hora, horário de Brasília) → Date; null se vazio ou inválido. */
+export function offerEndFromInput(input: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(input)) return null;
+  const d = new Date(`${input}:00-03:00`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** Date → texto do campo de data e hora em Brasília ("2026-10-19T23:59"). */
+export const offerEndToInput = (d: Date) => new Date(d.getTime() - BR_OFFSET_MS).toISOString().slice(0, 16);
+
+/** "até 19 out · 23h59" (horário de Brasília). */
+export function offerEndText(d: Date) {
+  const br = new Date(d.getTime() - BR_OFFSET_MS);
+  const hh = String(br.getUTCHours()).padStart(2, '0');
+  const mm = String(br.getUTCMinutes()).padStart(2, '0');
+  return `até ${br.getUTCDate()} ${MONTHS[br.getUTCMonth()]} · ${hh}h${mm}`;
+}

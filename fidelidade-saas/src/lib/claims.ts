@@ -36,6 +36,14 @@ async function creditWallet(
   return wallet;
 }
 
+/** Presente de aniversário: um por cliente, lugar e ano (a restrição única impede repetir). Devolve true se creditou agora. */
+export async function creditBirthdayGift(tx: Tx, customerId: string, restaurantId: string, points: number, year: number) {
+  const created = await tx.birthdayGift.createMany({ data: [{ customerId, restaurantId, year, points }], skipDuplicates: true });
+  if (created.count !== 1) return false;
+  await creditWallet(tx, customerId, restaurantId, points, 'Presente de aniversário');
+  return true;
+}
+
 type ProgressClient = Prisma.TransactionClient | typeof prisma;
 type ChallengeRow = {
   id: string;

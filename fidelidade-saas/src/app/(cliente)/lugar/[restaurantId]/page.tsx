@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { BirthdayCard } from '@/components/BirthdayCard';
 import { CheckInButton } from '@/components/CheckInButton';
 import { CopyButton } from '@/components/CopyButton';
 import { Icon, type IconName } from '@/components/Icons';
@@ -188,6 +189,8 @@ export default async function LugarPage({
 
         <div className="space-y-6 lg:grid lg:grid-cols-5 lg:items-start lg:gap-6 lg:space-y-0">
         <div className="space-y-6 lg:col-span-3">
+        {customer && customer.birthDay == null && <BirthdayCard initial={null} giftPoints={restaurant.birthdayPoints} placeName={restaurant.name} />}
+
         {/* Saldo / entrar */}
         {customer ? (
           <section className="glass-panel flex items-center justify-between gap-3 p-4">

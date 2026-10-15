@@ -356,7 +356,7 @@ export function IdentityForm({ defaults, placeName, supportEnv }: { defaults: Id
   );
 }
 
-export function EngagementForm({ defaults }: { defaults: { checkInPoints: number; checkInRadiusM: number; referralPoints: number } }) {
+export function EngagementForm({ defaults }: { defaults: { checkInPoints: number; checkInRadiusM: number; referralPoints: number; birthdayPoints: number } }) {
   const [state, action] = useActionState(saveEngagement, {});
   return (
     <form action={action} className="space-y-4">
@@ -377,6 +377,11 @@ export function EngagementForm({ defaults }: { defaults: { checkInPoints: number
           <label className="glass-label" htmlFor="e-rf">Pontos por indicação</label>
           <input id="e-rf" name="referralPoints" type="number" min={0} inputMode="numeric" className="glass-input" defaultValue={state.values?.referralPoints ?? defaults.referralPoints} required />
           <p className="mt-1 text-xs text-slate-500">Quem indica ganha quando o amigo faz a primeira compra. Use 0 para desligar.</p>
+        </div>
+        <div>
+          <label className="glass-label" htmlFor="e-bd">Presente de aniversário (pontos)</label>
+          <input id="e-bd" name="birthdayPoints" type="number" min={0} inputMode="numeric" className="glass-input" defaultValue={state.values?.birthdayPoints ?? defaults.birthdayPoints} required />
+          <p className="mt-1 text-xs text-slate-500">Quem tem carteira aqui e informou o aniversário ganha estes pontos no dia, uma vez por ano. Use 0 para desligar.</p>
         </div>
       </div>
       <FormMessage state={state} />

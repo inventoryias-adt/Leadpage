@@ -5,12 +5,13 @@ import { OrderMenu, type MenuGroup, type MenuView } from '@/components/OrderMenu
 import { prisma } from '@/lib/db';
 import { isOpenNow, parseSchedule } from '@/lib/hours';
 import { imageUrl } from '@/lib/images';
+import { promoActive } from '@/lib/orders';
 import { getCustomer } from '@/lib/session';
 
 export const metadata = { title: 'Fazer pedido' };
 export const dynamic = 'force-dynamic';
 
-export default async function PedidoPage({ params, searchParams }: { params: Promise<{ restaurantId: string }>; searchParams: Promise<{ unidade?: string }> }) {
+export default async function PedidoPage({ params, searchParams }: { params: Promise<{ restaurantId: string }>; searchParams: Promise<{ unidade?: string; item?: string }> }) {
   const { restaurantId } = await params;
   const sp = await searchParams;
   if (!/^[0-9a-f-]{36}$/.test(restaurantId)) notFound();
@@ -42,7 +43,12 @@ export default async function PedidoPage({ params, searchParams }: { params: Pro
 
   const unit = units.find((u) => u.id === sp.unidade) ?? units[0];
   const schedule = parseSchedule(unit.openingSchedule);
-  const view = (i: (typeof items)[number]): MenuView => ({ id: i.id, name: i.name, description: i.description, priceCents: i.priceCents, promoCents: i.promoCents, imageUrl: imageUrl(i.imageId) });
+  const now = new Date();
+  // A promoção já vem resolvida: fora do prazo ou sem estoque, o cliente vê (e paga) o preço normal. O servidor confere de novo ao confirmar.
+  const view = (i: (typeof items)[number]): MenuView => {
+    const live = promoActive(i, now);
+    return { id: i.id, name: i.name, description: i.description, priceCents: i.priceCents, promoCents: live ? i.promoCents : null, imageUrl: imageUrl(i.imageId), stock: live ? i.offerStock : null };
+  };
   const featured = items.find((i) => i.featured) ?? null;
   const groups: MenuGroup[] = [];
   for (const i of items) {
@@ -67,6 +73,7 @@ export default async function PedidoPage({ params, searchParams }: { params: Pro
         featured={featured ? view(featured) : null}
         groups={groups}
         backHref={back}
+        preselectId={items.some((i) => i.id === sp.item) ? sp.item : undefined}
       />
     </main>
   );

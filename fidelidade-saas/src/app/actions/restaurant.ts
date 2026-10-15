@@ -377,6 +377,7 @@ const engagementSchema = z.object({
   checkInPoints: z.coerce.number().int('Use um número inteiro.').min(0).max(10_000),
   checkInRadiusM: z.coerce.number().int().refine((v) => CHECKIN_RADIUS_OPTIONS.some((o) => o.value === v), 'Escolha uma das distâncias da lista.'),
   referralPoints: z.coerce.number().int('Use um número inteiro.').min(0).max(100_000),
+  birthdayPoints: z.coerce.number().int('Use um número inteiro.').min(0).max(100_000),
 });
 
 export async function saveEngagement(_: FormState, formData: FormData): Promise<FormState> {

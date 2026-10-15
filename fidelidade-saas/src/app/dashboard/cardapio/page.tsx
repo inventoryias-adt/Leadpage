@@ -6,7 +6,7 @@ import { MenuItemEditor, MenuItemForm, OrderSettingsForm } from '@/components/Me
 import { RewardImage } from '@/components/Visual';
 import { prisma } from '@/lib/db';
 import { imageUrl } from '@/lib/images';
-import { hasPromo, promoPct, unitPrice } from '@/lib/orders';
+import { hasPromo, offerEndText, offerEndToInput, promoPct, unitPrice } from '@/lib/orders';
 import { formatBRL } from '@/lib/points';
 import { requireActiveRestaurant } from '@/lib/session';
 
@@ -57,6 +57,9 @@ export default async function CardapioPage() {
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                       <span className="glass-chip">{i.category}</span>
                       {i.featured && <span className="glass-chip">Destaque da casa</span>}
+                      {i.spotlight && <span className="glass-chip">Oferta em Lugares</span>}
+                      {i.offerEndsAt && <span className="glass-chip">{i.offerEndsAt > new Date() ? offerEndText(i.offerEndsAt) : 'Oferta encerrada'}</span>}
+                      {i.offerStock != null && <span className="glass-chip">{i.offerStock > 0 ? `restam ${i.offerStock}` : 'Estoque da oferta esgotado'}</span>}
                       {!i.active && <span className="glass-chip">Pausado</span>}
                     </div>
                   </div>
@@ -70,7 +73,7 @@ export default async function CardapioPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <MenuItemEditor
                     categories={categories}
-                    item={{ id: i.id, name: i.name, description: i.description ?? '', category: i.category, price: brInput(i.priceCents), promo: i.promoCents ? brInput(i.promoCents) : '', featured: i.featured, imageUrl: imageUrl(i.imageId) }}
+                    item={{ id: i.id, name: i.name, description: i.description ?? '', category: i.category, price: brInput(i.priceCents), promo: i.promoCents ? brInput(i.promoCents) : '', featured: i.featured, imageUrl: imageUrl(i.imageId), spotlight: i.spotlight, offerEnds: i.offerEndsAt && i.offerEndsAt > new Date() ? offerEndToInput(i.offerEndsAt) : '', offerStock: i.offerStock != null ? String(i.offerStock) : '' }}
                   />
                   <form action={setMenuItemActive} className="mt-3">
                     <input type="hidden" name="id" value={i.id} />

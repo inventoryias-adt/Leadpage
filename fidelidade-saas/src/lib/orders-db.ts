@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from './db';
 import { BusinessError, creditClaimWith } from './claims';
 import { MAX_BILL_CENTS, formatBRL } from './points';
-import { MAX_ITEMS_PER_ORDER, MAX_NOTE, MAX_OPEN_ORDERS, OPEN_STATUSES, STATUS_LABEL, canMove, cartCount, cleanCart, orderPoints, orderTotal, prepText, unitPrice, type OrderStatus } from './orders';
+import { MAX_ITEMS_PER_ORDER, MAX_NOTE, MAX_OPEN_ORDERS, OPEN_STATUSES, STATUS_LABEL, canMove, cartCount, cleanCart, orderPoints, orderTotal, prepText, promoActive, unitPrice, type OrderStatus } from './orders';
 import { sendEmail } from './mailer';
 import { notify } from './notifications';
 import { appUrl } from './payments';
@@ -42,9 +42,20 @@ export async function placeOrder(customerId: string, restaurantId: string, rawIt
 
       const byId = new Map(items.map((i) => [i.id, i]));
       const lines = cart.map((c) => ({ item: byId.get(c.menuItemId)!, qty: c.qty }));
-      const totalCents = orderTotal(lines);
+      const now = new Date();
+      const totalCents = orderTotal(lines, now);
       if (totalCents <= 0) throw new BusinessError('Este pedido não tem valor. Atualize a página.');
       if (totalCents > MAX_BILL_CENTS) throw new BusinessError('Valor do pedido acima do limite.');
+
+      // Oferta com estoque: reserva as unidades na hora (condição no próprio UPDATE: dois pedidos ao mesmo tempo não passam do estoque).
+      for (const { item, qty } of lines) {
+        if (item.offerStock == null || !promoActive(item, now)) continue;
+        const taken = await tx.menuItem.updateMany({ where: { id: item.id, offerStock: { gte: qty } }, data: { offerStock: { decrement: qty } } });
+        if (taken.count !== 1) {
+          const left = Math.max(0, (await tx.menuItem.findUnique({ where: { id: item.id }, select: { offerStock: true } }))?.offerStock ?? 0);
+          throw new BusinessError(left > 0 ? `Na oferta de ${item.name} restam só ${left}. Ajuste a quantidade.` : `A oferta de ${item.name} acabou. Atualize a página.`);
+        }
+      }
 
       // O código aparece no balcão; é único por lugar. Repete se der colisão (raríssimo).
       for (let attempt = 0; attempt < 6; attempt++) {
@@ -59,7 +70,7 @@ export async function placeOrder(customerId: string, restaurantId: string, rawIt
               prepMin: restaurant.orderPrepMin,
               note,
               items: {
-                create: lines.map(({ item, qty }) => ({ menuItemId: item.id, name: item.name, unitCents: unitPrice(item), listCents: item.priceCents, qty, imageId: item.imageId })),
+                create: lines.map(({ item, qty }) => ({ menuItemId: item.id, name: item.name, unitCents: unitPrice(item, now), listCents: item.priceCents, qty, imageId: item.imageId })),
               },
             },
             include: { items: true },
@@ -177,6 +188,13 @@ export async function cancelOrder(id: string, by: 'CUSTOMER' | 'OWNER', where: {
     }
     const marked = await tx.order.updateMany({ where: { id, status: order.status }, data: { status: 'CANCELED', canceledAt: new Date(), canceledBy: by } });
     if (marked.count !== 1) throw new BusinessError('Este pedido acabou de ser atualizado. Recarregue a página.');
+    // Unidades vendidas pelo preço da oferta voltam ao estoque (sem passar do total da oferta).
+    const sold = await tx.orderItem.findMany({ where: { orderId: id, menuItemId: { not: null } }, select: { menuItemId: true, qty: true, unitCents: true, listCents: true } });
+    for (const it of sold.filter((x) => x.unitCents < x.listCents)) {
+      const m = await tx.menuItem.findUnique({ where: { id: it.menuItemId as string }, select: { offerStock: true, offerStockTotal: true } });
+      if (m?.offerStock == null) continue;
+      await tx.menuItem.update({ where: { id: it.menuItemId as string }, data: { offerStock: Math.min(m.offerStockTotal ?? m.offerStock + it.qty, m.offerStock + it.qty) } });
+    }
     if (by === 'OWNER') {
       await notify(tx, {
         customerId: order.customerId,

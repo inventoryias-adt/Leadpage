@@ -88,6 +88,7 @@ model Restaurant {
   checkInPoints      Int @default(1) // pontos por check-in no local (0 desliga)
   checkInRadiusM     Int @default(10) // distância máxima (m) do ponto da unidade para o check-in valer; o cliente nunca vê esse número
   referralPoints     Int @default(100) // pontos para quem indica um amigo que compra (0 desliga)
+  birthdayPoints     Int @default(0) // presente de pontos no aniversário do cliente (0 desliga)
 
   // Agenda e reservas
   bookingAutoConfirm  Boolean @default(true) // false: o estabelecimento confirma cada pedido
@@ -135,6 +136,7 @@ model Restaurant {
   bookings         Booking[]
   menuItems        MenuItem[]
   orders           Order[]
+  birthdayGifts    BirthdayGift[]
 }
 
 /// Pontuação fixa por interação (foto no Instagram, avaliação 5★ no Google...).
@@ -179,6 +181,8 @@ model Customer {
   referralCode String?  @unique // código do link "Indique amigos"
   termsAcceptedAt DateTime? // aceite dos Termos de Uso e da Política de Privacidade (null = conta anterior ao aceite)
   termsVersion    String? // versão aceita (ver src/lib/legal.ts)
+  birthDay        Int? // aniversário: só dia e mês (sem o ano), opcional; o cliente informa e remove quando quiser
+  birthMonth      Int?
   createdAt    DateTime @default(now())
 
   wallets           Wallet[]
@@ -194,6 +198,7 @@ model Customer {
   bookings          Booking[]
   photo             CustomerPhoto?
   orders            Order[]
+  birthdayGifts     BirthdayGift[]
 }
 
 /// Foto de perfil do cliente. Fica em tabela própria para não pesar a consulta da sessão; só o próprio cliente a vê.
@@ -646,6 +651,11 @@ model MenuItem {
   imageId      String?
   featured     Boolean  @default(false) // "Destaque da casa"
   active       Boolean  @default(true)
+  // Oferta: o preço promocional só vale até `offerEndsAt` e enquanto houver `offerStock` (null = sem limite). `spotlight` mostra o cartão na lista de Lugares.
+  spotlight       Boolean   @default(false)
+  offerEndsAt     DateTime?
+  offerStock      Int? // unidades que ainda saem pelo preço promocional
+  offerStockTotal Int? // quantas eram no início (para o anel de progresso)
   createdAt    DateTime @default(now())
 
   restaurant Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
@@ -699,6 +709,21 @@ model OrderItem {
   menuItem MenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
 
   @@index([orderId])
+}
+
+/// Presente de aniversário já dado: um por cliente, lugar e ano (a restrição garante que o cron não repita).
+model BirthdayGift {
+  id           String   @id @default(uuid())
+  customerId   String
+  restaurantId String
+  year         Int
+  points       Int
+  createdAt    DateTime @default(now())
+
+  customer   Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, restaurantId, year])
 }
 
 model Booking {

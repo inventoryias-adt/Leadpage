@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { canMove, cartCount, cleanCart, hasPromo, isOpen, lineTotal, orderPoints, orderTotal, prepText, promoPct, unitPrice, validPrep } from './orders';
+import { canMove, cartCount, cleanCart, hasPromo, isOpen, lineTotal, offerEndFromInput, offerEndText, offerEndToInput, orderPoints, orderTotal, prepText, promoActive, promoPct, unitPrice, validPrep } from './orders';
 
 test('cleanCart junta repetidos, limita quantidades e descarta lixo', () => {
   const cart = cleanCart([
@@ -69,4 +69,28 @@ test('texto do tempo de preparo', () => {
   assert.equal(prepText(90), 'pronto em 1 h 30 min');
   assert.equal(validPrep(15), true);
   assert.equal(validPrep(7), false);
+});
+
+test('oferta: o preço promocional some no prazo e no estoque', () => {
+  const now = new Date('2026-10-15T12:00:00Z');
+  const base = { priceCents: 2800, promoCents: 1590 };
+  assert.equal(promoActive({ ...base, offerEndsAt: new Date('2026-10-19T02:59:00Z') }, now), true);
+  assert.equal(promoActive({ ...base, offerEndsAt: new Date('2026-10-15T11:59:00Z') }, now), false); // prazo passou
+  assert.equal(promoActive({ ...base, offerStock: 37 }, now), true);
+  assert.equal(promoActive({ ...base, offerStock: 0 }, now), false); // estoque acabou
+  assert.equal(promoActive({ ...base, offerEndsAt: null, offerStock: null }, now), true); // sem prazo nem limite
+  assert.equal(unitPrice({ ...base, offerStock: 0 }, now), 2800); // volta ao preço cheio
+  assert.equal(hasPromo({ ...base, offerEndsAt: new Date('2026-10-01T00:00:00Z') }, now), false);
+  assert.equal(orderTotal([{ item: { ...base, offerStock: 0 }, qty: 2 }], now), 5600);
+  assert.equal(promoPct({ ...base, offerStock: 0 }, now), 0);
+});
+
+test('oferta: o prazo digitado vale no horário de Brasília', () => {
+  const d = offerEndFromInput('2026-10-19T23:59')!;
+  assert.equal(d.toISOString(), '2026-10-20T02:59:00.000Z');
+  assert.equal(offerEndToInput(d), '2026-10-19T23:59');
+  assert.equal(offerEndText(d), 'até 19 out · 23h59');
+  assert.equal(offerEndFromInput(''), null);
+  assert.equal(offerEndFromInput('amanhã'), null);
+  assert.equal(offerEndText(new Date('2026-12-01T03:05:00Z')), 'até 1 dez · 00h05');
 });

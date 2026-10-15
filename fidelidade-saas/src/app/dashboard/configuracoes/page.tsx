@@ -278,7 +278,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
       </Block>
 
       <Optional id="engajamento" title="Check-in e indicação de amigos" hint="Dois jeitos de fazer o cliente voltar e trazer gente nova." status={restaurant.checkInPoints > 0 || restaurant.referralPoints > 0 ? `Ligado` : 'Opcional'} open={openAll || restaurant.checkInPoints > 0 || restaurant.referralPoints > 0}>
-        <EngagementForm defaults={{ checkInPoints: restaurant.checkInPoints, checkInRadiusM: restaurant.checkInRadiusM, referralPoints: restaurant.referralPoints }} />
+        <EngagementForm defaults={{ checkInPoints: restaurant.checkInPoints, checkInRadiusM: restaurant.checkInRadiusM, referralPoints: restaurant.referralPoints, birthdayPoints: restaurant.birthdayPoints }} />
       </Optional>
 
       <Optional id="interacoes" title="Interações que dão pontos" hint="Pontuação fixa, marcada pelo caixa no lançamento (avaliação no Google, story no Instagram…)." status={interactions.length > 0 ? `${interactions.length} ${interactions.length === 1 ? 'ativa' : 'ativas'}` : 'Opcional'} open={openAll || interactions.length > 0}>

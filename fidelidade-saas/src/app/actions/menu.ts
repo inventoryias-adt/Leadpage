@@ -9,7 +9,7 @@ import { fail, type FormState } from '@/lib/form';
 import { photoFromForm } from '@/lib/form-photo';
 import { saveImageFromDataUrl } from '@/lib/images';
 import { setOrderStatus } from '@/lib/orders-db';
-import { canMove, validPrep, type OrderStatus } from '@/lib/orders';
+import { canMove, offerEndFromInput, validPrep, type OrderStatus } from '@/lib/orders';
 import { MAX_BILL_CENTS, parseMoneyToCents } from '@/lib/points';
 import { requireActiveRestaurant, requirePaidRestaurant } from '@/lib/session';
 
@@ -49,6 +49,23 @@ export async function saveMenuItem(_: FormState, formData: FormData): Promise<Fo
   }
   const featured = formData.get('featured') === 'on';
 
+  // Oferta (opcional): prazo e estoque só fazem sentido com preço promocional.
+  const endsRaw = String(formData.get('offerEnds') ?? '').trim();
+  const stockRaw = String(formData.get('offerStock') ?? '').trim();
+  const spotlight = formData.get('spotlight') === 'on';
+  let offerEndsAt: Date | null = null;
+  let stock: number | null = null;
+  if (endsRaw) {
+    offerEndsAt = offerEndFromInput(endsRaw);
+    if (!offerEndsAt) return fail('Data e hora do fim da oferta inválidas.', formData);
+    if (offerEndsAt <= new Date()) return fail('O fim da oferta precisa ser uma data futura.', formData);
+  }
+  if (stockRaw) {
+    stock = Number(stockRaw);
+    if (!Number.isInteger(stock) || stock < 1 || stock > 100_000) return fail('O estoque da oferta precisa ser um número inteiro de 1 a 100.000.', formData);
+  }
+  if ((offerEndsAt || stock != null || spotlight) && promo == null) return fail('Para fazer uma oferta, informe o preço promocional.', formData);
+
   const existing = id ? await prisma.menuItem.findFirst({ where: { id, restaurantId: restaurant.id } }) : null;
   if (id && !existing) return { error: 'Produto não encontrado.' };
   if (!existing && (await prisma.menuItem.count({ where: { restaurantId: restaurant.id } })) >= MAX_MENU_ITEMS) {
@@ -58,9 +75,12 @@ export async function saveMenuItem(_: FormState, formData: FormData): Promise<Fo
   try {
     const photo = await photoFromForm(formData);
     const imageId = photo ? await saveImageFromDataUrl(restaurant.id, photo, existing?.imageId) : (existing?.imageId ?? null);
-    const data = { name: parsed.data.name, description: parsed.data.description || null, category: parsed.data.category || DEFAULT_CATEGORY, priceCents: price, promoCents: promo, featured, imageId };
+    // O total da oferta (anel de progresso) só muda quando o dono muda o estoque.
+    const stockTotal = stock == null ? null : stock !== existing?.offerStock ? stock : (existing?.offerStockTotal ?? stock);
+    const data = { name: parsed.data.name, description: parsed.data.description || null, category: parsed.data.category || DEFAULT_CATEGORY, priceCents: price, promoCents: promo, featured, imageId, spotlight, offerEndsAt, offerStock: stock, offerStockTotal: stockTotal };
     await prisma.$transaction(async (tx) => {
       if (featured) await tx.menuItem.updateMany({ where: { restaurantId: restaurant.id, featured: true, ...(existing ? { id: { not: existing.id } } : {}) }, data: { featured: false } }); // um só destaque
+      if (spotlight) await tx.menuItem.updateMany({ where: { restaurantId: restaurant.id, spotlight: true, ...(existing ? { id: { not: existing.id } } : {}) }, data: { spotlight: false } }); // uma só oferta em destaque nos Lugares
       if (existing) await tx.menuItem.update({ where: { id: existing.id }, data });
       else await tx.menuItem.create({ data: { ...data, restaurantId: restaurant.id } });
     });
@@ -70,6 +90,7 @@ export async function saveMenuItem(_: FormState, formData: FormData): Promise<Fo
   }
   revalidatePath('/dashboard/cardapio');
   revalidatePath('/lugar', 'layout');
+  revalidatePath('/lugares');
   return { ok: existing ? 'Produto atualizado.' : 'Produto adicionado ao cardápio.' };
 }
 

@@ -17,9 +17,12 @@ export type MenuItemDefaults = {
   promo: string; // "" = sem promoção
   featured: boolean;
   imageUrl: string | null;
+  spotlight: boolean;
+  offerEnds: string; // "2026-10-19T23:59" (Brasília) ou ""
+  offerStock: string; // "" = sem limite
 };
 
-const EMPTY: MenuItemDefaults = { name: '', description: '', category: '', price: '', promo: '', featured: false, imageUrl: null };
+const EMPTY: MenuItemDefaults = { name: '', description: '', category: '', price: '', promo: '', featured: false, imageUrl: null, spotlight: false, offerEnds: '', offerStock: '' };
 
 /** Cadastro e edição de um item do cardápio (com `item.id` edita). A foto vem do computador ou da busca na web. */
 export function MenuItemForm({ item = EMPTY, categories, onDone }: { item?: MenuItemDefaults; categories: string[]; onDone?: () => void }) {
@@ -57,6 +60,24 @@ export function MenuItemForm({ item = EMPTY, categories, onDone }: { item?: Menu
         </div>
       </div>
       <p className="text-xs text-slate-500">Com preço promocional, o cliente vê o preço normal riscado e paga o promocional. Itens da mesma categoria aparecem juntos no cardápio.</p>
+      <fieldset className="space-y-3 rounded-xl border border-slate-200 bg-white p-3">
+        <legend className="px-1 text-sm font-bold text-slate-800">Oferta por tempo ou estoque limitado <span className="font-normal text-slate-500">(opcional)</span></legend>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="glass-label" htmlFor={`m-ends-${uid}`}>Termina em</label>
+            <input id={`m-ends-${uid}`} name="offerEnds" type="datetime-local" defaultValue={v.offerEnds ?? item.offerEnds} className="glass-input" />
+          </div>
+          <div>
+            <label className="glass-label" htmlFor={`m-stock-${uid}`}>Unidades na oferta</label>
+            <input id={`m-stock-${uid}`} name="offerStock" type="number" min={1} inputMode="numeric" defaultValue={v.offerStock ?? item.offerStock} className="glass-input" placeholder="Ex.: 40" />
+          </div>
+        </div>
+        <label className="flex cursor-pointer items-start gap-3 text-sm">
+          <input type="checkbox" name="spotlight" defaultChecked={item.spotlight} className="mt-0.5 h-4 w-4 rounded accent-electric-500" />
+          <span><span className="block font-semibold text-slate-800">Mostrar como oferta na lista de Lugares</span><span className="block text-xs text-slate-500">Aparece um cartão com o prazo e “restam N”. Uma oferta em destaque por vez.</span></span>
+        </label>
+        <p className="text-xs text-slate-500">Acabou o prazo ou o estoque, o produto volta sozinho ao preço normal. Precisa do preço promocional.</p>
+      </fieldset>
       <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-3 text-sm has-[:checked]:border-electric-500 has-[:checked]:bg-[#F3F6FD]">
         <input type="checkbox" name="featured" defaultChecked={item.featured} className="mt-0.5 h-4 w-4 rounded accent-electric-500" />
         <span><span className="block font-semibold text-slate-800">Destaque da casa</span><span className="block text-xs text-slate-500">Aparece primeiro, em cartão grande. Só um produto por vez.</span></span>

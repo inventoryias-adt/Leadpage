@@ -8,7 +8,7 @@ import { formatBRL, formatPoints } from '@/lib/points';
 import { Icon } from './Icons';
 import { PlaceAvatar, RewardImage } from './Visual';
 
-export type MenuView = { id: string; name: string; description: string | null; priceCents: number; promoCents: number | null; imageUrl: string | null };
+export type MenuView = { id: string; name: string; description: string | null; priceCents: number; promoCents: number | null; imageUrl: string | null; stock?: number | null }; // stock: unidades que ainda saem pela oferta (null = sem limite)
 export type MenuGroup = { name: string; items: MenuView[] };
 export type PickupUnit = { id: string; name: string; address: string | null };
 
@@ -22,6 +22,12 @@ function Price({ item, className = '' }: { item: MenuView; className?: string })
       {hasPromo(item) && <span className="ml-2 text-sm font-medium text-slate-400 line-through">{formatBRL(item.priceCents)}</span>}
     </span>
   );
+}
+
+/** "restam N" da oferta com estoque: numa linha própria, para não apertar o preço e o contador. */
+function StockTag({ item }: { item: MenuView }) {
+  if (item.stock == null) return null;
+  return <span className="mt-1 inline-block w-fit rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-bold text-rose-700" data-testid="stock-tag">restam {item.stock}</span>;
 }
 
 function Stepper({ qty, name, onMinus, onPlus, canPlus }: { qty: number; name: string; onMinus: () => void; onPlus: () => void; canPlus: boolean }) {
@@ -53,6 +59,7 @@ export function OrderMenu({
   featured,
   groups,
   backHref,
+  preselectId,
 }: {
   restaurantId: string;
   placeName: string;
@@ -66,6 +73,7 @@ export function OrderMenu({
   featured: MenuView | null;
   groups: MenuGroup[];
   backHref: string;
+  preselectId?: string;
 }) {
   const [state, action, pending] = useActionState(placeOrderAction, {});
   const [qty, setQty] = useState<Record<string, number>>({});
@@ -92,12 +100,21 @@ export function OrderMenu({
     restored.current = true;
   }, [storageKey]);
 
+  // Vindo do cartão "Pedir" da lista de Lugares: já põe 1 unidade da oferta na sacola.
+  const preselected = useRef(false);
+  useEffect(() => {
+    if (!preselectId || preselected.current) return;
+    preselected.current = true;
+    setQty((q) => (q[preselectId] ? q : { ...q, [preselectId]: 1 }));
+  }, [preselectId]);
+
   const lines = useMemo(() => all.filter((i) => (qty[i.id] ?? 0) > 0).map((i) => ({ item: i, qty: qty[i.id] })), [all, qty]);
   const count = lines.reduce((n, l) => n + l.qty, 0);
   const total = lines.reduce((n, l) => n + unitPrice(l.item) * l.qty, 0);
   const points = orderPoints(total, pointsPerReal);
 
-  const add = (id: string) => setQty((q) => ({ ...q, [id]: Math.min(MAX_QTY_PER_ITEM, (q[id] ?? 0) + 1) }));
+  const cap = (id: string) => Math.min(MAX_QTY_PER_ITEM, byId.get(id)?.stock ?? MAX_QTY_PER_ITEM);
+  const add = (id: string) => setQty((q) => ({ ...q, [id]: Math.min(cap(id), (q[id] ?? 0) + 1) }));
   const sub = (id: string) =>
     setQty((q) => {
       const next = { ...q, [id]: (q[id] ?? 0) - 1 };
@@ -196,9 +213,10 @@ export function OrderMenu({
                   {hasPromo(featured) && <span className="shrink-0 rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">−{promoPct(featured)}%</span>}
                 </div>
                 {featured.description && <p className="mt-1 line-clamp-3 text-sm text-slate-600">{featured.description}</p>}
-                <div className="mt-3 flex items-center justify-between gap-3">
+                <StockTag item={featured} />
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                   <Price item={featured} className="text-2xl" />
-                  <AddControl id={featured.id} name={featured.name} qty={qty[featured.id] ?? 0} add={add} sub={sub} />
+                  <AddControl id={featured.id} name={featured.name} qty={qty[featured.id] ?? 0} add={add} sub={sub} max={cap(featured.id)} />
                 </div>
               </div>
             </article>
@@ -215,9 +233,10 @@ export function OrderMenu({
                   <div className="flex min-w-0 flex-1 flex-col">
                     <p className="font-bold leading-snug text-slate-900 [overflow-wrap:anywhere]">{i.name}</p>
                     {i.description && <p className="line-clamp-2 text-sm text-slate-500">{i.description}</p>}
-                    <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+                    <StockTag item={i} />
+                    <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-2">
                       <Price item={i} />
-                      <AddControl id={i.id} name={i.name} qty={qty[i.id] ?? 0} add={add} sub={sub} />
+                      <AddControl id={i.id} name={i.name} qty={qty[i.id] ?? 0} add={add} sub={sub} max={cap(i.id)} />
                     </div>
                   </div>
                   <RewardImage src={i.imageUrl} name={i.name} className="h-24 w-24 shrink-0 self-start rounded-2xl" />
@@ -277,7 +296,7 @@ export function OrderMenu({
                           <p className="font-bold leading-snug text-slate-900">{item.name}</p>
                           <Price item={item} className="text-sm" />
                         </div>
-                        <Stepper qty={q} name={item.name} onMinus={() => sub(item.id)} onPlus={() => add(item.id)} canPlus={q < MAX_QTY_PER_ITEM} />
+                        <Stepper qty={q} name={item.name} onMinus={() => sub(item.id)} onPlus={() => add(item.id)} canPlus={q < cap(item.id)} />
                       </li>
                     ))}
                   </ul>
@@ -359,7 +378,7 @@ export function OrderMenu({
 }
 
 /** "Adicionar" vira o contador depois do primeiro toque. */
-function AddControl({ id, name, qty, add, sub }: { id: string; name: string; qty: number; add: (id: string) => void; sub: (id: string) => void }) {
+function AddControl({ id, name, qty, add, sub, max }: { id: string; name: string; qty: number; add: (id: string) => void; sub: (id: string) => void; max: number }) {
   if (qty === 0) {
     return (
       <button type="button" onClick={() => add(id)} className="glass-button btn-sm !w-auto" aria-label={`Adicionar ${name} à sacola`}>
@@ -367,5 +386,5 @@ function AddControl({ id, name, qty, add, sub }: { id: string; name: string; qty
       </button>
     );
   }
-  return <Stepper qty={qty} name={name} onMinus={() => sub(id)} onPlus={() => add(id)} canPlus={qty < MAX_QTY_PER_ITEM} />;
+  return <Stepper qty={qty} name={name} onMinus={() => sub(id)} onPlus={() => add(id)} canPlus={qty < max} />;
 }
