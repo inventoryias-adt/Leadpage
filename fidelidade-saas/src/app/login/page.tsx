@@ -12,7 +12,7 @@ export default async function LoginPage() {
     <main className="flex min-h-screen items-center justify-center p-5">
       <div className="glass-panel w-full max-w-md p-8">
         <h1 className="mb-1 text-2xl font-bold text-primary">Entrar no painel</h1>
-        <p className="mb-6 text-sm text-slate-500">Acesso do restaurante.</p>
+        <p className="mb-6 text-sm text-slate-500">Acesso do estabelecimento.</p>
         <LoginForm />
         <p className="mt-6 text-center text-sm text-slate-600">
           Ainda não tem conta? <Link href="/#assinar" className="font-semibold text-electric-600">Assinar</Link>

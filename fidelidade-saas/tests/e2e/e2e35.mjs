@@ -39,7 +39,12 @@ console.log('3. sessão válida passa; token de outro tipo não abre o painel do
 const o = await (await b.newContext({ viewport: { width: 1100, height: 800 } })).newPage();
 await o.goto(BASE + '/login'); await o.fill('#email', 'ze@burger.com'); await o.fill('#password', 'senha-segura-1'); await o.click('button[type=submit]'); await o.waitForURL('**/dashboard**');
 await o.goto(BASE + '/dashboard/caixa'); await o.waitForSelector('#amount');
-const nf = await ctx.request.get(BASE + '/nada-aqui'); assert.equal(nf.status(), 404);
+// o servidor de desenvolvimento compila a página 404 na primeira visita e pode derrubar a conexão nessa hora: tenta de novo
+let nf;
+for (let i = 0; i < 3; i++) {
+  try { nf = await ctx.request.get(BASE + '/nada-aqui'); break; } catch (e) { if (i === 2) throw e; await new Promise((r) => setTimeout(r, 3000)); }
+}
+assert.equal(nf.status(), 404);
 await p.goto(BASE + '/nada-aqui'); await p.waitForSelector('text=Página não encontrada'); await p.waitForSelector('a:has-text("Ver lugares")');
 console.log('4. dono logado segue entrando no painel; página 404 própria com a marca OK');
 await b.close();
