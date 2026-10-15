@@ -2,7 +2,7 @@ import 'server-only';
 import { Prisma } from '@prisma/client';
 import { prisma } from './db';
 import { dayKeyBR, periodRange } from './challenges';
-import { CHECKIN_RADIUS_M, formatDistance, validCoords } from './geo';
+import { validCoords } from './geo';
 import { nearestUnit } from './units';
 import { startOfMonthBR } from './points';
 import { newVoucherCode } from './tokens';
@@ -176,9 +176,10 @@ export async function performCheckIn(customerId: string, restaurantId: string, l
   if (!validCoords(lat, lng)) throw new BusinessError('Não conseguimos ler a sua localização. Tente de novo.');
 
   const near = nearestUnit(units, { lat, lng: lng as number })!;
-  if (near.meters > CHECKIN_RADIUS_M) {
-    const where = units.length > 1 ? 'da unidade mais próxima' : 'do local';
-    throw new BusinessError(`Você está a ${formatDistance(near.meters)} ${where}. Chegue mais perto para fazer o check-in.`);
+  if (near.meters > restaurant.checkInRadiusM) {
+    // De propósito sem a distância: quem está de fora não pode ir "calibrando" até a borda do raio.
+    const where = units.length > 1 ? 'em uma das unidades' : 'no estabelecimento';
+    throw new BusinessError(`Não foi possível confirmar que você está ${where}. Faça o check-in estando dentro do local.`);
   }
 
   return prisma.$transaction(async (tx) => {

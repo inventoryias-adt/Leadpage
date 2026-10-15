@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
+import { parseImageDataUrl } from '@/lib/images';
 import { isValidCpf, normalizePhone, onlyDigits } from '@/lib/br';
 import { BusinessError, creditClaim, performCheckIn, redeemItems, redeemReward, type BagItem } from '@/lib/claims';
 import { TERMS_REQUIRED_MESSAGE, termsAccepted, termsRecord } from '@/lib/legal';
@@ -214,4 +215,31 @@ export async function redeemBagAction(_: BagState, formData: FormData): Promise<
     if (!(e instanceof BusinessError)) throw e;
     return { error: e.message };
   }
+}
+
+/** Troca a foto de perfil do cliente logado (a foto já chega reduzida pelo navegador). */
+export async function saveProfilePhoto(_: FormState, formData: FormData): Promise<FormState> {
+  const customer = await getCustomer();
+  if (!customer) return { error: 'Entre na sua conta para trocar a foto.' };
+  if (!(await allow(`photo:${customer.id}`, 20, 3600))) return { error: TOO_MANY };
+  try {
+    const { mime, data } = parseImageDataUrl(String(formData.get('photoData') ?? ''));
+    await prisma.customerPhoto.upsert({
+      where: { customerId: customer.id },
+      create: { customerId: customer.id, mime, data },
+      update: { mime, data },
+    });
+  } catch (e) {
+    if (e instanceof BusinessError) return { error: e.message };
+    throw e;
+  }
+  revalidatePath('/perfil');
+  return { ok: 'Foto atualizada.' };
+}
+
+export async function removeProfilePhoto(): Promise<void> {
+  const customer = await getCustomer();
+  if (!customer) return;
+  await prisma.customerPhoto.deleteMany({ where: { customerId: customer.id } });
+  revalidatePath('/perfil');
 }

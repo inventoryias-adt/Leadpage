@@ -16,6 +16,7 @@ import { UFS, cepDigits, composeAddress } from '@/lib/address';
 import { BusinessError, creditClaimWith } from '@/lib/claims';
 import { isValidCpf, onlyDigits, shortName } from '@/lib/br';
 import { TOO_MANY, allow } from '@/lib/rate-limit';
+import { CHECKIN_RADIUS_OPTIONS } from '@/lib/geo';
 import { saveImageFromDataUrl } from '@/lib/images';
 import { downloadWithFallback } from '@/lib/product-images';
 import { describeChallenge } from '@/lib/challenges';
@@ -393,6 +394,7 @@ export async function saveCategory(category: string, categoryOther: string): Pro
 
 const engagementSchema = z.object({
   checkInPoints: z.coerce.number().int('Use um número inteiro.').min(0).max(10_000),
+  checkInRadiusM: z.coerce.number().int().refine((v) => CHECKIN_RADIUS_OPTIONS.some((o) => o.value === v), 'Escolha uma das distâncias da lista.'),
   referralPoints: z.coerce.number().int('Use um número inteiro.').min(0).max(100_000),
 });
 

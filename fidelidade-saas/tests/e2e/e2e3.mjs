@@ -123,7 +123,7 @@ const m = await mctx.newPage();
 await login(m);
 await m.goto(`${BASE}/lugar/${rid}`); await wait(m, 2500);
 await m.click('button:has-text("Fazer check-in")');
-await m.waitForSelector('text=da unidade mais próxima');
+await m.waitForSelector('text=Não foi possível confirmar que você está em uma das unidades');
 await mctx.close();
 console.log('4. QR/horários por unidade e check-in na unidade mais próxima OK');
 

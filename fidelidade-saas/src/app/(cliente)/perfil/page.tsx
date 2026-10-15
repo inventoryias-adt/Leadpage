@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { customerLogout } from '@/app/actions/customer';
 import { Brand } from '@/components/Brand';
 import { PointsActivity } from '@/components/PointsActivity';
+import { ProfilePhoto } from '@/components/ProfilePhoto';
 import { Reveal } from '@/components/Reveal';
 import { Icon } from '@/components/Icons';
 import { LegalLinks } from '@/components/LegalLinks';
@@ -10,7 +11,7 @@ import { PlaceAvatar } from '@/components/Visual';
 import { formatPhone, maskCpf } from '@/lib/br';
 import { prisma } from '@/lib/db';
 import { PERIODS, activitySeries, activitySince, type Activity, type Period } from '@/lib/activity';
-import { imageUrl } from '@/lib/images';
+import { imageUrl, profilePhotoUrl } from '@/lib/images';
 import { appUrl } from '@/lib/payments';
 import { formatPoints } from '@/lib/points';
 import { requireCustomer } from '@/lib/session';
@@ -22,7 +23,7 @@ export const dynamic = 'force-dynamic';
 export default async function PerfilPage() {
   const customer = await requireCustomer('/perfil');
 
-  const [wallets, pending, usedCount, acceptors, movements, upcomingBookings] = await Promise.all([
+  const [wallets, pending, usedCount, acceptors, movements, upcomingBookings, photo] = await Promise.all([
     prisma.wallet.findMany({
       where: { customerId: customer.id },
       include: { restaurant: { select: { id: true, name: true, logoImageId: true, referralPoints: true, subscriptionStatus: true, pointsShareOut: true } } },
@@ -43,6 +44,7 @@ export default async function PerfilPage() {
       take: 3000,
     }),
     prisma.booking.count({ where: { customerId: customer.id, status: { in: ['PENDING', 'CONFIRMED'] }, endsAt: { gt: new Date() } } }),
+    prisma.customerPhoto.findUnique({ where: { customerId: customer.id }, select: { updatedAt: true } }),
   ]);
   const rows = movements.map((m) => ({ at: m.createdAt, type: m.type as 'EARN' | 'REDEEM', points: m.points }));
   const activity = Object.fromEntries(PERIODS.map((p) => [p, activitySeries(rows, p)])) as Record<Period, Activity>;
@@ -59,19 +61,10 @@ export default async function PerfilPage() {
     <main className="space-y-6 p-4 sm:p-6 md:pt-8 lg:grid lg:grid-cols-5 lg:items-start lg:gap-6 lg:space-y-0">
       <Reveal as="header" from="top" className="lg:col-span-5">
         <div className="md:hidden"><Brand href="/carteira" /></div>
-        <div className="mt-5 flex items-center gap-4">
-          <span
-            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg text-2xl font-semibold text-white"
-            style={{ background: '#0F1F3D' }}
-            aria-hidden
-          >
-            {customer.name.trim().charAt(0).toUpperCase()}
-          </span>
-          <div className="min-w-0">
-            <h1 className="truncate text-2xl font-extrabold tracking-tight text-primary">{customer.name}</h1>
-            <p className="text-sm text-slate-500">CPF {maskCpf(customer.cpf)} · {formatPhone(customer.phone)}</p>
-          </div>
-        </div>
+        <ProfilePhoto name={customer.name} photoUrl={profilePhotoUrl(photo?.updatedAt)}>
+          <h1 className="truncate text-2xl font-extrabold tracking-tight text-primary">{customer.name}</h1>
+          <p className="text-sm text-slate-500">CPF {maskCpf(customer.cpf)} · {formatPhone(customer.phone)}</p>
+        </ProfilePhoto>
       </Reveal>
 
       <Reveal from="zoom" className="lg:col-span-5">

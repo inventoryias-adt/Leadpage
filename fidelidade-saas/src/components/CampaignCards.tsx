@@ -22,7 +22,7 @@ const headline = (c: CampaignItem) => (c.badge ? c.badge : `+${formatPoints(c.po
 type Group = { placeId: string; placeName: string; logoUrl: string | null; items: CampaignView[] };
 
 /**
- * Campanhas rolando, uma por estabelecimento: cada cartão diz quantas o lugar tem e, ao tocar,
+ * Campanhas rolando, uma por estabelecimento: cada cartão mostra só o lugar e quantas campanhas ele tem; ao tocar,
  * abre a lista das campanhas daquele lugar (com o "como funciona" e o convite para participar).
  */
 export function CampaignCards({ items, loggedIn }: { items: CampaignView[]; loggedIn: boolean }) {
@@ -58,31 +58,26 @@ export function CampaignCards({ items, loggedIn }: { items: CampaignView[]; logg
       </div>
 
       <Carousel label="Campanhas por lugar">
-        {groups.slice(0, 16).map((g) => {
-          const top = g.items.find((i) => i.live) ?? g.items[0];
-          return (
-            <li key={g.placeId} className="w-[14.5rem] shrink-0 snap-start">
-              <button
-                type="button"
-                onClick={() => setOpen(g)}
-                className="card-link flex h-full min-h-[9.5rem] w-full flex-col justify-between gap-3 rounded-[22px] border border-slate-200 bg-white p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600"
-                aria-label={`${g.placeName}: ${g.items.length} ${g.items.length === 1 ? 'campanha' : 'campanhas'} rolando. Toque para ver`}
-              >
-                <span className="flex items-center gap-2.5">
-                  <PlaceAvatar name={g.placeName} src={g.logoUrl} size={40} />
-                  <span className="min-w-0 truncate text-sm font-bold text-slate-900">{g.placeName}</span>
-                </span>
-                <span>
-                  <span className="block text-2xl font-bold leading-none text-primary">{headline(top)}</span>
-                  <span className="mt-1 line-clamp-1 block text-xs font-medium text-slate-600">{top.title}</span>
-                </span>
-                <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-[#E8EEFB] px-3 py-1 text-xs font-bold text-electric-600">
-                  {g.items.length} {g.items.length === 1 ? 'campanha' : 'campanhas'} <Icon name="chevron" size={13} />
-                </span>
-              </button>
-            </li>
-          );
-        })}
+        {groups.slice(0, 16).map((g) => (
+          <li key={g.placeId} className="w-[14.5rem] shrink-0 snap-start">
+            <button
+              type="button"
+              onClick={() => setOpen(g)}
+              className="card-link flex h-full min-h-[8.5rem] w-full flex-col justify-between gap-4 rounded-[22px] border border-slate-200 bg-white p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600"
+              aria-label={`${g.placeName}: ${g.items.length} ${g.items.length === 1 ? 'campanha' : 'campanhas'} rolando. Toque para ver`}
+            >
+              <span className="flex items-center gap-2.5">
+                <PlaceAvatar name={g.placeName} src={g.logoUrl} size={40} />
+                <span className="min-w-0 truncate text-sm font-bold text-slate-900">{g.placeName}</span>
+              </span>
+              {/* Só a contagem: o detalhe de cada campanha fica na lista que abre ao tocar. */}
+              <span className="flex items-center justify-between gap-2">
+                <span className="text-2xl font-bold leading-none text-primary">{g.items.length} {g.items.length === 1 ? 'campanha' : 'campanhas'}</span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#E8EEFB] text-electric-600"><Icon name="chevron" size={16} /></span>
+              </span>
+            </button>
+          </li>
+        ))}
       </Carousel>
 
       {open && (
