@@ -180,7 +180,9 @@ export async function checkInAction(_: FormState, formData: FormData): Promise<F
   if (!customer) return { error: 'Entre na sua conta para fazer check-in.' };
   const restaurantId = String(formData.get('restaurantId') ?? '');
   try {
-    const { points, bonuses } = await performCheckIn(customer.id, restaurantId, Number(formData.get('lat')), Number(formData.get('lng')));
+    const rawAcc = formData.get('accuracy');
+    const accuracy = rawAcc == null || rawAcc === '' ? undefined : Number(rawAcc);
+    const { points, bonuses } = await performCheckIn(customer.id, restaurantId, Number(formData.get('lat')), Number(formData.get('lng')), accuracy);
     revalidatePath(`/lugar/${restaurantId}`);
     revalidatePath('/carteira');
     const bonus = bonuses.length ? ` + bônus do desafio (${bonuses.map((b) => `+${b.points}`).join(', ')})` : '';

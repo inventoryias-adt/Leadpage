@@ -2,7 +2,7 @@ import 'server-only';
 import { Prisma } from '@prisma/client';
 import { prisma } from './db';
 import { dayKeyBR, periodRange } from './challenges';
-import { validCoords } from './geo';
+import { maxAcceptedAccuracyM, validCoords } from './geo';
 import { nearestUnit } from './units';
 import { startOfMonthBR } from './points';
 import { newVoucherCode } from './tokens';
@@ -172,7 +172,7 @@ async function rewardReferrer(tx: Tx, referredId: string, restaurantId: string, 
 }
 
 /** Check-in por proximidade: +pontos uma vez por dia, só se o cliente estiver em alguma unidade da marca. */
-export async function performCheckIn(customerId: string, restaurantId: string, lat: unknown, lng: unknown) {
+export async function performCheckIn(customerId: string, restaurantId: string, lat: unknown, lng: unknown, accuracy?: number) {
   const restaurant = await prisma.restaurant.findUnique({ where: { id: restaurantId } });
   if (!restaurant || restaurant.subscriptionStatus !== 'ACTIVE') throw new BusinessError('Lugar indisponível.');
   if (restaurant.checkInPoints <= 0) throw new BusinessError('Este lugar não oferece pontos por check-in.');
@@ -188,6 +188,10 @@ export async function performCheckIn(customerId: string, restaurantId: string, l
     // De propósito sem a distância: quem está de fora não pode ir "calibrando" até a borda do raio.
     const where = units.length > 1 ? 'em uma das unidades' : 'no estabelecimento';
     throw new BusinessError(`Não foi possível confirmar que você está ${where}. Faça o check-in estando dentro do local.`);
+  }
+  // Dentro do raio, mas com a leitura do GPS imprecisa demais para o raio escolhido: orienta em vez de acusar (e sem números).
+  if (accuracy != null && Number.isFinite(accuracy) && accuracy > maxAcceptedAccuracyM(restaurant.checkInRadiusM)) {
+    throw new BusinessError('Sinal de GPS fraco. Vá para perto de uma janela ou da porta, espere alguns segundos e tente de novo.');
   }
 
   return prisma.$transaction(async (tx) => {

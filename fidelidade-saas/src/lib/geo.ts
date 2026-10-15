@@ -26,11 +26,31 @@ export function validCoords(lat: unknown, lng: unknown): lat is number {
  * O app NÃO mostra esse número nem a distância ao cliente (evita "chegar até a borda do raio").
  */
 export const DEFAULT_CHECKIN_RADIUS_M = 10;
-export const CHECKIN_RADIUS_OPTIONS: { value: number; label: string }[] = [
-  { value: 10, label: '10 m — só dentro da loja (padrão)' },
-  { value: 20, label: '20 m — loja pequena com GPS fraco' },
-  { value: 30, label: '30 m' },
-  { value: 50, label: '50 m — loja grande ou de esquina' },
-  { value: 100, label: '100 m — shopping ou quadra inteira' },
-  { value: 200, label: '200 m — bem flexível' },
+export const CHECKIN_RADIUS_OPTIONS: { value: number; label: string; hint: string }[] = [
+  { value: 10, label: '10 m', hint: 'Só dentro da loja (padrão). Exige o ponto da unidade bem exato.' },
+  { value: 20, label: '20 m', hint: 'Loja pequena, com GPS fraco.' },
+  { value: 30, label: '30 m', hint: 'Loja pequena que aceita um pouco da calçada.' },
+  { value: 50, label: '50 m', hint: 'Loja grande ou de esquina.' },
+  { value: 75, label: '75 m', hint: 'Loja grande com estacionamento.' },
+  { value: 100, label: '100 m', hint: 'Shopping ou quadra inteira.' },
+  { value: 150, label: '150 m', hint: 'Shopping grande ou centro comercial.' },
+  { value: 200, label: '200 m', hint: 'Bem flexível: aceita quem está no entorno.' },
+  { value: 300, label: '300 m', hint: 'Área aberta: feira, praça, evento.' },
+  { value: 400, label: '400 m', hint: 'Área aberta grande.' },
+  { value: 500, label: '500 m', hint: 'O máximo. Aceita quem está a uns cinco minutos a pé.' },
 ];
+
+/** Posição da escala de um raio (para o controle deslizante); se o valor não está na escala, a mais próxima abaixo. */
+export function radiusIndex(radiusM: number) {
+  let idx = 0;
+  CHECKIN_RADIUS_OPTIONS.forEach((o, i) => { if (o.value <= radiusM) idx = i; });
+  return idx;
+}
+
+/**
+ * Precisão (margem de erro do GPS) que o check-in aceita: nunca menos que 50 m e, quando o dono escolhe um raio maior,
+ * acompanha o raio. Assim um computador, que acha a posição pelo Wi-Fi com centenas de metros de margem, consegue num lugar de raio
+ * grande; já num raio de 10 m a leitura precisa ser boa. A posição ainda precisa cair dentro do raio.
+ */
+export const MIN_ACCEPTED_ACCURACY_M = 50;
+export const maxAcceptedAccuracyM = (radiusM: number) => Math.max(MIN_ACCEPTED_ACCURACY_M, radiusM);

@@ -6,6 +6,7 @@ import {
   AddChallengeForm,
   AddPromotionForm,
   AddInteractionForm,
+  InteractionRow,
   AddRewardForm,
   BasicsForm,
   BillingPortalForm,
@@ -285,7 +286,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
         <ul className="mb-4 divide-y divide-slate-200/70">
           {interactions.length === 0 && <li className="py-2 text-sm text-slate-500">Nenhuma interação cadastrada.</li>}
           {interactions.map((i) => (
-            <PointsRow key={i.id} text={i.label} points={i.points} remove={<RemoveButton action={removeInteraction} id={i.id} label={i.label} />} />
+            <InteractionRow key={i.id} id={i.id} label={i.label} points={i.points} remove={<RemoveButton action={removeInteraction} id={i.id} label={i.label} />} />
           ))}
         </ul>
         <p className="mb-2 text-sm font-bold text-slate-800">Nova interação</p>

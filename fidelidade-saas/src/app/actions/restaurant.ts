@@ -186,6 +186,19 @@ export async function addInteraction(_: FormState, formData: FormData): Promise<
   return { ok: 'Interação adicionada.' };
 }
 
+/** Edita a descrição e os pontos de uma interação já cadastrada, sem apagar. Lançamentos antigos mantêm os pontos da época. */
+export async function updateInteraction(_: FormState, formData: FormData): Promise<FormState> {
+  const restaurant = await requirePaidRestaurant();
+  const id = String(formData.get('id') ?? '');
+  const parsed = interactionSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return fail(firstIssue(parsed.error), formData);
+  const done = await prisma.interactionRule.updateMany({ where: { id, restaurantId: restaurant.id }, data: parsed.data });
+  if (done.count !== 1) return { error: 'Interação não encontrada.' };
+  revalidatePath('/dashboard', 'layout');
+  revalidatePath('/lugar', 'layout');
+  return { ok: 'Interação atualizada.' };
+}
+
 export async function removeInteraction(formData: FormData) {
   const restaurant = await requirePaidRestaurant();
   await prisma.interactionRule.deleteMany({

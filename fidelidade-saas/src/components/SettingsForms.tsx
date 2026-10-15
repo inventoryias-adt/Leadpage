@@ -5,6 +5,7 @@ import { startTransition, useActionState, useEffect, useId, useRef, useState } f
 import {
   addChallenge,
   addInteraction,
+  updateInteraction,
   addPromotion,
   addReward,
   finishOnboarding,
@@ -28,7 +29,7 @@ import { defaultSchedule, parseSchedule, type Schedule } from '@/lib/hours';
 import { HoursGrid } from './HoursGrid';
 import { UnitLocationField } from './UnitLocationField';
 import { Icon } from './Icons';
-import { CHECKIN_RADIUS_OPTIONS } from '@/lib/geo';
+import { CHECKIN_RADIUS_OPTIONS, radiusIndex } from '@/lib/geo';
 import { ImageUpload, shrinkImage } from './ImageUpload';
 import { WebImageSearch } from './WebImageSearch';
 import { FormMessage, SubmitButton } from './ui';
@@ -69,6 +70,58 @@ export function RulesForm({ defaults }: { defaults: { pointsPerReal: number; max
       <FormMessage state={state} />
       <SubmitButton pendingText="Salvando…">Salvar regras</SubmitButton>
     </form>
+  );
+}
+
+/**
+ * Linha de uma interação que dá pontos, com "Editar": muda a descrição e os pontos no lugar, sem apagar e criar de novo.
+ * O botão de remover vem de fora (formulário do servidor).
+ */
+export function InteractionRow({ id, label, points, remove }: { id: string; label: string; points: number; remove: React.ReactNode }) {
+  const [state, action] = useActionState(updateInteraction, {});
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (state.ok) setOpen(false);
+  }, [state.ok]);
+  return (
+    <li className="py-3" data-testid="interaction-row">
+      <div className="flex items-center gap-3">
+        <span className="flex h-10 min-w-[3.5rem] shrink-0 items-center justify-center rounded-lg bg-[#E8EEFB] px-2 text-sm font-bold tabular-nums text-electric-600">+{points.toLocaleString('pt-BR')}</span>
+        <span className="min-w-0 flex-1 text-sm leading-snug text-slate-800">{label}</span>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-label={`Editar ${label}`}
+          title="Editar"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-transparent text-slate-400 transition-colors hover:border-slate-200 hover:bg-slate-50 hover:text-slate-700"
+        >
+          <Icon name="cog" size={18} />
+        </button>
+        {remove}
+      </div>
+      {open && (
+        <form action={action} className="mt-3 space-y-3 rounded-lg border border-slate-200 bg-white p-3">
+          <input type="hidden" name="id" value={id} />
+          <div className="grid gap-3 sm:grid-cols-[1fr_8rem]">
+            <div>
+              <label className="glass-label" htmlFor={`i-label-${id}`}>Descrição</label>
+              <input id={`i-label-${id}`} name="label" defaultValue={state.values?.label ?? label} className="glass-input" required maxLength={80} />
+            </div>
+            <div>
+              <label className="glass-label" htmlFor={`i-pts-${id}`}>Pontos</label>
+              <input id={`i-pts-${id}`} name="points" type="number" min={1} inputMode="numeric" defaultValue={state.values?.points ?? points} className="glass-input" required />
+            </div>
+          </div>
+          <p className="text-xs text-slate-500">A mudança vale daqui para frente; o que o cliente já ganhou não muda.</p>
+          <FormMessage state={state} />
+          <div className="flex gap-2">
+            <SubmitButton pendingText="Salvando…" className="btn-sm">Salvar</SubmitButton>
+            <button type="button" className="glass-button-ghost btn-sm" onClick={() => setOpen(false)}>Cancelar</button>
+          </div>
+        </form>
+      )}
+    </li>
   );
 }
 
@@ -356,6 +409,41 @@ export function IdentityForm({ defaults, placeName, supportEnv }: { defaults: Id
   );
 }
 
+/**
+ * Distância máxima do check-in: um controle deslizante sobre uma escala (10, 20, 30, 50, 75, 100… até 500 m), em vez de uma lista.
+ * O servidor guarda os metros (`checkInRadiusM`); o `#e-rad` guarda a posição na escala.
+ */
+function RadiusSlider({ initial }: { initial: number }) {
+  const last = CHECKIN_RADIUS_OPTIONS.length - 1;
+  const [idx, setIdx] = useState(radiusIndex(initial));
+  const cur = CHECKIN_RADIUS_OPTIONS[idx];
+  return (
+    <div>
+      <div className="flex items-end justify-between gap-3">
+        <label className="glass-label !mb-0" htmlFor="e-rad">Distância máxima do check-in</label>
+        <output htmlFor="e-rad" className="text-2xl font-extrabold tabular-nums text-primary" data-testid="radius-value">{cur.label}</output>
+      </div>
+      <input type="hidden" name="checkInRadiusM" value={cur.value} />
+      <input
+        id="e-rad"
+        type="range"
+        min={0}
+        max={last}
+        step={1}
+        value={idx}
+        onChange={(e) => setIdx(Number(e.target.value))}
+        aria-valuetext={cur.label}
+        className="mt-3 h-2 w-full cursor-pointer accent-electric-500"
+      />
+      <div className="mt-1 flex justify-between text-[11px] font-medium text-slate-500" aria-hidden>
+        {[0, 3, 5, 7, last].map((i) => <span key={i}>{CHECKIN_RADIUS_OPTIONS[i].label}</span>)}
+      </div>
+      <p className="mt-2 text-sm font-semibold text-slate-700" data-testid="radius-hint">{cur.hint}</p>
+      <p className="mt-1 text-xs text-slate-500">Distância entre o cliente e o ponto da sua unidade no mapa. O cliente não vê esse número nem quanto falta. Quanto maior o raio, mais o check-in aceita uma leitura de GPS imprecisa (como a de um computador, sem GPS). Se os clientes reclamarem que o check-in não funciona (loja grande, shopping, sinal fraco), aumente; confira também se o ponto da unidade está exato.</p>
+    </div>
+  );
+}
+
 export function EngagementForm({ defaults }: { defaults: { checkInPoints: number; checkInRadiusM: number; referralPoints: number; birthdayPoints: number } }) {
   const [state, action] = useActionState(saveEngagement, {});
   return (
@@ -367,11 +455,7 @@ export function EngagementForm({ defaults }: { defaults: { checkInPoints: number
           <p className="mt-1 text-xs text-slate-500">O cliente confirma que está no local pelo GPS. Use 0 para desligar.</p>
         </div>
         <div className="sm:col-span-2">
-          <label className="glass-label" htmlFor="e-rad">Distância máxima do check-in</label>
-          <select id="e-rad" name="checkInRadiusM" className="glass-input" defaultValue={state.values?.checkInRadiusM ?? String(defaults.checkInRadiusM)}>
-            {CHECKIN_RADIUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-          <p className="mt-1 text-xs text-slate-500">Distância entre o cliente e o ponto da sua unidade no mapa. O cliente não vê esse número nem quanto falta. Para valer só dentro da loja, use 10 m e confira se o ponto da unidade está exato; se os clientes reclamarem que o check-in não funciona (loja grande, shopping, sinal fraco), aumente.</p>
+          <RadiusSlider initial={Number(state.values?.checkInRadiusM ?? defaults.checkInRadiusM)} />
         </div>
         <div>
           <label className="glass-label" htmlFor="e-rf">Pontos por indicação</label>
