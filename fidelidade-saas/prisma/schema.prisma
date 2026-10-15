@@ -177,6 +177,17 @@ model Customer {
   addresses         CustomerAddress[]
   promotionUses     PromotionUse[]
   bookings          Booking[]
+  photo             CustomerPhoto?
+}
+
+/// Foto de perfil do cliente. Fica em tabela própria para não pesar a consulta da sessão; só o próprio cliente a vê.
+model CustomerPhoto {
+  customerId String   @id
+  mime       String
+  data       Bytes
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 }
 
 /// Uma carteira por cliente por restaurante.

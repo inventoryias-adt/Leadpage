@@ -12,21 +12,29 @@ function sniffMime(buf: Buffer): 'image/jpeg' | 'image/png' | 'image/webp' | nul
   return null;
 }
 
-/**
- * Salva a foto enviada pelo formulário (data URL gerada no navegador) e devolve o id.
- * Se `previousId` existir, a foto antiga é apagada.
- */
-export async function saveImageFromDataUrl(restaurantId: string, dataUrl: string, previousId?: string | null) {
+/** Valida a foto enviada pelo formulário (data URL gerada no navegador): confere o tipo real e o tamanho. */
+export function parseImageDataUrl(dataUrl: string) {
   const match = /^data:image\/(?:jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl);
   if (!match) throw new BusinessError('Imagem inválida. Use JPG, PNG ou WebP.');
   const data = Buffer.from(match[1], 'base64');
   if (data.length > MAX_BYTES) throw new BusinessError('Imagem muito grande. Escolha uma foto menor.');
   const mime = sniffMime(data);
   if (!mime) throw new BusinessError('Imagem inválida. Use JPG, PNG ou WebP.');
+  return { mime, data };
+}
 
+/**
+ * Salva a foto enviada pelo formulário (data URL gerada no navegador) e devolve o id.
+ * Se `previousId` existir, a foto antiga é apagada.
+ */
+export async function saveImageFromDataUrl(restaurantId: string, dataUrl: string, previousId?: string | null) {
+  const { mime, data } = parseImageDataUrl(dataUrl);
   const image = await prisma.image.create({ data: { restaurantId, mime, data } });
   if (previousId) await prisma.image.deleteMany({ where: { id: previousId, restaurantId } });
   return image.id;
 }
 
 export const imageUrl = (id: string | null | undefined) => (id ? `/api/imagem/${id}` : null);
+
+/** Endereço da foto de perfil do cliente. O `?v=` (hora da última troca) faz o navegador baixar de novo quando a foto muda. */
+export const profilePhotoUrl = (updatedAt: Date | null | undefined) => (updatedAt ? `/api/perfil/foto?v=${updatedAt.getTime()}` : null);
