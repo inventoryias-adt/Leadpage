@@ -400,6 +400,7 @@ Decisões em aberto: modelo de recebimento (Stripe Connect com Pix e repasse a c
 - **É dado pessoal, então não é pública**: `/api/perfil/foto` só entrega a foto ao próprio cliente logado (401 sem login, 404 sem foto). O endereço leva `?v=` com a hora da troca, então o navegador guarda a foto e baixa de novo ao trocar. Por enquanto só o próprio cliente a vê (no Perfil); se um dia o estabelecimento for mostrar a foto do cliente, isso é uma decisão nova de privacidade (e de texto na Política de Privacidade).
 - **Deploy**: a migração é só uma tabela nova, mas precisa estar no banco de produção **antes** do deploy do código.
 - Teste: `e2e36` (sem foto, escolher, recarregar, trocar, não pública, arquivo que não é imagem, remover).
+- **Permissões em produção (migration `0026_foto_do_cliente_permissoes`)**: no Supabase de produção as tabelas pertencem ao papel `fidelize_app` (o do app) e têm RLS ligado sem políticas. Uma tabela criada pelo SQL do painel/MCP nasce com dono `postgres` e o app recebe `permission denied` (foi o erro na tela "Algo deu errado" do Perfil logo após o deploy do PR #51). **Toda migração nova aplicada em produção deve terminar com** `ALTER TABLE "X" OWNER TO fidelize_app; ALTER TABLE "X" ENABLE ROW LEVEL SECURITY; REVOKE ALL ON TABLE "X" FROM anon, authenticated, service_role;` e conferir com `set local role fidelize_app; select count(*) from "X";`.
 
 ## Copiar o Instagram do lugar (migration: nenhuma)
 
