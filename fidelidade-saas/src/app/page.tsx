@@ -119,7 +119,7 @@ export default function LandingPage() {
       <section className="grid items-center gap-10 px-5 py-12 sm:px-8 md:grid-cols-[1.1fr_1fr] md:py-16">
         <div>
           <span className="glass-chip enter-top mb-6 !px-3 !py-1.5 !text-[13px]" style={d(0)}>
-            Clube de pontos para restaurantes, salões, clínicas e comércios
+            Clube de pontos para o seu comércio
           </span>
           <h1 className="enter-top mb-5 text-4xl font-semibold leading-[1.05] text-primary md:text-6xl" style={d(120)}>
             Seu cliente volta,

@@ -386,3 +386,9 @@ Decisões em aberto: modelo de recebimento (Stripe Connect com Pix e repasse a c
 
 - **Testes de tela dentro do repositório** (`tests/e2e/`): `e2e.mjs` (cria os dados) e `e2e2` a `e2e35`, em Playwright. Rodam contra um app em `http://localhost:3000` e o Postgres local `fidelidade` com `tests/e2e/run.sh` (todos, nessa ordem) ou `tests/e2e/run.sh e2e12 e2e31` (só alguns, depois do `e2e.mjs`). Variáveis: `CHROMIUM_PATH` (navegador), `DEV_MAIL_FILE` (onde o app grava os e-mails de teste). Prints e logs saem em `tests/e2e/out/` (fora do git). Use `next dev`: os pagamentos de mentira só existem fora de produção.
 - **CI** (`.github/workflows/ci.yml`, em todo PR e push na `main`): job `qualidade` (instala, `tsc`, testes unitários e `next build`) e job `telas` (Postgres 16, migrations, servidor de desenvolvimento e `tests/e2e/run.sh`; guarda os prints se falhar). Ao mudar uma tela, ajuste o teste dela no mesmo PR.
+
+## Prévia do link e ícone da aba (migration: nenhuma)
+
+- **Prévia ao compartilhar o link** (WhatsApp etc.): título "Fidelize — Clube de pontos para o seu comércio" e descrição voltada a comércios (`src/app/layout.tsx`). A imagem (`src/app/opengraph-image.tsx`) mostra só o logo grande e o nome: o WhatsApp exibe o quadrado central (630 × 630) da imagem, então o logo ocupa quase todo esse quadrado e a frase fica no texto ao lado, não dentro da imagem. A imagem muda de endereço (`?hash`) quando o desenho muda, então a prévia se atualiza; links já enviados mantêm a prévia antiga no WhatsApp até ele recarregar.
+- **Ícone da aba / Google**: `favicon.ico` foi para `public/` e todos os ícones usam `?v=5`. Para o navegador e o Google baixarem o ícone novo, basta aumentar esse número quando o logo mudar. O Google leva dias para atualizar o ícone nos resultados de busca.
+- Textos: "restaurantes" saiu do título, da descrição e da frase de cima da landing ("Clube de pontos para o seu comércio") e do login ("Acesso do estabelecimento").
