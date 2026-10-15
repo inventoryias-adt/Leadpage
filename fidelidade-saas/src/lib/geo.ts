@@ -20,8 +20,17 @@ export function validCoords(lat: unknown, lng: unknown): lat is number {
 }
 
 /**
- * Raio (m) para valer o check-in: o cliente precisa estar dentro do estabelecimento (a partir do endereço marcado
- * na unidade). Curto de propósito, para não valer quem só passa na frente; por isso o ponto da unidade no mapa
- * precisa ser exato. O app NÃO mostra esse número nem a distância ao cliente (evita "chegar até a borda do raio").
+ * Raio (m) para valer o check-in: o cliente precisa estar dentro do estabelecimento (a partir do ponto marcado na
+ * unidade). O padrão é curto de propósito, para não valer quem só passa na frente; por isso o ponto da unidade no
+ * mapa precisa ser exato. Cada estabelecimento escolhe o seu entre as opções abaixo (Regras → Check-in).
+ * O app NÃO mostra esse número nem a distância ao cliente (evita "chegar até a borda do raio").
  */
-export const CHECKIN_RADIUS_M = 10;
+export const DEFAULT_CHECKIN_RADIUS_M = 10;
+export const CHECKIN_RADIUS_OPTIONS: { value: number; label: string }[] = [
+  { value: 10, label: '10 m — só dentro da loja (padrão)' },
+  { value: 20, label: '20 m — loja pequena com GPS fraco' },
+  { value: 30, label: '30 m' },
+  { value: 50, label: '50 m — loja grande ou de esquina' },
+  { value: 100, label: '100 m — shopping ou quadra inteira' },
+  { value: 200, label: '200 m — bem flexível' },
+];

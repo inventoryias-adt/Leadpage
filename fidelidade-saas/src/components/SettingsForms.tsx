@@ -28,6 +28,7 @@ import { defaultSchedule, parseSchedule, type Schedule } from '@/lib/hours';
 import { HoursGrid } from './HoursGrid';
 import { UnitLocationField } from './UnitLocationField';
 import { Icon } from './Icons';
+import { CHECKIN_RADIUS_OPTIONS } from '@/lib/geo';
 import { ImageUpload, shrinkImage } from './ImageUpload';
 import { WebImageSearch } from './WebImageSearch';
 import { FormMessage, SubmitButton } from './ui';
@@ -355,7 +356,7 @@ export function IdentityForm({ defaults, placeName, supportEnv }: { defaults: Id
   );
 }
 
-export function EngagementForm({ defaults }: { defaults: { checkInPoints: number; referralPoints: number } }) {
+export function EngagementForm({ defaults }: { defaults: { checkInPoints: number; checkInRadiusM: number; referralPoints: number } }) {
   const [state, action] = useActionState(saveEngagement, {});
   return (
     <form action={action} className="space-y-4">
@@ -364,6 +365,13 @@ export function EngagementForm({ defaults }: { defaults: { checkInPoints: number
           <label className="glass-label" htmlFor="e-ci">Pontos por check-in (1 por dia)</label>
           <input id="e-ci" name="checkInPoints" type="number" min={0} inputMode="numeric" className="glass-input" defaultValue={state.values?.checkInPoints ?? defaults.checkInPoints} required />
           <p className="mt-1 text-xs text-slate-500">O cliente confirma que está no local pelo GPS. Use 0 para desligar.</p>
+        </div>
+        <div className="sm:col-span-2">
+          <label className="glass-label" htmlFor="e-rad">Distância máxima do check-in</label>
+          <select id="e-rad" name="checkInRadiusM" className="glass-input" defaultValue={state.values?.checkInRadiusM ?? String(defaults.checkInRadiusM)}>
+            {CHECKIN_RADIUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          <p className="mt-1 text-xs text-slate-500">Distância entre o cliente e o ponto da sua unidade no mapa. O cliente não vê esse número nem quanto falta. Para valer só dentro da loja, use 10 m e confira se o ponto da unidade está exato; se os clientes reclamarem que o check-in não funciona (loja grande, shopping, sinal fraco), aumente.</p>
         </div>
         <div>
           <label className="glass-label" htmlFor="e-rf">Pontos por indicação</label>

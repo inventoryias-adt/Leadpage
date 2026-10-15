@@ -78,6 +78,7 @@ model Restaurant {
   pointsPerReal      Int @default(10) // R$ 1,00 = 10 pontos
   maxRedeemsPerMonth Int @default(5) // limite de resgates por CPF por mês
   checkInPoints      Int @default(1) // pontos por check-in no local (0 desliga)
+  checkInRadiusM     Int @default(10) // distância máxima (m) do ponto da unidade para o check-in valer; o cliente nunca vê esse número
   referralPoints     Int @default(100) // pontos para quem indica um amigo que compra (0 desliga)
 
   // Agenda e reservas
