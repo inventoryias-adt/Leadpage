@@ -25,3 +25,12 @@ jobs:
           code=$(curl -sS -o resp.json -w '%{http_code}' --max-time 50 -X POST -H "Authorization: Bearer $CRON_SECRET" "$APP_URL/api/cron/lembretes")
           cat resp.json; echo
           [ "$code" = "200" ] || { echo "::error::HTTP $code"; exit 1; }
+      - name: Avisar se falhou
+        if: failure()
+        env:
+          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+        run: |
+          [ -n "$ALERT_WEBHOOK_URL" ] || exit 0
+          msg="Fidelize: o workflow de lembretes falhou ($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)"
+          curl -sS --max-time 10 -X POST -H 'Content-Type: application/json' -d "{\"text\":\"$msg\",\"content\":\"$msg\"}" "$ALERT_WEBHOOK_URL" || true
+
