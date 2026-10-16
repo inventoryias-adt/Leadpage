@@ -541,11 +541,10 @@ label:has(input[type='radio']) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Abertura do app (Splash.tsx), ~3 s                                 */
-/* O símbolo nasce no centro da tela, a câmera desliza até a moeda    */
-/* (que termina no centro) enquanto dá zoom, e tudo se dissolve no app. */
+/* Abertura do app (Splash.tsx), ~2,6 s                               */
+/* O símbolo inteiro surge no meio da tela com um fade, dá um zoom    */
+/* lento e suave enquanto o fundo se dissolve, e o app aparece por trás. */
 /* O símbolo é desenhado 4× maior e reduzido a 25% para o zoom ficar nítido. */
-/* Deslocamento da moeda até o centro, em px (símbolo de 704 px): (42,5−32)/64·704 e (47−32)/64·704. */
 /* ------------------------------------------------------------------ */
 .splash {
   position: fixed;
@@ -555,44 +554,33 @@ label:has(input[type='radio']) {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: #0b1b3a;
+  /* degradê bem leve: marinho um pouco mais claro no meio */
+  background: radial-gradient(circle at 50% 50%, #12295a 0%, #0b1b3a 70%);
   pointer-events: none;
-  animation: splash-out 0.9s cubic-bezier(0.4, 0, 0.2, 1) 2.1s forwards;
+  animation: splash-out 1.2s cubic-bezier(0.4, 0, 0.2, 1) 1.4s forwards;
 }
 html[data-splash='off'] .splash {
   display: none;
 }
-.splash-move,
 .splash-zoom {
   display: block;
   flex: none;
   width: 704px;
   height: 704px;
-}
-.splash-move {
-  animation: splash-move 2.7s both;
-}
-.splash-zoom {
-  /* centro da moeda dentro do símbolo (42,5/64 e 47/64) */
-  transform-origin: 66.4% 73.4%;
-  animation: splash-zoom 2.7s both;
+  animation: splash-zoom 2.6s cubic-bezier(0.45, 0, 0.2, 1) both;
 }
 .splash-zoom svg {
   display: block;
   animation: splash-logo-in 0.9s cubic-bezier(0.22, 0.8, 0.3, 1) both;
 }
-/* Parado no centro (o símbolo reduzido fica no meio da tela) e então a moeda desliza para o centro. */
-@keyframes splash-move {
-  0%, 44% { transform: translate(-86.6px, -123.75px); animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); }
-  100% { transform: translate(-115.5px, -165px); }
-}
+/* Cresce devagar de 25% para 40% (o símbolo todo, sem foco na moeda). */
 @keyframes splash-zoom {
-  0%, 44% { transform: scale(0.25); animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); }
-  100% { transform: scale(20); }
+  from { transform: scale(0.25); }
+  to { transform: scale(0.4); }
 }
 @keyframes splash-logo-in {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 @keyframes splash-out {
   from { opacity: 1; }
