@@ -21,6 +21,7 @@ export default function PrivacidadePage() {
         <li>Nome, CPF, telefone, e-mail e senha (guardada somente em forma de hash, nunca em texto).</li>
         <li>Carteiras e histórico: pontos ganhos e usados, compras lançadas (valor e data), prêmios resgatados, desafios, check-ins (data, unidade e distância até o local) e indicações de amigos.</li>
         <li>Localização aproximada <strong>apenas no momento</strong> em que você usa o check-in ou “Lugares perto de você”. Não guardamos o seu trajeto: do check-in fica registrado só o dia, a unidade e a distância.</li>
+        <li>Aniversário (<strong>somente dia e mês</strong>, sem o ano), se você quiser informar: serve para lembrar do seu dia e para o lugar poder lhe dar um presente de pontos. É opcional e você pode alterar ou apagar quando quiser, no seu Perfil.</li>
         <li>Preferências no aparelho (por exemplo, se você já viu o tutorial ou o aviso para adicionar o app à tela inicial).</li>
       </ul>
       <p><strong>Estabelecimentos</strong></p>

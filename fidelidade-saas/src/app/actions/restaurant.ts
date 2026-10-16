@@ -18,7 +18,7 @@ import { isValidCpf, onlyDigits, shortName } from '@/lib/br';
 import { TOO_MANY, allow } from '@/lib/rate-limit';
 import { CHECKIN_RADIUS_OPTIONS } from '@/lib/geo';
 import { saveImageFromDataUrl } from '@/lib/images';
-import { downloadWithFallback } from '@/lib/product-images';
+import { imageField, photoFromForm } from '@/lib/form-photo';
 import { describeChallenge } from '@/lib/challenges';
 import { applyPromos, endOfDayBR, promoBadge, startOfDayBR, parseTime } from '@/lib/promos';
 import { fail, type FormState } from '@/lib/form';
@@ -186,6 +186,19 @@ export async function addInteraction(_: FormState, formData: FormData): Promise<
   return { ok: 'Interação adicionada.' };
 }
 
+/** Edita a descrição e os pontos de uma interação já cadastrada, sem apagar. Lançamentos antigos mantêm os pontos da época. */
+export async function updateInteraction(_: FormState, formData: FormData): Promise<FormState> {
+  const restaurant = await requirePaidRestaurant();
+  const id = String(formData.get('id') ?? '');
+  const parsed = interactionSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return fail(firstIssue(parsed.error), formData);
+  const done = await prisma.interactionRule.updateMany({ where: { id, restaurantId: restaurant.id }, data: parsed.data });
+  if (done.count !== 1) return { error: 'Interação não encontrada.' };
+  revalidatePath('/dashboard', 'layout');
+  revalidatePath('/lugar', 'layout');
+  return { ok: 'Interação atualizada.' };
+}
+
 export async function removeInteraction(formData: FormData) {
   const restaurant = await requirePaidRestaurant();
   await prisma.interactionRule.deleteMany({
@@ -206,25 +219,6 @@ function cashCentsFrom(input: string): number | 'invalid' {
   if (!input) return 0;
   const cents = parseMoneyToCents(input);
   return cents == null || cents > MAX_BILL_CENTS ? 'invalid' : cents;
-}
-
-/** Aceita só data URL de imagem; campo vazio = sem foto nova. */
-const imageField = (formData: FormData, key: string) => {
-  const v = String(formData.get(key) ?? '');
-  return v.startsWith('data:image/') ? v : null;
-};
-
-/** Foto enviada do computador (data URL) ou escolhida na busca da web (URL de host permitido, baixada aqui). */
-async function photoFromForm(formData: FormData): Promise<string | null> {
-  const file = imageField(formData, 'imageData');
-  if (file) return file;
-  const web = String(formData.get('imageWebUrl') ?? '');
-  if (!web) return null;
-  try {
-    return await downloadWithFallback(web, String(formData.get('imageWebAlt') ?? '') || undefined);
-  } catch (e) {
-    throw new BusinessError(e instanceof Error ? e.message : 'Não foi possível baixar a imagem.');
-  }
 }
 
 export async function addReward(_: FormState, formData: FormData): Promise<FormState> {
@@ -396,6 +390,7 @@ const engagementSchema = z.object({
   checkInPoints: z.coerce.number().int('Use um número inteiro.').min(0).max(10_000),
   checkInRadiusM: z.coerce.number().int().refine((v) => CHECKIN_RADIUS_OPTIONS.some((o) => o.value === v), 'Escolha uma das distâncias da lista.'),
   referralPoints: z.coerce.number().int('Use um número inteiro.').min(0).max(100_000),
+  birthdayPoints: z.coerce.number().int('Use um número inteiro.').min(0).max(100_000),
 });
 
 export async function saveEngagement(_: FormState, formData: FormData): Promise<FormState> {

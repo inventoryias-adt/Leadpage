@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { setAppCampaign } from '@/app/actions/app-campaigns';
 import { campaignBadge, campaignWhen } from '@/lib/app-campaigns';
 import { removeChallenge, removeInteraction, removePromotion, removeReward, removeUnit, togglePromotion } from '@/app/actions/restaurant';
@@ -5,6 +6,7 @@ import {
   AddChallengeForm,
   AddPromotionForm,
   AddInteractionForm,
+  InteractionRow,
   AddRewardForm,
   BasicsForm,
   BillingPortalForm,
@@ -277,14 +279,14 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
       </Block>
 
       <Optional id="engajamento" title="Check-in e indicação de amigos" hint="Dois jeitos de fazer o cliente voltar e trazer gente nova." status={restaurant.checkInPoints > 0 || restaurant.referralPoints > 0 ? `Ligado` : 'Opcional'} open={openAll || restaurant.checkInPoints > 0 || restaurant.referralPoints > 0}>
-        <EngagementForm defaults={{ checkInPoints: restaurant.checkInPoints, checkInRadiusM: restaurant.checkInRadiusM, referralPoints: restaurant.referralPoints }} />
+        <EngagementForm defaults={{ checkInPoints: restaurant.checkInPoints, checkInRadiusM: restaurant.checkInRadiusM, referralPoints: restaurant.referralPoints, birthdayPoints: restaurant.birthdayPoints }} />
       </Optional>
 
       <Optional id="interacoes" title="Interações que dão pontos" hint="Pontuação fixa, marcada pelo caixa no lançamento (avaliação no Google, story no Instagram…)." status={interactions.length > 0 ? `${interactions.length} ${interactions.length === 1 ? 'ativa' : 'ativas'}` : 'Opcional'} open={openAll || interactions.length > 0}>
         <ul className="mb-4 divide-y divide-slate-200/70">
           {interactions.length === 0 && <li className="py-2 text-sm text-slate-500">Nenhuma interação cadastrada.</li>}
           {interactions.map((i) => (
-            <PointsRow key={i.id} text={i.label} points={i.points} remove={<RemoveButton action={removeInteraction} id={i.id} label={i.label} />} />
+            <InteractionRow key={i.id} id={i.id} label={i.label} points={i.points} remove={<RemoveButton action={removeInteraction} id={i.id} label={i.label} />} />
           ))}
         </ul>
         <p className="mb-2 text-sm font-bold text-slate-800">Nova interação</p>
@@ -393,6 +395,11 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
           <h4 className="mb-3 text-sm font-bold text-slate-800">Novo produto</h4>
           <AddRewardForm />
         </div>
+      </Block>
+      <Block id="pedidos" title="Pedidos pelo app (cardápio)" hint="Venda em reais: o cliente escolhe do cardápio, monta a sacola e retira no balcão. Você cobra no balcão e os pontos entram sozinhos ao marcar como retirado.">
+        <Link href="/dashboard/cardapio" className="glass-button-ghost !w-auto">
+          {restaurant.ordersEnabled ? 'Abrir cardápio e pedidos' : 'Montar cardápio e ligar pedidos'}
+        </Link>
       </Block>
       </Section>
 

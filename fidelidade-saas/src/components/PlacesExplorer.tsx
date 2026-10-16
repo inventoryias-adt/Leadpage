@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import type { SavedAddress } from '@/app/actions/location';
 import { distanceMeters, formatDistance } from '@/lib/geo';
-import { formatPoints } from '@/lib/points';
+import { formatBRL, formatPoints } from '@/lib/points';
 import type { CampaignItem } from '@/lib/campaigns';
 import { CampaignCards } from './CampaignCards';
 import { Carousel } from './Carousel';
@@ -13,9 +13,11 @@ import { Icon } from './Icons';
 import { Illustration } from './Illustrations';
 import { LocationBar } from './LocationBar';
 import { Reveal } from './Reveal';
-import { PlaceAvatar } from './Visual';
+import { PlaceAvatar, RewardImage } from './Visual';
 
 export type PlaceUnit = { id: string; name: string; address: string | null; lat: number | null; lng: number | null; openNow: boolean | null };
+
+export type PlaceOffer = { itemId: string; name: string; priceCents: number; promoCents: number; imageUrl: string | null; endsText: string | null; stock: number | null; stockTotal: number | null };
 
 export type PlaceCard = {
   id: string;
@@ -24,6 +26,11 @@ export type PlaceCard = {
   categoryLabel: string | null;
   logoUrl: string | null;
   pointsPerReal: number;
+  cashbackPct: number | null; // quanto do gasto volta em pontos (%)
+  hasGoogle: boolean;
+  hasInstagram: boolean;
+  hasRewards: boolean;
+  offer: PlaceOffer | null;
   balance: number | null;
   minReward: number | null;
   challenges: number;
@@ -264,11 +271,12 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses }:
         </div>
       ) : (
         <ul className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0 lg:grid-cols-3">
-          {list.map((p, i) => (
+          {list.flatMap((p, i) => [
             <Reveal as="li" key={p.id} from={i % 2 === 0 ? 'left' : 'right'} delay={(i % 4) * 50}>
               <PlaceRow p={p} />
-            </Reveal>
-          ))}
+            </Reveal>,
+            ...(p.offer ? [<Reveal as="li" key={`${p.id}-oferta`} from="bottom" className="md:col-span-2 lg:col-span-3"><OfferCard p={p} offer={p.offer} /></Reveal>] : []),
+          ])}
         </ul>
       )}
 
@@ -354,6 +362,14 @@ function PlaceRow({ p }: { p: Row }) {
           {p.meters != null && <span className="shrink-0 text-xs font-semibold text-electric-600">{formatDistance(p.meters)}</span>}
         </div>
         <p className="truncate text-xs text-slate-500">{[p.categoryLabel, p.units.length > 1 ? p.unit.name : null, p.unit.address].filter(Boolean).join(' · ')}</p>
+        {(p.hasGoogle || p.hasInstagram || p.hasRewards || p.challenges > 0) && (
+          <ul className="mt-1 flex items-center gap-2 text-slate-400" aria-label="O que este lugar oferece" data-testid="offers-icons">
+            {p.hasGoogle && <li title="Pontos por avaliar no Google" aria-label="Avaliação no Google"><Icon name="star" size={15} /></li>}
+            {p.hasInstagram && <li title="Pontos por marcar no Instagram" aria-label="Instagram"><Icon name="camera" size={15} /></li>}
+            {p.hasRewards && <li title="Tem prêmios para trocar" aria-label="Prêmios"><Icon name="gift" size={15} /></li>}
+            {p.challenges > 0 && <li title="Tem desafios" aria-label="Desafios"><Icon name="trophy" size={15} /></li>}
+          </ul>
+        )}
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           {p.unit.openNow != null && (
             <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${p.unit.openNow ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
@@ -369,10 +385,52 @@ function PlaceRow({ p }: { p: Row }) {
             <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">Você tem {formatPoints(p.balance)} pts</span>
           )}
           {p.units.length > 1 && <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-700">{p.units.length} unidades</span>}
-          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-700">{p.pointsPerReal} pts por R$ 1</span>
+          {p.cashbackPct ? (
+            <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700" data-testid="cashback-chip">{String(p.cashbackPct).replace('.', ',')}% de volta</span>
+          ) : (
+            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-700">{p.pointsPerReal} pts por R$ 1</span>
+          )}
         </div>
       </div>
       <Icon name="chevron" size={18} className="text-slate-400" />
     </Link>
+  );
+}
+
+/** Cartão de oferta (preço promocional com prazo e estoque) logo abaixo do lugar. O anel mostra quanto do estoque ainda resta. */
+function OfferCard({ p, offer }: { p: Row; offer: PlaceOffer }) {
+  const pct = offer.stock != null && offer.stockTotal ? Math.max(0, Math.min(1, offer.stock / offer.stockTotal)) : null;
+  const R = 46;
+  const C = 2 * Math.PI * R;
+  const href = `/lugar/${p.id}/pedido?item=${offer.itemId}${p.units.length > 1 ? `&unidade=${p.unit.id}` : ''}`;
+  return (
+    <section aria-label={`Oferta de ${p.name}`} data-testid="offer-card">
+      <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">{p.name} · oferta</p>
+      <div className="flex items-center justify-between gap-3 rounded-[28px] bg-emerald-50 p-5">
+        <div className="min-w-0">
+          <h3 className="text-xl font-extrabold leading-tight tracking-tight text-slate-900">{offer.name}</h3>
+          <p className="mt-1.5">
+            <span className="text-2xl font-extrabold text-slate-900">{formatBRL(offer.promoCents)}</span>
+            <span className="ml-2 text-sm font-medium text-slate-400 line-through">{formatBRL(offer.priceCents)}</span>
+          </p>
+          {offer.endsText && <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-600"><Icon name="clock" size={15} /> {offer.endsText}</p>}
+          <Link href={href} className="glass-button mt-3 !w-auto px-8" data-testid="offer-order">Pedir</Link>
+        </div>
+        <div className="relative shrink-0">
+          <div className="relative h-28 w-28">
+            {pct != null && (
+              <svg viewBox="0 0 100 100" className="absolute inset-0 -rotate-90" aria-hidden>
+                <circle cx="50" cy="50" r={R} fill="none" stroke="#D1E9D8" strokeWidth="5" />
+                <circle cx="50" cy="50" r={R} fill="none" stroke="#4ADE80" strokeWidth="5" strokeLinecap="round" strokeDasharray={`${C * pct} ${C}`} />
+              </svg>
+            )}
+            <div className="absolute inset-[7px] overflow-hidden rounded-full bg-white">
+              <RewardImage src={offer.imageUrl} name={offer.name} className="h-full w-full" />
+            </div>
+          </div>
+          {offer.stock != null && <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-800 shadow" data-testid="offer-stock">restam {offer.stock}</span>}
+        </div>
+      </div>
+    </section>
   );
 }

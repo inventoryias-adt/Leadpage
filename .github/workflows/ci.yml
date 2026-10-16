@@ -90,6 +90,9 @@ jobs:
           for p in / /login /entrar /lugares /termos /privacidade /admin/entrar /dashboard /carteira /perfil; do curl -sS -o /dev/null --max-time 120 "http://localhost:3000$p" || true; done
       - name: Testes de tela
         run: tests/e2e/run.sh
+      - name: Registro do servidor se falhou
+        if: failure()
+        run: tail -n 120 /tmp/app.log || true
       - name: Guardar prints e registros se falhou
         if: failure()
         uses: actions/upload-artifact@v4

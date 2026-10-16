@@ -3,6 +3,9 @@ export type FormState = { error?: string; ok?: string; values?: Record<string, s
 
 export type BagState = FormState & { codes?: { name: string; code: string }[] };
 
+/** Resultado de "fazer pedido": o código que o cliente mostra no balcão. */
+export type OrderState = FormState & { order?: { id: string; code: string; totalCents: number; prepMin: number } };
+
 /**
  * Erro de formulário que devolve o que o usuário digitou (menos senhas): o React 19 limpa os
  * campos não controlados após cada action, então reaproveitamos esses valores como defaultValue.

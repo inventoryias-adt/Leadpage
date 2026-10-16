@@ -1,5 +1,6 @@
 import { timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
+import { giveBirthdayGifts } from '@/lib/birthday-db';
 import { sendDueReminders } from '@/lib/booking-db';
 
 export const runtime = 'nodejs';
@@ -15,7 +16,13 @@ async function handle(req: Request) {
   const given = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
   if (!same(given, secret)) return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
   try {
-    return NextResponse.json({ ok: true, ...(await sendDueReminders()) });
+    // Os dois trabalhos são independentes: se um falhar, o outro ainda roda na próxima chamada.
+    const reminders = await sendDueReminders();
+    const gifts = await giveBirthdayGifts().catch((e) => {
+      console.error('[cron/aniversarios]', e);
+      return { birthdayGifts: 0 };
+    });
+    return NextResponse.json({ ok: true, ...reminders, ...gifts });
   } catch (e) {
     console.error('[cron/lembretes]', e);
     return NextResponse.json({ error: 'Falha ao enviar lembretes.' }, { status: 500 });

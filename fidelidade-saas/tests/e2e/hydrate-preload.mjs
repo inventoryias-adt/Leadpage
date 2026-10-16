@@ -13,7 +13,19 @@ const patch = (page) => {
   pages.push(page);
   for (const name of ['goto', 'waitForURL', 'reload']) {
     const f = page[name].bind(page);
-    page[name] = async (...a) => { const r = await f(...a); await settle(page); return r; };
+    page[name] = async (...a) => {
+      let r;
+      try {
+        r = await f(...a);
+      } catch (e) {
+        // O servidor de desenvolvimento do CI às vezes demora mais de 60 s para compilar uma rota: a segunda tentativa já a encontra compilada.
+        if (name !== 'goto' || e?.name !== 'TimeoutError') throw e;
+        console.error(`(navegação lenta: tentando de novo ${a[0]})`);
+        r = await f(...a);
+      }
+      await settle(page);
+      return r;
+    };
   }
   return page;
 };

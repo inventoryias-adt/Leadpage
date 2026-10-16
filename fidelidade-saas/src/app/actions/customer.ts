@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { parseImageDataUrl } from '@/lib/images';
 import { isValidCpf, normalizePhone, onlyDigits } from '@/lib/br';
+import { validBirthday } from '@/lib/birthday';
 import { BusinessError, creditClaim, performCheckIn, redeemItems, redeemReward, type BagItem } from '@/lib/claims';
 import { TERMS_REQUIRED_MESSAGE, termsAccepted, termsRecord } from '@/lib/legal';
 import { emailConfigured } from '@/lib/mailer';
@@ -179,7 +180,9 @@ export async function checkInAction(_: FormState, formData: FormData): Promise<F
   if (!customer) return { error: 'Entre na sua conta para fazer check-in.' };
   const restaurantId = String(formData.get('restaurantId') ?? '');
   try {
-    const { points, bonuses } = await performCheckIn(customer.id, restaurantId, Number(formData.get('lat')), Number(formData.get('lng')));
+    const rawAcc = formData.get('accuracy');
+    const accuracy = rawAcc == null || rawAcc === '' ? undefined : Number(rawAcc);
+    const { points, bonuses } = await performCheckIn(customer.id, restaurantId, Number(formData.get('lat')), Number(formData.get('lng')), accuracy);
     revalidatePath(`/lugar/${restaurantId}`);
     revalidatePath('/carteira');
     const bonus = bonuses.length ? ` + bônus do desafio (${bonuses.map((b) => `+${b.points}`).join(', ')})` : '';
@@ -242,4 +245,26 @@ export async function removeProfilePhoto(): Promise<void> {
   if (!customer) return;
   await prisma.customerPhoto.deleteMany({ where: { customerId: customer.id } });
   revalidatePath('/perfil');
+}
+
+/** Aniversário do cliente (só dia e mês). Opcional: serve para lembrar do dia e para o lugar dar um presente de pontos. */
+export async function saveBirthday(_: FormState, formData: FormData): Promise<FormState> {
+  const customer = await getCustomer();
+  if (!customer) return { error: 'Sua sessão expirou. Entre novamente.' };
+  const day = Number(formData.get('birthDay'));
+  const month = Number(formData.get('birthMonth'));
+  if (!validBirthday(day, month)) return { error: 'Escolha um dia e um mês válidos.' };
+  await prisma.customer.update({ where: { id: customer.id }, data: { birthDay: day, birthMonth: month } });
+  revalidatePath('/perfil');
+  revalidatePath('/lugar', 'layout');
+  return { ok: 'Aniversário salvo.' };
+}
+
+export async function removeBirthday(): Promise<FormState> {
+  const customer = await getCustomer();
+  if (!customer) return { error: 'Sua sessão expirou. Entre novamente.' };
+  await prisma.customer.update({ where: { id: customer.id }, data: { birthDay: null, birthMonth: null } });
+  revalidatePath('/perfil');
+  revalidatePath('/lugar', 'layout');
+  return { ok: 'Aniversário removido.' };
 }
