@@ -3,6 +3,8 @@ import { Brand } from '@/components/Brand';
 import { Reveal } from '@/components/Reveal';
 import { PlacesExplorer, type PlaceCard } from '@/components/PlacesExplorer';
 import { buildCampaigns } from '@/lib/campaigns';
+import { cashbackPct } from '@/lib/points-discount';
+import { offerEndText, promoActive } from '@/lib/orders';
 import { CATEGORIES, CATEGORY_HINT, categoryLabel } from '@/lib/categories';
 import { savedText } from '@/lib/customer-location';
 import { prisma } from '@/lib/db';
@@ -25,10 +27,14 @@ export default async function LugaresPage() {
         category: true, categoryOther: true,
         logoImageId: true,
         pointsPerReal: true,
+        pointsPerRealOff: true,
+        instagram: true,
+        ordersEnabled: true,
+        menuItems: { where: { active: true, spotlight: true, promoCents: { not: null } }, take: 1 },
         units: {
           where: { active: true },
           orderBy: { createdAt: 'asc' },
-          select: { id: true, name: true, address: true, latitude: true, longitude: true, openingSchedule: true },
+          select: { id: true, name: true, address: true, latitude: true, longitude: true, openingSchedule: true, googleReviewUrl: true },
         },
         rewards: { where: { active: true }, select: { pointsCost: true }, orderBy: { pointsCost: 'asc' }, take: 1 },
         checkInPoints: true,
@@ -44,6 +50,7 @@ export default async function LugaresPage() {
   const savedAddresses: SavedAddress[] = addresses.map((a) => ({ id: a.id, label: a.label, ...savedText(a), lat: a.latitude, lng: a.longitude }));
 
   const balances = new Map(wallets.map((w) => [w.restaurantId, w.balance]));
+  const now = new Date();
   const places: PlaceCard[] = restaurants
     .filter((r) => r.units.length > 0)
     .map((r) => ({
@@ -53,6 +60,14 @@ export default async function LugaresPage() {
       categoryLabel: categoryLabel(r.category, r.categoryOther),
       logoUrl: imageUrl(r.logoImageId),
       pointsPerReal: r.pointsPerReal,
+      cashbackPct: cashbackPct(r.pointsPerReal, r.pointsPerRealOff) || null,
+      hasGoogle: r.units.some((u) => !!u.googleReviewUrl),
+      hasInstagram: !!r.instagram,
+      hasRewards: r.rewards.length > 0,
+      offer: (() => {
+        const m = r.ordersEnabled ? r.menuItems.find((i) => promoActive(i, now)) : undefined; // oferta em destaque que ainda vale
+        return m ? { itemId: m.id, name: m.name, priceCents: m.priceCents, promoCents: m.promoCents as number, imageUrl: imageUrl(m.imageId), endsText: m.offerEndsAt ? offerEndText(m.offerEndsAt) : null, stock: m.offerStock, stockTotal: m.offerStockTotal } : null;
+      })(),
       balance: customer ? (balances.get(r.id) ?? 0) : null,
       minReward: r.rewards[0]?.pointsCost ?? null,
       challenges: r.challenges.length,

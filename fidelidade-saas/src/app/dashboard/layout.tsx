@@ -18,9 +18,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const admin = await getAdmin();
   const { unit, units } = ready ? await currentUnit(restaurant.id) : { unit: null, units: [] };
   // A aba Agenda aparece para quem cadastrou serviços ou tem uma categoria que atende com hora marcada (barbearia, estética…); a bolinha conta os pedidos aguardando.
-  const [serviceCount, pendingBookings] = ready
-    ? await Promise.all([prisma.service.count({ where: { restaurantId: restaurant.id } }), prisma.booking.count({ where: { restaurantId: restaurant.id, status: 'PENDING', endsAt: { gt: new Date() } } })])
-    : [0, 0];
+  const [serviceCount, pendingBookings, newOrders, anyOrders] = ready
+    ? await Promise.all([
+        prisma.service.count({ where: { restaurantId: restaurant.id } }),
+        prisma.booking.count({ where: { restaurantId: restaurant.id, status: 'PENDING', endsAt: { gt: new Date() } } }),
+        prisma.order.count({ where: { restaurantId: restaurant.id, status: 'RECEIVED' } }),
+        restaurant.ordersEnabled ? 1 : prisma.order.count({ where: { restaurantId: restaurant.id } }),
+      ])
+    : [0, 0, 0, 0];
+  const showOrders = restaurant.ordersEnabled || anyOrders > 0; // a aba Pedidos aparece para quem liga os pedidos ou já recebeu algum
 
   // Passo a passo inicial: só para quem já pagou. O progresso mostra o que já está feito.
   const paid = restaurant.subscriptionStatus === 'ACTIVE';
@@ -49,7 +55,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <span className="hidden h-6 w-px bg-slate-300 sm:block" />
           <p className="hidden truncate text-sm font-semibold text-slate-600 sm:block">{restaurant.name}</p>
         </div>
-        {ready && <DashboardNav variant="top" agenda={serviceCount > 0 || suggestsBooking(restaurant.category)} pending={pendingBookings} />}
+        {ready && <DashboardNav variant="top" agenda={serviceCount > 0 || suggestsBooking(restaurant.category)} pending={pendingBookings} orders={showOrders} newOrders={newOrders} />}
         <div className="flex items-center gap-2">
           {unit && units.length > 1 && <UnitSwitcher units={units.map((u) => ({ id: u.id, name: u.name }))} currentId={unit.id} />}
         {guide && (
@@ -76,7 +82,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       {/* Barra inferior no celular: o caixa usa o painel com uma mão só. */}
       {ready && (
         <div className="safe-bottom fixed inset-x-0 bottom-0 z-20 px-4 pt-2 md:hidden">
-          <DashboardNav variant="bottom" agenda={serviceCount > 0 || suggestsBooking(restaurant.category)} pending={pendingBookings} />
+          <DashboardNav variant="bottom" agenda={serviceCount > 0 || suggestsBooking(restaurant.category)} pending={pendingBookings} orders={showOrders} newOrders={newOrders} />
         </div>
       )}
     </div>

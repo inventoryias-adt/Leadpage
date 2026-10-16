@@ -5,10 +5,10 @@ import { checkInAction } from '@/app/actions/customer';
 import { Icon } from './Icons';
 
 const GOOD_ACCURACY_M = 12; // leitura boa: não precisa esperar mais
-const WEAK_ACCURACY_M = 50; // pior que isso: pede para tentar de novo em vez de enviar
+const SETTLE_MS = 4000; // sem leitura melhor por tanto tempo: usa a melhor que já veio (computador não melhora)
 const MAX_WAIT_MS = 10_000;
 
-/** Pede a localização ao navegador (a melhor leitura em até 10 s) e manda para o servidor conferir se a pessoa está no local. */
+/** Pede a localização ao navegador (a melhor leitura em até 10 s) e manda, com a margem de erro, para o servidor conferir se a pessoa está no local. */
 export function CheckInButton({ restaurantId, points }: { restaurantId: string; points: number }) {
   const [state, action, pending] = useActionState(checkInAction, {});
   const [locating, setLocating] = useState(false);
@@ -27,9 +27,14 @@ export function CheckInButton({ restaurantId, points }: { restaurantId: string; 
     let best: GeolocationPosition | null = null;
     let finished = false;
     let timer: ReturnType<typeof setTimeout>;
+    let settle: ReturnType<typeof setTimeout> | undefined;
     const watch = navigator.geolocation.watchPosition(
       (pos) => {
-        if (!best || pos.coords.accuracy < best.coords.accuracy) best = pos;
+        if (!best || pos.coords.accuracy < best.coords.accuracy - 5) {
+          best = pos;
+          clearTimeout(settle); // leitura melhor: dá mais um tempo para melhorar
+          settle = setTimeout(done, SETTLE_MS);
+        }
         if (pos.coords.accuracy <= GOOD_ACCURACY_M) done();
       },
       (err) => {
@@ -48,6 +53,7 @@ export function CheckInButton({ restaurantId, points }: { restaurantId: string; 
     function finish() {
       finished = true;
       clearTimeout(timer);
+      clearTimeout(settle);
       navigator.geolocation.clearWatch(watch);
       setLocating(false);
     }
@@ -57,13 +63,12 @@ export function CheckInButton({ restaurantId, points }: { restaurantId: string; 
       finish();
       const pos = best as GeolocationPosition | null;
       if (!pos) return setGeoError('Não foi possível obter sua localização. Tente de novo.');
-      if (pos.coords.accuracy > WEAK_ACCURACY_M) {
-        return setGeoError('Sinal de GPS fraco. Vá para perto de uma janela ou da porta, espere alguns segundos e tente de novo.');
-      }
+      // Quem decide se a leitura é boa o bastante é o servidor (depende do raio do lugar, que o cliente não vê).
       const fd = new FormData();
       fd.set('restaurantId', restaurantId);
       fd.set('lat', String(pos.coords.latitude));
       fd.set('lng', String(pos.coords.longitude));
+      fd.set('accuracy', String(Math.round(pos.coords.accuracy)));
       startTransition(() => action(fd)); // transição mantém o estado "pending" do botão
     }
   }

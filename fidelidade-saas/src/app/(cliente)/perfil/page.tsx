@@ -4,6 +4,7 @@ import { Brand } from '@/components/Brand';
 import { PointsActivity } from '@/components/PointsActivity';
 import { ProfilePhoto } from '@/components/ProfilePhoto';
 import { Reveal } from '@/components/Reveal';
+import { BirthdayCard } from '@/components/BirthdayCard';
 import { Icon } from '@/components/Icons';
 import { LegalLinks } from '@/components/LegalLinks';
 import { ShareButtons } from '@/components/ShareButtons';
@@ -23,7 +24,7 @@ export const dynamic = 'force-dynamic';
 export default async function PerfilPage() {
   const customer = await requireCustomer('/perfil');
 
-  const [wallets, pending, usedCount, acceptors, movements, upcomingBookings, photo] = await Promise.all([
+  const [wallets, pending, usedCount, acceptors, movements, upcomingBookings, photo, ordersTotal, openOrders] = await Promise.all([
     prisma.wallet.findMany({
       where: { customerId: customer.id },
       include: { restaurant: { select: { id: true, name: true, logoImageId: true, referralPoints: true, subscriptionStatus: true, pointsShareOut: true } } },
@@ -45,6 +46,8 @@ export default async function PerfilPage() {
     }),
     prisma.booking.count({ where: { customerId: customer.id, status: { in: ['PENDING', 'CONFIRMED'] }, endsAt: { gt: new Date() } } }),
     prisma.customerPhoto.findUnique({ where: { customerId: customer.id }, select: { updatedAt: true } }),
+    prisma.order.count({ where: { customerId: customer.id } }),
+    prisma.order.count({ where: { customerId: customer.id, status: { in: ['RECEIVED', 'PREPARING', 'READY'] } } }),
   ]);
   const rows = movements.map((m) => ({ at: m.createdAt, type: m.type as 'EARN' | 'REDEEM', points: m.points }));
   const activity = Object.fromEntries(PERIODS.map((p) => [p, activitySeries(rows, p)])) as Record<Period, Activity>;
@@ -87,6 +90,16 @@ export default async function PerfilPage() {
               </span>
               <Icon name="chevron" size={18} className="text-slate-400" />
             </Link>
+            {ordersTotal > 0 && (
+              <Link href="/perfil/pedidos" className="glass-panel-sm card-link flex items-center gap-3 p-4" data-testid="my-orders-link">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#E8EEFB] text-electric-600"><Icon name="bag" size={22} /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-bold text-slate-800">Meus pedidos</span>
+                  <span className="block text-xs text-slate-500">{openOrders > 0 ? `${openOrders} ${openOrders === 1 ? 'pedido em andamento' : 'pedidos em andamento'}` : 'Veja o que você já pediu'}</span>
+                </span>
+                <Icon name="chevron" size={18} className="text-slate-400" />
+              </Link>
+            )}
             <Link href="/perfil/agendamentos" className="glass-panel-sm card-link flex items-center gap-3 p-4">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#E8EEFB] text-electric-600"><Icon name="clock" size={22} /></span>
               <span className="min-w-0 flex-1">
@@ -107,6 +120,10 @@ export default async function PerfilPage() {
             </Link>
           </div>
         </section>
+        </Reveal>
+
+        <Reveal from="bottom">
+        <BirthdayCard initial={customer.birthDay != null && customer.birthMonth != null ? { day: customer.birthDay, month: customer.birthMonth } : null} />
         </Reveal>
 
         <Reveal from="bottom">
