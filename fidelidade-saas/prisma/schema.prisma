@@ -477,6 +477,7 @@ model Promotion {
   inactiveDays   Int? // só para audience = INACTIVE
   active         Boolean   @default(true)
   appCampaignId  String? // preenchido quando o estabelecimento adotou uma campanha do app
+  color          String? // chave da paleta (src/lib/palette.ts); vazio = cor padrão pelo público
   createdAt      DateTime  @default(now())
 
   restaurant  Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
@@ -592,6 +593,7 @@ model Resource {
   phone        String? // WhatsApp (só dígitos), para o gestor enviar a agenda
   /// Dias e horários em que trabalha, no mesmo formato do horário da unidade. Vazio = segue o horário da unidade.
   schedule     Json?
+  color        String? // chave da paleta (src/lib/palette.ts); vazio = cor automática pela ordem
   createdAt    DateTime @default(now())
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)

@@ -5,6 +5,7 @@ import { useActionState, useMemo, useState } from 'react';
 import { redeemBagAction } from '@/app/actions/customer';
 import { formatPoints, formatPrice } from '@/lib/points';
 import { Icon } from './Icons';
+import { VoucherTicket } from './VoucherTicket';
 import { RewardImage } from './Visual';
 
 export type SharedInfo = { total: number; places: { name: string; points: number; equiv: number }[] };
@@ -16,6 +17,7 @@ export type BagReward = { id: string; name: string; description: string | null; 
  */
 export function RewardBag({
   restaurantId,
+  placeName,
   rewards,
   balance,
   remainingThisMonth,
@@ -24,6 +26,7 @@ export function RewardBag({
   shared,
 }: {
   restaurantId: string;
+  placeName: string;
   rewards: BagReward[];
   balance: number;
   remainingThisMonth: number;
@@ -73,13 +76,13 @@ export function RewardBag({
         </div>
         <ul className="space-y-3">
           {state.codes.map((c, i) => (
-            <li key={i} className="glass-panel-sm flex items-center justify-between gap-3 p-4">
-              <span className="min-w-0 truncate font-bold text-slate-800">{c.name}</span>
-              <span className="font-mono text-2xl font-bold tracking-[0.2em] text-electric-600">{c.code}</span>
-            </li>
+            <li key={i}><VoucherTicket code={c.code} rewardName={c.name} placeName={placeName} /></li>
           ))}
         </ul>
-        <Link href={`/carteira/${restaurantId}`} className="glass-button-ghost">Ver minha carteira</Link>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Link href="/perfil/premios" className="glass-button-navy">Ver meus prêmios</Link>
+          <Link href={`/carteira/${restaurantId}`} className="glass-button-ghost">Ver minha carteira</Link>
+        </div>
       </div>
     );
   }

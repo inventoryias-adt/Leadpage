@@ -77,13 +77,17 @@ export async function answerBookingReminder(formData: FormData) {
   if (!customer) redirect('/entrar?next=/perfil/agendamentos');
   const id = String(formData.get('id') ?? '');
   const answer = formData.get('answer') === 'no' ? 'no' : 'yes';
+  // Quem respondeu pela Início ou pelos Avisos volta para lá; o padrão é a lista de agendamentos.
+  const backRaw = String(formData.get('back') ?? '');
+  const base = backRaw === '/carteira' || backRaw === '/avisos' ? backRaw : '/perfil/agendamentos';
   let result: { canceled: boolean };
   try {
     result = await answerReminder(id, customer.id, answer);
   } catch (e) {
     if (!(e instanceof BusinessError)) throw e;
-    redirect(`/perfil/agendamentos?erro=${encodeURIComponent(e.message)}`);
+    redirect(`${base}?erro=${encodeURIComponent(e.message)}`);
   }
   revalidatePath('/perfil/agendamentos');
-  redirect(result.canceled ? '/perfil/agendamentos?liberado=1' : '/perfil/agendamentos?presenca=1');
+  revalidatePath(base);
+  redirect(result.canceled ? `${base}?liberado=1` : `${base}?presenca=1`);
 }

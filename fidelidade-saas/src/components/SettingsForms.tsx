@@ -32,6 +32,7 @@ import { Icon } from './Icons';
 import { CHECKIN_RADIUS_OPTIONS, radiusIndex } from '@/lib/geo';
 import { ImageUpload, shrinkImage } from './ImageUpload';
 import { WebImageSearch } from './WebImageSearch';
+import { ColorSwatches } from './ColorSwatches';
 import { FormMessage, SubmitButton } from './ui';
 
 type Basics = { name: string };
@@ -608,6 +609,9 @@ export function AddPromotionForm() {
         ) : (
           <div className="hidden sm:block" />
         )}
+        <div className="sm:col-span-2">
+          <ColorSwatches name="color" label="Cor da campanha" hint="aparece no cartão do cliente; sem escolher, usamos azul (todos), verde (clientes novos) ou laranja (quem sumiu)" />
+        </div>
         <div className="sm:col-span-2">
           <label className="glass-label" htmlFor="p-min">Valor mínimo da compra (R$) <span className="font-normal text-slate-500">— opcional</span></label>
           <input id="p-min" name="minAmount" inputMode="decimal" className="glass-input" placeholder="Ex.: 40,00" defaultValue={state.values?.minAmount} />

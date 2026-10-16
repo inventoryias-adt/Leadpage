@@ -68,6 +68,7 @@ export async function staffFor(db: Db, args: { restaurantId: string; service: Se
     id: r.id,
     name: r.name,
     photoImageId: r.photoImageId,
+    color: r.color,
     capacity: r.capacity,
     durationMin: linked.get(r.id) ?? service.durationMin,
     schedule: parseSchedule(r.schedule),

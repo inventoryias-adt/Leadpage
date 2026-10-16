@@ -10,8 +10,8 @@ module.exports = {
       },
       // Pesos mais contidos: títulos e números firmes, sem o peso "chamativo" do extrabold.
       fontWeight: { bold: '600', extrabold: '650' },
-      // Cantos menos arredondados: aparência de ferramenta profissional, não de brinquedo.
-      borderRadius: { sm: '4px', DEFAULT: '6px', md: '6px', lg: '8px', xl: '8px', '2xl': '10px', '3xl': '12px' },
+      // Cantos macios, como no material de apresentação: cartões e botões mais amigáveis, sem virar brinquedo.
+      borderRadius: { sm: '6px', DEFAULT: '8px', md: '10px', lg: '14px', xl: '18px', '2xl': '22px', '3xl': '28px' },
       colors: {
         glassBlue: 'rgba(37, 99, 235, 0.1)',
         glassWhite: 'rgba(255, 255, 255, 0.15)',

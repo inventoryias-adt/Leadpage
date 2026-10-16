@@ -12,7 +12,7 @@ export function SubmitButton({
 }: {
   children: React.ReactNode;
   pendingText?: string;
-  variant?: 'primary' | 'lime' | 'ghost';
+  variant?: 'primary' | 'lime' | 'ghost' | 'navy';
   className?: string;
   /** Faz este botão enviar o formulário para outra ação (ex.: lançar direto em vez de gerar QR Code). */
   formAction?: (formData: FormData) => void;
@@ -23,7 +23,7 @@ export function SubmitButton({
       type="submit"
       formAction={formAction}
       disabled={pending}
-      className={`${variant === 'primary' ? 'glass-button' : variant === 'lime' ? 'glass-button-lime' : 'glass-button-ghost'} ${className}`}
+      className={`${variant === 'primary' ? 'glass-button' : variant === 'navy' ? 'glass-button-navy' : variant === 'lime' ? 'glass-button-lime' : 'glass-button-ghost'} ${className}`}
     >
       {pending ? pendingText : children}
     </button>

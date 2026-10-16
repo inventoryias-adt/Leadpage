@@ -22,6 +22,7 @@ import { imageField, photoFromForm } from '@/lib/form-photo';
 import { describeChallenge } from '@/lib/challenges';
 import { applyPromos, endOfDayBR, promoBadge, startOfDayBR, parseTime } from '@/lib/promos';
 import { fail, type FormState } from '@/lib/form';
+import { isColorKey } from '@/lib/palette';
 import { cookies } from 'next/headers';
 import { UNIT_COOKIE, currentUnit } from '@/lib/units';
 
@@ -529,6 +530,7 @@ export async function addPromotion(_: FormState, formData: FormData): Promise<Fo
       weekdays: weekdays.length === 7 ? [] : weekdays,
       startTime: d.startTime || null,
       endTime: d.endTime || null,
+      color: isColorKey(formData.get('color')) ? String(formData.get('color')) : null,
     },
   });
   revalidatePath('/dashboard', 'layout');
@@ -539,6 +541,16 @@ export async function removePromotion(formData: FormData) {
   const restaurant = await requirePaidRestaurant();
   await prisma.promotion.deleteMany({ where: { id: String(formData.get('id')), restaurantId: restaurant.id } });
   revalidatePath('/dashboard', 'layout');
+}
+
+/** Troca a cor de uma campanha (bolinhas da lista). */
+export async function setPromotionColor(formData: FormData) {
+  const restaurant = await requirePaidRestaurant();
+  const color = formData.get('color');
+  if (!isColorKey(color)) return;
+  await prisma.promotion.updateMany({ where: { id: String(formData.get('id')), restaurantId: restaurant.id }, data: { color } });
+  revalidatePath('/dashboard', 'layout');
+  revalidatePath('/lugares');
 }
 
 export async function togglePromotion(formData: FormData) {

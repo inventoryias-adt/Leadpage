@@ -31,7 +31,7 @@ export function BookingForm({
         <textarea id="bk-note" name="note" rows={2} maxLength={300} className="glass-input" placeholder="Alguma preferência ou observação?" defaultValue={state.values?.note} />
       </div>
       <FormMessage state={state} />
-      <SubmitButton pendingText="Agendando…">Confirmar agendamento</SubmitButton>
+      <SubmitButton pendingText="Agendando…" variant="navy">Confirmar agendamento</SubmitButton>
     </form>
   );
 }

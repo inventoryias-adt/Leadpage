@@ -5,6 +5,7 @@ import { addService, saveBookingPolicy, saveResource } from '@/app/actions/agend
 import { defaultSchedule, type Schedule } from '@/lib/hours';
 import { HoursGrid } from './HoursGrid';
 import { ImageUpload } from './ImageUpload';
+import { ColorSwatches } from './ColorSwatches';
 import { MaskedInput } from './MaskedInput';
 import { cashbackPct } from '@/lib/points-discount';
 import { FormMessage, SubmitButton } from './ui';
@@ -76,6 +77,7 @@ export type StaffData = {
   unitId: string;
   schedule: Schedule | null;
   photoUrl: string | null;
+  color: string | null; // chave da paleta; vazio = automática
   offers: Record<string, number | null>; // serviceId → minutos (null = padrão do serviço)
 };
 
@@ -115,6 +117,9 @@ export function StaffForm({
           <div className="sm:col-span-2">
             <label className="glass-label" htmlFor={`${uid}-name`}>Nome</label>
             <input id={`${uid}-name`} name="name" className="glass-input" placeholder="Ex.: Lucas (barbeiro), Sala 1, Mesas" defaultValue={state.values?.name ?? staff?.name} maxLength={40} required />
+          </div>
+          <div className="sm:col-span-2">
+            <ColorSwatches value={staff?.color} label="Cor na agenda" hint="o cliente e a agenda usam esta cor para identificar quem atende" />
           </div>
           <div>
             <label className="glass-label" htmlFor={`${uid}-email`}>E-mail (recebe os agendamentos)</label>

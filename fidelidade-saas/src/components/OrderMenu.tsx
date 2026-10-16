@@ -15,11 +15,11 @@ export type PickupUnit = { id: string; name: string; address: string | null };
 type Step = 'menu' | 'bag' | 'receive';
 
 /** O preço de um item: o que se paga, e o cheio riscado quando há promoção. */
-function Price({ item, className = '' }: { item: MenuView; className?: string }) {
+function Price({ item, className = '', dark = false }: { item: MenuView; className?: string; dark?: boolean }) {
   return (
     <span className={className}>
-      <span className="font-extrabold text-slate-900">{formatBRL(unitPrice(item))}</span>
-      {hasPromo(item) && <span className="ml-2 text-sm font-medium text-slate-400 line-through">{formatBRL(item.priceCents)}</span>}
+      <span className={`font-extrabold ${dark ? 'text-lima' : 'text-slate-900'}`}>{formatBRL(unitPrice(item))}</span>
+      {hasPromo(item) && <span className={`ml-2 text-sm font-medium line-through ${dark ? 'text-white/60' : 'text-slate-400'}`}>{formatBRL(item.priceCents)}</span>}
     </span>
   );
 }
@@ -30,14 +30,15 @@ function StockTag({ item }: { item: MenuView }) {
   return <span className="mt-1 inline-block w-fit rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-bold text-rose-700" data-testid="stock-tag">restam {item.stock}</span>;
 }
 
-function Stepper({ qty, name, onMinus, onPlus, canPlus }: { qty: number; name: string; onMinus: () => void; onPlus: () => void; canPlus: boolean }) {
+function Stepper({ qty, name, onMinus, onPlus, canPlus, dark = false }: { qty: number; name: string; onMinus: () => void; onPlus: () => void; canPlus: boolean; dark?: boolean }) {
+  const hov = dark ? 'hover:bg-white/15' : 'hover:bg-slate-200';
   return (
-    <div className="flex items-center rounded-full bg-slate-100" role="group" aria-label={`Quantidade de ${name}`}>
-      <button type="button" onClick={onMinus} className="flex h-9 w-9 items-center justify-center rounded-full text-slate-700 hover:bg-slate-200" aria-label={qty === 1 ? `Remover ${name} da sacola` : `Tirar um ${name}`}>
+    <div className={`flex items-center rounded-full ${dark ? 'bg-white/10 text-white' : 'bg-[#EAF0FF] text-primary'}`} role="group" aria-label={`Quantidade de ${name}`}>
+      <button type="button" onClick={onMinus} className={`flex h-9 w-9 items-center justify-center rounded-full ${hov}`} aria-label={qty === 1 ? `Remover ${name} da sacola` : `Tirar um ${name}`}>
         {qty === 1 ? <Icon name="trash" size={17} /> : <span className="text-xl leading-none">−</span>}
       </button>
-      <span className="w-7 text-center font-bold text-slate-900" aria-live="polite">{qty}</span>
-      <button type="button" onClick={onPlus} disabled={!canPlus} className="flex h-9 w-9 items-center justify-center rounded-full text-xl leading-none text-slate-700 hover:bg-slate-200 disabled:opacity-40" aria-label={`Adicionar mais um ${name}`}>+</button>
+      <span className="w-7 text-center font-bold" aria-live="polite">{qty}</span>
+      <button type="button" onClick={onPlus} disabled={!canPlus} className={`flex h-9 w-9 items-center justify-center rounded-full text-xl leading-none ${hov} disabled:opacity-40`} aria-label={`Adicionar mais um ${name}`}>+</button>
     </div>
   );
 }
@@ -189,7 +190,7 @@ export function OrderMenu({
             <div className="min-w-0">
               <h1 className="truncate text-xl font-extrabold tracking-tight text-slate-900">{placeName}</h1>
               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600">
-                {open != null && <span className={`font-semibold ${open ? 'text-emerald-700' : 'text-slate-500'}`}>● {open ? 'Aberto' : 'Fechado agora'}</span>}
+                {open != null && <span className={open ? 'chip-verde' : 'rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600'}>● {open ? 'Aberto' : 'Fechado agora'}</span>}
                 <span className="flex items-center gap-1"><Icon name="clock" size={14} /> {prepMin} min</span>
                 <span className="flex items-center gap-1"><Icon name="bag" size={14} /> retirada grátis</span>
               </div>
@@ -202,21 +203,21 @@ export function OrderMenu({
         {featured && (
           <section aria-labelledby="destaque">
             <h2 id="destaque" className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Destaque da casa</h2>
-            <article className="glass-panel overflow-hidden" data-testid="menu-featured">
+            <article className="overflow-hidden rounded-[22px] bg-[#0F1F3D] text-white shadow-[0_8px_24px_rgba(15,31,61,.25)]" data-testid="menu-featured">
               {featured.imageUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={featured.imageUrl} alt={featured.name} className="h-40 w-full bg-slate-100 object-cover sm:h-52" />
               )}
               <div className="p-4">
                 <div className="flex items-start justify-between gap-3">
-                  <h3 className="text-lg font-extrabold leading-snug text-slate-900">{featured.name}</h3>
-                  {hasPromo(featured) && <span className="shrink-0 rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">−{promoPct(featured)}%</span>}
+                  <h3 className="text-lg font-extrabold leading-snug">{featured.name}</h3>
+                  {hasPromo(featured) && <span className="chip-lima shrink-0">−{promoPct(featured)}%</span>}
                 </div>
-                {featured.description && <p className="mt-1 line-clamp-3 text-sm text-slate-600">{featured.description}</p>}
+                {featured.description && <p className="mt-1 line-clamp-3 text-sm text-white/75">{featured.description}</p>}
                 <StockTag item={featured} />
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                  <Price item={featured} className="text-2xl" />
-                  <AddControl id={featured.id} name={featured.name} qty={qty[featured.id] ?? 0} add={add} sub={sub} max={cap(featured.id)} />
+                  <Price item={featured} className="text-2xl" dark />
+                  <AddControl id={featured.id} name={featured.name} qty={qty[featured.id] ?? 0} add={add} sub={sub} max={cap(featured.id)} dark />
                 </div>
               </div>
             </article>
@@ -229,7 +230,7 @@ export function OrderMenu({
             <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">{g.name}</h2>
             <ul className="space-y-3">
               {g.items.map((i) => (
-                <li key={i.id} className="glass-panel-sm flex gap-3 p-3" data-testid="menu-item">
+                <li key={i.id} className="glass-panel flex gap-3 !rounded-[20px] p-3" data-testid="menu-item">
                   <div className="flex min-w-0 flex-1 flex-col">
                     <p className="font-bold leading-snug text-slate-900 [overflow-wrap:anywhere]">{i.name}</p>
                     {i.description && <p className="line-clamp-2 text-sm text-slate-500">{i.description}</p>}
@@ -250,13 +251,13 @@ export function OrderMenu({
       {/* Barra da sacola, acima das abas do app */}
       {count > 0 && step === 'menu' && (
         <div className="fixed inset-x-0 bottom-24 z-20 mx-auto w-full max-w-md px-4">
-          <div className="glass-panel flex items-center gap-3 p-3 shadow-2xl">
+          <div className="flex items-center gap-3 rounded-[22px] bg-[#0F1F3D] p-3 text-white shadow-2xl">
             <PlaceAvatar name={placeName} src={logoUrl} size={44} />
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-slate-500">Total com retirada</p>
-              <p className="font-extrabold text-slate-900" data-testid="bag-total">{formatBRL(total)} <span className="text-sm font-medium text-slate-500">/ {count} {count === 1 ? 'item' : 'itens'}</span></p>
+              <p className="text-xs text-white/70">Total com retirada</p>
+              <p className="font-extrabold text-lima" data-testid="bag-total">{formatBRL(total)} <span className="text-sm font-medium text-white/70">/ {count} {count === 1 ? 'item' : 'itens'}</span></p>
             </div>
-            <button type="button" onClick={() => setStep('bag')} className="glass-button !w-auto px-5" data-testid="open-bag">Ver pedido</button>
+            <button type="button" onClick={() => setStep('bag')} className="glass-button-lime !w-auto px-5" data-testid="open-bag">Ver pedido</button>
           </div>
         </div>
       )}
@@ -313,7 +314,7 @@ export function OrderMenu({
                   {points > 0 && (
                     <p className="mt-4 flex items-center justify-between rounded-xl bg-[#F3F6FD] px-4 py-3 text-sm">
                       <span className="flex items-center gap-2 text-slate-700"><Icon name="gift" size={16} /> Você ganha nesse pedido</span>
-                      <strong className="text-emerald-600" data-testid="bag-points">+{formatPoints(points)} pts</strong>
+                      <strong className="chip-lima" data-testid="bag-points">+{formatPoints(points)} pts</strong>
                     </p>
                   )}
                 </>
@@ -359,11 +360,11 @@ export function OrderMenu({
               </div>
               {step === 'bag' ? (
                 // key próprio: sem ele o React reaproveita este mesmo botão como o "Confirmar" (type=submit) no meio do toque e o pedido sairia sem passar pela retirada
-                <button key="continue" type="button" onClick={() => setStep('receive')} disabled={count === 0} className="glass-button !w-auto px-6" data-testid="bag-continue">
+                <button key="continue" type="button" onClick={() => setStep('receive')} disabled={count === 0} className="glass-button-navy !w-auto px-6" data-testid="bag-continue">
                   Continuar <Icon name="chevron" size={16} />
                 </button>
               ) : loggedIn ? (
-                <button key="confirm" type="submit" disabled={pending || count === 0 || !chosen} className="glass-button !w-auto px-6" data-testid="order-confirm">
+                <button key="confirm" type="submit" disabled={pending || count === 0 || !chosen} className="glass-button-navy !w-auto px-6" data-testid="order-confirm">
                   {pending ? 'Enviando…' : 'Confirmar pedido'}
                 </button>
               ) : (
@@ -378,13 +379,13 @@ export function OrderMenu({
 }
 
 /** "Adicionar" vira o contador depois do primeiro toque. */
-function AddControl({ id, name, qty, add, sub, max }: { id: string; name: string; qty: number; add: (id: string) => void; sub: (id: string) => void; max: number }) {
+function AddControl({ id, name, qty, add, sub, max, dark = false }: { id: string; name: string; qty: number; add: (id: string) => void; sub: (id: string) => void; max: number; dark?: boolean }) {
   if (qty === 0) {
     return (
-      <button type="button" onClick={() => add(id)} className="glass-button btn-sm !w-auto" aria-label={`Adicionar ${name} à sacola`}>
+      <button type="button" onClick={() => add(id)} className={`${dark ? 'glass-button-lime' : 'glass-button-navy'} btn-sm !w-auto`} aria-label={`Adicionar ${name} à sacola`}>
         Adicionar
       </button>
     );
   }
-  return <Stepper qty={qty} name={name} onMinus={() => sub(id)} onPlus={() => add(id)} canPlus={qty < max} />;
+  return <Stepper qty={qty} name={name} onMinus={() => sub(id)} onPlus={() => add(id)} canPlus={qty < max} dark={dark} />;
 }

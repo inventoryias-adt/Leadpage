@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { formatBRL, formatPoints, formatPrice, startOfMonthBR } from '@/lib/points';
 import { requireCustomer } from '@/lib/session';
 import { UnitsHours } from '@/components/UnitsHours';
+import { VoucherTicket } from '@/components/VoucherTicket';
 import { RedeemButton } from './RedeemButton';
 
 export const metadata = { title: 'Meus pontos' };
@@ -78,15 +79,9 @@ export default async function WalletPage({
           <div className="mb-3"><UnitsHours units={restaurant.units} title="Horário para retirar seu prêmio" /></div>
           <div className="space-y-3">
             {vouchers.map((v) => (
-              <div key={v.id} className="glass-panel-sm flex items-center justify-between gap-3 p-4">
-                <div className="min-w-0">
-                  <p className="truncate font-bold text-slate-800">{v.rewardName}</p>
-                  <p className="text-xs text-slate-500">
-                    {v.cashCents > 0 ? `Mostre este código no balcão e pague ${formatBRL(v.cashCents)}` : 'Mostre este código no balcão'}
-                  </p>
-                </div>
-                <p className="font-mono text-2xl font-bold tracking-[0.2em] text-electric-600">{v.code}</p>
-              </div>
+              <Link key={v.id} href={`/cupom/${v.id}`} className="card-link block rounded-[24px]" aria-label={`Abrir cupom de ${v.rewardName}`}>
+                <VoucherTicket code={v.code} rewardName={v.rewardName} placeName={restaurant.name} cashCents={v.cashCents} compact />
+              </Link>
             ))}
           </div>
         </section>

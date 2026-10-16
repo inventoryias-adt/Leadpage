@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { applyPromos, audienceText, endOfDayBR, promoActiveAt, promoBadge, promoStatus, promoWhen, qualifiesForAudience, startOfDayBR, weekdaysText, type PromoLike } from './promos';
+import { applyPromos, audienceText, endOfDayBR, promoActiveAt, promoBadge, promoBig, promoStatus, promoWhen, qualifiesForAudience, startOfDayBR, weekdaysText, type PromoLike } from './promos';
 
 const base: PromoLike = { title: 'Terça em dobro', kind: 'MULTIPLIER', multiplier: 2, bonusPoints: null, minAmountCents: 0, startsAt: null, endsAt: null, weekdays: [], startTime: null, endTime: null, audience: 'ALL', inactiveDays: null, active: true };
 // 2026-10-06 é terça-feira. 21:00 UTC = 18:00 em Brasília.
@@ -52,6 +52,9 @@ test('textos', () => {
   assert.equal(weekdaysText([2]), 'terça');
   assert.equal(promoBadge(base), '2x pontos');
   assert.equal(promoBadge({ kind: 'BONUS', multiplier: null, bonusPoints: 50 }), '+50 pontos');
+  assert.equal(promoBig(base), '2x');
+  assert.equal(promoBig({ kind: 'MULTIPLIER', multiplier: 1.5, bonusPoints: null }), '1,5x');
+  assert.equal(promoBig({ kind: 'BONUS', multiplier: null, bonusPoints: 100 }), '+100');
   assert.equal(promoBadge({ kind: 'MULTIPLIER', multiplier: 1.5, bonusPoints: null }), '1,5x pontos');
   const money = (c: number) => `R$ ${(c / 100).toFixed(2).replace('.', ',')}`;
   assert.equal(promoWhen({ ...base, weekdays: [2, 4], startTime: '18:00', endTime: '22:30', minAmountCents: 4000 }, money), 'Ter e qui, das 18h às 22h30, em compras a partir de R$ 40,00');

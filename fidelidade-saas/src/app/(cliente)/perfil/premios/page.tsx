@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { VoucherTicket } from '@/components/VoucherTicket';
 import { Icon } from '@/components/Icons';
 import { RewardImage } from '@/components/Visual';
 import { affordableRewards, pendingVouchers, usedRedemptions } from '@/lib/customer-rewards';
@@ -52,13 +53,8 @@ export default async function MeusPremiosPage({ searchParams }: { searchParams: 
           <ul className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
             {vouchers.map((v) => (
               <li key={v.id}>
-                <Link href={`/carteira/${v.restaurant.id}`} className="glass-panel-sm card-link flex items-center justify-between gap-3 p-4">
-                  <div className="min-w-0">
-                    <p className="truncate font-bold text-slate-800">{v.rewardName}</p>
-                    <p className="truncate text-xs text-slate-500">{v.restaurant.name} · mostre este código no balcão</p>
-                    <p className="text-xs text-slate-400">Pedido em {formatDateTimeBR(v.createdAt)}</p>
-                  </div>
-                  <span className="font-mono text-xl font-bold tracking-[0.18em] text-electric-600">{v.code}</span>
+                <Link href={`/cupom/${v.id}`} className="card-link block rounded-[24px]" aria-label={`Abrir cupom de ${v.rewardName}`}>
+                  <VoucherTicket code={v.code} rewardName={v.rewardName} placeName={v.restaurant.name} cashCents={v.cashCents} compact />
                 </Link>
               </li>
             ))}

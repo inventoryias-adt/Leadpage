@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { BirthdayCard } from '@/components/BirthdayCard';
+import { CampaignTile } from '@/components/CampaignTile';
 import { CheckInButton } from '@/components/CheckInButton';
 import { CopyButton } from '@/components/CopyButton';
 import { Icon, type IconName } from '@/components/Icons';
@@ -16,7 +17,8 @@ import { isOpenNow, parseSchedule, todayLabel } from '@/lib/hours';
 import { imageUrl } from '@/lib/images';
 import { appUrl } from '@/lib/payments';
 import { formatBRL, formatPoints, formatPrice } from '@/lib/points';
-import { promoActiveAt, promoBadge, promoStatus, promoWhen } from '@/lib/promos';
+import { promoColor } from '@/lib/palette';
+import { promoActiveAt, promoBig, promoStatus, promoWhen } from '@/lib/promos';
 import { getCustomer } from '@/lib/session';
 import { newReferralCode } from '@/lib/tokens';
 
@@ -137,26 +139,26 @@ export default async function LugarPage({
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
             {open != null && (
-              <span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${open ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
+              <span className={open ? 'chip-verde' : 'glass-chip !bg-slate-100 !text-slate-600'}>
                 {open ? 'Aberto agora' : 'Fechado agora'}
               </span>
             )}
             {schedule && <span className="flex items-center gap-1 text-slate-600"><Icon name="clock" size={15} /> {todayLabel(schedule).replace('Hoje: ', 'Hoje ')}</span>}
           </div>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-4 grid grid-cols-2 gap-2">
             {restaurant.ordersEnabled && menuCount > 0 && units.length > 0 && (
-              <Link href={`${here}/pedido${multi && unit ? `?unidade=${unit.id}` : ''}`} className="glass-button btn-sm" data-testid="make-order">
-                <Icon name="bag" size={16} /> Fazer pedido
+              <Link href={`${here}/pedido${multi && unit ? `?unidade=${unit.id}` : ''}`} className="glass-button-navy" data-testid="make-order">
+                <Icon name="bag" size={17} /> Fazer pedido
               </Link>
             )}
             {canBook && units.length > 0 && (
-              <Link href={`${here}/agendar${multi && unit ? `?unidade=${unit.id}` : ''}`} className="glass-button btn-sm">
-                <Icon name="clock" size={16} /> Agendar
+              <Link href={`${here}/agendar${multi && unit ? `?unidade=${unit.id}` : ''}`} className="glass-button-navy">
+                <Icon name="clock" size={17} /> Agendar
               </Link>
             )}
             {directions && (
-              <a href={directions} target="_blank" rel="noopener noreferrer" className="glass-button-ghost btn-sm">
-                <Icon name="pin" size={16} /> Como chegar
+              <a href={directions} target="_blank" rel="noopener noreferrer" className="glass-button-ghost">
+                <Icon name="pin" size={17} /> Como chegar
               </a>
             )}
           </div>
@@ -193,12 +195,13 @@ export default async function LugarPage({
 
         {/* Saldo / entrar */}
         {customer ? (
-          <section className="glass-panel flex items-center justify-between gap-3 p-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Seu saldo aqui</p>
-              <p className="text-3xl font-extrabold text-primary">{formatPoints(balance)} <span className="text-base text-electric-600">pts</span></p>
+          <section className="relative flex items-center justify-between gap-3 overflow-hidden rounded-xl bg-primary p-5">
+            <div aria-hidden className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-lima/20 blur-2xl" />
+            <div className="relative">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Seu saldo aqui</p>
+              <p className="text-4xl font-extrabold text-lima">{formatPoints(balance)} <span className="text-base font-semibold text-slate-200">pts</span></p>
             </div>
-            <Link href={`${here}/premios`} className="glass-button btn-sm">
+            <Link href={`${here}/premios`} className="glass-button-lime btn-sm relative">
               <Icon name="gift" size={16} /> Escolher prêmio
             </Link>
           </section>
@@ -217,11 +220,11 @@ export default async function LugarPage({
             {restaurant.checkInPoints > 0 && (
               <li className="p-4">
                 <div className="flex items-start gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-electric-600/10 text-electric-600"><Icon name="pin" /></span>
+                  <span className="icon-tile"><Icon name="pin" /></span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-bold text-slate-800">Check-in no local</p>
-                      <span className="glass-chip">+{restaurant.checkInPoints} {restaurant.checkInPoints === 1 ? 'pt' : 'pts'}</span>
+                      <span className="chip-lima">+{restaurant.checkInPoints} {restaurant.checkInPoints === 1 ? 'pt' : 'pts'}</span>
                     </div>
                     <p className="text-sm text-slate-500">Uma vez por dia, estando no restaurante.</p>
                     {customer && hasCoords && <div className="mt-3"><CheckInButton restaurantId={restaurantId} points={restaurant.checkInPoints} /></div>}
@@ -235,11 +238,11 @@ export default async function LugarPage({
               return (
                 <li key={r.id} className="p-4">
                   <div className="flex items-start gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-electric-600/10 text-electric-600"><Icon name={meta.icon} /></span>
+                    <span className="icon-tile"><Icon name={meta.icon} /></span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
                         <p className="font-bold text-slate-800">{r.label}</p>
-                        <span className="glass-chip shrink-0">+{formatPoints(r.points)} pts</span>
+                        <span className="chip-lima shrink-0">+{formatPoints(r.points)} pts</span>
                       </div>
                       <p className="text-sm text-slate-500">Faça e mostre ao caixa para receber os pontos.</p>
                       {(meta.copy || meta.cta) && (
@@ -256,11 +259,11 @@ export default async function LugarPage({
             {restaurant.referralPoints > 0 && (
               <li className="p-4">
                 <div className="flex items-start gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-electric-600/10 text-electric-600"><Icon name="users" /></span>
+                  <span className="icon-tile"><Icon name="users" /></span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-bold text-slate-800">Indique amigos</p>
-                      <span className="glass-chip shrink-0">+{formatPoints(restaurant.referralPoints)} pts</span>
+                      <span className="chip-lima shrink-0">+{formatPoints(restaurant.referralPoints)} pts</span>
                     </div>
                     <p className="text-sm text-slate-500">Você ganha quando seu amigo faz a primeira compra aqui.</p>
                     <div className="mt-3">
@@ -289,25 +292,26 @@ export default async function LugarPage({
           {rewards.length === 0 ? (
             <p className="glass-panel-sm p-4 text-sm text-slate-500">Os prêmios deste lugar aparecem aqui em breve.</p>
           ) : (
-            <ul className="card-row">
-              {rewards.slice(0, 8).map((r) => {
+            <ul className="space-y-3">
+              {rewards.slice(0, 5).map((r) => {
                 const missing = r.pointsCost - balance;
                 return (
                   <li key={r.id}>
-                    <Link href={`${here}/premios`} className="glass-panel-sm card-link block overflow-hidden">
-                      <RewardImage src={imageUrl(r.imageId)} name={r.name} className="h-28 w-full" />
-                      <div className="space-y-1.5 p-3">
-                        <p className="truncate text-sm font-bold text-slate-800">{r.name}</p>
+                    <Link href={`${here}/premios`} className="glass-panel-sm card-link flex items-center gap-3.5 p-3.5">
+                      <RewardImage src={imageUrl(r.imageId)} name={r.name} className="h-16 w-16 shrink-0 rounded-2xl" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-bold text-slate-800">{r.name}</p>
                         <p className="text-sm font-semibold text-electric-600">{formatPrice(r.pointsCost, r.cashCents)}</p>
                         {customer && (missing > 0 ? (
-                          <>
+                          <div className="mt-1.5">
                             <ProgressBar value={balance} max={r.pointsCost} label={`Progresso para ${r.name}`} />
-                            <p className="text-[11px] text-slate-500">faltam {formatPoints(missing)} pts</p>
-                          </>
+                            <p className="mt-1 text-xs text-slate-500">{formatPoints(balance)} / {formatPoints(r.pointsCost)} pts · faltam {formatPoints(missing)}</p>
+                          </div>
                         ) : (
-                          <p className="text-[11px] font-bold text-emerald-600">Você já pode resgatar</p>
+                          <span className="chip-lima mt-1.5">Você já pode resgatar</span>
                         ))}
                       </div>
+                      <Icon name="chevron" size={18} className="shrink-0 text-slate-400" />
                     </Link>
                   </li>
                 );
@@ -323,13 +327,8 @@ export default async function LugarPage({
             <h2 id="promocoes" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Campanhas de pontos</h2>
             <ul className="space-y-3">
               {promotions.filter((p) => promoStatus(p, nowDate) !== 'ended').map((p) => (
-                <li key={p.id} className="glass-panel-sm space-y-1 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <span className="flex items-start gap-3 font-semibold text-slate-800"><Icon name="spark" className="mt-0.5 text-amber-500" /> {p.title}</span>
-                    <span className="glass-chip shrink-0">{promoBadge(p)}</span>
-                  </div>
-                  <p className="text-sm text-slate-600">{promoWhen(p, formatBRL)}</p>
-                  {promoActiveAt(p, nowDate) && <p className="text-xs font-bold text-emerald-600">Valendo agora</p>}
+                <li key={p.id}>
+                  <CampaignTile big={promoBig(p)} title={p.title} when={promoWhen(p, formatBRL)} color={promoColor(p)} live={promoActiveAt(p, nowDate)} />
                 </li>
               ))}
             </ul>
@@ -340,15 +339,15 @@ export default async function LugarPage({
         <section aria-labelledby="desafios">
           <h2 id="desafios" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Desafios da casa</h2>
           <ul className="space-y-3">
-            <li className="glass-panel-sm flex items-center justify-between gap-3 p-4">
-              <span className="flex items-center gap-3 font-semibold text-slate-800"><Icon name="target" className="text-electric-600" /> Toda compra aqui</span>
-              <span className="glass-chip">{restaurant.pointsPerReal} pts a cada R$ 1</span>
+            <li className="glass-panel-sm flex items-center justify-between gap-3 p-3.5">
+              <span className="flex items-center gap-3 font-semibold text-slate-800"><span className="icon-tile"><Icon name="target" /></span> Toda compra aqui</span>
+              <span className="chip-lima">{restaurant.pointsPerReal} pts a cada R$ 1</span>
             </li>
             {progress.map((c) => (
-              <li key={c.id} className="glass-panel-sm space-y-2 p-4">
+              <li key={c.id} className="glass-panel-sm space-y-2.5 p-3.5">
                 <div className="flex items-start justify-between gap-3">
-                  <span className="flex items-start gap-3 font-semibold text-slate-800"><Icon name="trophy" className="mt-0.5 text-amber-500" /> {describeChallenge(c)}</span>
-                  <span className="glass-chip shrink-0">+{formatPoints(c.bonusPoints)} pts</span>
+                  <span className="flex items-start gap-3 font-semibold text-slate-800"><span className="icon-tile !bg-[#F1EAFE] !text-[#7C3AED]"><Icon name="trophy" /></span><span className="pt-2">{describeChallenge(c)}</span></span>
+                  <span className="chip-lima shrink-0">+{formatPoints(c.bonusPoints)} pts</span>
                 </div>
                 {customer ? (
                   c.done ? (
