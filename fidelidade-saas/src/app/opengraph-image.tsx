@@ -30,7 +30,7 @@ export default function OpenGraphImage() {
             <rect x="18" y="12" width="10" height="40" rx="5" fill="#0B1B3A" />
             <rect x="18" y="12" width="30" height="10" rx="5" fill="#0B1B3A" />
             <rect x="18" y="27" width="21" height="10" rx="5" fill="#0B1B3A" />
-            <circle cx="43.5" cy="47" r="5.4" fill="#2150C9" />
+            <circle cx="43.5" cy="47" r="5.4" fill="#0B1B3A" />
           </g>
         </svg>
         <div style={{ fontSize: 112, fontWeight: 700, letterSpacing: -6, marginTop: 6 }}>fidelize</div>

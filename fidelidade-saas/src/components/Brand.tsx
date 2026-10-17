@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 /**
  * Símbolo do Fidelize: um "F" geométrico seguido de um ponto final liso, o "ponto" do clube de pontos.
- * Fundo lima, F marinho e ponto azul. Mantenha igual a public/logo.svg, src/app/icon.svg e src/app/opengraph-image.tsx.
+ * Fundo lima, F e ponto no mesmo azul-marinho. Mantenha igual a public/logo.svg, src/app/icon.svg e src/app/opengraph-image.tsx.
  */
 export function LogoMark({ size = 36 }: { size?: number }) {
   return (
@@ -12,7 +12,7 @@ export function LogoMark({ size = 36 }: { size?: number }) {
         <rect x="18" y="12" width="10" height="40" rx="5" fill="#0B1B3A" />
         <rect x="18" y="12" width="30" height="10" rx="5" fill="#0B1B3A" />
         <rect x="18" y="27" width="21" height="10" rx="5" fill="#0B1B3A" />
-        <circle cx="43.5" cy="47" r="5.4" fill="#2150C9" />
+        <circle cx="43.5" cy="47" r="5.4" fill="#0B1B3A" />
       </g>
     </svg>
   );
@@ -29,10 +29,10 @@ export function Brand({ href = '/', size = 36, compact = false }: { href?: strin
 }
 
 /** O ponto final sozinho (mesmo desenho do símbolo), para enfeitar a página e a abertura do app. */
-export function Coin({ size = 64, className = '' }: { size?: number; className?: string }) {
+export function Coin({ size = 64, className = '', color = '#0B1B3A' }: { size?: number; className?: string; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="-6 -6 12 12" aria-hidden className={`shrink-0 ${className}`}>
-      <circle r="5.4" fill="#2150C9" />
+      <circle r="5.4" fill={color} />
     </svg>
   );
 }

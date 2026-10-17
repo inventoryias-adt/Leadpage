@@ -238,7 +238,7 @@ export default function LandingPage() {
 
       {/* Preço */}
       <section className="bg-dots-dark relative overflow-hidden bg-primary px-5 py-16 text-center sm:px-8">
-        <Reveal from="flip" className="mb-5 flex justify-center"><Coin size={72} /></Reveal>
+        <Reveal from="flip" className="mb-5 flex justify-center"><Coin size={72} color="#C6F432" /></Reveal>
         <Reveal from="zoom">
           <h2 className="mx-auto mb-3 max-w-2xl text-3xl font-semibold text-white md:text-4xl">
             Um plano, tudo incluso. <span className="text-lima">{PLAN_PRICE} por mês.</span>
