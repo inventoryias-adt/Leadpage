@@ -22,12 +22,12 @@ await o.goto(BASE + '/dashboard/caixa'); await o.waitForSelector('#cpf');
 await o.fill('#cpf', cpfFmt);
 await o.waitForSelector('text=já tem conta no Fidelize');
 assert.match(await o.locator('[aria-live=polite]').first().innerText(), /✓ \w+ \w\. já tem conta/);
-assert.ok(await o.locator('button:has-text("Lançar na conta de")').count());
+assert.ok(await o.locator('[data-testid=lancar-direto]').count());
 console.log('1. CPF com conta: nome abreviado e botão de lançar direto OK');
 
 // 2. R$ 50,00 direto: 500 pontos, sem QR Code
 await o.fill('#amount', '50,00');
-await o.click('button:has-text("Lançar na conta de")');
+await o.click('[data-testid=lancar-direto]');
 await o.waitForSelector('text=pontos lançados para');
 assert.equal(sql(`select balance from "Wallet" where "customerId"='${cid}' and "restaurantId"='${rid}'`), '500');
 assert.equal(sql(`select ("redeemedAt" is not null)::text||'|'||("customerId"='${cid}')::text from "Claim" where "restaurantId"='${rid}' limit 1`), 'true|true');
@@ -38,7 +38,7 @@ console.log('2. lançamento direto: carteira +500, extrato, aviso ao cliente e l
 // 3. repetido em segundos: recusado
 await o.click('button:has-text("Novo lançamento")');
 await o.fill('#cpf', cpfFmt); await o.waitForSelector('text=já tem conta no Fidelize');
-await o.fill('#amount', '50,00'); await o.click('button:has-text("Lançar na conta de")');
+await o.fill('#amount', '50,00'); await o.click('[data-testid=lancar-direto]');
 await o.waitForSelector('text=acabou de ser feito');
 assert.equal(sql(`select balance from "Wallet" where "customerId"='${cid}' and "restaurantId"='${rid}'`), '500', 'não creditou duas vezes');
 console.log('3. mesmo lançamento repetido em segundos é recusado OK');
@@ -46,7 +46,7 @@ console.log('3. mesmo lançamento repetido em segundos é recusado OK');
 // 4. CPF válido sem conta: orienta o QR Code, que segue funcionando
 await o.fill('#cpf', '123.456.789-09');
 await o.waitForSelector('text=ainda não tem conta');
-assert.equal(await o.locator('button:has-text("Lançar na conta de")').count(), 0);
+assert.equal(await o.locator('[data-testid=lancar-direto]').count(), 0);
 await o.fill('#amount', '30,00'); await o.click('button:has-text("Gerar QR Code")');
 await o.waitForSelector('text=Uso único');
 console.log('4. CPF sem conta: orienta o QR Code, e o QR segue funcionando OK');

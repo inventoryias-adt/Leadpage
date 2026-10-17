@@ -99,7 +99,7 @@ await o.waitForURL('**/dashboard'); await o.goto(BASE+'/dashboard/caixa'); await
 await a.click('button:has-text("Reativar")'); await a.fill('#status-reason','pago por Pix');
 await a.click('[role=dialog] button:has-text("Sim, liberar acesso")');
 await a.waitForSelector('text=Acesso liberado.'); await a.click('[role=dialog] button:has-text("Fechar")');
-await o.goto(BASE+'/dashboard/caixa'); await wait(o,2000); await o.waitForSelector('text=Gerar pontos');
+await o.goto(BASE+'/dashboard/caixa'); await wait(o,2000); await o.waitForSelector('text=Lançar pontos');
 console.log('7. status da assinatura muda o acesso do dono OK');
 
 // ---- novo assinante + cancelar com botão + conta de teste

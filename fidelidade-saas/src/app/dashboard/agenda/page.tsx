@@ -106,7 +106,7 @@ const toExport = (b: Row): ExportRow => ({
   note: b.note,
 });
 
-export default async function AgendaPage({ searchParams }: { searchParams: Promise<{ data?: string; per?: string; prof?: string; vista?: string; ok?: string; erro?: string }> }) {
+export default async function AgendaPage({ searchParams }: { searchParams: Promise<{ data?: string; per?: string; prof?: string; vista?: string; ag?: string; ok?: string; erro?: string }> }) {
   const restaurant = await requireActiveRestaurant();
   const sp = await searchParams;
   const today = todayKey();
@@ -231,12 +231,26 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
         <AgendaGrid
           open={openWindow}
           openLabel={openWindow && openWindow !== 'closed' ? windowLabel(openWindow) : undefined}
-          linkBase={href({ vista: 'lista' })}
+          linkBase={back}
           staff={(who ? [who] : staff.filter((r) => r.active || list.some((b) => b.resourceId === r.id))).map((r) => ({ id: r.id, name: r.name, color: r.color, photoUrl: imageUrl(r.photoImageId), work: dayWindow(parseSchedule(r.schedule), weekday) }))}
           bookings={list.map((b) => ({ id: b.id, resourceId: b.resourceId, startsAt: b.startsAt, endsAt: b.endsAt, serviceName: b.serviceName, customerName: b.customer.name, status: b.status }))}
           nowMin={date === today ? (() => { const hm = hmOf(new Date()); return Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3, 5)); })() : null}
         />
       )}
+
+      {(() => {
+        const sel = sp.ag ? list.find((b) => b.id === sp.ag) ?? pending.find((b) => b.id === sp.ag) : null;
+        if (!sel) return null;
+        return (
+          <div role="dialog" aria-modal="true" aria-label="Detalhes do agendamento" data-testid="booking-modal" className="fixed inset-0 z-50 flex items-end justify-center p-3 sm:items-center">
+            <Link href={back} aria-label="Fechar" className="absolute inset-0 bg-slate-900/45" />
+            <div className="relative w-full max-w-md rounded-[26px] bg-white p-4 shadow-2xl">
+              <ul><Item b={sel} back={back} showDay /></ul>
+              <Link href={back} className="glass-button-ghost mt-3 w-full">Fechar</Link>
+            </div>
+          </div>
+        );
+      })()}
 
       {list.length === 0 ? (
         <p className="glass-panel-sm p-4 text-sm text-slate-600">Nenhum agendamento {per === 'dia' ? 'neste dia' : 'neste período'}{who ? ` para ${who.name}` : ''}.</p>

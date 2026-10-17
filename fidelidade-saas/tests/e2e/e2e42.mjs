@@ -33,7 +33,7 @@ console.log('2. Caixa acha o cliente pelo ID OK');
 
 // 3. lança R$ 40,00 pelo ID: 400 pontos na carteira
 await o.fill('#amount', '40,00');
-await o.click('button:has-text("Lançar na conta de")');
+await o.click('[data-testid=lancar-direto]');
 await o.waitForSelector('text=pontos lançados para');
 assert.equal(sql(`select balance from "Wallet" where "customerId"='${cid}' and "restaurantId"='${rid}'`), '400');
 console.log('3. Lançamento pelo ID: carteira +400 OK');
@@ -42,7 +42,7 @@ console.log('3. Lançamento pelo ID: carteira +400 OK');
 await o.click('button:has-text("Novo lançamento")');
 await o.fill('#cpf', 'FZ-ZZZZZZ');
 await o.waitForSelector('text=Nenhuma conta com este ID');
-assert.equal(await o.locator('button:has-text("Lançar na conta de")').count(), 0);
+assert.equal(await o.locator('[data-testid=lancar-direto]').count(), 0);
 console.log('4. ID inexistente: aviso e sem botão de lançar OK');
 
 // 5. CPF continua funcionando no mesmo campo

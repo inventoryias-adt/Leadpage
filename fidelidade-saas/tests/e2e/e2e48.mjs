@@ -54,7 +54,7 @@ console.log('4. alterna entre grade e lista OK');
 
 // 5. clicar num bloco da grade abre a lista naquele agendamento
 await o.locator('[data-testid=agenda-grid] a[aria-label*="Confirmado"]').first().click();
-await o.waitForURL('**vista=lista#ag-*'); await o.waitForSelector('ul[aria-label="Agendamentos do dia"]');
+await o.waitForSelector('[data-testid=booking-modal]'); assert.ok(await o.locator('[data-testid=booking-modal] button:has-text("Concluir")').count(), 'o modal traz as ações');
 console.log('5. bloco da grade abre o agendamento na lista OK');
 
 // 6. agendamento fora do horário amplia a grade só o necessário; dia fechado avisa
