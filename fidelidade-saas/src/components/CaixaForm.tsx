@@ -6,6 +6,7 @@ import { useActionState, useEffect, useMemo, useState } from 'react';
 import { createClaim, creditByCpf, lookupCpf, type CaixaState, type CpfLookup } from '@/app/actions/restaurant';
 import { calculatePoints, formatPoints, parseMoneyToCents } from '@/lib/points';
 import { applyPromos, promoActiveAt, promoBadge, type PromoLike } from '@/lib/promos';
+import { looksLikeAccountCode, normalizeAccountCode } from '@/lib/account-code';
 import { formatCpf, isValidCpf, normalizePhone, onlyDigits } from '@/lib/br';
 import { Icon } from './Icons';
 import { PrintTicket } from './PrintTicket';
@@ -37,14 +38,19 @@ export function CaixaForm({ pointsPerReal, rules, promos = [], placeName }: { po
     return applyPromos(calculatePoints(cents, pointsPerReal), cents, promoList.filter((p) => p.audience === 'ALL')).points + extras;
   }, [amount, checked, pointsPerReal, rules, promoList]);
 
-  // Ao completar um CPF válido, vê se o cliente já tem conta (nome abreviado).
+  // Ao completar um CPF válido (ou um ID da conta), vê se o cliente já tem conta (nome abreviado).
   useEffect(() => {
+    const byId = looksLikeAccountCode(cpf);
     const digits = onlyDigits(cpf);
-    if (digits.length < 11) return setLookup(null);
-    if (!isValidCpf(digits)) return setLookup({ status: 'invalid' });
+    if (byId) {
+      if (!normalizeAccountCode(cpf)) return setLookup(null); // ainda digitando o ID
+    } else {
+      if (digits.length < 11) return setLookup(null);
+      if (!isValidCpf(digits)) return setLookup({ status: 'invalid' });
+    }
     setLookup('loading');
     let alive = true;
-    lookupCpf(digits).then((r) => alive && setLookup(r)).catch(() => alive && setLookup(null));
+    lookupCpf(byId ? cpf : digits).then((r) => alive && setLookup(r)).catch(() => alive && setLookup(null));
     return () => {
       alive = false;
     };
@@ -101,14 +107,15 @@ export function CaixaForm({ pointsPerReal, rules, promos = [], placeName }: { po
       >
         <div className="glass-inset space-y-2 p-3">
           <label className="glass-label !mb-0" htmlFor="cpf">
-            CPF do cliente <span className="font-normal text-slate-500">(opcional: lança os pontos direto na conta dele)</span>
+            CPF ou ID da conta do cliente <span className="font-normal text-slate-500">(opcional: lança os pontos direto na conta dele)</span>
           </label>
-          <input id="cpf" name="cpf" inputMode="numeric" autoComplete="off" className="glass-input" placeholder="000.000.000-00" value={cpf} onChange={(e) => setCpf(formatCpf(e.target.value))} />
+          <input id="cpf" name="cpf" autoComplete="off" className="glass-input" placeholder="000.000.000-00 ou FZ-7K3Q9X" value={cpf} onChange={(e) => setCpf(looksLikeAccountCode(e.target.value) ? e.target.value.toUpperCase().slice(0, 12) : formatCpf(e.target.value))} />
           <div aria-live="polite" className="min-h-[1.25rem] text-sm">
             {lookup === 'loading' && <span className="text-slate-500">Procurando…</span>}
             {found && <span className="font-semibold text-emerald-700">✓ {found.name} já tem conta no Fidelize. Dá para lançar direto.</span>}
             {typeof lookup === 'object' && lookup?.status === 'new' && <span className="text-slate-600">Este CPF ainda não tem conta. Gere o QR Code e envie por WhatsApp para ele criar a conta e receber os pontos.</span>}
             {typeof lookup === 'object' && lookup?.status === 'invalid' && <span className="text-red-600">CPF inválido. Confira os números.</span>}
+            {typeof lookup === 'object' && lookup?.status === 'noid' && <span className="text-red-600">Nenhuma conta com este ID. Confira o código com o cliente.</span>}
             {typeof lookup === 'object' && lookup?.status === 'limit' && <span className="text-red-600">Muitas consultas seguidas. Aguarde alguns minutos.</span>}
           </div>
         </div>

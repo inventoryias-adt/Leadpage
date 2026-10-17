@@ -179,6 +179,7 @@ model Customer {
   email        String?  @unique // minúsculo; null até o cliente criar o acesso com e-mail e senha
   passwordHash String?
   referralCode String?  @unique // código do link "Indique amigos"
+  accountCode  String?  @unique // ID da conta (FZ-XXXXXX): o cliente informa no caixa no lugar do CPF
   termsAcceptedAt DateTime? // aceite dos Termos de Uso e da Política de Privacidade (null = conta anterior ao aceite)
   termsVersion    String? // versão aceita (ver src/lib/legal.ts)
   birthDay        Int? // aniversário: só dia e mês (sem o ano), opcional; o cliente informa e remove quando quiser

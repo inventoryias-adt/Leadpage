@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { EmptyState } from '@/components/EmptyState';
 import type { Prisma } from '@prisma/client';
+import { normalizeAccountCode } from '@/lib/account-code';
 import { maskCpf, formatPhone, onlyDigits } from '@/lib/br';
 import { prisma } from '@/lib/db';
 import { formatDateTimeBR, formatPoints } from '@/lib/points';
@@ -22,7 +23,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
   const digits = onlyDigits(q);
 
   const customerFilter: Prisma.CustomerWhereInput | undefined = q
-    ? { OR: [{ name: { contains: q, mode: 'insensitive' } }, ...(digits ? [{ cpf: { contains: digits } }, { phone: { contains: digits } }] : [])] }
+    ? { OR: [{ name: { contains: q, mode: 'insensitive' } }, ...(normalizeAccountCode(q) ? [{ accountCode: normalizeAccountCode(q)! }] : []), ...(digits ? [{ cpf: { contains: digits } }, { phone: { contains: digits } }] : [])] }
     : undefined;
 
   const { rows: allRows } = await loadCustomerRows(restaurant.id);
@@ -83,7 +84,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
         {seg && <p className="mb-3 text-sm text-slate-600">{SEGMENT_HINT[seg]}</p>}
         <form className="flex gap-2" role="search">
           {seg && <input type="hidden" name="seg" value={seg} />}
-          <input name="q" defaultValue={q} className="glass-input" placeholder="Buscar por nome, CPF ou telefone" aria-label="Buscar cliente" />
+          <input name="q" defaultValue={q} className="glass-input" placeholder="Buscar por nome, CPF, telefone ou ID da conta" aria-label="Buscar cliente" />
           <button className="glass-button-ghost !w-auto">Buscar</button>
         </form>
       </section>

@@ -11,6 +11,7 @@ import { BusinessError, creditClaim, performCheckIn, redeemItems, redeemReward, 
 import { TERMS_REQUIRED_MESSAGE, termsAccepted, termsRecord } from '@/lib/legal';
 import { emailConfigured } from '@/lib/mailer';
 import { dummyHash, hashPassword, verifyPassword } from '@/lib/password';
+import { uniqueAccountCode } from '@/lib/account-code-db';
 import { newReferralCode } from '@/lib/tokens';
 import { endCustomerSession, getCustomer, startCustomerSession } from '@/lib/session';
 import { fail, safeNext, type BagState, type FormState } from '@/lib/form';
@@ -88,7 +89,7 @@ export async function customerSignup(_: FormState, formData: FormData): Promise<
   if (byEmail) return fail('Este e-mail já está em uso. Entre com ele ou use outro.', formData);
 
   const customer = await prisma.customer
-    .create({ data: { cpf, phone, name, email, passwordHash: await hashPassword(password), referralCode: newReferralCode(), ...termsRecord() } })
+    .create({ data: { cpf, phone, name, email, passwordHash: await hashPassword(password), referralCode: newReferralCode(), accountCode: await uniqueAccountCode(), ...termsRecord() } })
     .catch((e: { code?: string }) => (e.code === 'P2002' ? null : Promise.reject(e))); // corrida: outro cadastro igual no mesmo instante
   if (!customer) return fail('Este CPF ou e-mail já tem cadastro. Tente entrar.', formData);
   // Cadastro feito pelo link "Indique amigos": registra quem indicou (o prêmio sai na primeira compra).

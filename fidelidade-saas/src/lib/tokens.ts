@@ -20,3 +20,10 @@ export function newReferralCode(): string {
   for (let i = 0; i < 8; i++) out += ALPHABET[randomInt(ALPHABET.length)];
   return out;
 }
+
+/** ID da conta do cliente (FZ-XXXXXX): o cliente informa no caixa no lugar do CPF. */
+export function newAccountCode(): string {
+  let out = 'FZ-';
+  for (let i = 0; i < 6; i++) out += ALPHABET[randomInt(ALPHABET.length)];
+  return out;
+}
