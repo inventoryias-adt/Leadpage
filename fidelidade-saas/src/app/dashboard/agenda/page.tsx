@@ -174,13 +174,13 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
               <Icon name={vista === 'grade' ? 'receipt' : 'clock'} size={16} /> {vista === 'grade' ? `Ver agendamentos${list.length ? ` (${list.length})` : ''}` : 'Ver grade do dia'}
             </Link>
           )}
-          <Link href="/dashboard/configuracoes#agenda" className="glass-button-ghost btn-sm"><Icon name="cog" size={16} /> Serviços e regras</Link>
+          <Link href="/dashboard/configuracoes?etapa=agenda&abrir=agenda-conteudo#agenda" className="glass-button-ghost btn-sm"><Icon name="cog" size={16} /> Serviços e regras</Link>
         </div>
       </header>
 
       {sp.ok && <p role="status" className="glass-success">{sp.ok}</p>}
       {sp.erro && <p role="alert" className="glass-error">{sp.erro}</p>}
-      {setup === 0 && <p className="glass-panel-sm p-4 text-sm text-slate-600">Cadastre ao menos um serviço em <Link href="/dashboard/configuracoes#agenda" className="link-inline">Regras → Agenda e serviços</Link> para o cliente poder agendar.</p>}
+      {setup === 0 && <p className="glass-panel-sm p-4 text-sm text-slate-600">Cadastre ao menos um serviço em <Link href="/dashboard/configuracoes?etapa=agenda&abrir=agenda-conteudo#agenda" className="link-inline">Regras → Agenda e serviços</Link> para o cliente poder agendar.</p>}
 
       {pendingOtherDays.length > 0 && (
         <section aria-labelledby="pend">

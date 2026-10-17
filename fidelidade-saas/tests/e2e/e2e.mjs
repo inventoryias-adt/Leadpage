@@ -65,6 +65,10 @@ assert.equal(saved.find(d => d.day === 6).open, '11:00');
 // concluir sem produto deve falhar
 await r.click('text=Concluir configuração');
 await r.waitForSelector('text=Cadastre pelo menos um produto');
+// os produtos ficam na etapa 3 (Prêmios): uma etapa por vez
+assert.equal(await r.locator('[data-testid=etapa-premios]').count(), 0);
+await r.goto(BASE + '/dashboard/configuracoes?etapa=premios');
+await r.waitForSelector('[data-testid=etapa-premios]');
 await r.fill('input[name=name][placeholder^="Ex.: Sobremesa"]', 'Sobremesa grátis');
 await r.fill('input[name=pointsCost]', '500');
 await r.click('text=Adicionar produto');

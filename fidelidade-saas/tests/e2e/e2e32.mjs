@@ -32,7 +32,7 @@ await p.waitForSelector('h1:has-text("Agenda")');
 console.log('2. o link abre a agenda aberta e a página da Agenda já funciona (serviço padrão) OK');
 
 // 3. recarregar: seção da agenda aberta como "Recomendado" para esse tipo de negócio
-await p.goto(BASE + '/dashboard/configuracoes'); await p.waitForSelector('#agenda-conteudo');
+await p.goto(BASE + '/dashboard/configuracoes?etapa=agenda'); await p.waitForSelector('#agenda-conteudo');
 assert.equal(await p.locator('#agenda-conteudo[open]').count(), 1);
 assert.ok(await p.locator('#agenda-conteudo >> text=1 serviço').count());
 console.log('3. na configuração, a agenda vem aberta com o serviço padrão OK');

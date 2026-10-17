@@ -40,14 +40,18 @@ export const metadata = { title: 'Regras e configurações' };
 export const dynamic = 'force-dynamic';
 
 /** Etapa grande da configuração (numerada, aparece no menu). */
-function Section({ id, n, title, hint, children }: { id: string; n: number; title: string; hint?: string; children: React.ReactNode }) {
+function Section({ id, n, title, hint, where, children }: { id: string; n: number; title: string; hint?: string; where: string; children: React.ReactNode }) {
   return (
-    <section id={id} className="glass-panel scroll-mt-4 p-5 sm:p-7">
+    <section id={id} data-testid={`etapa-${id}`} className="glass-panel scroll-mt-4 p-5 sm:p-7">
       <div className="mb-5 flex items-start gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-electric-600 text-sm font-bold text-white">{n}</span>
-        <div>
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0f1f3d] text-sm font-bold text-[#c6f432]">{n}</span>
+        <div className="min-w-0">
           <h2 className="text-lg font-bold text-primary">{title}</h2>
           {hint && <p className="text-sm text-slate-500">{hint}</p>}
+          <p className="mt-2 inline-flex max-w-full items-start gap-1.5 rounded-full bg-[#f3f6fd] px-3 py-1 text-xs font-semibold text-slate-600">
+            <Icon name="phone" size={14} className="mt-px shrink-0 text-[#0f1f3d]" />
+            <span>{where}</span>
+          </p>
         </div>
       </div>
       <div className="space-y-6">{children}</div>
@@ -115,10 +119,23 @@ const SECTIONS = [
   ['conta', 'Minha conta'],
 ] as const;
 
-export default async function ConfiguracoesPage({ searchParams }: { searchParams: Promise<{ abrir?: string }> }) {
+type Etapa = (typeof SECTIONS)[number][0];
+
+/** Etapa que contém cada bloco: os atalhos de outras telas usam `/dashboard/configuracoes?etapa=…#bloco`. */
+const hrefOf = (etapa: Etapa, hash?: string, extra = '') => `/dashboard/configuracoes?etapa=${etapa}${extra}${hash ? `#${hash}` : ''}`;
+
+export default async function ConfiguracoesPage({ searchParams }: { searchParams: Promise<{ abrir?: string; etapa?: string }> }) {
   const restaurant = await requirePaidRestaurant();
-  const abrir = (await searchParams).abrir;
+  const sp = await searchParams;
+  const abrir = sp.abrir;
   const abrirTudo = abrir === 'tudo';
+  // uma etapa por vez; "?abrir=tudo" mostra todas (útil para imprimir ou procurar algo); "?abrir=agenda" é o atalho antigo
+  const pedida = (abrir === 'agenda' ? 'agenda' : sp.etapa) as Etapa | undefined;
+  const etapa: Etapa = SECTIONS.some(([id]) => id === pedida) ? (pedida as Etapa) : 'negocio';
+  const show = (id: Etapa) => abrirTudo || etapa === id;
+  const idx = SECTIONS.findIndex(([id]) => id === etapa);
+  const prev = !abrirTudo && idx > 0 ? SECTIONS[idx - 1] : null;
+  const next = !abrirTudo && idx < SECTIONS.length - 1 ? SECTIONS[idx + 1] : null;
   const [interactions, rewards, challenges, units, promotions, resources, services, appCampaigns] = await Promise.all([
     prisma.interactionRule.findMany({ where: { restaurantId: restaurant.id, active: true }, orderBy: { createdAt: 'asc' } }),
     prisma.reward.findMany({ where: { restaurantId: restaurant.id, active: true }, orderBy: { pointsCost: 'asc' } }),
@@ -141,12 +158,15 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
       {/* Computador: menu lateral fixo ao rolar */}
       <aside className="sticky top-6 hidden lg:block">
         <nav aria-label="Seções" className="glass-panel-sm flex flex-col gap-0.5 p-2">
-          {SECTIONS.map(([id, label], i) => (
-            <a key={id} href={`#${id}`} className="nav-tab flex items-center gap-2.5 !px-3 !py-2 !text-sm">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-electric-600/10 text-[11px] font-bold text-electric-600">{i + 1}</span>
-              {label}
-            </a>
-          ))}
+          {SECTIONS.map(([id, label], i) => {
+            const on = !abrirTudo && id === etapa;
+            return (
+              <Link key={id} href={hrefOf(id)} aria-current={on ? 'step' : undefined} className={`${on ? 'nav-tab-active' : 'nav-tab'} flex items-center gap-2.5 !px-3 !py-2 !text-sm`}>
+                <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold ${on ? 'bg-[#0f1f3d] text-[#c6f432]' : 'bg-[#0f1f3d]/10 text-[#0f1f3d]'}`}>{i + 1}</span>
+                {label}
+              </Link>
+            );
+          })}
         </nav>
       </aside>
 
@@ -159,18 +179,18 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
       )}
 
       <nav aria-label="Seções" className="chip-row lg:hidden">
-        {SECTIONS.map(([id, label]) => (
-          <a key={id} href={`#${id}`} className="chip-link shrink-0">
-            {label}
-          </a>
+        {SECTIONS.map(([id, label], i) => (
+          <Link key={id} href={hrefOf(id)} aria-current={!abrirTudo && id === etapa ? 'step' : undefined} className={`${!abrirTudo && id === etapa ? 'chip-link-active' : 'chip-link'} shrink-0`}>
+            {i + 1}. {label}
+          </Link>
         ))}
       </nav>
 
       {(() => {
         const steps = [
-          { done: !!restaurant.logoImageId && !!restaurant.category, label: 'Logo e categoria do seu negócio', href: '#identidade' },
-          { done: units.some((u) => u.active && !!u.address && u.latitude != null), label: 'Endereço, horário e localização no mapa', href: '#unidades' },
-          { done: rewards.length > 0, label: 'Ao menos um prêmio para o cliente trocar por pontos', href: '#produtos' },
+          { done: !!restaurant.logoImageId && !!restaurant.category, label: 'Logo e categoria do seu negócio', href: hrefOf('negocio', 'identidade') },
+          { done: units.some((u) => u.active && !!u.address && u.latitude != null), label: 'Endereço, horário e localização no mapa', href: hrefOf('negocio', 'unidades') },
+          { done: rewards.length > 0, label: 'Ao menos um prêmio para o cliente trocar por pontos', href: hrefOf('premios', 'produtos') },
         ];
         const ready = steps.filter((x) => x.done).length;
         if (ready === steps.length && !onboarding) return null;
@@ -183,19 +203,20 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
             <ul className="space-y-2">
               {steps.map((x) => (
                 <li key={x.href}>
-                  <a href={x.href} className="flex items-center gap-3 rounded-xl px-2 py-1.5 text-sm hover:bg-slate-50">
+                  <Link href={x.href} className="flex items-center gap-3 rounded-xl px-2 py-1.5 text-sm hover:bg-[#eaf0ff]">
                     <span aria-hidden className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${x.done ? 'bg-emerald-100 text-emerald-700' : 'border border-slate-300 text-slate-400'}`}>{x.done ? '✓' : ''}</span>
                     <span className={x.done ? 'text-slate-500 line-through' : 'font-semibold text-slate-800'}>{x.label}</span>
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
-            <p className="mt-3 text-xs text-slate-500">O resto é opcional e você pode configurar depois: campanhas, desafios, agenda e pontos compartilhados ficam logo abaixo.</p>
+            <p className="mt-3 text-xs text-slate-500">O resto é opcional e você pode configurar depois: campanhas, desafios, agenda e pontos compartilhados ficam nas outras etapas do menu.</p>
           </section>
         );
       })()}
 
-      <Section id="negocio" n={1} title="Seu negócio" hint="Nome, marca, onde fica e quando abre. É o que o cliente vê no app.">
+{show('negocio') && (
+      <Section id="negocio" where="Início do app, página do seu lugar, Lugares perto de você e o mapa" n={1} title="Seu negócio" hint="Nome, marca, onde fica e quando abre. É o que o cliente vê no app.">
       <Block id="dados" title="Dados do estabelecimento">
         <BasicsForm defaults={{ name: restaurant.name }} />
       </Block>
@@ -274,17 +295,19 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
         </details>
       </Block>
       </Section>
+)}
 
-      <Section id="regras" n={2} title="Como o cliente ganha pontos" hint="O essencial é o primeiro bloco. Os outros são opcionais e abrem sozinhos quando você já configurou algo.">
+{show('regras') && (
+      <Section id="regras" where="Cartão da carteira, página do seu lugar (ganhar pontos), vitrine Lugares e Avisos" n={2} title="Como o cliente ganha pontos" hint="O essencial é o primeiro bloco. Os outros são opcionais e abrem sozinhos quando você já configurou algo.">
       <Block id="pontos" title="Pontos por compra" hint="Quanto cada real vale em pontos e quantos resgates cada CPF pode fazer por mês.">
         <RulesForm defaults={{ pointsPerReal: restaurant.pointsPerReal, maxRedeemsPerMonth: restaurant.maxRedeemsPerMonth }} />
       </Block>
 
-      <Optional id="engajamento" title="Check-in e indicação de amigos" hint="Dois jeitos de fazer o cliente voltar e trazer gente nova." status={restaurant.checkInPoints > 0 || restaurant.referralPoints > 0 ? `Ligado` : 'Opcional'} open={openAll || restaurant.checkInPoints > 0 || restaurant.referralPoints > 0}>
+      <Optional id="engajamento" title="Check-in e indicação de amigos" hint="Dois jeitos de fazer o cliente voltar e trazer gente nova." status={restaurant.checkInPoints > 0 || restaurant.referralPoints > 0 ? `Ligado` : 'Opcional'} open={openAll || abrir === 'engajamento' || restaurant.checkInPoints > 0 || restaurant.referralPoints > 0}>
         <EngagementForm defaults={{ checkInPoints: restaurant.checkInPoints, checkInRadiusM: restaurant.checkInRadiusM, referralPoints: restaurant.referralPoints, birthdayPoints: restaurant.birthdayPoints }} />
       </Optional>
 
-      <Optional id="interacoes" title="Interações que dão pontos" hint="Pontuação fixa, marcada pelo caixa no lançamento (avaliação no Google, story no Instagram…)." status={interactions.length > 0 ? `${interactions.length} ${interactions.length === 1 ? 'ativa' : 'ativas'}` : 'Opcional'} open={openAll || interactions.length > 0}>
+      <Optional id="interacoes" title="Interações que dão pontos" hint="Pontuação fixa, marcada pelo caixa no lançamento (avaliação no Google, story no Instagram…)." status={interactions.length > 0 ? `${interactions.length} ${interactions.length === 1 ? 'ativa' : 'ativas'}` : 'Opcional'} open={openAll || abrir === 'interacoes' || interactions.length > 0}>
         <ul className="mb-4 divide-y divide-slate-200/70">
           {interactions.length === 0 && <li className="py-2 text-sm text-slate-500">Nenhuma interação cadastrada.</li>}
           {interactions.map((i) => (
@@ -295,7 +318,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
         <AddInteractionForm />
       </Optional>
 
-      <Optional id="desafios" title="Desafios da casa" hint="Metas que dão pontos de bônus automaticamente, como “2 compras acima de R$ 42 na semana”." status={challenges.length > 0 ? `${challenges.length} ${challenges.length === 1 ? 'ativo' : 'ativos'}` : 'Opcional'} open={openAll || challenges.length > 0}>
+      <Optional id="desafios" title="Desafios da casa" hint="Metas que dão pontos de bônus automaticamente, como “2 compras acima de R$ 42 na semana”." status={challenges.length > 0 ? `${challenges.length} ${challenges.length === 1 ? 'ativo' : 'ativos'}` : 'Opcional'} open={openAll || abrir === 'desafios' || challenges.length > 0}>
         <ul className="mb-4 divide-y divide-slate-200/70">
           {challenges.length === 0 && <li className="py-2 text-sm text-slate-500">Nenhum desafio criado.</li>}
           {challenges.map((c) => (
@@ -306,7 +329,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
         <AddChallengeForm />
       </Optional>
 
-      <Optional id="campanhas" title="Campanhas de pontos" hint="Pontos em dobro na terça, +50 pontos acima de R$ 40… Valem no caixa e aparecem como card na vitrine dos clientes." status={promotions.length + appCampaigns.length > 0 ? `${promotions.length} ${promotions.length === 1 ? 'campanha' : 'campanhas'}` : 'Opcional'} open={openAll || promotions.length > 0}>
+      <Optional id="campanhas" title="Campanhas de pontos" hint="Pontos em dobro na terça, +50 pontos acima de R$ 40… Valem no caixa e aparecem como card na vitrine dos clientes." status={promotions.length + appCampaigns.length > 0 ? `${promotions.length} ${promotions.length === 1 ? 'campanha' : 'campanhas'}` : 'Opcional'} open={openAll || abrir === 'campanhas' || promotions.length > 0}>
         {appCampaigns.length > 0 && (
           <div className="mb-5">
             <h3 className="mb-2 text-sm font-bold text-slate-800">Campanhas do app</h3>
@@ -376,8 +399,10 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
         <AddPromotionForm />
       </Optional>
       </Section>
+)}
 
-      <Section id="premios" n={3} title="Prêmios do clube" hint="O que o cliente pode trocar por pontos. Com foto, o resgate vende mais.">
+{show('premios') && (
+      <Section id="premios" where="Página do seu lugar → Prêmios e a tela de resgate (cupom)" n={3} title="Prêmios do clube" hint="O que o cliente pode trocar por pontos. Com foto, o resgate vende mais.">
       <Block id="produtos" title="Produtos resgatáveis">
         <ul className="mb-4 space-y-3">
           {rewards.length === 0 && <li className="py-2 text-sm text-slate-500">Cadastre ao menos um produto.</li>}
@@ -407,9 +432,11 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
         </Link>
       </Block>
       </Section>
+)}
 
-      <Section id="agenda" n={4} title="Agenda e serviços" hint="Barbearia, clínica, salão, restaurante… O cliente marca pelo app e, quando o atendimento é concluído, os pontos entram sozinhos.">
-      <Optional id="agenda-conteudo" title="Configurar a agenda" hint={bookingSuggested ? 'Seu tipo de negócio costuma atender com hora marcada: cadastre os serviços para o cliente agendar pelo app.' : 'Só se o seu negócio atende com hora marcada ou reserva.'} status={services.length > 0 ? `${services.length} ${services.length === 1 ? 'serviço' : 'serviços'}` : bookingSuggested ? 'Recomendado' : 'Opcional'} open={openAll || abrir === 'agenda' || bookingSuggested || services.length > 0}>
+{show('agenda') && (
+      <Section id="agenda" where="Botão Agendar na página do seu lugar e Meus agendamentos" n={4} title="Agenda e serviços" hint="Barbearia, clínica, salão, restaurante… O cliente marca pelo app e, quando o atendimento é concluído, os pontos entram sozinhos.">
+      <Optional id="agenda-conteudo" title="Configurar a agenda" hint={bookingSuggested ? 'Seu tipo de negócio costuma atender com hora marcada: cadastre os serviços para o cliente agendar pelo app.' : 'Só se o seu negócio atende com hora marcada ou reserva.'} status={services.length > 0 ? `${services.length} ${services.length === 1 ? 'serviço' : 'serviços'}` : bookingSuggested ? 'Recomendado' : 'Opcional'} open={openAll || abrir === 'agenda' || abrir === 'agenda-conteudo' || bookingSuggested || services.length > 0}>
         <div className="space-y-7">
           <div>
             <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-slate-500">Serviços</h3>
@@ -497,15 +524,27 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
         </div>
       </Optional>
       </Section>
+)}
 
-      <Section id="compartilhar" n={5} title="Pontos compartilhados" hint="Uma rede entre lugares: o cliente junta pontos em um e pode usar em outros que participam.">
+{show('compartilhar') && (
+      <Section id="compartilhar" where="Carteira do cliente (pontos de outros lugares) e tela de resgate" n={5} title="Pontos compartilhados" hint="Uma rede entre lugares: o cliente junta pontos em um e pode usar em outros que participam.">
         <SharingForm defaults={{ pointsShareOut: restaurant.pointsShareOut, pointsAcceptIn: restaurant.pointsAcceptIn }} />
       </Section>
+)}
 
-      <Section id="conta" n={6} title="Minha conta" hint="Troque a senha de acesso ao painel. Use uma senha que só você conheça.">
+{show('conta') && (
+      <Section id="conta" where="Só você vê: não aparece para o cliente" n={6} title="Minha conta" hint="Troque a senha de acesso ao painel. Use uma senha que só você conheça.">
         <PasswordForm />
         {restaurant.paymentCustomerId && <BillingPortalForm support={getSupport('Assinatura no Fidelize', `Olá! Sou do estabelecimento "${restaurant.name}" e não consegui abrir o gerenciamento da assinatura no Fidelize.`)} />}
       </Section>
+)}
+
+      {(prev || next) && (
+        <nav aria-label="Navegação entre etapas" data-testid="etapa-nav" className="flex items-center justify-between gap-3">
+          {prev ? <Link href={hrefOf(prev[0])} className="glass-button-ghost !w-auto">← {prev[1]}</Link> : <span />}
+          {next && <Link href={hrefOf(next[0])} className="glass-button-lime !w-auto">Próximo: {next[1]} →</Link>}
+        </nav>
+      )}
 
       {onboarding && (
         <div id="finalizar" className="glass-panel scroll-mt-4 p-5 sm:p-7">

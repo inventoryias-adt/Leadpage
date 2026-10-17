@@ -118,7 +118,7 @@ export default async function PontosPage({ searchParams }: { searchParams: Promi
             variant="coin"
             title="Nenhuma campanha rendeu pontos neste mês"
             text="Quando uma compra for creditada com uma campanha valendo, ela aparece aqui com os números."
-            action={{ href: '/dashboard/configuracoes#campanhas', label: 'Criar uma campanha' }}
+            action={{ href: '/dashboard/configuracoes?etapa=regras&abrir=campanhas#campanhas', label: 'Criar uma campanha' }}
           />
         ) : (
           <>

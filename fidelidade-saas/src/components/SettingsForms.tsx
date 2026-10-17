@@ -34,6 +34,11 @@ import { CHECKIN_RADIUS_OPTIONS, radiusIndex } from '@/lib/geo';
 import { ImageUpload, shrinkImage } from './ImageUpload';
 import { WebImageSearch } from './WebImageSearch';
 import { ColorSwatches } from './ColorSwatches';
+import { PreviewFrame } from './PreviewFrame';
+import { CampaignTile } from './CampaignTile';
+import { RewardImage, ProgressBar } from './Visual';
+import { colorOf, promoDefaultColor } from '@/lib/palette';
+import { formatPoints, formatPrice } from '@/lib/points';
 import { FormMessage, SubmitButton } from './ui';
 
 type Basics = { name: string };
@@ -158,9 +163,24 @@ export function AddInteractionForm() {
 
 export function AddRewardForm() {
   const [state, action] = useActionState(addReward, {});
+  const [photo, setPhoto] = useState('');
+  const [draft, setDraft] = useState({ name: '', points: '', cash: '' });
+  useEffect(() => {
+    if (state.ok) setDraft({ name: '', points: '', cash: '' });
+  }, [state.ok]);
+  const points = Math.max(0, parseInt(draft.points, 10) || 0);
+  const cashCents = Math.round((parseFloat(draft.cash.replace(/\./g, '').replace(',', '.')) || 0) * 100);
   return (
-    <form action={action} className="space-y-3" key={state.ok ?? 'idle'}>
-      <ImageUpload name="imageData" label="Foto do produto" hint="Opcional, mas aumenta muito a vontade de resgatar." maxSide={640} webSearch />
+    <form
+      action={action}
+      className="space-y-3"
+      key={state.ok ?? 'idle'}
+      onChange={(e) => {
+        const fd = new FormData(e.currentTarget);
+        setDraft({ name: String(fd.get('name') ?? ''), points: String(fd.get('pointsCost') ?? ''), cash: String(fd.get('cashValue') ?? '') });
+      }}
+    >
+      <ImageUpload name="imageData" label="Foto do produto" hint="Opcional, mas aumenta muito a vontade de resgatar." maxSide={640} webSearch onPreview={setPhoto} />
       <div className="grid gap-3 sm:grid-cols-[1fr_8rem]">
         <input name="name" defaultValue={state.values?.name} className="glass-input" placeholder="Ex.: Sobremesa grátis" aria-label="Nome do produto" required />
         <input name="pointsCost" defaultValue={state.values?.pointsCost} type="number" min={1} inputMode="numeric" className="glass-input" placeholder="Pontos" aria-label="Custo em pontos" required />
@@ -171,6 +191,22 @@ export function AddRewardForm() {
         <p className="mt-1 text-xs text-slate-500">Deixe vazio para resgate só com pontos. Com valor, o cliente paga esse valor no balcão e dá os pontos. Faça a conta para ter certeza de que compensa.</p>
       </div>
       <input name="description" defaultValue={state.values?.description} className="glass-input" placeholder="Descrição curta (opcional)" aria-label="Descrição do produto" maxLength={160} />
+      <PreviewFrame where="página do seu lugar → Prêmios, e na tela de resgate">
+        <div className="glass-panel-sm flex items-center gap-3.5 p-3.5" data-testid="reward-preview">
+          <RewardImage src={photo} name={draft.name || 'Seu produto'} className="h-16 w-16 shrink-0 rounded-2xl" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-bold text-slate-800">{draft.name || 'Nome do produto'}</p>
+            <p className="text-sm font-semibold text-electric-600">{points > 0 ? formatPrice(points, cashCents) : '— pts'}</p>
+            {points > 0 && (
+              <div className="mt-1.5">
+                <ProgressBar value={Math.round(points * 0.4)} max={points} label="Exemplo de progresso" />
+                <p className="mt-1 text-xs text-slate-500">Exemplo: {formatPoints(Math.round(points * 0.4))} / {formatPoints(points)} pts · faltam {formatPoints(points - Math.round(points * 0.4))}</p>
+              </div>
+            )}
+          </div>
+        </div>
+        {!photo && <p className="mt-2 text-xs text-slate-500">Sem foto, o cliente vê o presente cinza. Com foto o resgate vende mais.</p>}
+      </PreviewFrame>
       <FormMessage state={state} />
       <SubmitButton variant="ghost" pendingText="Adicionando…">Adicionar produto</SubmitButton>
     </form>
@@ -385,7 +421,7 @@ export function IdentityForm({ defaults, placeName, supportEnv }: { defaults: Id
           {suggestsBooking(category) && (
             <p className="mt-2 rounded-lg border border-[#C3D2F4] bg-[#EEF3FD] p-3 text-xs text-slate-700">
               Esse tipo de negócio costuma atender com <strong>hora marcada</strong>. A aba <strong>Agenda</strong> já está liberada no menu: cadastre seus serviços para o cliente agendar pelo app.{' '}
-              <Link href="/dashboard/configuracoes?abrir=agenda#agenda" className="link-inline">Configurar a agenda</Link>
+              <Link href="/dashboard/configuracoes?etapa=agenda&abrir=agenda-conteudo#agenda" className="link-inline">Configurar a agenda</Link>
             </p>
           )}
         </div>
@@ -578,8 +614,38 @@ export function AddPromotionForm() {
   const [state, action] = useActionState(addPromotion, {});
   const [kind, setKind] = useState<'MULTIPLIER' | 'BONUS'>((state.values?.kind as 'MULTIPLIER' | 'BONUS') ?? 'MULTIPLIER');
   const [audience, setAudience] = useState<'ALL' | 'NEW' | 'INACTIVE'>((state.values?.audience as 'ALL' | 'NEW' | 'INACTIVE') ?? 'ALL');
+  const [draft, setDraft] = useState({ title: '', multiplier: '2', bonus: '', color: '', days: [] as number[], start: '', end: '', min: '' });
+  useEffect(() => {
+    if (state.ok) setDraft({ title: '', multiplier: '2', bonus: '', color: '', days: [], start: '', end: '', min: '' });
+  }, [state.ok]);
+  const color = colorOf(draft.color || promoDefaultColor(audience));
+  const big = kind === 'MULTIPLIER' ? `${draft.multiplier.replace('.', ',')}x` : `+${parseInt(draft.bonus, 10) || 0}`;
+  const dayNames = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+  const when = [
+    draft.days.length === 0 || draft.days.length === 7 ? 'Todos os dias' : draft.days.map((d) => dayNames[d]).join(', ').replace(/^./, (c) => c.toUpperCase()),
+    draft.start && draft.end ? `das ${draft.start} às ${draft.end}` : draft.start ? `a partir das ${draft.start}` : draft.end ? `até as ${draft.end}` : '',
+    parseFloat(draft.min.replace(',', '.')) > 0 ? `em compras a partir de R$ ${draft.min}` : '',
+    audience === 'NEW' ? 'só na primeira compra' : audience === 'INACTIVE' ? 'para quem não compra há um tempo' : '',
+  ].filter(Boolean).join(', ');
   return (
-    <form action={action} className="space-y-4" key={state.ok ?? 'idle'}>
+    <form
+      action={action}
+      className="space-y-4"
+      key={state.ok ?? 'idle'}
+      onChange={(e) => {
+        const fd = new FormData(e.currentTarget);
+        setDraft({
+          title: String(fd.get('title') ?? ''),
+          multiplier: String(fd.get('multiplier') ?? '2'),
+          bonus: String(fd.get('bonusPoints') ?? ''),
+          color: String(fd.get('color') ?? ''),
+          days: fd.getAll('weekdays').map(Number),
+          start: String(fd.get('startTime') ?? ''),
+          end: String(fd.get('endTime') ?? ''),
+          min: String(fd.get('minAmount') ?? ''),
+        });
+      }}
+    >
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label className="glass-label" htmlFor="p-title">Nome da campanha</label>
@@ -667,6 +733,9 @@ export function AddPromotionForm() {
       <p className="text-xs text-slate-500">
         A campanha vale no caixa, no horário de Brasília, e já aparece como card na vitrine “Lugares”. Multiplicadores não se somam (vale o maior); pontos extras se somam. Campanhas para um público específico (clientes novos ou quem sumiu) entram quando o cliente lê o QR Code, porque só então sabemos quem ele é.
       </p>
+      <PreviewFrame where="vitrine Lugares, página do seu lugar e cartão da carteira">
+        <div data-testid="promo-preview"><CampaignTile big={big} title={draft.title || 'Nome da campanha'} when={when} color={color} live /></div>
+      </PreviewFrame>
       <FormMessage state={state} />
       <SubmitButton variant="ghost" pendingText="Criando…">Criar campanha</SubmitButton>
     </form>
