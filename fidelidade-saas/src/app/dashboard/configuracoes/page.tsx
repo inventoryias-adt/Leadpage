@@ -1,10 +1,8 @@
 import Link from 'next/link';
 import { setAppCampaign } from '@/app/actions/app-campaigns';
 import { campaignBadge, campaignWhen } from '@/lib/app-campaigns';
-import { removeChallenge, removeInteraction, removePromotion, removeReward, removeUnit, setPromotionColor, togglePromotion } from '@/app/actions/restaurant';
+import { removeChallenge, removeInteraction, removePromotion, removeReward, removeUnit, setPromotionColor, toggleChallenge, togglePromotion } from '@/app/actions/restaurant';
 import {
-  AddChallengeForm,
-  AddPromotionForm,
   AddInteractionForm,
   InteractionRow,
   AddRewardForm,
@@ -19,6 +17,7 @@ import {
   RulesForm,
   UnitForm,
 } from '@/components/SettingsForms';
+import { AddChallengeForm, AddPromotionForm, ChallengeRow, PromotionCard, type PromoInit } from '@/components/CampaignForms';
 import { EmptyState } from '@/components/EmptyState';
 import { Icon } from '@/components/Icons';
 import { PlaceAvatar, RewardImage } from '@/components/Visual';
@@ -33,6 +32,7 @@ import { imageUrl } from '@/lib/images';
 import { formatBRL, formatPoints, formatPrice } from '@/lib/points';
 import { ColorDots } from '@/components/ColorSwatches';
 import { promoColor } from '@/lib/palette';
+import { dateKeyOf } from '@/lib/booking';
 import { promoBadge, promoBig, promoStatus, promoWhen } from '@/lib/promos';
 import { requirePaidRestaurant } from '@/lib/session';
 
@@ -99,17 +99,6 @@ function RemoveButton({ action, id, label }: { action: (fd: FormData) => Promise
   );
 }
 
-/** Linha de lista "texto + pontos + remover", sem espremer o texto no celular. */
-function PointsRow({ text, points, remove }: { text: string; points: number; remove: React.ReactNode }) {
-  return (
-    <li className="flex items-center gap-3 py-3">
-      <span className="flex h-10 min-w-[3.5rem] shrink-0 items-center justify-center rounded-lg bg-[#E8EEFB] px-2 text-sm font-bold tabular-nums text-electric-600">+{formatPoints(points)}</span>
-      <span className="min-w-0 flex-1 text-sm leading-snug text-slate-800">{text}</span>
-      {remove}
-    </li>
-  );
-}
-
 const SECTIONS = [
   ['negocio', 'Seu negócio'],
   ['regras', 'Ganhar pontos'],
@@ -151,6 +140,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
   const activeCount = units.filter((u) => u.active).length;
   const onboarding = !restaurant.onboardedAt;
   const bookingSuggested = suggestsBooking(restaurant.category);
+  const engagementOn = [restaurant.checkInPoints, restaurant.referralPoints, restaurant.birthdayPoints].filter((n) => n > 0).length;
   const openAll = abrirTudo || onboarding; // no primeiro acesso mostramos tudo aberto
 
   return (
@@ -303,7 +293,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
         <RulesForm defaults={{ pointsPerReal: restaurant.pointsPerReal, maxRedeemsPerMonth: restaurant.maxRedeemsPerMonth }} />
       </Block>
 
-      <Optional id="engajamento" title="Check-in e indicação de amigos" hint="Dois jeitos de fazer o cliente voltar e trazer gente nova." status={restaurant.checkInPoints > 0 || restaurant.referralPoints > 0 ? `Ligado` : 'Opcional'} open={openAll || abrir === 'engajamento' || restaurant.checkInPoints > 0 || restaurant.referralPoints > 0}>
+      <Optional id="engajamento" title="Check-in, indicação e aniversário" hint="Jeitos de fazer o cliente voltar e trazer gente nova. Cada um tem a sua chave liga/desliga." status={engagementOn > 0 ? `${engagementOn} ${engagementOn === 1 ? 'ligado' : 'ligados'}` : 'Desligados'} open={openAll || abrir === 'engajamento' || engagementOn > 0}>
         <EngagementForm defaults={{ checkInPoints: restaurant.checkInPoints, checkInRadiusM: restaurant.checkInRadiusM, referralPoints: restaurant.referralPoints, birthdayPoints: restaurant.birthdayPoints }} />
       </Optional>
 
@@ -322,7 +312,20 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
         <ul className="mb-4 divide-y divide-slate-200/70">
           {challenges.length === 0 && <li className="py-2 text-sm text-slate-500">Nenhum desafio criado.</li>}
           {challenges.map((c) => (
-            <PointsRow key={c.id} text={describeChallenge(c)} points={c.bonusPoints} remove={<RemoveButton action={removeChallenge} id={c.id} label={c.title} />} />
+            <ChallengeRow
+              key={c.id}
+              text={describeChallenge(c)}
+              points={c.bonusPoints}
+              active={c.active}
+              init={{ id: c.id, kind: c.kind, period: c.period, target: String(c.target), bonus: String(c.bonusPoints), min: c.minAmountCents > 0 ? (c.minAmountCents / 100).toFixed(2).replace('.', ',') : '' }}
+              toggle={
+                <form action={toggleChallenge} className="shrink-0">
+                  <input type="hidden" name="id" value={c.id} />
+                  <button className="glass-button-ghost btn-sm">{c.active ? 'Pausar' : 'Retomar'}</button>
+                </form>
+              }
+              remove={<RemoveButton action={removeChallenge} id={c.id} label={c.title} />}
+            />
           ))}
         </ul>
         <p className="mb-2 text-sm font-bold text-slate-800">Novo desafio</p>
@@ -369,33 +372,58 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
             const status = promoStatus(p, nowDate);
             const look = { now: ['Valendo agora', 'bg-emerald-100 text-emerald-700'], scheduled: ['Agendada', 'bg-blue-100 text-electric-600'], paused: ['Pausada', 'bg-slate-200 text-slate-600'], ended: ['Encerrada', 'bg-slate-200 text-slate-500'] }[status];
             const color = promoColor(p);
+            const init: PromoInit = {
+              id: p.id,
+              title: p.title,
+              kind: p.kind,
+              audience: p.audience,
+              inactiveDays: String(p.inactiveDays ?? 30),
+              multiplier: String(p.multiplier ?? 2),
+              bonus: p.bonusPoints != null ? String(p.bonusPoints) : '',
+              color: p.color ?? '',
+              days: p.weekdays,
+              start: p.startTime ?? '',
+              end: p.endTime ?? '',
+              min: p.minAmountCents > 0 ? (p.minAmountCents / 100).toFixed(2).replace('.', ',') : '',
+              startDate: p.startsAt ? dateKeyOf(p.startsAt) : '',
+              endDate: p.endsAt ? dateKeyOf(p.endsAt) : '',
+            };
             return (
-              <li key={p.id} className="glass-inset p-3">
-                <div className="flex items-start gap-3">
-                  <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold text-white" style={{ background: color.hex }}>{promoBig(p)}</span>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-slate-800">{p.title}{p.appCampaignId && <span className="ml-2 rounded-full bg-[#E8EEFB] px-2 py-0.5 text-[11px] font-semibold text-electric-600">Campanha do app</span>}</p>
-                    <p className="text-xs text-slate-500">{promoWhen(p, formatBRL)}</p>
+              <PromotionCard
+                key={p.id}
+                init={init}
+                editable={!p.appCampaignId}
+                preview={{ big: promoBig(p), title: p.title, when: promoWhen(p, formatBRL), color, live: status === 'now' }}
+                header={
+                  <div className="flex items-start gap-3">
+                    <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold text-white" style={{ background: color.hex }}>{promoBig(p)}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-slate-800">{p.title}{p.appCampaignId && <span className="ml-2 rounded-full bg-[#E8EEFB] px-2 py-0.5 text-[11px] font-semibold text-electric-600">Campanha do app</span>}</p>
+                      <p className="text-xs text-slate-500">{promoWhen(p, formatBRL)}</p>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end gap-1.5">
+                      <span className="glass-chip">{promoBadge(p)}</span>
+                      <span className={`rounded-md px-2.5 py-0.5 text-xs font-semibold ${look[1]}`}>{look[0]}</span>
+                    </div>
                   </div>
-                  <div className="flex shrink-0 flex-col items-end gap-1.5">
-                    <span className="glass-chip">{promoBadge(p)}</span>
-                    <span className={`rounded-md px-2.5 py-0.5 text-xs font-semibold ${look[1]}`}>{look[0]}</span>
-                  </div>
-                </div>
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  {status !== 'ended' && (
-                    <form action={togglePromotion}>
-                      <input type="hidden" name="id" value={p.id} />
-                      <button className="glass-button-ghost btn-sm">{p.active ? 'Pausar' : 'Retomar'}</button>
-                    </form>
-                  )}
-                  <RemoveButton action={removePromotion} id={p.id} label={p.title} />
-                  <span className="ml-auto"><ColorDots action={setPromotionColor} id={p.id} value={color.key} /></span>
-                </div>
-              </li>
+                }
+                actions={
+                  <>
+                    {status !== 'ended' && (
+                      <form action={togglePromotion}>
+                        <input type="hidden" name="id" value={p.id} />
+                        <button className="glass-button-ghost btn-sm">{p.active ? 'Pausar' : 'Retomar'}</button>
+                      </form>
+                    )}
+                    <RemoveButton action={removePromotion} id={p.id} label={p.title} />
+                    <span className="ml-auto"><ColorDots action={setPromotionColor} id={p.id} value={color.key} /></span>
+                  </>
+                }
+              />
             );
           })}
         </ul>
+        <p className="mb-2 text-sm font-bold text-slate-800">Nova campanha</p>
         <AddPromotionForm />
       </Optional>
       </Section>

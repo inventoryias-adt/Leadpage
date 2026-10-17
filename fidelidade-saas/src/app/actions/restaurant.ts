@@ -441,28 +441,52 @@ const challengeSchema = z.object({
   bonusPoints: z.coerce.number().int('Use um número inteiro.').min(1, 'Informe os pontos de bônus.').max(100_000),
 });
 
-export async function addChallenge(_: FormState, formData: FormData): Promise<FormState> {
-  const restaurant = await requirePaidRestaurant();
+/** Lê e valida o formulário de desafio (criar e editar usam o mesmo). */
+function readChallenge(formData: FormData): { error: string } | { data: { kind: 'PURCHASES' | 'CHECKINS'; period: 'WEEK' | 'MONTH'; target: number; bonusPoints: number; minAmountCents: number; title: string } } {
   const parsed = challengeSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return fail(firstIssue(parsed.error), formData);
+  if (!parsed.success) return { error: firstIssue(parsed.error) };
   const { kind, period, target, bonusPoints } = parsed.data;
-
   let minAmountCents = 0;
   if (kind === 'PURCHASES' && parsed.data.minAmount.trim()) {
     const cents = parseMoneyToCents(parsed.data.minAmount);
-    if (cents === null || cents > MAX_BILL_CENTS) return fail('Valor mínimo inválido. Exemplo: 42,00', formData);
+    if (cents === null || cents > MAX_BILL_CENTS) return { error: 'Valor mínimo inválido. Exemplo: 42,00' };
     minAmountCents = cents;
   }
+  return { data: { kind, period, target, bonusPoints, minAmountCents, title: describeChallenge({ kind, target, minAmountCents, period }) } };
+}
+
+export async function addChallenge(_: FormState, formData: FormData): Promise<FormState> {
+  const restaurant = await requirePaidRestaurant();
+  const read = readChallenge(formData);
+  if ('error' in read) return fail(read.error, formData);
   if ((await prisma.challenge.count({ where: { restaurantId: restaurant.id } })) >= 10) {
     return fail('Limite de 10 desafios atingido.', formData);
   }
-
-  const title = describeChallenge({ kind, target, minAmountCents, period });
-  await prisma.challenge.create({
-    data: { restaurantId: restaurant.id, title, kind, period, target, minAmountCents, bonusPoints },
-  });
+  await prisma.challenge.create({ data: { restaurantId: restaurant.id, ...read.data } });
   revalidatePath('/dashboard', 'layout');
   return { ok: 'Desafio criado.' };
+}
+
+/** Edita um desafio no lugar: vale daqui para frente; quem já concluiu o período atual não ganha de novo. */
+export async function updateChallenge(_: FormState, formData: FormData): Promise<FormState> {
+  const restaurant = await requirePaidRestaurant();
+  const read = readChallenge(formData);
+  if ('error' in read) return fail(read.error, formData);
+  const done = await prisma.challenge.updateMany({ where: { id: String(formData.get('id')), restaurantId: restaurant.id }, data: read.data });
+  if (done.count === 0) return fail('Desafio não encontrado.', formData);
+  revalidatePath('/dashboard', 'layout');
+  revalidatePath('/lugares');
+  return { ok: 'Desafio atualizado.' };
+}
+
+/** Pausa ou retoma um desafio (pausado, ele some para o cliente e não premia). */
+export async function toggleChallenge(formData: FormData) {
+  const restaurant = await requirePaidRestaurant();
+  const c = await prisma.challenge.findFirst({ where: { id: String(formData.get('id')), restaurantId: restaurant.id } });
+  if (!c) return;
+  await prisma.challenge.update({ where: { id: c.id }, data: { active: !c.active } });
+  revalidatePath('/dashboard', 'layout');
+  revalidatePath('/lugares');
 }
 
 export async function removeChallenge(formData: FormData) {
@@ -487,52 +511,65 @@ const promoSchema = z.object({
   endTime: z.string().default(''),
 });
 
-export async function addPromotion(_: FormState, formData: FormData): Promise<FormState> {
-  const restaurant = await requirePaidRestaurant();
+type PromoData = {
+  title: string;
+  kind: 'MULTIPLIER' | 'BONUS';
+  audience: 'ALL' | 'NEW' | 'INACTIVE';
+  inactiveDays: number | null;
+  multiplier: number | null;
+  bonusPoints: number | null;
+  minAmountCents: number;
+  startsAt: Date | null;
+  endsAt: Date | null;
+  weekdays: number[];
+  startTime: string | null;
+  endTime: string | null;
+  color: string | null;
+};
+
+/** Lê e valida o formulário de campanha (criar e editar usam o mesmo). */
+function readPromo(formData: FormData): { error: string } | { data: PromoData } {
   const parsed = promoSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return fail(firstIssue(parsed.error), formData);
+  if (!parsed.success) return { error: firstIssue(parsed.error) };
   const d = parsed.data;
 
   let multiplier: number | null = null;
   let bonusPoints: number | null = null;
   if (d.kind === 'MULTIPLIER') {
     multiplier = Number(d.multiplier.replace(',', '.'));
-    if (!Number.isFinite(multiplier) || multiplier < 1.1 || multiplier > 10) return fail('O multiplicador deve ficar entre 1,1x e 10x.', formData);
+    if (!Number.isFinite(multiplier) || multiplier < 1.1 || multiplier > 10) return { error: 'O multiplicador deve ficar entre 1,1x e 10x.' };
     multiplier = Math.round(multiplier * 100) / 100;
   } else {
     bonusPoints = Number(d.bonusPoints);
-    if (!Number.isInteger(bonusPoints) || bonusPoints < 1 || bonusPoints > 100_000) return fail('Informe os pontos extras (número inteiro, a partir de 1).', formData);
+    if (!Number.isInteger(bonusPoints) || bonusPoints < 1 || bonusPoints > 100_000) return { error: 'Informe os pontos extras (número inteiro, a partir de 1).' };
   }
 
   let inactiveDays: number | null = null;
   if (d.audience === 'INACTIVE') {
     inactiveDays = Number(d.inactiveDays);
-    if (!Number.isInteger(inactiveDays) || inactiveDays < 7 || inactiveDays > 365) return fail('Informe há quantos dias o cliente não compra (de 7 a 365).', formData);
+    if (!Number.isInteger(inactiveDays) || inactiveDays < 7 || inactiveDays > 365) return { error: 'Informe há quantos dias o cliente não compra (de 7 a 365).' };
   }
 
   let minAmountCents = 0;
   if (d.minAmount.trim()) {
     const cents = parseMoneyToCents(d.minAmount);
-    if (cents === null || cents > MAX_BILL_CENTS) return fail('Valor mínimo inválido. Exemplo: 40,00', formData);
+    if (cents === null || cents > MAX_BILL_CENTS) return { error: 'Valor mínimo inválido. Exemplo: 40,00' };
     minAmountCents = cents;
   }
 
   const startsAt = d.startDate ? startOfDayBR(d.startDate) : null;
   const endsAt = d.endDate ? endOfDayBR(d.endDate) : null;
-  if ((d.startDate && !startsAt) || (d.endDate && !endsAt)) return fail('Data inválida.', formData);
-  if (startsAt && endsAt && endsAt <= startsAt) return fail('A data final precisa ser igual ou depois da inicial.', formData);
-  if (endsAt && endsAt.getTime() <= Date.now()) return fail('A data final já passou.', formData);
+  if ((d.startDate && !startsAt) || (d.endDate && !endsAt)) return { error: 'Data inválida.' };
+  if (startsAt && endsAt && endsAt <= startsAt) return { error: 'A data final precisa ser igual ou depois da inicial.' };
+  if (endsAt && endsAt.getTime() <= Date.now()) return { error: 'A data final já passou.' };
 
-  if ((d.startTime && parseTime(d.startTime) == null) || (d.endTime && parseTime(d.endTime) == null)) return fail('Horário inválido.', formData);
-  if (d.startTime && d.endTime && d.startTime === d.endTime) return fail('O horário inicial e o final não podem ser iguais.', formData);
+  if ((d.startTime && parseTime(d.startTime) == null) || (d.endTime && parseTime(d.endTime) == null)) return { error: 'Horário inválido.' };
+  if (d.startTime && d.endTime && d.startTime === d.endTime) return { error: 'O horário inicial e o final não podem ser iguais.' };
 
   const weekdays = [...new Set(formData.getAll('weekdays').map(Number).filter((n) => Number.isInteger(n) && n >= 0 && n <= 6))].sort();
 
-  if ((await prisma.promotion.count({ where: { restaurantId: restaurant.id } })) >= 20) return fail('Limite de 20 campanhas atingido. Remova alguma antiga.', formData);
-
-  await prisma.promotion.create({
+  return {
     data: {
-      restaurantId: restaurant.id,
       title: d.title,
       kind: d.kind,
       audience: d.audience,
@@ -547,9 +584,31 @@ export async function addPromotion(_: FormState, formData: FormData): Promise<Fo
       endTime: d.endTime || null,
       color: isColorKey(formData.get('color')) ? String(formData.get('color')) : null,
     },
-  });
+  };
+}
+
+export async function addPromotion(_: FormState, formData: FormData): Promise<FormState> {
+  const restaurant = await requirePaidRestaurant();
+  const read = readPromo(formData);
+  if ('error' in read) return fail(read.error, formData);
+  if ((await prisma.promotion.count({ where: { restaurantId: restaurant.id } })) >= 20) return fail('Limite de 20 campanhas atingido. Remova alguma antiga.', formData);
+  await prisma.promotion.create({ data: { restaurantId: restaurant.id, ...read.data } });
   revalidatePath('/dashboard', 'layout');
   return { ok: 'Campanha criada.' };
+}
+
+/** Edita uma campanha própria no lugar (as do app só podem ser pausadas ou removidas). */
+export async function updatePromotion(_: FormState, formData: FormData): Promise<FormState> {
+  const restaurant = await requirePaidRestaurant();
+  const promo = await prisma.promotion.findFirst({ where: { id: String(formData.get('id')), restaurantId: restaurant.id } });
+  if (!promo) return fail('Campanha não encontrada.', formData);
+  if (promo.appCampaignId) return fail('As campanhas do app são definidas pelo Fidelize. Você pode pausar ou sair da campanha.', formData);
+  const read = readPromo(formData);
+  if ('error' in read) return fail(read.error, formData);
+  await prisma.promotion.update({ where: { id: promo.id }, data: { ...read.data, color: read.data.color ?? promo.color } });
+  revalidatePath('/dashboard', 'layout');
+  revalidatePath('/lugares');
+  return { ok: 'Campanha atualizada.' };
 }
 
 export async function removePromotion(formData: FormData) {
