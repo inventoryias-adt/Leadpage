@@ -465,3 +465,15 @@ Decisões em aberto: modelo de recebimento (Stripe Connect com Pix e repasse a c
 - **Início** (`/carteira`): na ordem do PDF. Saudação, **resumo** (saldo total em azul-marinho com "+N no mês" e dois atalhos: prêmios ao alcance e cupons a retirar), **Suas carteiras** (logo, categoria · "aberto agora"/"fechado agora", saldo, barra de progresso e "Faltam X para <prêmio>", selos "Pode resgatar" e "N para retirar"), **próximo horário** (com "Sim, estarei lá / Liberar horário"), **Prêmios ao seu alcance** (até 3), **Campanhas do app** e **Atividade recente** (4 últimas movimentações em todos os lugares). Os rótulos "Prêmios para retirar", "Você pode resgatar agora" e "Vantagens de usar" continuam fora do Início (teste `e2e16`).
 - **Avisos** (`/avisos`): uma única rolagem **agrupada por dia** (Hoje, Ontem, "Seg, 12/10"; `src/lib/notice-groups.ts`) e **filtro por estabelecimento** (chips com a quantidade de novos; `?lugar=<id>`, só aceita lugar que tem aviso do cliente). Cada aviso mostra o ícone/cor do tipo, o horário e o nome do lugar. Abrir um lugar marca como lido só os avisos dele (`markNotificationsRead(restaurantId)`); "Todos" marca o resto. Os lembretes de horário pendentes ficam no topo, com os botões.
 - Testes: `src/lib/notice-groups.test.ts` e `e2e45`.
+
+## App do gestor separado do app do cliente (migration: nenhuma)
+
+- **Problema**: havia um único manifesto de instalação (`start_url: /carteira`), então o gestor que adicionava o painel à tela inicial recebia o app do **cliente**.
+- **Agora são dois apps**, com nome, ícone e manifesto próprios:
+  - **Cliente**: `/manifest.webmanifest` (`id` e `start_url` = `/carteira`, ícone lima). Vale para `/entrar`, a carteira, Lugares, Avisos e Perfil.
+  - **Gestor**: `/gestor.webmanifest` (`id` e `start_url` = `/dashboard`, nome "Fidelize Gestor", ícone azul-marinho com o F em lima, atalhos para Caixa, Agenda e Pedidos). Vale para `/dashboard` e para `/login` (o convite de instalar aparece no celular, nas duas telas). Os metadados (`GESTOR_METADATA` em `src/lib/gestor-app.ts`) trocam também o ícone de iPhone e o título "Fidelize Gestor".
+  - O `id` diferente faz o Android e o iPhone tratarem os dois como apps distintos; o mesmo celular pode ter os dois.
+- O manifesto do cliente virou rota (`src/app/manifest.webmanifest/route.ts`) porque o arquivo especial `manifest.ts` tem prioridade e impediria a troca no painel.
+- **Convite no painel** (`InstallApp variant="gestor"`): cartão "Tenha o Fidelize Gestor na tela inicial" no celular (sem o pop-up central, para não competir com o guia inicial); "agora não" e "já instalei" são guardados à parte do app do cliente.
+- **Quem já instalou o app errado** precisa remover o ícone e adicionar de novo pelo painel (o sistema não troca o manifesto de um app já instalado).
+- O painel já tem barra de abas no celular; o teste confere que as 8 telas principais não têm rolagem lateral em 390 px. Teste: `e2e46`.

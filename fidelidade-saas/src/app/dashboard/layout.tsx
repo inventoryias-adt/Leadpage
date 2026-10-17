@@ -1,4 +1,6 @@
 import { Brand } from '@/components/Brand';
+import { InstallApp } from '@/components/InstallApp';
+import { GESTOR_METADATA } from '@/lib/gestor-app';
 import { OwnerGuide } from '@/components/OwnerGuide';
 import { exitImpersonation } from '@/app/actions/admin';
 import { getAdmin } from '@/lib/session';
@@ -12,6 +14,8 @@ import { requireRestaurant } from '@/lib/session';
 import { UnitSwitcher } from '@/components/UnitSwitcher';
 import { currentUnit } from '@/lib/units';
 import { suggestsBooking } from '@/lib/categories';
+
+export const metadata = GESTOR_METADATA;
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const restaurant = await requireRestaurant();
@@ -78,6 +82,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </form>
         </div>
       </header>
+
+      {ready && <div className="mx-auto w-full max-w-5xl px-4 pt-4 empty:hidden md:hidden"><InstallApp variant="gestor" /></div>}
 
       {children}
 
