@@ -2,7 +2,7 @@ import 'server-only';
 import type { Prisma } from '@prisma/client';
 import { prisma } from './db';
 import { BusinessError, creditClaimWith } from './claims';
-import { REMINDER_LEAD_MIN, REMINDER_MIN_AHEAD_MIN, availableSlots, bookingPoints, dayStartUtc, formatBookingWhen, hmOf, parseDateKey, pickResource, reminderDue, type BusyRange, type Slot } from './booking';
+import { REMINDER_LEAD_MIN, REMINDER_MIN_AHEAD_MIN, availableSlots, bookingPoints, canCustomerCancel, dayStartUtc, formatBookingWhen, hmOf, parseDateKey, pickResource, reminderDue, type BusyRange, type Slot } from './booking';
 import { suggestsBooking } from './categories';
 import { parseSchedule } from './hours';
 import { sendEmail } from './mailer';
@@ -78,7 +78,7 @@ export async function staffFor(db: Db, args: { restaurantId: string; service: Se
 /** Horários livres de um serviço numa unidade em um dia, com o que está ocupado (para escolher o profissional). */
 export async function slotsForDay(
   db: Db,
-  args: { restaurantId: string; policy: Policy; service: ServiceLike; unit: { id: string; openingSchedule: unknown }; date: string; now?: Date; resourceId?: string | null },
+  args: { restaurantId: string; policy: Policy; service: ServiceLike; unit: { id: string; openingSchedule: unknown }; date: string; now?: Date; resourceId?: string | null; ignoreBookingId?: string },
 ): Promise<{ slots: Slot[]; busy: BusyRange[] }> {
   const { restaurantId, policy, service, unit, date } = args;
   if (!parseDateKey(date)) return { slots: [], busy: [] };
@@ -88,6 +88,7 @@ export async function slotsForDay(
   const busy = await db.booking.findMany({
     where: {
       resourceId: { in: staff.map((r) => r.id) },
+      ...(args.ignoreBookingId ? { id: { not: args.ignoreBookingId } } : {}), // reagendando: o horário atual do próprio cliente não conta como ocupado
       status: { in: ['PENDING', 'CONFIRMED'] },
       startsAt: { lt: new Date(start.getTime() + 2 * DAY_MS) },
       endsAt: { gt: start },
@@ -204,6 +205,104 @@ async function bookSlotTx(customerId: string, input: BookInput) {
     },
     { timeout: 15_000 },
   );
+}
+
+export type RescheduleInput = { date: string; time: string; resourceId?: string | null };
+
+/**
+ * O cliente troca o dia, o horário e/ou o profissional de um agendamento em aberto. Serviço, unidade, preço e o desconto com
+ * pontos continuam os mesmos. Vale a mesma antecedência do cancelamento. O novo horário passa pelas mesmas regras de
+ * disponibilidade (com o cadeado do estabelecimento) e, se o lugar confirma na mão, volta a aguardar confirmação.
+ */
+export async function rescheduleBooking(customerId: string, bookingId: string, input: RescheduleInput) {
+  const result = await prisma.$transaction(
+    async (tx) => {
+      const found = await tx.booking.findFirst({ where: { id: bookingId, customerId }, select: { restaurantId: true } });
+      if (!found) throw new BusinessError('Agendamento não encontrado.');
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${found.restaurantId}))`;
+
+      const booking = await tx.booking.findFirst({ where: { id: bookingId, customerId, status: { in: ['PENDING', 'CONFIRMED'] } }, include: { resource: { select: { name: true } } } });
+      if (!booking) throw new BusinessError('Agendamento não encontrado ou já encerrado.');
+      const restaurant = await tx.restaurant.findUnique({ where: { id: booking.restaurantId } });
+      if (!restaurant || restaurant.subscriptionStatus !== 'ACTIVE') throw new BusinessError('Este lugar não está recebendo agendamentos agora.');
+      if (!canCustomerCancel(booking, restaurant.bookingCancelHours)) throw new BusinessError('O prazo para remarcar pelo app já passou. Fale com o lugar.');
+      const [service, unit] = await Promise.all([
+        booking.serviceId ? tx.service.findFirst({ where: { id: booking.serviceId, restaurantId: restaurant.id, active: true } }) : null,
+        booking.unitId ? tx.unit.findFirst({ where: { id: booking.unitId, restaurantId: restaurant.id, active: true } }) : null,
+      ]);
+      if (!service || !unit) throw new BusinessError('Este serviço não está mais disponível para remarcar. Cancele e agende de novo.');
+      if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(input.time)) throw new BusinessError('Horário inválido.');
+
+      const { slots, busy } = await slotsForDay(tx, { restaurantId: restaurant.id, policy: restaurant, service, unit, date: input.date, resourceId: input.resourceId || null, ignoreBookingId: booking.id });
+      const slot = slots.find((s) => s.time === input.time);
+      if (!slot) throw new BusinessError('Esse horário acabou de ser ocupado ou não está mais disponível. Escolha outro.');
+      // Mantém o mesmo profissional quando ele está livre (a menos que o cliente tenha escolhido outro).
+      const preferred = !input.resourceId && booking.resourceId && slot.resourceIds.includes(booking.resourceId) ? booking.resourceId : null;
+      const resourceId = preferred ?? pickResource(slot.resourceIds, busy);
+      if (!resourceId) throw new BusinessError('Esse horário não está mais disponível. Escolha outro.');
+      if (resourceId === booking.resourceId && slot.startsAt.getTime() === booking.startsAt.getTime()) throw new BusinessError('Escolha um dia, horário ou profissional diferente do atual.');
+      const durationMin = slot.durationByResource[resourceId] ?? service.durationMin;
+      const endsAt = new Date(slot.startsAt.getTime() + durationMin * 60_000);
+      const clash = await tx.booking.count({
+        where: { id: { not: booking.id }, customerId, restaurantId: restaurant.id, status: { in: ['PENDING', 'CONFIRMED'] }, startsAt: { lt: endsAt }, endsAt: { gt: slot.startsAt } },
+      });
+      if (clash) throw new BusinessError('Você já tem um agendamento neste horário.');
+
+      const auto = restaurant.bookingAutoConfirm;
+      const updated = await tx.booking.update({
+        where: { id: booking.id },
+        data: {
+          startsAt: slot.startsAt,
+          endsAt,
+          resourceId,
+          durationMin,
+          status: auto ? 'CONFIRMED' : 'PENDING',
+          confirmedAt: auto ? new Date() : null,
+          reminderSentAt: null, // o lembrete de 30 min é do novo horário
+          reminderAnswer: null,
+        },
+      });
+      await notify(tx, {
+        customerId,
+        restaurantId: restaurant.id,
+        title: auto ? 'Agendamento remarcado' : 'Pedido de remarcação enviado',
+        body: `${booking.serviceName} · agora ${formatBookingWhen(slot.startsAt)} · ${restaurant.name}${auto ? '' : '. O lugar vai confirmar o novo horário.'}`,
+        href: '/perfil/agendamentos',
+      });
+      return { booking: updated, before: { startsAt: booking.startsAt, resourceName: booking.resource?.name ?? null, resourceId: booking.resourceId } };
+    },
+    { timeout: 15_000 },
+  );
+  void notifyStaffRescheduled(result.booking.id, result.before).catch((e) => console.error('Falha ao avisar a equipe da remarcação', e instanceof Error ? e.message : e));
+  return result.booking;
+}
+
+/** E-mail à equipe: o cliente remarcou (mostra o horário antigo e o novo). */
+export async function notifyStaffRescheduled(bookingId: string, before: { startsAt: Date; resourceName: string | null; resourceId: string | null }) {
+  const b = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      customer: { select: { name: true, phone: true } },
+      resource: { select: { name: true, email: true } },
+      unit: { select: { name: true } },
+      restaurant: { select: { name: true, email: true, bookingNotifyEmail: true } },
+    },
+  });
+  if (!b) return;
+  const text = [
+    `${b.customer.name} remarcou um agendamento em ${b.restaurant.name}${b.status === 'PENDING' ? ' (aguardando a sua confirmação)' : ''}:`,
+    '',
+    `Serviço: ${b.serviceName} (${b.durationMin} min)`,
+    `Antes: ${formatBookingWhen(before.startsAt)}${before.resourceName ? ` com ${before.resourceName}` : ''}`,
+    `Agora: ${formatBookingWhen(b.startsAt)}${b.resource ? ` com ${b.resource.name}` : ''}`,
+    `Cliente: ${b.customer.name} · ${formatPhone(b.customer.phone)}`,
+    `Unidade: ${b.unit.name}`,
+    '',
+    `Veja a agenda: ${appUrl()}/dashboard/agenda`,
+  ].join('\n');
+  const old = before.resourceId && before.resourceId !== b.resourceId ? await prisma.resource.findUnique({ where: { id: before.resourceId }, select: { email: true } }) : null;
+  const to = [...new Set([...staffAddresses(b), (old?.email ?? '').trim().toLowerCase()].filter(Boolean))];
+  for (const address of to) await sendEmail({ to: address, subject: `Horário remarcado: ${b.serviceName} · ${formatBookingWhen(b.startsAt)}`, text });
 }
 
 /** E-mail ao profissional (se tiver e-mail) e ao e-mail padrão do estabelecimento a cada novo agendamento. */

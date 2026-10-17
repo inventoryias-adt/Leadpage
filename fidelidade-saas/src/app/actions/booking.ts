@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { canCustomerCancel } from '@/lib/booking';
-import { answerReminder, bookSlot, cancelBooking } from '@/lib/booking-db';
+import { answerReminder, bookSlot, cancelBooking, rescheduleBooking } from '@/lib/booking-db';
 import { BusinessError } from '@/lib/claims';
 import { fail, type FormState } from '@/lib/form';
 import { TOO_MANY, allow } from '@/lib/rate-limit';
@@ -52,6 +52,32 @@ export async function createBooking(_: FormState, formData: FormData): Promise<F
   }
   revalidatePath('/perfil/agendamentos');
   redirect(`/perfil/agendamentos?novo=${id}`);
+}
+
+const rescheduleSchema = z.object({
+  id: z.string().regex(/^[0-9a-f-]{36}$/),
+  resourceId: z.string().default(''),
+  date: z.string(),
+  time: z.string(),
+});
+
+/** O cliente remarca o próprio agendamento (novo dia, horário e/ou profissional), dentro da antecedência que o lugar exige. */
+export async function rescheduleMyBooking(_: FormState, formData: FormData): Promise<FormState> {
+  const customer = await getCustomer();
+  if (!customer) return { error: 'Sua sessão expirou. Entre novamente para remarcar.' };
+  const parsed = rescheduleSchema.safeParse({ id: formData.get('id') ?? '', resourceId: formData.get('resourceId') ?? '', date: formData.get('date') ?? '', time: formData.get('time') ?? '' });
+  if (!parsed.success) return fail('Não foi possível ler o horário. Escolha de novo.', formData);
+  if (!(await allow(`resched:${customer.id}`, 15, 3600))) return fail(TOO_MANY, formData);
+  const d = parsed.data;
+  try {
+    await rescheduleBooking(customer.id, d.id, { date: d.date, time: d.time, resourceId: /^[0-9a-f-]{36}$/.test(d.resourceId) ? d.resourceId : null });
+  } catch (e) {
+    if (e instanceof BusinessError) return fail(e.message, formData);
+    throw e;
+  }
+  revalidatePath('/perfil/agendamentos');
+  revalidatePath('/carteira');
+  redirect(`/perfil/agendamentos?remarcado=${d.id}`);
 }
 
 /** O cliente cancela o próprio agendamento, dentro da antecedência que o lugar exige. */

@@ -1,10 +1,11 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { BookingForm } from '@/components/BookingForm';
+import { RescheduleForm } from '@/components/RescheduleForm';
 import { Icon } from '@/components/Icons';
 import { PlaceAvatar } from '@/components/Visual';
 import { imageUrl } from '@/lib/images';
-import { addDaysKey, bookingPoints, formatBookingWhen, parseDateKey, todayKey, weekdayOf } from '@/lib/booking';
+import { addDaysKey, bookingPoints, canCustomerCancel, formatBookingWhen, parseDateKey, todayKey, weekdayOf } from '@/lib/booking';
 import { ensureDefaultService, slotsForDay, staffFor } from '@/lib/booking-db';
 import { prisma } from '@/lib/db';
 import { DAY_SHORT, parseSchedule } from '@/lib/hours';
@@ -16,7 +17,7 @@ import { getCustomer } from '@/lib/session';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Agendar' };
 
-type SP = { servico?: string; unidade?: string; data?: string; hora?: string; prof?: string };
+type SP = { servico?: string; unidade?: string; data?: string; hora?: string; prof?: string; reagendar?: string };
 
 export default async function AgendarPage({ params, searchParams }: { params: Promise<{ restaurantId: string }>; searchParams: Promise<SP> }) {
   const { restaurantId } = await params;
@@ -50,11 +51,37 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
     );
   }
 
-  const service = services.find((s) => s.id === sp.servico) ?? null;
-  const unit = units.find((u) => u.id === sp.unidade) ?? units[0];
+  // Reagendar: o serviço e a unidade são os do agendamento; o cliente só escolhe novo dia, horário e profissional.
+  if (sp.reagendar && !customer) redirect(`/entrar?next=${encodeURIComponent(`${base}?reagendar=${sp.reagendar}`)}`);
+  const rb =
+    sp.reagendar && customer && /^[0-9a-f-]{36}$/.test(sp.reagendar)
+      ? await prisma.booking.findFirst({ where: { id: sp.reagendar, customerId: customer.id, restaurantId, status: { in: ['PENDING', 'CONFIRMED'] } }, include: { resource: { select: { name: true } } } })
+      : null;
+  if (sp.reagendar && (!rb || !rb.serviceId || !rb.unitId || !services.some((s) => s.id === rb.serviceId) || !units.some((u) => u.id === rb.unitId))) {
+    return (
+      <main className="space-y-5 p-4 sm:p-6 md:pt-8">
+        {back}
+        <h1 className="text-2xl font-extrabold tracking-tight text-primary">Reagendar</h1>
+        <p role="alert" className="glass-error">Não foi possível remarcar este agendamento: ele já foi encerrado ou o serviço não está mais disponível.</p>
+        <Link href="/perfil/agendamentos" className="glass-button-navy">Ver meus agendamentos</Link>
+      </main>
+    );
+  }
+  if (rb && !canCustomerCancel(rb, restaurant.bookingCancelHours)) {
+    return (
+      <main className="space-y-5 p-4 sm:p-6 md:pt-8">
+        {back}
+        <h1 className="text-2xl font-extrabold tracking-tight text-primary">Reagendar</h1>
+        <p role="alert" className="glass-error">O prazo para remarcar pelo app já passou. Fale com o lugar.</p>
+        <Link href="/perfil/agendamentos" className="glass-button-navy">Ver meus agendamentos</Link>
+      </main>
+    );
+  }
+  const service = rb ? services.find((s) => s.id === rb.serviceId) ?? null : services.find((s) => s.id === sp.servico) ?? null;
+  const unit = rb ? units.find((u) => u.id === rb.unitId) ?? units[0] : units.find((u) => u.id === sp.unidade) ?? units[0];
   const url = (over: Partial<SP>) => {
     const q = new URLSearchParams();
-    const merged = { servico: service?.id, unidade: units.length > 1 ? unit.id : undefined, data: sp.data, prof: sp.prof, ...over };
+    const merged = { servico: service?.id, unidade: units.length > 1 ? unit.id : undefined, data: sp.data, prof: sp.prof, reagendar: rb?.id, ...over };
     for (const [k, v] of Object.entries(merged)) if (v) q.set(k, v);
     const s = q.toString();
     return s ? `${base}?${s}` : base;
@@ -97,7 +124,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
   const schedule = parseSchedule(unit.openingSchedule);
   const staff = await staffFor(prisma, { restaurantId, service, unitId: unit.id });
   const prof = staff.find((p) => p.id === sp.prof) ?? null; // quem o cliente escolheu (vazio = qualquer)
-  const { slots } = await slotsForDay(prisma, { restaurantId, policy: restaurant, service, unit, date, now, resourceId: prof?.id });
+  const { slots } = await slotsForDay(prisma, { restaurantId, policy: restaurant, service, unit, date, now, resourceId: prof?.id, ignoreBookingId: rb?.id });
   const days = Array.from({ length: Math.min(14, restaurant.bookingMaxDaysAhead + 1) }, (_, i) => addDaysKey(today, i));
   const chosen = sp.hora ? slots.find((s) => s.time === sp.hora) ?? null : null;
   const label = (key: string, i: number) => (i === 0 ? 'Hoje' : i === 1 ? 'Amanhã' : DAY_SHORT[weekdayOf(key)]);
@@ -110,16 +137,22 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
     <main className="space-y-5 p-4 sm:p-6 md:pt-8">
       {back}
       <header>
-        <h1 className="text-2xl font-extrabold tracking-tight text-primary">Agendar</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-primary">{rb ? 'Reagendar' : 'Agendar'}</h1>
         <p className="flex flex-wrap items-center gap-x-2 text-sm text-slate-600">
           <span className="font-semibold text-slate-800">{service.name}</span> · {service.durationMin} min{service.priceCents > 0 ? ` · ${formatBRL(service.priceCents)}` : ''}
-          <Link href={url({ servico: undefined, hora: undefined })} className="link-inline text-xs">trocar</Link>
+          {!rb && <Link href={url({ servico: undefined, hora: undefined })} className="link-inline text-xs">trocar</Link>}
         </p>
-        {points > 0 && <p className="mt-1.5"><span className="chip-lima">Ao concluir você ganha {formatPoints(points)} pontos aqui</span></p>}
-        {service.pointsDiscountMaxPct > 0 && service.priceCents > 0 && <p className="mt-1.5"><span className="glass-chip">Aceita pontos como desconto, até {service.pointsDiscountMaxPct}% do preço.</span></p>}
+        {rb && (
+          <p className="mt-2 flex flex-wrap items-center gap-2 rounded-2xl bg-[#EAF0FF] px-4 py-3 text-sm text-primary" data-testid="reschedule-current">
+            <Icon name="clock" size={18} className="text-electric-600" />
+            <span>Horário atual: <b>{formatBookingWhen(rb.startsAt)}</b>{rb.resource ? <> com <b>{rb.resource.name}</b></> : null}. Escolha o novo dia, horário e profissional.</span>
+          </p>
+        )}
+        {!rb && points > 0 && <p className="mt-1.5"><span className="chip-lima">Ao concluir você ganha {formatPoints(points)} pontos aqui</span></p>}
+        {!rb && service.pointsDiscountMaxPct > 0 && service.priceCents > 0 && <p className="mt-1.5"><span className="glass-chip">Aceita pontos como desconto, até {service.pointsDiscountMaxPct}% do preço.</span></p>}
       </header>
 
-      {units.length > 1 && (
+      {units.length > 1 && !rb && (
         <nav aria-label="Unidade" className="chip-row">
           {units.map((u) => (
             <Link key={u.id} href={url({ unidade: u.id, hora: undefined })} aria-current={u.id === unit.id ? 'true' : undefined} className={`chip-link shrink-0 ${u.id === unit.id ? 'chip-link-active' : ''}`}>
@@ -211,7 +244,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
       {chosen && (
         <section aria-labelledby="confirmar" className="glass-panel space-y-4 !rounded-[22px] p-4">
           <div>
-            <h2 id="confirmar" className="text-lg font-bold text-primary">Confirmar</h2>
+            <h2 id="confirmar" className="text-lg font-bold text-primary">{rb ? 'Confirmar novo horário' : 'Confirmar'}</h2>
             <p className="text-sm text-slate-700">
               <strong>{service.name}</strong> em <strong>{formatBookingWhen(chosen.startsAt)}</strong>
               {units.length > 1 ? <> · {unit.name}</> : null}
@@ -243,7 +276,9 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
               );
             })()}
           </div>
-          {customer ? (
+          {rb && customer ? (
+            <RescheduleForm bookingId={rb.id} date={date} time={chosen.time} resourceId={prof?.id ?? ''} />
+          ) : customer ? (
             <BookingForm hidden={{ restaurantId, serviceId: service.id, unitId: unit.id, date, time: chosen.time, resourceId: prof?.id ?? '' }} askPartySize={service.askPartySize} discount={{ priceCents: service.priceCents, balance, rate: restaurant.pointsPerRealOff, maxPoints: discount.maxPoints, maxPct: service.pointsDiscountMaxPct }} />
           ) : (
             <Link href={`/entrar?next=${encodeURIComponent(url({ data: date, hora: chosen.time }))}`} className="glass-button-navy w-full">Entrar para confirmar</Link>
