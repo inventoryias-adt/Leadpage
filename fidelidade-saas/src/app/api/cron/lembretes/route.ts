@@ -2,6 +2,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { giveBirthdayGifts } from '@/lib/birthday-db';
 import { sendDueReminders } from '@/lib/booking-db';
+import { settleDueInteractions } from '@/lib/interaction-claims';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,7 +23,11 @@ async function handle(req: Request) {
       console.error('[cron/aniversarios]', e);
       return { birthdayGifts: 0 };
     });
-    return NextResponse.json({ ok: true, ...reminders, ...gifts });
+    const interactions = await settleDueInteractions().catch((e) => {
+      console.error('[cron/interacoes]', e);
+      return 0;
+    });
+    return NextResponse.json({ ok: true, ...reminders, ...gifts, interactionsApproved: interactions });
   } catch (e) {
     console.error('[cron/lembretes]', e);
     return NextResponse.json({ error: 'Falha ao enviar lembretes.' }, { status: 500 });

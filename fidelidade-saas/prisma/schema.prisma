@@ -137,6 +137,7 @@ model Restaurant {
   menuItems        MenuItem[]
   orders           Order[]
   birthdayGifts    BirthdayGift[]
+  interactionClaims InteractionClaim[]
 }
 
 /// Pontuação fixa por interação (foto no Instagram, avaliação 5★ no Google...).
@@ -146,11 +147,43 @@ model InteractionRule {
   label        String
   points       Int
   active       Boolean  @default(true)
+  /// Como os pontos são confirmados: COUNTER (só no balcão, como sempre foi), MANUAL (o cliente toca "Já fiz" e o dono aprova)
+  /// ou AUTO (o cliente toca "Já fiz" e os pontos entram sozinhos em 24 h, a menos que o dono recuse antes).
+  approval     String   @default("COUNTER")
   createdAt    DateTime @default(now())
 
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  restaurant Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  claims     InteractionClaim[]
 
   @@index([restaurantId])
+}
+
+enum InteractionClaimStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/// "Já fiz": pedido do cliente por pontos de uma interação (avaliar no Google, story no Instagram…), que o dono aprova ou recusa.
+model InteractionClaim {
+  id           String                 @id @default(uuid())
+  restaurantId String
+  customerId   String
+  ruleId       String?
+  label        String // snapshot da descrição
+  points       Int // snapshot
+  status       InteractionClaimStatus @default(PENDING)
+  autoAt       DateTime? // quando entra sozinho (regra AUTO); vazio = só com aprovação do dono
+  createdAt    DateTime               @default(now())
+  decidedAt    DateTime?
+  decidedBy    String? // OWNER ou AUTO
+
+  restaurant Restaurant       @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  customer   Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  rule       InteractionRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+
+  @@index([restaurantId, status])
+  @@index([customerId, ruleId, createdAt])
 }
 
 /// Produto do cardápio elegível para resgate com pontos.
@@ -200,6 +233,7 @@ model Customer {
   photo             CustomerPhoto?
   orders            Order[]
   birthdayGifts     BirthdayGift[]
+  interactionClaims InteractionClaim[]
 }
 
 /// Foto de perfil do cliente. Fica em tabela própria para não pesar a consulta da sessão; só o próprio cliente a vê.

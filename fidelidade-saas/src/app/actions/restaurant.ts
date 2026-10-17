@@ -15,6 +15,8 @@ import { validCoords } from '@/lib/geo';
 import { UFS, cepDigits, composeAddress } from '@/lib/address';
 import { BusinessError, creditClaimWith } from '@/lib/claims';
 import { looksLikeAccountCode, normalizeAccountCode } from '@/lib/account-code';
+import { APPROVALS } from '@/lib/interaction-approval';
+import { decideInteraction } from '@/lib/interaction-claims';
 import { isValidCpf, onlyDigits, shortName } from '@/lib/br';
 import { TOO_MANY, allow } from '@/lib/rate-limit';
 import { CHECKIN_RADIUS_OPTIONS } from '@/lib/geo';
@@ -173,7 +175,19 @@ export async function saveRules(_: FormState, formData: FormData): Promise<FormS
 const interactionSchema = z.object({
   label: z.string().trim().min(2, 'Descreva a interação.').max(80),
   points: z.coerce.number().int('Use um número inteiro.').min(1, 'Mínimo de 1 ponto.').max(100_000),
+  approval: z.enum(APPROVALS).catch('COUNTER'),
 });
+
+/** O dono aprova (creditando os pontos) ou recusa um pedido "Já fiz" de um cliente. */
+export async function decideInteractionAction(formData: FormData) {
+  const restaurant = await requireActiveRestaurant();
+  try {
+    await decideInteraction(String(formData.get('id') ?? ''), restaurant.id, formData.get('op') === 'approve', 'OWNER');
+  } catch (e) {
+    if (!(e instanceof BusinessError)) throw e;
+  }
+  revalidatePath('/dashboard', 'layout');
+}
 
 export async function addInteraction(_: FormState, formData: FormData): Promise<FormState> {
   const restaurant = await requirePaidRestaurant();

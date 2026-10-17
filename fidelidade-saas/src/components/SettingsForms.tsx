@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { APPROVALS, APPROVAL_LABEL } from '@/lib/interaction-approval';
 import { startTransition, useActionState, useEffect, useId, useRef, useState } from 'react';
 import {
   addChallenge,
@@ -74,11 +75,24 @@ export function RulesForm({ defaults }: { defaults: { pointsPerReal: number; max
   );
 }
 
+/** Como os pontos da interação são confirmados: só no balcão, aprovação do dono ou automática em 24 h. */
+function ApprovalSelect({ id, value }: { id: string; value: string }) {
+  return (
+    <div>
+      <label className="glass-label" htmlFor={id}>Como confirmar</label>
+      <select id={id} name="approval" defaultValue={value} className="glass-input">
+        {APPROVALS.map((a) => <option key={a} value={a}>{APPROVAL_LABEL[a]}</option>)}
+      </select>
+      <p className="mt-1 text-xs text-slate-500">Com “Eu aprovo” ou “Automático”, o cliente toca <b>Já fiz</b> no app e o pedido aparece no Caixa. Cada interação vale uma vez a cada 30 dias por cliente.</p>
+    </div>
+  );
+}
+
 /**
  * Linha de uma interação que dá pontos, com "Editar": muda a descrição e os pontos no lugar, sem apagar e criar de novo.
  * O botão de remover vem de fora (formulário do servidor).
  */
-export function InteractionRow({ id, label, points, remove }: { id: string; label: string; points: number; remove: React.ReactNode }) {
+export function InteractionRow({ id, label, points, approval = 'COUNTER', remove }: { id: string; label: string; points: number; approval?: string; remove: React.ReactNode }) {
   const [state, action] = useActionState(updateInteraction, {});
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -88,7 +102,7 @@ export function InteractionRow({ id, label, points, remove }: { id: string; labe
     <li className="py-3" data-testid="interaction-row">
       <div className="flex items-center gap-3">
         <span className="flex h-10 min-w-[3.5rem] shrink-0 items-center justify-center rounded-lg bg-[#E8EEFB] px-2 text-sm font-bold tabular-nums text-electric-600">+{points.toLocaleString('pt-BR')}</span>
-        <span className="min-w-0 flex-1 text-sm leading-snug text-slate-800">{label}</span>
+        <span className="min-w-0 flex-1 text-sm leading-snug text-slate-800">{label}{approval !== 'COUNTER' && <span className="glass-chip ml-2 align-middle">{approval === 'AUTO' ? 'Automático em 24 h' : 'Você aprova'}</span>}</span>
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
@@ -114,6 +128,7 @@ export function InteractionRow({ id, label, points, remove }: { id: string; labe
               <input id={`i-pts-${id}`} name="points" type="number" min={1} inputMode="numeric" defaultValue={state.values?.points ?? points} className="glass-input" required />
             </div>
           </div>
+          <ApprovalSelect id={`i-ap-${id}`} value={state.values?.approval ?? approval} />
           <p className="text-xs text-slate-500">A mudança vale daqui para frente; o que o cliente já ganhou não muda.</p>
           <FormMessage state={state} />
           <div className="flex gap-2">
@@ -134,6 +149,7 @@ export function AddInteractionForm() {
         <input name="label" defaultValue={state.values?.label} className="glass-input" placeholder="Ex.: Story no Instagram" aria-label="Descrição da interação" required />
         <input name="points" defaultValue={state.values?.points} type="number" min={1} inputMode="numeric" className="glass-input" placeholder="Pontos" aria-label="Pontos da interação" required />
       </div>
+      <ApprovalSelect id="i-ap-novo" value={state.values?.approval ?? 'COUNTER'} />
       <FormMessage state={state} />
       <SubmitButton variant="ghost" pendingText="Adicionando…">Adicionar interação</SubmitButton>
     </form>

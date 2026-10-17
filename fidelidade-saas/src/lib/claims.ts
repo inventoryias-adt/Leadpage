@@ -16,7 +16,7 @@ export class BusinessError extends Error {}
 type Tx = Prisma.TransactionClient;
 
 /** Soma pontos na carteira (criando-a se preciso) e registra a movimentação. */
-async function creditWallet(
+export async function creditWallet(
   tx: Tx,
   customerId: string,
   restaurantId: string,

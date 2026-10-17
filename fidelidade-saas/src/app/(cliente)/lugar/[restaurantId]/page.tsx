@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { BirthdayCard } from '@/components/BirthdayCard';
 import { CampaignTile } from '@/components/CampaignTile';
 import { CheckInButton } from '@/components/CheckInButton';
+import { JaFizButton } from '@/components/JaFizButton';
 import { CopyButton } from '@/components/CopyButton';
 import { Icon, type IconName } from '@/components/Icons';
 import { OpeningHours } from '@/components/OpeningHours';
@@ -20,6 +21,8 @@ import { formatBRL, formatPoints, formatPrice } from '@/lib/points';
 import { promoColor } from '@/lib/palette';
 import { promoActiveAt, promoBig, promoStatus, promoWhen } from '@/lib/promos';
 import { getCustomer } from '@/lib/session';
+import { INTERACTION_COOLDOWN_DAYS, releaseText } from '@/lib/interaction-approval';
+import { settleDueInteractions } from '@/lib/interaction-claims';
 import { newReferralCode } from '@/lib/tokens';
 
 export const dynamic = 'force-dynamic';
@@ -60,6 +63,8 @@ export default async function LugarPage({
   if (!/^[0-9a-f-]{36}$/.test(restaurantId)) notFound();
 
   const customer = await getCustomer();
+  // Pedidos "Já fiz" em modo automático que já passaram do prazo entram antes de mostrar o saldo e o estado de cada interação.
+  if (customer) await settleDueInteractions({ customerId: customer.id, restaurantId }).catch(() => 0);
   const [restaurant, rewards, challenges, rules, wallet, completions, units, promotions, serviceCount, menuCount] = await Promise.all([
     prisma.restaurant.findUnique({ where: { id: restaurantId } }),
     prisma.reward.findMany({ where: { restaurantId, active: true }, orderBy: { pointsCost: 'asc' } }),
@@ -72,6 +77,10 @@ export default async function LugarPage({
     prisma.service.count({ where: { restaurantId, active: true } }),
     prisma.menuItem.count({ where: { restaurantId, active: true } }),
   ]);
+  // Último pedido "Já fiz" do cliente em cada interação deste lugar (para mostrar "em análise", "aprovado"…).
+  const claimRows = customer ? await prisma.interactionClaim.findMany({ where: { customerId: customer.id, restaurantId }, orderBy: { createdAt: 'desc' }, take: 40 }) : [];
+  const lastClaim = new Map<string, (typeof claimRows)[number]>();
+  for (const c of claimRows) if (c.ruleId && !lastClaim.has(c.ruleId)) lastClaim.set(c.ruleId, c);
   const nowDate = new Date();
   if (!restaurant || restaurant.subscriptionStatus !== 'ACTIVE' || !restaurant.onboardedAt) notFound();
   // Barbearia, estética etc. sem nenhum serviço cadastrado: já oferece o serviço padrão, para o cliente poder agendar.
@@ -244,13 +253,30 @@ export default async function LugarPage({
                         <p className="font-bold text-slate-800">{r.label}</p>
                         <span className="chip-lima shrink-0">+{formatPoints(r.points)} pts</span>
                       </div>
-                      <p className="text-sm text-slate-500">Faça e mostre ao caixa para receber os pontos.</p>
+                      {(() => {
+                        const last = lastClaim.get(r.id);
+                        const cooldownOver = last?.status === 'APPROVED' && Date.now() - last.createdAt.getTime() > INTERACTION_COOLDOWN_DAYS * 24 * 3_600_000;
+                        if (r.approval === 'COUNTER') return <p className="text-sm text-slate-500">Faça e mostre ao caixa para receber os pontos.</p>;
+                        if (last?.status === 'PENDING') return <p className="mt-1"><span className="glass-chip" data-testid="claim-pending">Em análise{last.autoAt ? ` · ${releaseText(last.autoAt)}` : ''}</span></p>;
+                        if (last?.status === 'APPROVED' && !cooldownOver) return <p className="mt-1"><span className="chip-verde">Pontos recebidos</span></p>;
+                        return (
+                          <>
+                            <p className="text-sm text-slate-500">Faça e toque em <b>Já fiz</b>. {r.approval === 'AUTO' ? 'Os pontos entram sozinhos em até 24 h.' : 'O lugar confere e libera os seus pontos.'}</p>
+                            {last?.status === 'REJECTED' && <p className="mt-1 text-xs font-semibold text-rose-600">O último pedido não foi confirmado pelo lugar.</p>}
+                          </>
+                        );
+                      })()}
                       {(meta.copy || meta.cta) && (
                         <div className="mt-3 flex flex-wrap gap-2">
                           {meta.copy && <CopyButton text={meta.copy} label={`Copiar ${meta.copy}`} copiedLabel="Copiado! Cole na sua foto" />}
                           {meta.cta && <a href={meta.cta.href} target="_blank" rel="noopener noreferrer" className="glass-button-ghost btn-sm">{meta.cta.text}</a>}
                         </div>
                       )}
+                      {customer && r.approval !== 'COUNTER' && (() => {
+                        const last = lastClaim.get(r.id);
+                        const blocked = last?.status === 'PENDING' || (last?.status === 'APPROVED' && Date.now() - last.createdAt.getTime() <= INTERACTION_COOLDOWN_DAYS * 24 * 3_600_000);
+                        return blocked ? null : <div className="mt-3"><JaFizButton ruleId={r.id} restaurantId={restaurantId} /></div>;
+                      })()}
                     </div>
                   </div>
                 </li>
