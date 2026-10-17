@@ -38,13 +38,7 @@ await o.locator('#identidade input[name=listed]').check();
 assert.equal(await o.locator('[data-testid=listed-off-warning]').count(), 0);
 console.log('2. Lugares ligado por padrão; desligar avisa e ligar de novo tira o aviso OK');
 
-// 3. nova unidade: aviso de cobrança por unidade (R$ 69,90)
-await o.locator('summary:has-text("Adicionar outra unidade")').click();
-await o.waitForSelector('[data-testid=unit-billing-note]');
-assert.match(await o.locator('[data-testid=unit-billing-note]').first().innerText(), /cobrada à parte.*R\$ 69,90/s);
-console.log('3. adicionar unidade avisa que cada unidade ativa é cobrada (R$ 69,90) OK');
-
-// 4. Ganhar pontos: campos estreitos com "Salvar regras" na mesma linha
+// 3. Ganhar pontos: campos estreitos com "Salvar regras" na mesma linha
 await o.goto(BASE + '/dashboard/configuracoes?etapa=regras'); await o.waitForSelector('#r-ppr');
 {
   const form = await box('#pontos form'); const a = await box('#r-ppr'); const m = await box('#r-max'); const btn = await box('#pontos button:has-text("Salvar regras")');
@@ -52,9 +46,9 @@ await o.goto(BASE + '/dashboard/configuracoes?etapa=regras'); await o.waitForSel
   assert.ok(Math.abs(btn.y - a.y) < a.height + 10 && Math.abs(btn.y - m.y) < m.height + 10, 'Salvar regras na mesma linha');
   assert.ok(btn.width < 200, 'botão Salvar regras proporcional');
 }
-console.log('4. pontos por real e resgates/mês estreitos, com Salvar regras ao lado OK');
+console.log('3. pontos por real e resgates/mês estreitos, com Salvar regras ao lado OK');
 
-// 5. check-in, indicação e aniversário: 3 campos + Salvar numa linha, cada um com chave liga/desliga
+// 4. check-in, indicação e aniversário: 3 campos + Salvar numa linha, cada um com chave liga/desliga
 await o.goto(BASE + '/dashboard/configuracoes?etapa=regras&abrir=engajamento'); await o.waitForSelector('#e-ci');
 {
   const ci = await box('#e-ci'); const rf = await box('#e-rf'); const bd = await box('#e-bd'); const salvar = await box('#engajamento button:has-text("Salvar")');
@@ -74,9 +68,9 @@ await o.locator('#engajamento [role=switch][aria-label*="presente de aniversári
 assert.ok(Number(await o.inputValue('#e-bd')) > 0, 'ao ligar, volta com pontos');
 await o.locator('#engajamento button:has-text("Salvar")').click();
 await until(o, () => Number(sql(`select "birthdayPoints" from "Restaurant" where id='${rid}'`)) > 0, 'aniversário religado');
-console.log('5. três campos + Salvar numa linha; chaves liga/desliga gravam 0 e voltam OK');
+console.log('4. três campos + Salvar numa linha; chaves liga/desliga gravam 0 e voltam OK');
 
-// 6. check-in desligado: some a distância máxima e grava 0 (a distância continua guardada)
+// 5. check-in desligado: some a distância máxima e grava 0 (a distância continua guardada)
 await o.goto(BASE + '/dashboard/configuracoes?etapa=regras&abrir=engajamento'); await o.waitForSelector('#e-ci');
 assert.equal(await o.locator('#e-rad').count(), 1);
 await o.locator('#engajamento [role=switch][aria-label*="check-in"]').click();
@@ -89,9 +83,9 @@ await o.locator('#engajamento [role=switch][aria-label*="check-in"]').click();
 await o.waitForSelector('#e-rad');
 await o.locator('#engajamento button:has-text("Salvar")').click();
 await until(o, () => Number(sql(`select "checkInPoints" from "Restaurant" where id='${rid}'`)) > 0, 'check-in religado');
-console.log('6. desligar o check-in esconde a distância máxima e grava 0; religar traz de volta OK');
+console.log('5. desligar o check-in esconde a distância máxima e grava 0; religar traz de volta OK');
 
-// 7. o botão de editar interação é um lápis (não a engrenagem)
+// 6. o botão de editar interação é um lápis (não a engrenagem)
 const iid = sql(`insert into "InteractionRule"(id,"restaurantId",label,points,active,approval) values (gen_random_uuid(),'${rid}','Teste lápis: avaliar no Google',30,true,'COUNTER') returning id`).split('\n')[0];
 await o.goto(BASE + '/dashboard/configuracoes?etapa=regras&abrir=interacoes'); await o.waitForSelector('[data-testid=interaction-row]');
 {
@@ -100,9 +94,9 @@ await o.goto(BASE + '/dashboard/configuracoes?etapa=regras&abrir=interacoes'); a
   assert.equal(await edit.locator('svg path').count(), 2, 'ícone de lápis');
 }
 sql(`delete from "InteractionRule" where id='${iid}'`);
-console.log('7. editar interação usa lápis, não engrenagem OK');
+console.log('6. editar interação usa lápis, não engrenagem OK');
 
-// 8. desafios: editar, pausar e retomar
+// 7. desafios: editar, pausar e retomar
 sql(`insert into "Challenge"(id,"restaurantId",title,kind,target,"minAmountCents",period,"bonusPoints",active) values (gen_random_uuid(),'${rid}','x','PURCHASES',2,4200,'WEEK',200,true)`);
 await o.goto(BASE + '/dashboard/configuracoes?etapa=regras&abrir=desafios'); await o.waitForSelector('[data-testid=challenge-row]');
 const crow = o.locator('[data-testid=challenge-row]').first();
@@ -131,9 +125,9 @@ await o.locator('[data-testid=challenge-row] button:has-text("Retomar")').click(
 await until(o, () => sql(`select active from "Challenge" where "restaurantId"='${rid}'`) === 't', 'retomou');
 await c.reload(); await c.waitForSelector('#desafios');
 assert.ok(await c.locator('text=/\\+350 pts/').count(), 'desafio retomado volta para o cliente');
-console.log('8. desafios: editar no mesmo registro, pausar some para o cliente e retomar volta OK');
+console.log('7. desafios: editar no mesmo registro, pausar some para o cliente e retomar volta OK');
 
-// 9. campanhas: editar mesmo estando ativa, e mostrar onde aparece
+// 8. campanhas: editar mesmo estando ativa, e mostrar onde aparece
 const pid = sql(`insert into "Promotion"(id,"restaurantId",title,kind,multiplier,color) values (gen_random_uuid(),'${rid}','Terça em dobro','MULTIPLIER',2,'azul') returning id`).split('\n')[0];
 await o.goto(BASE + '/dashboard/configuracoes?etapa=regras&abrir=campanhas'); await o.waitForSelector('[data-testid=promo-card]');
 const pcard = o.locator('[data-testid=promo-card]').first();
@@ -150,7 +144,7 @@ assert.equal(sql(`select count(*) from "Promotion" where "restaurantId"='${rid}'
 assert.equal(sql(`select color from "Promotion" where id='${pid}'`), 'azul', 'a cor continua a mesma');
 await o.waitForSelector('[data-testid=promo-card]:has-text("Quarta em triplo")');
 sql(`delete from "Promotion" where id='${pid}'; delete from "Challenge" where "restaurantId"='${rid}'`);
-console.log('9. campanhas: ativas também têm Editar; onde aparece e prévia do cliente; edita no mesmo registro OK');
+console.log('8. campanhas: ativas também têm Editar; onde aparece e prévia do cliente; edita no mesmo registro OK');
 
 await b.close();
 console.log('ALL OK (regras mais compactas, chaves, editar desafios e campanhas)');

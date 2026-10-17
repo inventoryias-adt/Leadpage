@@ -34,7 +34,6 @@ import { WebImageSearch } from './WebImageSearch';
 import { PreviewFrame } from './PreviewFrame';
 import { RewardImage, ProgressBar } from './Visual';
 import { formatPoints, formatPrice } from '@/lib/points';
-import { PLAN_PRICE } from '@/lib/plan';
 import { FormMessage, SubmitButton } from './ui';
 
 type Basics = { name: string };
@@ -640,15 +639,6 @@ export type UnitFormData = {
   schedule: unknown;
 };
 
-/** Aviso de cobrança: cada unidade ativa tem a sua mensalidade. */
-function UnitBillingNote() {
-  return (
-    <p role="note" data-testid="unit-billing-note" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-      <b>Atenção:</b> cada unidade ativa é cobrada à parte, com a mesma mensalidade do plano ({PLAN_PRICE} por mês). Ao adicionar ou ativar esta unidade, ela passa a contar na sua assinatura.
-    </p>
-  );
-}
-
 /** Cadastro de uma unidade: nome, endereço, horários por dia, localização (GPS) e link de avaliação do Google. */
 export function UnitForm({ unit, uid }: { unit: UnitFormData; uid: string }) {
   const [state, action] = useActionState(saveUnit, {});
@@ -698,8 +688,6 @@ export function UnitForm({ unit, uid }: { unit: UnitFormData; uid: string }) {
       <input type="hidden" name="schedule" value={JSON.stringify(days)} />
       <input type="hidden" name="latitude" value={coords.lat} />
       <input type="hidden" name="longitude" value={coords.lng} />
-
-      {isNew && <UnitBillingNote />}
 
       <div>
         <label className="glass-label" htmlFor={`${uid}name`}>Nome da unidade</label>
@@ -790,7 +778,6 @@ export function UnitForm({ unit, uid }: { unit: UnitFormData; uid: string }) {
           <span className="text-sm text-slate-700"><span className="font-semibold">Unidade ativa</span> — aparece para os clientes e pode lançar pontos</span>
         </label>
       )}
-      {!isNew && !unit.active && activeOn && <UnitBillingNote />}
 
       <FormMessage state={state} />
       <SubmitButton pendingText="Salvando…">{isNew ? 'Adicionar unidade' : 'Salvar unidade'}</SubmitButton>
