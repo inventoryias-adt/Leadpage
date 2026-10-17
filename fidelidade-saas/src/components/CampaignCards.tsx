@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CampaignItem } from '@/lib/campaigns';
+import { colorOf } from '@/lib/palette';
 import { formatPoints } from '@/lib/points';
 import { Carousel } from './Carousel';
 import { Icon, type IconName } from './Icons';
@@ -63,17 +64,25 @@ export function CampaignCards({ items, loggedIn }: { items: CampaignView[]; logg
             <button
               type="button"
               onClick={() => setOpen(g)}
-              className="card-link flex h-full min-h-[8.5rem] w-full flex-col justify-between gap-4 rounded-[22px] border border-slate-200 bg-white p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600"
+              className="card-link flex h-full min-h-[9.5rem] w-full flex-col justify-between gap-4 rounded-[22px] border border-slate-200 bg-white p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600"
               aria-label={`${g.placeName}: ${g.items.length} ${g.items.length === 1 ? 'campanha' : 'campanhas'} rolando. Toque para ver`}
             >
               <span className="flex items-center gap-2.5">
                 <PlaceAvatar name={g.placeName} src={g.logoUrl} size={40} />
                 <span className="min-w-0 truncate text-sm font-bold text-slate-900">{g.placeName}</span>
               </span>
-              {/* Só a contagem: o detalhe de cada campanha fica na lista que abre ao tocar. */}
-              <span className="flex items-center justify-between gap-2">
-                <span className="text-2xl font-bold leading-none text-primary">{g.items.length} {g.items.length === 1 ? 'campanha' : 'campanhas'}</span>
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#E8EEFB] text-electric-600"><Icon name="chevron" size={16} /></span>
+              {/* A contagem e um quadradinho colorido por campanha: o detalhe fica na lista que abre ao tocar. */}
+              <span className="block">
+                <span className="block text-2xl font-bold leading-none text-primary">{g.items.length} {g.items.length === 1 ? 'campanha' : 'campanhas'}</span>
+                <span className="mt-3 flex items-center justify-between gap-2">
+                  <span aria-hidden className="flex min-w-0 items-center gap-1.5">
+                    {g.items.slice(0, 4).map((c) => (
+                      <span key={c.id} className="flex h-8 min-w-8 items-center justify-center rounded-xl px-1.5 text-xs font-extrabold text-white" style={{ background: colorOf(c.color).hex }}>{c.big}</span>
+                    ))}
+                    {g.items.length > 4 && <span className="text-xs font-bold text-slate-500">+{g.items.length - 4}</span>}
+                  </span>
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#E8EEFB] text-electric-600"><Icon name="chevron" size={16} /></span>
+                </span>
               </span>
             </button>
           </li>
@@ -101,14 +110,20 @@ export function CampaignCards({ items, loggedIn }: { items: CampaignView[]; logg
             <ul className="-mx-1 mb-4 min-h-0 flex-1 space-y-3 overflow-y-auto px-1">
               {open.items.map((c) => {
                 const look = LOOK[c.kind];
+                const color = colorOf(c.color);
                 return (
-                  <li key={c.id} className="rounded-2xl border border-slate-200 border-l-4 border-l-electric-500 bg-slate-50 p-4">
-                    <span className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-                      <Icon name={look.icon} size={13} /> {look.label}{c.live ? ' · agora' : ''}
-                    </span>
-                    <p className="text-2xl font-bold leading-none text-primary">{headline(c)}</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-800">{c.title}</p>
-                    <p className="mt-1 text-xs text-slate-600">{c.how}</p>
+                  <li key={c.id} className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_4px_14px_rgba(15,31,61,0.05)]">
+                    <div className="flex items-center gap-3.5">
+                      <span aria-hidden className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-center font-extrabold leading-none text-white" style={{ background: color.hex, fontSize: c.big.length > 4 ? 16 : c.big.length > 3 ? 19 : 23 }}>{c.big}</span>
+                      <div className="min-w-0 flex-1">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide" style={{ color: color.hex }}>
+                          <Icon name={look.icon} size={13} /> {look.label}{c.live ? ' · agora' : ''}
+                        </span>
+                        <p className="font-bold leading-tight text-slate-800">{c.title}</p>
+                        <p className="text-sm font-semibold text-slate-500">{headline(c)}</p>
+                      </div>
+                    </div>
+                    <p className="mt-2.5 text-xs text-slate-600">{c.how}</p>
                     <Link href={loggedIn ? `/lugar/${open.placeId}#${c.anchor}` : `/entrar?next=${encodeURIComponent(`/lugar/${open.placeId}`)}`} className="link-inline mt-2 inline-flex items-center gap-1 text-sm" onClick={() => setOpen(null)}>
                       {loggedIn ? 'Quero participar' : 'Entrar para participar'} <Icon name="chevron" size={14} />
                     </Link>

@@ -11,6 +11,8 @@ import { BusinessError, creditClaim, performCheckIn, redeemItems, redeemReward, 
 import { TERMS_REQUIRED_MESSAGE, termsAccepted, termsRecord } from '@/lib/legal';
 import { emailConfigured } from '@/lib/mailer';
 import { dummyHash, hashPassword, verifyPassword } from '@/lib/password';
+import { uniqueAccountCode } from '@/lib/account-code-db';
+import { requestInteraction } from '@/lib/interaction-claims';
 import { newReferralCode } from '@/lib/tokens';
 import { endCustomerSession, getCustomer, startCustomerSession } from '@/lib/session';
 import { fail, safeNext, type BagState, type FormState } from '@/lib/form';
@@ -88,7 +90,7 @@ export async function customerSignup(_: FormState, formData: FormData): Promise<
   if (byEmail) return fail('Este e-mail já está em uso. Entre com ele ou use outro.', formData);
 
   const customer = await prisma.customer
-    .create({ data: { cpf, phone, name, email, passwordHash: await hashPassword(password), referralCode: newReferralCode(), ...termsRecord() } })
+    .create({ data: { cpf, phone, name, email, passwordHash: await hashPassword(password), referralCode: newReferralCode(), accountCode: await uniqueAccountCode(), ...termsRecord() } })
     .catch((e: { code?: string }) => (e.code === 'P2002' ? null : Promise.reject(e))); // corrida: outro cadastro igual no mesmo instante
   if (!customer) return fail('Este CPF ou e-mail já tem cadastro. Tente entrar.', formData);
   // Cadastro feito pelo link "Indique amigos": registra quem indicou (o prêmio sai na primeira compra).
@@ -187,6 +189,21 @@ export async function checkInAction(_: FormState, formData: FormData): Promise<F
     revalidatePath('/carteira');
     const bonus = bonuses.length ? ` + bônus do desafio (${bonuses.map((b) => `+${b.points}`).join(', ')})` : '';
     return { ok: `Check-in feito! +${points} ${points === 1 ? 'ponto' : 'pontos'}${bonus}` };
+  } catch (e) {
+    if (!(e instanceof BusinessError)) throw e;
+    return { error: e.message };
+  }
+}
+
+/** "Já fiz": o cliente pede os pontos de uma interação (Google, Instagram…) e o lugar aprova, recusa ou deixa entrar sozinho. */
+export async function requestInteractionAction(_: FormState, formData: FormData): Promise<FormState> {
+  const customer = await getCustomer();
+  if (!customer) return { error: 'Entre na sua conta para pedir os pontos.' };
+  const restaurantId = String(formData.get('restaurantId') ?? '');
+  try {
+    const claim = await requestInteraction(customer.id, String(formData.get('ruleId') ?? ''));
+    revalidatePath(`/lugar/${restaurantId}`);
+    return { ok: claim.autoAt ? 'Pedido enviado! Os pontos entram sozinhos em até 24 h.' : 'Pedido enviado! O lugar vai conferir e liberar seus pontos.' };
   } catch (e) {
     if (!(e instanceof BusinessError)) throw e;
     return { error: e.message };

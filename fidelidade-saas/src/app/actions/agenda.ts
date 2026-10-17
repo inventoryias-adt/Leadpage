@@ -8,6 +8,7 @@ import { fail, type FormState } from '@/lib/form';
 import { normalizePhone } from '@/lib/br';
 import { scheduleSchema } from '@/lib/hours';
 import { saveImageFromDataUrl } from '@/lib/images';
+import { COLORS, isColorKey } from '@/lib/palette';
 import { parseMoneyToCents } from '@/lib/points';
 import { redirect } from 'next/navigation';
 import { cancelByOwner, completeBooking, confirmBooking, markNoShow } from '@/lib/booking-db';
@@ -120,7 +121,14 @@ export async function saveResource(_: FormState, formData: FormData): Promise<Fo
     throw e;
   }
 
-  const data = { name: d.name, capacity: d.capacity, unitId, email: d.email || null, phone, schedule, photoImageId };
+  const rawColor = formData.get('color');
+  let color: string | null = isColorKey(rawColor) ? rawColor : (existing?.color ?? null);
+  if (!color && !existing) {
+    // Profissional novo sem cor escolhida: pega a primeira cor da paleta que a equipe ainda não usa (cada um fica com a sua).
+    const used = new Set((await prisma.resource.findMany({ where: { restaurantId: restaurant.id }, select: { color: true } })).map((r) => r.color));
+    color = COLORS.find((c) => !used.has(c.key))?.key ?? null;
+  }
+  const data = { name: d.name, capacity: d.capacity, unitId, email: d.email || null, phone, schedule, photoImageId, color };
   await prisma.$transaction(async (tx) => {
     const resource = existing
       ? await tx.resource.update({ where: { id: existing.id }, data })

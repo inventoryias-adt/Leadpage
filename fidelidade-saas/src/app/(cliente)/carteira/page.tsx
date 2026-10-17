@@ -6,12 +6,12 @@ import { Icon } from '@/components/Icons';
 import { Illustration } from '@/components/Illustrations';
 import { Reveal } from '@/components/Reveal';
 import { IntroSlides } from '@/components/IntroSlides';
-import { PlaceAvatar } from '@/components/Visual';
+import { NextBookingCard } from '@/components/NextBookingCard';
+import { PlaceAvatar, ProgressBar } from '@/components/Visual';
 import { campaignsForCustomers } from '@/lib/app-campaigns-db';
 import { prisma } from '@/lib/db';
 import { affordableRewards, pendingVouchers } from '@/lib/customer-rewards';
 import { imageUrl } from '@/lib/images';
-import { formatBookingWhen } from '@/lib/booking';
 import { formatPoints } from '@/lib/points';
 import { requireCustomer } from '@/lib/session';
 
@@ -32,10 +32,15 @@ export default async function CarteiraPage() {
     prisma.booking.findFirst({
       where: { customerId: customer.id, status: { in: ['PENDING', 'CONFIRMED'] }, endsAt: { gt: new Date() } },
       orderBy: { startsAt: 'asc' },
-      include: { restaurant: { select: { name: true } } },
+      include: { restaurant: { select: { name: true } }, resource: { select: { name: true } } },
     }),
     campaignsForCustomers(),
   ]);
+  // Próximo prêmio de cada lugar: o mais barato que ainda não dá para resgatar (para mostrar "faltam N pontos").
+  const rewardRows = wallets.length
+    ? await prisma.reward.findMany({ where: { restaurantId: { in: wallets.map((w) => w.restaurantId) }, active: true }, select: { restaurantId: true, name: true, pointsCost: true }, orderBy: { pointsCost: 'asc' } })
+    : [];
+  const nextGoal = (restaurantId: string, balance: number) => rewardRows.find((r) => r.restaurantId === restaurantId && r.pointsCost > balance) ?? null;
   const total = wallets.reduce((n, w) => n + w.balance, 0);
   // O que está esperando em cada lugar: códigos para retirar e prêmios que já dá para resgatar.
   const toPickUp = new Map<string, number>();
@@ -56,19 +61,7 @@ export default async function CarteiraPage() {
         )}
       </Reveal>
 
-      {nextBooking && (
-        <Reveal from="left">
-        <Link href="/perfil/agendamentos" className="glass-panel card-link flex items-center gap-3 !rounded-[22px] p-4">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E8EEFB] text-electric-600"><Icon name="clock" size={22} /></span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-xs font-bold uppercase tracking-wider text-slate-500">Seu próximo horário</span>
-            <span className="block truncate font-bold text-slate-800">{nextBooking.serviceName} · {formatBookingWhen(nextBooking.startsAt)}</span>
-            <span className="block truncate text-xs text-slate-500">{nextBooking.restaurant.name}{nextBooking.status === 'PENDING' ? ' · aguardando confirmação' : ''}</span>
-          </span>
-          <Icon name="chevron" size={18} className="text-slate-400" />
-        </Link>
-        </Reveal>
-      )}
+      {nextBooking && <Reveal from="left"><NextBookingCard booking={nextBooking} /></Reveal>}
 
       {appCampaigns.length > 0 && <Reveal from="right"><AppCampaignStrip campaigns={appCampaigns} /></Reveal>}
 
@@ -89,15 +82,22 @@ export default async function CarteiraPage() {
             {wallets.map((w) => {
               const pick = toPickUp.get(w.restaurantId) ?? 0;
               const can = canRedeem.has(w.restaurantId);
+              const goal = nextGoal(w.restaurantId, w.balance);
               return (
-                <li key={w.id} className="w-[11.5rem] shrink-0 snap-start">
+                <li key={w.id} className="w-[13rem] shrink-0 snap-start">
                   <Link href={`/carteira/${w.restaurantId}`} className="glass-panel card-link flex h-full flex-col items-start gap-2 !rounded-[22px] p-4" aria-label={`${w.restaurant.name}: ${formatPoints(w.balance)} pontos${pick ? `, ${pick} para retirar` : ''}${can ? ', já dá para resgatar' : ''}`}>
                     <PlaceAvatar name={w.restaurant.name} src={imageUrl(w.restaurant.logoImageId)} size={44} />
                     <p className="w-full truncate text-sm font-bold text-slate-900">{w.restaurant.name}</p>
                     <p className="leading-none">
-                      <span className="text-2xl font-extrabold text-primary">{formatPoints(w.balance)}</span>
+                      <span className="text-3xl font-extrabold text-primary">{formatPoints(w.balance)}</span>
                       <span className="ml-1 text-xs font-semibold text-electric-600">pontos</span>
                     </p>
+                    {goal && (
+                      <span className="block w-full">
+                        <ProgressBar value={w.balance} max={goal.pointsCost} label={`Progresso para ${goal.name}`} />
+                        <span className="mt-1.5 block text-xs text-slate-500">Faltam <b className="text-slate-700">{formatPoints(goal.pointsCost - w.balance)}</b> para {goal.name}</span>
+                      </span>
+                    )}
                     <span className="mt-auto flex min-h-[1.5rem] flex-wrap gap-1.5">
                       {pick > 0 && <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-bold text-amber-800">{pick} para retirar</span>}
                       {can && <span className="rounded-full bg-lima px-2.5 py-0.5 text-[11px] font-bold text-primary">Pode resgatar</span>}

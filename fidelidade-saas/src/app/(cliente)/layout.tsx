@@ -1,3 +1,4 @@
+import { AssistantFab } from '@/components/AssistantFab';
 import { CustomerNav } from '@/components/CustomerNav';
 import { InstallApp } from '@/components/InstallApp';
 import { unreadCount } from '@/lib/notifications';
@@ -14,6 +15,7 @@ export default async function ClienteLayout({ children }: { children: React.Reac
         <div className="px-4 pt-4 sm:px-6 empty:hidden"><InstallApp /></div>
         {children}
       </div>
+      {customer && <AssistantFab role="cliente" />}
     </>
   );
 }

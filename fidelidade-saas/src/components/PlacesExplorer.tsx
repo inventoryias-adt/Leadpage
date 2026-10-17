@@ -363,11 +363,11 @@ function PlaceRow({ p }: { p: Row }) {
         </div>
         <p className="truncate text-xs text-slate-500">{[p.categoryLabel, p.units.length > 1 ? p.unit.name : null, p.unit.address].filter(Boolean).join(' · ')}</p>
         {(p.hasGoogle || p.hasInstagram || p.hasRewards || p.challenges > 0) && (
-          <ul className="mt-1 flex items-center gap-2 text-slate-400" aria-label="O que este lugar oferece" data-testid="offers-icons">
-            {p.hasGoogle && <li title="Pontos por avaliar no Google" aria-label="Avaliação no Google"><Icon name="star" size={15} /></li>}
-            {p.hasInstagram && <li title="Pontos por marcar no Instagram" aria-label="Instagram"><Icon name="camera" size={15} /></li>}
-            {p.hasRewards && <li title="Tem prêmios para trocar" aria-label="Prêmios"><Icon name="gift" size={15} /></li>}
-            {p.challenges > 0 && <li title="Tem desafios" aria-label="Desafios"><Icon name="trophy" size={15} /></li>}
+          <ul className="mt-1.5 flex items-center gap-1.5 text-electric-600" aria-label="O que este lugar oferece" data-testid="offers-icons">
+            {p.hasGoogle && <li title="Pontos por avaliar no Google" aria-label="Avaliação no Google" className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#EAF0FF]"><Icon name="star" size={15} /></li>}
+            {p.hasInstagram && <li title="Pontos por marcar no Instagram" aria-label="Instagram" className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#EAF0FF]"><Icon name="camera" size={15} /></li>}
+            {p.hasRewards && <li title="Tem prêmios para trocar" aria-label="Prêmios" className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#EAF0FF]"><Icon name="gift" size={15} /></li>}
+            {p.challenges > 0 && <li title="Tem desafios" aria-label="Desafios" className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#EAF0FF]"><Icon name="trophy" size={15} /></li>}
           </ul>
         )}
         <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -386,9 +386,9 @@ function PlaceRow({ p }: { p: Row }) {
           )}
           {p.units.length > 1 && <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-700">{p.units.length} unidades</span>}
           {p.cashbackPct ? (
-            <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700" data-testid="cashback-chip">{String(p.cashbackPct).replace('.', ',')}% de volta</span>
+            <span className="chip-lima" data-testid="cashback-chip">{String(p.cashbackPct).replace('.', ',')}% de volta</span>
           ) : (
-            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-700">{p.pointsPerReal} pts por R$ 1</span>
+            <span className="glass-chip">{p.pointsPerReal} pts por R$ 1</span>
           )}
         </div>
       </div>
@@ -406,22 +406,22 @@ function OfferCard({ p, offer }: { p: Row; offer: PlaceOffer }) {
   return (
     <section aria-label={`Oferta de ${p.name}`} data-testid="offer-card">
       <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">{p.name} · oferta</p>
-      <div className="flex items-center justify-between gap-3 rounded-[28px] bg-emerald-50 p-5">
+      <div className="flex items-center justify-between gap-3 rounded-[28px] bg-[#0F1F3D] p-5 text-white">
         <div className="min-w-0">
-          <h3 className="text-xl font-extrabold leading-tight tracking-tight text-slate-900">{offer.name}</h3>
+          <h3 className="text-xl font-extrabold leading-tight tracking-tight">{offer.name}</h3>
           <p className="mt-1.5">
-            <span className="text-2xl font-extrabold text-slate-900">{formatBRL(offer.promoCents)}</span>
-            <span className="ml-2 text-sm font-medium text-slate-400 line-through">{formatBRL(offer.priceCents)}</span>
+            <span className="text-2xl font-extrabold text-lima">{formatBRL(offer.promoCents)}</span>
+            <span className="ml-2 text-sm font-medium text-white/60 line-through">{formatBRL(offer.priceCents)}</span>
           </p>
-          {offer.endsText && <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-600"><Icon name="clock" size={15} /> {offer.endsText}</p>}
-          <Link href={href} className="glass-button mt-3 !w-auto px-8" data-testid="offer-order">Pedir</Link>
+          {offer.endsText && <p className="mt-1 flex items-center gap-1.5 text-sm text-white/80"><Icon name="clock" size={15} /> {offer.endsText}</p>}
+          <Link href={href} className="glass-button-lime btn-sm mt-3 !w-auto px-8" data-testid="offer-order">Pedir</Link>
         </div>
         <div className="relative shrink-0">
           <div className="relative h-28 w-28">
             {pct != null && (
               <svg viewBox="0 0 100 100" className="absolute inset-0 -rotate-90" aria-hidden>
-                <circle cx="50" cy="50" r={R} fill="none" stroke="#D1E9D8" strokeWidth="5" />
-                <circle cx="50" cy="50" r={R} fill="none" stroke="#4ADE80" strokeWidth="5" strokeLinecap="round" strokeDasharray={`${C * pct} ${C}`} />
+                <circle cx="50" cy="50" r={R} fill="none" stroke="rgba(255,255,255,.18)" strokeWidth="5" />
+                <circle cx="50" cy="50" r={R} fill="none" stroke="#C6F432" strokeWidth="5" strokeLinecap="round" strokeDasharray={`${C * pct} ${C}`} />
               </svg>
             )}
             <div className="absolute inset-[7px] overflow-hidden rounded-full bg-white">

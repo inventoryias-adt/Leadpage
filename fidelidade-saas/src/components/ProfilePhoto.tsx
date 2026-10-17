@@ -48,7 +48,7 @@ export function ProfilePhoto({ name, photoUrl, children }: { name: string; photo
 
   return (
     <div className="mt-5 flex items-center gap-4">
-      <form ref={form} action={action} className="relative shrink-0">
+      <form ref={form} action={action} autoComplete="off" className="relative shrink-0">
         <label htmlFor={id} className="block cursor-pointer" aria-label={label}>
           <span
             className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg text-2xl font-semibold text-white"

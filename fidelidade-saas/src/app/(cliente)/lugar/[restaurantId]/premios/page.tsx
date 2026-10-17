@@ -79,6 +79,7 @@ export default async function PremiosPage({ params }: { params: Promise<{ restau
       ) : (
         <RewardBag
           restaurantId={restaurantId}
+          placeName={restaurant.name}
           balance={wallet?.balance ?? 0}
           remainingThisMonth={Math.max(0, restaurant.maxRedeemsPerMonth - usedThisMonth)}
           limit={restaurant.maxRedeemsPerMonth}

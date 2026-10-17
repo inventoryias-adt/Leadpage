@@ -1,4 +1,6 @@
 import { CaixaForm } from '@/components/CaixaForm';
+import { InteractionRequests } from '@/components/InteractionRequests';
+import { settleDueInteractions } from '@/lib/interaction-claims';
 import { prisma } from '@/lib/db';
 import { formatPoints } from '@/lib/points';
 import { requireActiveRestaurant } from '@/lib/session';
@@ -10,12 +12,14 @@ export const dynamic = 'force-dynamic';
 
 export default async function CaixaPage() {
   const restaurant = await requireActiveRestaurant();
-  const [rules, recent, { unit, units }, promos] = await Promise.all([
+  await settleDueInteractions({ restaurantId: restaurant.id }).catch(() => 0);
+  const [rules, requests, recent, { unit, units }, promos] = await Promise.all([
     prisma.interactionRule.findMany({
       where: { restaurantId: restaurant.id, active: true },
       orderBy: { createdAt: 'asc' },
       select: { id: true, label: true, points: true },
     }),
+    prisma.interactionClaim.findMany({ where: { restaurantId: restaurant.id, status: 'PENDING' }, orderBy: { createdAt: 'asc' }, take: 50, include: { customer: { select: { name: true } } } }),
     prisma.claim.findMany({
       where: { restaurantId: restaurant.id },
       orderBy: { createdAt: 'desc' },
@@ -39,6 +43,11 @@ export default async function CaixaPage() {
             Lançando pela unidade <strong className="text-primary">{unit.name}</strong>
             <span className="text-slate-500">(troque no topo da tela)</span>
           </p>
+        )}
+        {requests.length > 0 && (
+          <div className="mb-4">
+            <InteractionRequests items={requests.map((r) => ({ id: r.id, label: r.label, points: r.points, createdAt: r.createdAt, autoAt: r.autoAt, customerName: r.customer.name }))} />
+          </div>
         )}
         <CaixaForm
           placeName={restaurant.name}

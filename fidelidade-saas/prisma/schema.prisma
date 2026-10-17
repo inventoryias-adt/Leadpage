@@ -137,6 +137,7 @@ model Restaurant {
   menuItems        MenuItem[]
   orders           Order[]
   birthdayGifts    BirthdayGift[]
+  interactionClaims InteractionClaim[]
 }
 
 /// Pontuação fixa por interação (foto no Instagram, avaliação 5★ no Google...).
@@ -146,11 +147,43 @@ model InteractionRule {
   label        String
   points       Int
   active       Boolean  @default(true)
+  /// Como os pontos são confirmados: COUNTER (só no balcão, como sempre foi), MANUAL (o cliente toca "Já fiz" e o dono aprova)
+  /// ou AUTO (o cliente toca "Já fiz" e os pontos entram sozinhos em 24 h, a menos que o dono recuse antes).
+  approval     String   @default("COUNTER")
   createdAt    DateTime @default(now())
 
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  restaurant Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  claims     InteractionClaim[]
 
   @@index([restaurantId])
+}
+
+enum InteractionClaimStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/// "Já fiz": pedido do cliente por pontos de uma interação (avaliar no Google, story no Instagram…), que o dono aprova ou recusa.
+model InteractionClaim {
+  id           String                 @id @default(uuid())
+  restaurantId String
+  customerId   String
+  ruleId       String?
+  label        String // snapshot da descrição
+  points       Int // snapshot
+  status       InteractionClaimStatus @default(PENDING)
+  autoAt       DateTime? // quando entra sozinho (regra AUTO); vazio = só com aprovação do dono
+  createdAt    DateTime               @default(now())
+  decidedAt    DateTime?
+  decidedBy    String? // OWNER ou AUTO
+
+  restaurant Restaurant       @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  customer   Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  rule       InteractionRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+
+  @@index([restaurantId, status])
+  @@index([customerId, ruleId, createdAt])
 }
 
 /// Produto do cardápio elegível para resgate com pontos.
@@ -179,6 +212,7 @@ model Customer {
   email        String?  @unique // minúsculo; null até o cliente criar o acesso com e-mail e senha
   passwordHash String?
   referralCode String?  @unique // código do link "Indique amigos"
+  accountCode  String?  @unique // ID da conta (FZ-XXXXXX): o cliente informa no caixa no lugar do CPF
   termsAcceptedAt DateTime? // aceite dos Termos de Uso e da Política de Privacidade (null = conta anterior ao aceite)
   termsVersion    String? // versão aceita (ver src/lib/legal.ts)
   birthDay        Int? // aniversário: só dia e mês (sem o ano), opcional; o cliente informa e remove quando quiser
@@ -199,6 +233,7 @@ model Customer {
   photo             CustomerPhoto?
   orders            Order[]
   birthdayGifts     BirthdayGift[]
+  interactionClaims InteractionClaim[]
 }
 
 /// Foto de perfil do cliente. Fica em tabela própria para não pesar a consulta da sessão; só o próprio cliente a vê.
@@ -477,6 +512,7 @@ model Promotion {
   inactiveDays   Int? // só para audience = INACTIVE
   active         Boolean   @default(true)
   appCampaignId  String? // preenchido quando o estabelecimento adotou uma campanha do app
+  color          String? // chave da paleta (src/lib/palette.ts); vazio = cor padrão pelo público
   createdAt      DateTime  @default(now())
 
   restaurant  Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
@@ -592,6 +628,7 @@ model Resource {
   phone        String? // WhatsApp (só dígitos), para o gestor enviar a agenda
   /// Dias e horários em que trabalha, no mesmo formato do horário da unidade. Vazio = segue o horário da unidade.
   schedule     Json?
+  color        String? // chave da paleta (src/lib/palette.ts); vazio = cor automática pela ordem
   createdAt    DateTime @default(now())
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)

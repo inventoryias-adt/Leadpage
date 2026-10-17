@@ -9,6 +9,7 @@ import { ensureDefaultService, slotsForDay, staffFor } from '@/lib/booking-db';
 import { prisma } from '@/lib/db';
 import { DAY_SHORT, parseSchedule } from '@/lib/hours';
 import { formatBRL, formatPoints } from '@/lib/points';
+import { resourceColor } from '@/lib/palette';
 import { maxDiscount } from '@/lib/points-discount';
 import { getCustomer } from '@/lib/session';
 
@@ -71,7 +72,8 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
         <ul className="space-y-3">
           {services.map((s) => (
             <li key={s.id}>
-              <Link href={`${base}?servico=${s.id}`} className="glass-panel-sm card-link flex items-center gap-3 p-4">
+              <Link href={`${base}?servico=${s.id}`} className="glass-panel card-link flex items-center gap-3 !rounded-[20px] p-4">
+                <span className="icon-tile"><Icon name="clock" size={20} /></span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-bold text-slate-800">{s.name}</p>
                   {s.description && <p className="truncate text-xs text-slate-500">{s.description}</p>}
@@ -113,8 +115,8 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
           <span className="font-semibold text-slate-800">{service.name}</span> · {service.durationMin} min{service.priceCents > 0 ? ` · ${formatBRL(service.priceCents)}` : ''}
           <Link href={url({ servico: undefined, hora: undefined })} className="link-inline text-xs">trocar</Link>
         </p>
-        {points > 0 && <p className="mt-1 text-xs font-semibold text-emerald-700">Ao concluir você ganha {formatPoints(points)} pontos aqui.</p>}
-        {service.pointsDiscountMaxPct > 0 && service.priceCents > 0 && <p className="mt-1 text-xs font-semibold text-electric-600">Aceita pontos como desconto, até {service.pointsDiscountMaxPct}% do preço.</p>}
+        {points > 0 && <p className="mt-1.5"><span className="chip-lima">Ao concluir você ganha {formatPoints(points)} pontos aqui</span></p>}
+        {service.pointsDiscountMaxPct > 0 && service.priceCents > 0 && <p className="mt-1.5"><span className="glass-chip">Aceita pontos como desconto, até {service.pointsDiscountMaxPct}% do preço.</span></p>}
       </header>
 
       {units.length > 1 && (
@@ -134,13 +136,17 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
             <li className="shrink-0">
               <Link href={url({ prof: undefined, hora: undefined })} aria-current={!prof ? 'true' : undefined} className={`chip-link h-full ${!prof ? 'chip-link-active' : ''}`}>Qualquer um</Link>
             </li>
-            {staff.map((p) => (
-              <li key={p.id} className="shrink-0">
-                <Link href={url({ prof: p.id, hora: undefined })} aria-current={prof?.id === p.id ? 'true' : undefined} className={`chip-link gap-2 !py-1 ${prof?.id === p.id ? 'chip-link-active' : ''}`}>
-                  <PlaceAvatar name={p.name} src={imageUrl(p.photoImageId)} size={28} /> {p.name}
-                </Link>
-              </li>
-            ))}
+            {staff.map((p) => {
+              const tone = resourceColor(p);
+              const on = prof?.id === p.id;
+              return (
+                <li key={p.id} className="shrink-0">
+                  <Link href={url({ prof: p.id, hora: undefined })} aria-current={on ? 'true' : undefined} className="chip-link gap-2 !py-1" style={on ? { background: tone.hex, borderColor: tone.hex, color: '#fff' } : { background: tone.soft, borderColor: tone.soft, color: tone.hex }}>
+                    <span className="rounded-full ring-2" style={{ '--tw-ring-color': tone.hex } as React.CSSProperties}><PlaceAvatar name={p.name} src={imageUrl(p.photoImageId)} size={28} /></span> {p.name}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}
@@ -158,12 +164,12 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
             return (
               <li key={key} className="shrink-0">
                 {closed ? (
-                  <span className="flex w-14 flex-col items-center rounded-md border border-slate-200 bg-slate-50 py-1.5 text-slate-300" aria-label={`${label(key, i)} ${day}: fechado`}>
+                  <span className="flex w-14 flex-col items-center rounded-2xl border border-slate-200 bg-slate-50 py-2 text-slate-300" aria-label={`${label(key, i)} ${day}: fechado`}>
                     <span className="text-[11px] font-semibold">{label(key, i)}</span>
                     <span className="text-lg font-bold">{day}</span>
                   </span>
                 ) : (
-                  <Link href={url({ data: key, hora: undefined })} aria-current={on ? 'date' : undefined} className={`flex w-14 flex-col items-center rounded-md border py-1.5 ${on ? 'border-electric-500 bg-electric-500 text-white' : 'border-slate-300 bg-white text-slate-700 hover:border-electric-500'}`}>
+                  <Link href={url({ data: key, hora: undefined })} aria-current={on ? 'date' : undefined} className={`flex w-14 flex-col items-center rounded-2xl border py-2 ${on ? 'border-electric-600 bg-electric-600 text-white shadow-md' : 'border-slate-200 bg-white text-slate-700 hover:border-electric-500'}`}>
                     <span className="text-[11px] font-semibold">{label(key, i)}</span>
                     <span className="text-lg font-bold">{day}</span>
                   </Link>
@@ -193,7 +199,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
           <ul className="grid grid-cols-4 gap-2 sm:grid-cols-6">
             {slots.map((s) => (
               <li key={s.time}>
-                <Link href={url({ data: date, hora: s.time })} aria-current={chosen?.time === s.time ? 'true' : undefined} className={`block rounded-md border py-2 text-center text-sm font-semibold ${chosen?.time === s.time ? 'border-electric-500 bg-electric-500 text-white' : 'border-slate-300 bg-white text-slate-800 hover:border-electric-500'}`}>
+                <Link href={url({ data: date, hora: s.time })} aria-current={chosen?.time === s.time ? 'true' : undefined} className={`block rounded-xl border py-2.5 text-center text-sm font-semibold ${chosen?.time === s.time ? 'border-[#0F1F3D] bg-[#0F1F3D] text-lima' : 'border-slate-200 bg-white text-slate-800 hover:border-electric-500'}`}>
                   {s.time}
                 </Link>
               </li>
@@ -203,7 +209,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
       </section>
 
       {chosen && (
-        <section aria-labelledby="confirmar" className="glass-panel space-y-4 p-4">
+        <section aria-labelledby="confirmar" className="glass-panel space-y-4 !rounded-[22px] p-4">
           <div>
             <h2 id="confirmar" className="text-lg font-bold text-primary">Confirmar</h2>
             <p className="text-sm text-slate-700">
@@ -240,7 +246,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
           {customer ? (
             <BookingForm hidden={{ restaurantId, serviceId: service.id, unitId: unit.id, date, time: chosen.time, resourceId: prof?.id ?? '' }} askPartySize={service.askPartySize} discount={{ priceCents: service.priceCents, balance, rate: restaurant.pointsPerRealOff, maxPoints: discount.maxPoints, maxPct: service.pointsDiscountMaxPct }} />
           ) : (
-            <Link href={`/entrar?next=${encodeURIComponent(url({ data: date, hora: chosen.time }))}`} className="glass-button w-full">Entrar para confirmar</Link>
+            <Link href={`/entrar?next=${encodeURIComponent(url({ data: date, hora: chosen.time }))}`} className="glass-button-navy w-full">Entrar para confirmar</Link>
           )}
         </section>
       )}

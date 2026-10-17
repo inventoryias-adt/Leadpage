@@ -125,6 +125,12 @@ const ddmm = (d: Date) => {
 };
 
 /** "2x pontos" ou "+50 pontos". */
+/** O número do cartão da campanha: "2x" (multiplicador) ou "+100" (pontos extras). */
+export function promoBig(p: Pick<PromoLike, 'kind' | 'multiplier' | 'bonusPoints'>): string {
+  if (p.kind === 'MULTIPLIER') return `${String(p.multiplier ?? 1).replace('.', ',')}x`;
+  return `+${p.bonusPoints ?? 0}`;
+}
+
 export function promoBadge(p: Pick<PromoLike, 'kind' | 'multiplier' | 'bonusPoints'>): string {
   if (p.kind === 'MULTIPLIER') return `${String(p.multiplier ?? 1).replace('.', ',')}x pontos`;
   return `+${p.bonusPoints ?? 0} pontos`;

@@ -1,11 +1,14 @@
 import Link from 'next/link';
 import { bookingAction } from '@/app/actions/agenda';
+import { AgendaGrid } from '@/components/AgendaGrid';
 import { Icon } from '@/components/Icons';
 import { PERIODS, PERIOD_LABEL, fmtDay, periodRange, rangeBounds, whatsappText, type AgendaPeriod, type ExportRow } from '@/lib/agenda-export';
 import { addDaysKey, dateKeyOf, formatBookingWhen, hmOf, parseDateKey, todayKey, weekdayOf } from '@/lib/booking';
 import { formatPhone } from '@/lib/br';
+import { imageUrl } from '@/lib/images';
 import { prisma } from '@/lib/db';
 import { DAY_NAMES } from '@/lib/hours';
+import { resourceColor } from '@/lib/palette';
 import { formatBRL, formatPoints } from '@/lib/points';
 import { requireActiveRestaurant } from '@/lib/session';
 
@@ -14,8 +17,8 @@ export const dynamic = 'force-dynamic';
 
 const STATUS: Record<string, { label: string; cls: string }> = {
   PENDING: { label: 'Aguardando', cls: 'bg-amber-100 text-amber-800' },
-  CONFIRMED: { label: 'Confirmado', cls: 'bg-emerald-100 text-emerald-700' },
-  COMPLETED: { label: 'Concluído', cls: 'bg-slate-100 text-slate-600' },
+  CONFIRMED: { label: 'Confirmado', cls: 'bg-[#EAF0FF] text-electric-600' },
+  COMPLETED: { label: 'Concluído', cls: 'bg-emerald-100 text-emerald-700' },
   CANCELED: { label: 'Cancelado', cls: 'bg-slate-100 text-slate-500' },
   NO_SHOW: { label: 'Faltou', cls: 'bg-rose-100 text-rose-700' },
 };
@@ -31,7 +34,7 @@ const load = (restaurantId: string, from: Date, to: Date, opts: { statuses?: str
       ...(opts.resourceId ? { resourceId: opts.resourceId } : {}),
     },
     orderBy: { startsAt: 'asc' },
-    include: { customer: { select: { name: true, phone: true } }, resource: { select: { name: true } }, unit: { select: { name: true } } },
+    include: { customer: { select: { name: true, phone: true } }, resource: { select: { name: true, color: true } }, unit: { select: { name: true } } },
   });
 
 function Actions({ b, back }: { b: Row; back: string }) {
@@ -58,7 +61,7 @@ function Actions({ b, back }: { b: Row; back: string }) {
 function Item({ b, back, showDay }: { b: Row; back: string; showDay?: boolean }) {
   const st = STATUS[b.status];
   return (
-    <li className="glass-panel-sm space-y-2 p-4">
+    <li id={`ag-${b.id}`} className="glass-panel-sm scroll-mt-4 space-y-2 border-l-4 p-4" style={{ borderLeftColor: b.resource ? resourceColor({ id: b.resourceId ?? '', color: b.resource.color }).hex : undefined }}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-bold text-slate-800">
@@ -111,7 +114,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
   const range = periodRange(per, date);
   const { start, end } = rangeBounds(range.from, range.to);
 
-  const staff = await prisma.resource.findMany({ where: { restaurantId: restaurant.id }, orderBy: { name: 'asc' }, select: { id: true, name: true, phone: true } });
+  const staff = await prisma.resource.findMany({ where: { restaurantId: restaurant.id }, orderBy: { name: 'asc' }, select: { id: true, name: true, phone: true, color: true, photoImageId: true, active: true } });
   const who = staff.find((r) => r.id === sp.prof) ?? null; // só aceita profissional deste estabelecimento
 
   const qs = (over: { data?: string; per?: AgendaPeriod; prof?: string | null }) => {
@@ -151,7 +154,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
   const csvHref = `/dashboard/agenda/exportar${(() => { const q = new URLSearchParams({ data: date, per }); if (who) q.set('prof', who.id); return `?${q}`; })()}`;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
+    <div className="mx-auto max-w-5xl space-y-5">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-primary">Agenda</h1>
@@ -183,7 +186,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
           <div className="flex flex-wrap gap-2" role="group" aria-label="Profissional">
             <Link href={href({ prof: null })} aria-current={!who ? 'true' : undefined} className={`rounded-full px-3 py-1.5 text-sm font-semibold ${!who ? 'bg-electric-500 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50'}`}>Todos</Link>
             {staff.map((r) => (
-              <Link key={r.id} href={href({ prof: r.id })} aria-current={who?.id === r.id ? 'true' : undefined} className={`rounded-full px-3 py-1.5 text-sm font-semibold ${who?.id === r.id ? 'bg-electric-500 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50'}`}>{r.name}</Link>
+              <Link key={r.id} href={href({ prof: r.id })} aria-current={who?.id === r.id ? 'true' : undefined} className={`rounded-full px-3 py-1.5 text-sm font-semibold ${who?.id === r.id ? 'bg-electric-500 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50'}`}><span className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full align-baseline" style={{ background: resourceColor(r).hex }} />{r.name}</Link>
             ))}
           </div>
         )}
@@ -208,6 +211,14 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
         <a href={csvHref} className="glass-button-ghost btn-sm" download>Baixar planilha (CSV)</a>
       </div>
       {who && !who.phone && <p className="text-xs text-slate-500">{who.name} não tem WhatsApp cadastrado: o WhatsApp abrirá para você escolher o contato. Cadastre em Regras → Agenda e serviços.</p>}
+
+      {per === 'dia' && list.length > 0 && (
+        <AgendaGrid
+          staff={(who ? [who] : staff.filter((r) => r.active || list.some((b) => b.resourceId === r.id))).map((r) => ({ id: r.id, name: r.name, color: r.color, photoUrl: imageUrl(r.photoImageId) }))}
+          bookings={list.map((b) => ({ id: b.id, resourceId: b.resourceId, startsAt: b.startsAt, endsAt: b.endsAt, serviceName: b.serviceName, customerName: b.customer.name, status: b.status }))}
+          nowMin={date === today ? (() => { const hm = hmOf(new Date()); return Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3, 5)); })() : null}
+        />
+      )}
 
       {list.length === 0 ? (
         <p className="glass-panel-sm p-4 text-sm text-slate-600">Nenhum agendamento {per === 'dia' ? 'neste dia' : 'neste período'}{who ? ` para ${who.name}` : ''}.</p>

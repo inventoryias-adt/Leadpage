@@ -14,6 +14,9 @@ import { isCategory } from '@/lib/categories';
 import { validCoords } from '@/lib/geo';
 import { UFS, cepDigits, composeAddress } from '@/lib/address';
 import { BusinessError, creditClaimWith } from '@/lib/claims';
+import { looksLikeAccountCode, normalizeAccountCode } from '@/lib/account-code';
+import { APPROVALS } from '@/lib/interaction-approval';
+import { decideInteraction } from '@/lib/interaction-claims';
 import { isValidCpf, onlyDigits, shortName } from '@/lib/br';
 import { TOO_MANY, allow } from '@/lib/rate-limit';
 import { CHECKIN_RADIUS_OPTIONS } from '@/lib/geo';
@@ -22,6 +25,7 @@ import { imageField, photoFromForm } from '@/lib/form-photo';
 import { describeChallenge } from '@/lib/challenges';
 import { applyPromos, endOfDayBR, promoBadge, startOfDayBR, parseTime } from '@/lib/promos';
 import { fail, type FormState } from '@/lib/form';
+import { isColorKey } from '@/lib/palette';
 import { cookies } from 'next/headers';
 import { UNIT_COOKIE, currentUnit } from '@/lib/units';
 
@@ -171,7 +175,19 @@ export async function saveRules(_: FormState, formData: FormData): Promise<FormS
 const interactionSchema = z.object({
   label: z.string().trim().min(2, 'Descreva a interação.').max(80),
   points: z.coerce.number().int('Use um número inteiro.').min(1, 'Mínimo de 1 ponto.').max(100_000),
+  approval: z.enum(APPROVALS).catch('COUNTER'),
 });
+
+/** O dono aprova (creditando os pontos) ou recusa um pedido "Já fiz" de um cliente. */
+export async function decideInteractionAction(formData: FormData) {
+  const restaurant = await requireActiveRestaurant();
+  try {
+    await decideInteraction(String(formData.get('id') ?? ''), restaurant.id, formData.get('op') === 'approve', 'OWNER');
+  } catch (e) {
+    if (!(e instanceof BusinessError)) throw e;
+  }
+  revalidatePath('/dashboard', 'layout');
+}
 
 export async function addInteraction(_: FormState, formData: FormData): Promise<FormState> {
   const restaurant = await requirePaidRestaurant();
@@ -529,6 +545,7 @@ export async function addPromotion(_: FormState, formData: FormData): Promise<Fo
       weekdays: weekdays.length === 7 ? [] : weekdays,
       startTime: d.startTime || null,
       endTime: d.endTime || null,
+      color: isColorKey(formData.get('color')) ? String(formData.get('color')) : null,
     },
   });
   revalidatePath('/dashboard', 'layout');
@@ -539,6 +556,16 @@ export async function removePromotion(formData: FormData) {
   const restaurant = await requirePaidRestaurant();
   await prisma.promotion.deleteMany({ where: { id: String(formData.get('id')), restaurantId: restaurant.id } });
   revalidatePath('/dashboard', 'layout');
+}
+
+/** Troca a cor de uma campanha (bolinhas da lista). */
+export async function setPromotionColor(formData: FormData) {
+  const restaurant = await requirePaidRestaurant();
+  const color = formData.get('color');
+  if (!isColorKey(color)) return;
+  await prisma.promotion.updateMany({ where: { id: String(formData.get('id')), restaurantId: restaurant.id }, data: { color } });
+  revalidatePath('/dashboard', 'layout');
+  revalidatePath('/lugares');
 }
 
 export async function togglePromotion(formData: FormData) {
@@ -572,16 +599,27 @@ const caixaSchema = z.object({
   phone: z.string().default(''),
 });
 
-export type CpfLookup = { status: 'invalid' } | { status: 'new' } | { status: 'found'; name: string } | { status: 'limit' };
+export type CpfLookup = { status: 'invalid' } | { status: 'new' } | { status: 'found'; name: string } | { status: 'limit' } | { status: 'noid' };
+
+/** Quem o caixa digitou: um CPF (só números) ou o ID da conta (FZ-XXXXXX). */
+function customerKey(raw: string): { cpf: string } | { accountCode: string } | null {
+  if (looksLikeAccountCode(raw)) {
+    const accountCode = normalizeAccountCode(raw);
+    return accountCode ? { accountCode } : null;
+  }
+  const cpf = onlyDigits(raw);
+  return isValidCpf(cpf) ? { cpf } : null;
+}
 
 /** O caixa digitou um CPF: o cliente já tem conta? (nome abreviado; limite de consultas para não virar listagem de CPFs) */
 export async function lookupCpf(cpfRaw: string): Promise<CpfLookup> {
   const restaurant = await requireActiveRestaurant();
-  const cpf = onlyDigits(cpfRaw);
-  if (!isValidCpf(cpf)) return { status: 'invalid' };
+  const key = customerKey(cpfRaw);
+  if (!key) return { status: 'invalid' };
   if (!(await allow(`cpflookup:${restaurant.id}`, 60, 600))) return { status: 'limit' };
-  const customer = await prisma.customer.findUnique({ where: { cpf }, select: { name: true } });
-  return customer ? { status: 'found', name: shortName(customer.name) } : { status: 'new' };
+  const customer = await prisma.customer.findUnique({ where: key, select: { name: true } });
+  if (customer) return { status: 'found', name: shortName(customer.name) };
+  return 'accountCode' in key ? { status: 'noid' } : { status: 'new' };
 }
 
 /** Conta do lançamento: pontos, descrição e unidade, com as regras gravadas no banco (nada vem do navegador). */
@@ -622,13 +660,14 @@ async function buildLaunch(restaurant: { id: string; pointsPerReal: number }, fo
 /** Lança os pontos direto na conta do cliente, pelo CPF, sem QR Code. Campanhas, indicação e desafios valem igual. */
 export async function creditByCpf(_: CaixaState, formData: FormData): Promise<CaixaState> {
   const restaurant = await requireActiveRestaurant();
-  const cpf = onlyDigits(String(formData.get('cpf') ?? ''));
-  if (!isValidCpf(cpf)) return { error: 'CPF inválido. Confira os números.' };
+  const rawKey = String(formData.get('cpf') ?? '');
+  const key = customerKey(rawKey);
+  if (!key) return { error: looksLikeAccountCode(rawKey) ? 'ID da conta inválido. Confira o código (ex.: FZ-7K3Q9X).' : 'CPF inválido. Confira os números.' };
   const launch = await buildLaunch(restaurant, formData);
   if ('error' in launch) return { error: launch.error };
 
-  const customer = await prisma.customer.findUnique({ where: { cpf }, select: { id: true, name: true } });
-  if (!customer) return { error: 'Este CPF ainda não tem conta. Gere o QR Code e envie por WhatsApp para ele criar a conta.' };
+  const customer = await prisma.customer.findUnique({ where: key, select: { id: true, name: true } });
+  if (!customer) return { error: 'accountCode' in key ? 'Nenhuma conta com este ID. Confira o código com o cliente.' : 'Este CPF ainda não tem conta. Gere o QR Code e envie por WhatsApp para ele criar a conta.' };
   if (!(await allow(`cpfcredit:${restaurant.id}`, 120, 600))) return { error: TOO_MANY };
   // Segurança contra clique duplo: o mesmo lançamento (mesmo cliente e mesmos pontos) não repete em 20 segundos.
   if (!(await allow(`cpfdup:${restaurant.id}:${customer.id}:${launch.points}:${launch.amountCents}`, 1, 20))) {

@@ -5,6 +5,7 @@ import { PointsActivity } from '@/components/PointsActivity';
 import { ProfilePhoto } from '@/components/ProfilePhoto';
 import { Reveal } from '@/components/Reveal';
 import { BirthdayCard } from '@/components/BirthdayCard';
+import { CopyButton } from '@/components/CopyButton';
 import { Icon } from '@/components/Icons';
 import { LegalLinks } from '@/components/LegalLinks';
 import { ShareButtons } from '@/components/ShareButtons';
@@ -16,6 +17,7 @@ import { imageUrl, profilePhotoUrl } from '@/lib/images';
 import { appUrl } from '@/lib/payments';
 import { formatPoints } from '@/lib/points';
 import { requireCustomer } from '@/lib/session';
+import { ensureAccountCode } from '@/lib/account-code-db';
 import { newReferralCode } from '@/lib/tokens';
 
 export const metadata = { title: 'Perfil' };
@@ -58,6 +60,7 @@ export default async function PerfilPage() {
     code = newReferralCode();
     await prisma.customer.update({ where: { id: customer.id }, data: { referralCode: code } }).catch(() => {});
   }
+  const accountCode = await ensureAccountCode(customer);
   const invites = wallets.filter((w) => w.restaurant.subscriptionStatus === 'ACTIVE' && w.restaurant.referralPoints > 0);
 
   return (
@@ -68,6 +71,18 @@ export default async function PerfilPage() {
           <h1 className="truncate text-2xl font-extrabold tracking-tight text-primary">{customer.name}</h1>
           <p className="text-sm text-slate-500">CPF {maskCpf(customer.cpf)} · {formatPhone(customer.phone)}</p>
         </ProfilePhoto>
+      </Reveal>
+
+      <Reveal from="zoom" className="lg:col-span-5">
+      <section aria-labelledby="id-conta" className="flex items-center gap-3 rounded-[22px] bg-[#0F1F3D] p-4 text-white" data-testid="account-id">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-lima text-primary"><Icon name="user" size={22} /></span>
+        <div className="min-w-0 flex-1">
+          <h2 id="id-conta" className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">ID da sua conta</h2>
+          <p className="whitespace-nowrap font-mono text-xl font-bold tracking-[0.12em] text-lima" data-testid="account-id-code">{accountCode}</p>
+          <p className="text-xs text-white/70">Informe no caixa no lugar do CPF para receber seus pontos.</p>
+        </div>
+        <CopyButton text={accountCode} label="Copiar" />
+      </section>
       </Reveal>
 
       <Reveal from="zoom" className="lg:col-span-5">

@@ -15,14 +15,14 @@ const items: { href: string; label: string; icon: IconName }[] = [
   { href: '/dashboard/configuracoes', label: 'Regras', icon: 'cog' },
 ];
 
-export function DashboardNav({ variant, agenda = false, pending: pendingBookings = 0, orders = false, newOrders = 0 }: { variant: 'top' | 'bottom'; agenda?: boolean; pending?: number; orders?: boolean; newOrders?: number }) {
+export function DashboardNav({ variant, agenda = false, pending: pendingBookings = 0, orders = false, newOrders = 0, caixa = 0 }: { variant: 'top' | 'bottom'; agenda?: boolean; pending?: number; orders?: boolean; newOrders?: number; caixa?: number }) {
   const pathname = usePathname();
   // Destaca a aba no mesmo instante do toque (antes da página nova chegar), para a interface responder na hora.
   const [pending, setPending] = useState<string | null>(null);
   useEffect(() => setPending(null), [pathname]);
   const current = pending ?? pathname;
   const visible = items.filter((i) => (agenda || i.href !== '/dashboard/agenda') && (orders || i.href !== '/dashboard/pedidos')); // Agenda e Pedidos só aparecem para quem usa
-  const count = (href: string) => (href === '/dashboard/agenda' ? pendingBookings : href === '/dashboard/pedidos' ? newOrders : 0);
+  const count = (href: string) => (href === '/dashboard/agenda' ? pendingBookings : href === '/dashboard/pedidos' ? newOrders : href === '/dashboard/caixa' ? caixa : 0);
   const badge = (href: string) => count(href) > 0 && <span className="ml-1 rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-4 text-white" aria-label={`${count(href)} aguardando`}>{count(href)}</span>;
   const active = (href: string) => (href === '/dashboard' ? current === href : current.startsWith(href));
 

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { setAppCampaign } from '@/app/actions/app-campaigns';
 import { campaignBadge, campaignWhen } from '@/lib/app-campaigns';
-import { removeChallenge, removeInteraction, removePromotion, removeReward, removeUnit, togglePromotion } from '@/app/actions/restaurant';
+import { removeChallenge, removeInteraction, removePromotion, removeReward, removeUnit, setPromotionColor, togglePromotion } from '@/app/actions/restaurant';
 import {
   AddChallengeForm,
   AddPromotionForm,
@@ -31,7 +31,9 @@ import { removeResource, removeService } from '@/app/actions/agenda';
 import { AddServiceForm, BookingPolicyForm, StaffForm } from '@/components/AgendaSettings';
 import { imageUrl } from '@/lib/images';
 import { formatBRL, formatPoints, formatPrice } from '@/lib/points';
-import { promoBadge, promoStatus, promoWhen } from '@/lib/promos';
+import { ColorDots } from '@/components/ColorSwatches';
+import { promoColor } from '@/lib/palette';
+import { promoBadge, promoBig, promoStatus, promoWhen } from '@/lib/promos';
 import { requirePaidRestaurant } from '@/lib/session';
 
 export const metadata = { title: 'Regras e configurações' };
@@ -286,7 +288,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
         <ul className="mb-4 divide-y divide-slate-200/70">
           {interactions.length === 0 && <li className="py-2 text-sm text-slate-500">Nenhuma interação cadastrada.</li>}
           {interactions.map((i) => (
-            <InteractionRow key={i.id} id={i.id} label={i.label} points={i.points} remove={<RemoveButton action={removeInteraction} id={i.id} label={i.label} />} />
+            <InteractionRow key={i.id} id={i.id} label={i.label} points={i.points} approval={i.approval} remove={<RemoveButton action={removeInteraction} id={i.id} label={i.label} />} />
           ))}
         </ul>
         <p className="mb-2 text-sm font-bold text-slate-800">Nova interação</p>
@@ -343,10 +345,12 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
           {promotions.map((p) => {
             const status = promoStatus(p, nowDate);
             const look = { now: ['Valendo agora', 'bg-emerald-100 text-emerald-700'], scheduled: ['Agendada', 'bg-blue-100 text-electric-600'], paused: ['Pausada', 'bg-slate-200 text-slate-600'], ended: ['Encerrada', 'bg-slate-200 text-slate-500'] }[status];
+            const color = promoColor(p);
             return (
               <li key={p.id} className="glass-inset p-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
+                <div className="flex items-start gap-3">
+                  <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold text-white" style={{ background: color.hex }}>{promoBig(p)}</span>
+                  <div className="min-w-0 flex-1">
                     <p className="font-semibold text-slate-800">{p.title}{p.appCampaignId && <span className="ml-2 rounded-full bg-[#E8EEFB] px-2 py-0.5 text-[11px] font-semibold text-electric-600">Campanha do app</span>}</p>
                     <p className="text-xs text-slate-500">{promoWhen(p, formatBRL)}</p>
                   </div>
@@ -355,7 +359,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
                     <span className={`rounded-md px-2.5 py-0.5 text-xs font-semibold ${look[1]}`}>{look[0]}</span>
                   </div>
                 </div>
-                <div className="mt-2 flex gap-2">
+                <div className="mt-2 flex flex-wrap items-center gap-2">
                   {status !== 'ended' && (
                     <form action={togglePromotion}>
                       <input type="hidden" name="id" value={p.id} />
@@ -363,6 +367,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
                     </form>
                   )}
                   <RemoveButton action={removePromotion} id={p.id} label={p.title} />
+                  <span className="ml-auto"><ColorDots action={setPromotionColor} id={p.id} value={color.key} /></span>
                 </div>
               </li>
             );
@@ -467,6 +472,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
                             unitId: r.unitId ?? '',
                             schedule: sched,
                             photoUrl: imageUrl(r.photoImageId),
+                            color: r.color,
                             offers: Object.fromEntries(r.offers.map((o) => [o.serviceId, o.durationMin])),
                           }}
                         />

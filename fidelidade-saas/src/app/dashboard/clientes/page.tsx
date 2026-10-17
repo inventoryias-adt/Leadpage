@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { EmptyState } from '@/components/EmptyState';
 import type { Prisma } from '@prisma/client';
+import { normalizeAccountCode } from '@/lib/account-code';
 import { maskCpf, formatPhone, onlyDigits } from '@/lib/br';
 import { prisma } from '@/lib/db';
 import { formatDateTimeBR, formatPoints } from '@/lib/points';
 import { requireActiveRestaurant } from '@/lib/session';
+import { PlaceAvatar } from '@/components/Visual';
 import { loadCustomerRows } from '@/lib/insights-db';
 import { SEGMENT_HINT, SEGMENT_LABEL, type Segment } from '@/lib/insights';
 
@@ -21,12 +23,13 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
   const digits = onlyDigits(q);
 
   const customerFilter: Prisma.CustomerWhereInput | undefined = q
-    ? { OR: [{ name: { contains: q, mode: 'insensitive' } }, ...(digits ? [{ cpf: { contains: digits } }, { phone: { contains: digits } }] : [])] }
+    ? { OR: [{ name: { contains: q, mode: 'insensitive' } }, ...(normalizeAccountCode(q) ? [{ accountCode: normalizeAccountCode(q)! }] : []), ...(digits ? [{ cpf: { contains: digits } }, { phone: { contains: digits } }] : [])] }
     : undefined;
 
   const { rows: allRows } = await loadCustomerRows(restaurant.id);
   const counts: Record<Segment, number> = { novos: 0, fieis: 0, quase: 0, sumidos: 0 };
   for (const r of allRows) for (const sg of r.segments) counts[sg] += 1;
+  const segOf = new Map(allRows.map((r) => [r.customerId, r.segments]));
   const inSegment = seg ? allRows.filter((r) => r.segments.includes(seg)).map((r) => r.customerId) : null;
 
   const [total, wallets] = await Promise.all([
@@ -81,7 +84,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
         {seg && <p className="mb-3 text-sm text-slate-600">{SEGMENT_HINT[seg]}</p>}
         <form className="flex gap-2" role="search">
           {seg && <input type="hidden" name="seg" value={seg} />}
-          <input name="q" defaultValue={q} className="glass-input" placeholder="Buscar por nome, CPF ou telefone" aria-label="Buscar cliente" />
+          <input name="q" defaultValue={q} className="glass-input" placeholder="Buscar por nome, CPF, telefone ou ID da conta" aria-label="Buscar cliente" />
           <button className="glass-button-ghost !w-auto">Buscar</button>
         </form>
       </section>
@@ -94,33 +97,38 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
           action={q || seg ? undefined : { href: '/dashboard/caixa', label: 'Abrir o Caixa' }}
         />
       ) : (
-        <ul className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
-          {wallets.map((w) => {
-            const s = byWallet.get(w.id) ?? { earned: 0, redeemed: 0, visits: 0 };
-            return (
-              <li key={w.id}>
-                <Link href={`/dashboard/clientes/${w.customer.id}`} className="glass-panel-sm card-link block p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate font-bold text-slate-800">{w.customer.name}</p>
-                      <p className="text-xs text-slate-500">
-                        CPF {maskCpf(w.customer.cpf)} · {formatPhone(w.customer.phone)}
-                      </p>
+        <div className="glass-panel !rounded-[22px] p-2 sm:p-3">
+          <div className="hidden grid-cols-[minmax(0,2.2fr)_6rem_9rem_minmax(0,1.4fr)] gap-3 px-3 pb-2 pt-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 md:grid" aria-hidden>
+            <span>Cliente</span><span>Saldo</span><span>Última visita</span><span>Grupo</span>
+          </div>
+          <ul className="divide-y divide-slate-100">
+            {wallets.map((w) => {
+              const s = byWallet.get(w.id) ?? { earned: 0, redeemed: 0, visits: 0 };
+              const groups = segOf.get(w.customer.id) ?? [];
+              return (
+                <li key={w.id}>
+                  <Link href={`/dashboard/clientes/${w.customer.id}`} className="card-link grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 rounded-2xl px-3 py-3 md:grid-cols-[minmax(0,2.2fr)_6rem_9rem_minmax(0,1.4fr)]">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <PlaceAvatar name={w.customer.name} src={null} size={40} />
+                      <div className="min-w-0">
+                        <p className="truncate font-bold text-slate-800">{w.customer.name}</p>
+                        <p className="truncate text-xs text-slate-500">CPF {maskCpf(w.customer.cpf)} · {formatPhone(w.customer.phone)}</p>
+                      </div>
                     </div>
-                    <p className="shrink-0 text-right">
-                      <span className="text-2xl font-extrabold text-primary">{formatPoints(w.balance)}</span>
-                      <span className="ml-1 text-xs font-semibold text-electric-600">pts</span>
+                    <p className="text-right md:text-left"><span className="chip-lima !text-sm">{formatPoints(w.balance)} pts</span></p>
+                    <p className="col-span-2 text-xs text-slate-600 md:col-span-1 md:text-sm">
+                      <span className="md:hidden">Última visita: </span>{s.last ? formatDateTimeBR(s.last) : '—'}
+                      <span className="block text-[11px] text-slate-400">{s.visits} {s.visits === 1 ? 'pontuação' : 'pontuações'} · {formatPoints(s.earned)} recebidos · {formatPoints(s.redeemed)} usados</span>
                     </p>
-                  </div>
-                  <p className="mt-2 text-xs text-slate-600">
-                    {s.visits} {s.visits === 1 ? 'pontuação' : 'pontuações'} · {formatPoints(s.earned)} pts recebidos · {formatPoints(s.redeemed)} pts usados
-                    {s.last && <> · última atividade {formatDateTimeBR(s.last)}</>}
-                  </p>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+                    <p className="col-span-2 flex flex-wrap gap-1.5 md:col-span-1">
+                      {groups.length === 0 ? <span className="text-xs text-slate-400">—</span> : groups.map((g) => <span key={g} className="glass-chip">{SEGMENT_LABEL[g]}</span>)}
+                    </p>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       )}
       {total > LIMIT && !q && <p className="text-center text-xs text-slate-500">Mostrando os {LIMIT} clientes com mais pontos. Use a busca para encontrar os demais.</p>}
     </div>
