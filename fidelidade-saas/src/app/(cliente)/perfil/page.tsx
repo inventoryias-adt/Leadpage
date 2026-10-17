@@ -78,7 +78,7 @@ export default async function PerfilPage() {
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-lima text-primary"><Icon name="user" size={22} /></span>
         <div className="min-w-0 flex-1">
           <h2 id="id-conta" className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">ID da sua conta</h2>
-          <p className="font-mono text-2xl font-bold tracking-[0.18em] text-lima" data-testid="account-id-code">{accountCode}</p>
+          <p className="whitespace-nowrap font-mono text-xl font-bold tracking-[0.12em] text-lima" data-testid="account-id-code">{accountCode}</p>
           <p className="text-xs text-white/70">Informe no caixa no lugar do CPF para receber seus pontos.</p>
         </div>
         <CopyButton text={accountCode} label="Copiar" />
