@@ -23,7 +23,7 @@ const headline = (c: CampaignItem) => (c.badge ? c.badge : `+${formatPoints(c.po
 type Group = { placeId: string; placeName: string; logoUrl: string | null; items: CampaignView[] };
 
 /**
- * Campanhas rolando, uma por estabelecimento: cada cartão mostra só o lugar e quantas campanhas ele tem; ao tocar,
+ * Campanhas rolando, uma por estabelecimento: cada cartão mostra só o lugar e quantas campanhas ele tem (sem os valores soltos); ao tocar,
  * abre a lista das campanhas daquele lugar (com o "como funciona" e o convite para participar).
  */
 export function CampaignCards({ items, loggedIn }: { items: CampaignView[]; loggedIn: boolean }) {
@@ -71,16 +71,11 @@ export function CampaignCards({ items, loggedIn }: { items: CampaignView[]; logg
                 <PlaceAvatar name={g.placeName} src={g.logoUrl} size={40} />
                 <span className="min-w-0 truncate text-sm font-bold text-slate-900">{g.placeName}</span>
               </span>
-              {/* A contagem e um quadradinho colorido por campanha: o detalhe fica na lista que abre ao tocar. */}
+              {/* Só a contagem: o detalhe de cada campanha (valor, como funciona, participar) fica na janela que abre ao tocar. */}
               <span className="block">
                 <span className="block text-2xl font-bold leading-none text-primary">{g.items.length} {g.items.length === 1 ? 'campanha' : 'campanhas'}</span>
                 <span className="mt-3 flex items-center justify-between gap-2">
-                  <span aria-hidden className="flex min-w-0 items-center gap-1.5">
-                    {g.items.slice(0, 4).map((c) => (
-                      <span key={c.id} className="flex h-8 min-w-8 items-center justify-center rounded-xl px-1.5 text-xs font-extrabold text-white" style={{ background: colorOf(c.color).hex }}>{c.big}</span>
-                    ))}
-                    {g.items.length > 4 && <span className="text-xs font-bold text-slate-500">+{g.items.length - 4}</span>}
-                  </span>
+                  <span aria-hidden className="text-sm font-semibold text-electric-600">Ver {g.items.length === 1 ? 'a campanha' : 'as campanhas'}</span>
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#E8EEFB] text-electric-600"><Icon name="chevron" size={16} /></span>
                 </span>
               </span>

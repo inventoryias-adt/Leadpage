@@ -13,6 +13,7 @@ import { Icon } from './Icons';
 import { Illustration } from './Illustrations';
 import { LocationBar } from './LocationBar';
 import { Reveal } from './Reveal';
+import { TodayDeals, type Deal } from './TodayDeals';
 import { PlaceAvatar, RewardImage } from './Visual';
 
 export type PlaceUnit = { id: string; name: string; address: string | null; lat: number | null; lng: number | null; openNow: boolean | null };
@@ -31,6 +32,7 @@ export type PlaceCard = {
   hasInstagram: boolean;
   hasRewards: boolean;
   offer: PlaceOffer | null;
+  deals: PlaceOffer[]; // todo produto com promoção que ainda vale (alimenta "Promoções de hoje")
   balance: number | null;
   minReward: number | null;
   challenges: number;
@@ -103,7 +105,7 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses }:
         if (filter === 'saldo') return (p.balance ?? 0) > 0;
         if (filter === 'aberto') return p.openAny;
         if (filter === 'desafios') return p.challenges > 0;
-        if (filter === 'promo') return p.campaigns.some((c) => c.kind === 'promocao');
+        if (filter === 'promo') return p.campaigns.some((c) => c.kind === 'promocao') || p.deals.length > 0;
         return true;
       });
     rows.sort((a, b) => {
@@ -196,6 +198,19 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses }:
           <p className="text-xs text-slate-500">Mostra os lugares que descreveram o que são (ex.: “Outros · Doceria”).</p>
         </div>
       )}
+
+      <TodayDeals
+        deals={list.flatMap((p): Deal[] =>
+          p.deals.map((d) => ({
+            placeId: p.id,
+            placeName: p.name,
+            logoUrl: p.logoUrl,
+            unitId: p.units.length > 1 ? p.unit.id : null,
+            distance: p.meters != null ? formatDistance(p.meters) : null,
+            ...d,
+          })),
+        )}
+      />
 
       <CampaignCards
         loggedIn={loggedIn}

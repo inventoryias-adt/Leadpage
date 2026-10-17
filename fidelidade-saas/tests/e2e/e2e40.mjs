@@ -129,6 +129,7 @@ console.log('8. passou do prazo: volta ao preço normal e sai de Lugares OK');
 
 // ---- aniversário
 await o.goto(BASE + '/dashboard/configuracoes?abrir=tudo'); await o.waitForSelector('#e-bd');
+if (await o.locator('#e-bd').isDisabled()) await o.locator('[role=switch][aria-label*="presente de aniversário"]').click(); // desligado por padrão (0 pontos): liga a chave
 await o.fill('#e-bd', '50'); await o.click('form:has(#e-bd) button[type=submit]');
 await until(o, () => sql(`select "birthdayPoints" from "Restaurant" where id='${rid}'`) === '50', 'presente salvo');
 await c.goto(BASE + '/lugar/' + rid); await c.waitForSelector('[data-testid=birthday-card]');

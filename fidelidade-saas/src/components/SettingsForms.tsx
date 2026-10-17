@@ -4,10 +4,8 @@ import Link from 'next/link';
 import { APPROVALS, APPROVAL_LABEL } from '@/lib/interaction-approval';
 import { startTransition, useActionState, useEffect, useId, useRef, useState } from 'react';
 import {
-  addChallenge,
   addInteraction,
   updateInteraction,
-  addPromotion,
   addReward,
   finishOnboarding,
   saveBasics,
@@ -33,27 +31,46 @@ import { Icon } from './Icons';
 import { CHECKIN_RADIUS_OPTIONS, radiusIndex } from '@/lib/geo';
 import { ImageUpload, shrinkImage } from './ImageUpload';
 import { WebImageSearch } from './WebImageSearch';
-import { ColorSwatches } from './ColorSwatches';
 import { PreviewFrame } from './PreviewFrame';
-import { CampaignTile } from './CampaignTile';
 import { RewardImage, ProgressBar } from './Visual';
-import { colorOf, promoDefaultColor } from '@/lib/palette';
 import { formatPoints, formatPrice } from '@/lib/points';
 import { FormMessage, SubmitButton } from './ui';
 
 type Basics = { name: string };
 
+/** Chave liga/desliga (marinho com a bolinha lima quando ligada). */
+function Switch({ on, onChange, label, id }: { on: boolean; onChange: (v: boolean) => void; label: string; id?: string }) {
+  return (
+    <button
+      type="button"
+      id={id}
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      title={on ? 'Ligado: toque para desligar' : 'Desligado: toque para ligar'}
+      onClick={() => onChange(!on)}
+      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600 ${on ? 'bg-[#0f1f3d]' : 'bg-slate-300'}`}
+    >
+      <span className={`inline-block h-5 w-5 rounded-full shadow transition-transform ${on ? 'translate-x-[26px] bg-[#c6f432]' : 'translate-x-1 bg-white'}`} />
+    </button>
+  );
+}
+
 export function BasicsForm({ defaults }: { defaults: Basics }) {
   const [state, action] = useActionState(saveBasics, {});
   return (
-    <form action={action} className="space-y-4">
-      <div>
-        <label className="glass-label" htmlFor="b-name">Nome do estabelecimento</label>
-        <input id="b-name" name="name" className="glass-input" defaultValue={state.values?.name ?? defaults.name} required />
-        <p className="mt-1 text-xs text-slate-500">É o nome que o cliente vê. Endereço e horário ficam em cada unidade.</p>
+    <form action={action} className="space-y-3">
+      <div className="grid items-end gap-3 sm:grid-cols-2">
+        <div>
+          <label className="glass-label" htmlFor="b-name">Nome do estabelecimento</label>
+          <input id="b-name" name="name" className="glass-input" defaultValue={state.values?.name ?? defaults.name} required />
+        </div>
+        <div>
+          <SubmitButton pendingText="Salvando…" className="btn-sm">Salvar nome</SubmitButton>
+        </div>
       </div>
+      <p className="text-xs text-slate-500">É o nome que o cliente vê. Endereço e horário ficam em cada unidade.</p>
       <FormMessage state={state} />
-      <SubmitButton pendingText="Salvando…">Salvar nome</SubmitButton>
     </form>
   );
 }
@@ -61,21 +78,22 @@ export function BasicsForm({ defaults }: { defaults: Basics }) {
 export function RulesForm({ defaults }: { defaults: { pointsPerReal: number; maxRedeemsPerMonth: number } }) {
   const [state, action] = useActionState(saveRules, {});
   return (
-    <form action={action} className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
+    <form action={action} className="space-y-3">
+      <div className="grid items-end gap-3 sm:grid-cols-[minmax(0,12rem)_minmax(0,12rem)_auto]">
         <div>
           <label className="glass-label" htmlFor="r-ppr">Pontos a cada R$ 1,00 gasto</label>
           <input id="r-ppr" name="pointsPerReal" type="number" min={1} max={1000} step={1} inputMode="numeric" className="glass-input" defaultValue={state.values?.pointsPerReal ?? defaults.pointsPerReal} required />
-          <p className="mt-1 text-xs text-slate-500">Ex.: 10 → R$ 150,00 vira 1.500 pontos.</p>
         </div>
         <div>
           <label className="glass-label" htmlFor="r-max">Máx. de resgates por CPF/mês</label>
           <input id="r-max" name="maxRedeemsPerMonth" type="number" min={1} max={100} step={1} inputMode="numeric" className="glass-input" defaultValue={state.values?.maxRedeemsPerMonth ?? defaults.maxRedeemsPerMonth} required />
-          <p className="mt-1 text-xs text-slate-500">Trava de segurança contra abuso.</p>
+        </div>
+        <div>
+          <SubmitButton pendingText="Salvando…" className="btn-sm">Salvar regras</SubmitButton>
         </div>
       </div>
+      <p className="text-xs text-slate-500">Ex.: com 10 pontos por real, R$ 150,00 viram 1.500 pontos. O limite de resgates por mês é uma trava de segurança contra abuso.</p>
       <FormMessage state={state} />
-      <SubmitButton pendingText="Salvando…">Salvar regras</SubmitButton>
     </form>
   );
 }
@@ -116,7 +134,7 @@ export function InteractionRow({ id, label, points, approval = 'COUNTER', remove
           title="Editar"
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-transparent text-slate-400 transition-colors hover:border-slate-200 hover:bg-slate-50 hover:text-slate-700"
         >
-          <Icon name="cog" size={18} />
+          <Icon name="pencil" size={18} />
         </button>
         {remove}
       </div>
@@ -358,6 +376,7 @@ export function IdentityForm({ defaults, placeName, supportEnv }: { defaults: Id
   // Controlado: um <select> não-controlado ficaria em branco depois que o formulário é reiniciado ao salvar.
   const [category, setCategory] = useState(state.values?.category ?? defaults.category);
   const [other, setOther] = useState(state.values?.categoryOther ?? defaults.categoryOther);
+  const [listed, setListed] = useState(state.values ? state.values.listed === 'on' : defaults.listed);
   const help = buildSupport(supportEnv, 'Categoria no Fidelize', categoryRequestMessage(placeName, category === 'outros' ? other : ''));
   const catRef = useRef<HTMLSelectElement>(null);
   const otherRef = useRef<HTMLInputElement>(null);
@@ -448,16 +467,25 @@ export function IdentityForm({ defaults, placeName, supportEnv }: { defaults: Id
         )}
       </p>
 
-      <label className="flex items-start gap-3">
-        <input type="checkbox" name="listed" defaultChecked={state.values ? state.values.listed === 'on' : defaults.listed} className="mt-1 h-5 w-5 rounded accent-electric-500" />
-        <span className="text-sm text-slate-700">
-          <span className="font-semibold">Aparecer em “Lugares” no app dos clientes</span>
-          <span className="block text-xs text-slate-500">Quem usa o Fidelize pode encontrar seu restaurante, ver os prêmios e as ações que dão pontos.</span>
-        </span>
-      </label>
+      <div className="grid items-center gap-3 sm:grid-cols-2">
+        <label className="flex items-start gap-3">
+          <input type="checkbox" name="listed" checked={listed} onChange={(e) => setListed(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 rounded accent-electric-500" />
+          <span className="text-sm text-slate-700">
+            <span className="font-semibold">Aparecer em “Lugares” no app dos clientes</span>
+            <span className="block text-xs text-slate-500">Ligado por padrão: quem usa o Fidelize encontra seu estabelecimento, vê os prêmios e as ações que dão pontos.</span>
+          </span>
+        </label>
+        <div>
+          <SubmitButton pendingText="Salvando…" className="btn-sm">Salvar identidade</SubmitButton>
+        </div>
+      </div>
+      {!listed && (
+        <p role="alert" data-testid="listed-off-warning" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          <b>Atenção:</b> com isso desligado, seu estabelecimento deixa de aparecer em “Lugares” e quem ainda não é seu cliente não encontra você por lá. Salve para confirmar.
+        </p>
+      )}
 
       <FormMessage state={state} />
-      <SubmitButton pendingText="Salvando…">Salvar identidade</SubmitButton>
     </form>
   );
 }
@@ -498,32 +526,59 @@ function RadiusSlider({ initial }: { initial: number }) {
   );
 }
 
+type Toggle = { on: boolean; pts: string };
+
+/** Um item do bloco "Check-in, indicação e aniversário": nome, pontos e a chave que liga/desliga (desligado = 0 pontos). */
+function EngagementCell({ id, name, label, hint, t, setT, fallback }: { id: string; name: string; label: string; hint: string; t: Toggle; setT: (t: Toggle) => void; fallback: string }) {
+  const value = t.on ? String(Number(t.pts) > 0 ? Number(t.pts) : 0) : '0';
+  return (
+    <div>
+      <label className="glass-label" htmlFor={id}>{label}</label>
+      <input type="hidden" name={name} value={value} />
+      <div className="flex items-center gap-2">
+        <input
+          id={id}
+          type="number"
+          min={1}
+          inputMode="numeric"
+          className="glass-input min-w-0 flex-1 disabled:bg-slate-100 disabled:text-slate-400"
+          value={t.on ? t.pts : ''}
+          placeholder={t.on ? '' : 'Desligado'}
+          disabled={!t.on}
+          required={t.on}
+          onChange={(e) => setT({ ...t, pts: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+          aria-describedby={`${id}-hint`}
+        />
+        <Switch on={t.on} label={`${t.on ? 'Desligar' : 'Ligar'} ${label.toLowerCase()}`} onChange={(on) => setT({ on, pts: on && !(Number(t.pts) > 0) ? fallback : t.pts })} />
+      </div>
+      <p id={`${id}-hint`} className="mt-1 text-xs text-slate-500">{hint}</p>
+    </div>
+  );
+}
+
 export function EngagementForm({ defaults }: { defaults: { checkInPoints: number; checkInRadiusM: number; referralPoints: number; birthdayPoints: number } }) {
   const [state, action] = useActionState(saveEngagement, {});
+  const start = (k: 'checkInPoints' | 'referralPoints' | 'birthdayPoints'): Toggle => {
+    const n = Number(state.values?.[k] ?? defaults[k]);
+    return { on: n > 0, pts: n > 0 ? String(n) : '' };
+  };
+  const [ci, setCi] = useState<Toggle>(() => start('checkInPoints'));
+  const [rf, setRf] = useState<Toggle>(() => start('referralPoints'));
+  const [bd, setBd] = useState<Toggle>(() => start('birthdayPoints'));
+  const radius = Number(state.values?.checkInRadiusM ?? defaults.checkInRadiusM);
   return (
     <form action={action} className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="glass-label" htmlFor="e-ci">Pontos por check-in (1 por dia)</label>
-          <input id="e-ci" name="checkInPoints" type="number" min={0} inputMode="numeric" className="glass-input" defaultValue={state.values?.checkInPoints ?? defaults.checkInPoints} required />
-          <p className="mt-1 text-xs text-slate-500">O cliente confirma que está no local pelo GPS. Use 0 para desligar.</p>
-        </div>
-        <div className="sm:col-span-2">
-          <RadiusSlider initial={Number(state.values?.checkInRadiusM ?? defaults.checkInRadiusM)} />
-        </div>
-        <div>
-          <label className="glass-label" htmlFor="e-rf">Pontos por indicação</label>
-          <input id="e-rf" name="referralPoints" type="number" min={0} inputMode="numeric" className="glass-input" defaultValue={state.values?.referralPoints ?? defaults.referralPoints} required />
-          <p className="mt-1 text-xs text-slate-500">Quem indica ganha quando o amigo faz a primeira compra. Use 0 para desligar.</p>
-        </div>
-        <div>
-          <label className="glass-label" htmlFor="e-bd">Presente de aniversário (pontos)</label>
-          <input id="e-bd" name="birthdayPoints" type="number" min={0} inputMode="numeric" className="glass-input" defaultValue={state.values?.birthdayPoints ?? defaults.birthdayPoints} required />
-          <p className="mt-1 text-xs text-slate-500">Quem tem carteira aqui e informou o aniversário ganha estes pontos no dia, uma vez por ano. Use 0 para desligar.</p>
+      <div className="grid items-start gap-3 sm:grid-cols-[repeat(3,minmax(0,1fr))_auto]">
+        <EngagementCell id="e-ci" name="checkInPoints" label="Pontos por check-in" hint="1 por dia, pelo GPS." t={ci} setT={setCi} fallback="10" />
+        <EngagementCell id="e-rf" name="referralPoints" label="Pontos por indicação" hint="Quando o amigo faz a 1ª compra." t={rf} setT={setRf} fallback="50" />
+        <EngagementCell id="e-bd" name="birthdayPoints" label="Presente de aniversário" hint="No dia, uma vez por ano." t={bd} setT={setBd} fallback="50" />
+        <div className="sm:pt-[1.65rem]">
+          <SubmitButton pendingText="Salvando…" className="btn-sm">Salvar</SubmitButton>
         </div>
       </div>
+      <p className="text-xs text-slate-500">Cada item tem a sua chave: desligado, o cliente não vê nem ganha esses pontos. Quem informou o aniversário e tem carteira aqui ganha o presente.</p>
+      {ci.on ? <RadiusSlider initial={radius} /> : <input type="hidden" name="checkInRadiusM" value={radius} />}
       <FormMessage state={state} />
-      <SubmitButton pendingText="Salvando…">Salvar</SubmitButton>
     </form>
   );
 }
@@ -566,182 +621,6 @@ export function SharingForm({ defaults }: { defaults: { pointsShareOut: boolean;
   );
 }
 
-export function AddChallengeForm() {
-  const [state, action] = useActionState(addChallenge, {});
-  const [kind, setKind] = useState<'PURCHASES' | 'CHECKINS'>((state.values?.kind as 'PURCHASES' | 'CHECKINS') ?? 'PURCHASES');
-  return (
-    <form action={action} className="space-y-3" key={state.ok ?? 'idle'}>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div>
-          <label className="glass-label" htmlFor="c-kind">O cliente precisa…</label>
-          <select id="c-kind" name="kind" className="glass-input" value={kind} onChange={(e) => setKind(e.target.value as 'PURCHASES' | 'CHECKINS')}>
-            <option value="PURCHASES">Fazer compras</option>
-            <option value="CHECKINS">Fazer check-ins</option>
-          </select>
-        </div>
-        <div>
-          <label className="glass-label" htmlFor="c-period">Período</label>
-          <select id="c-period" name="period" className="glass-input" defaultValue={state.values?.period ?? 'WEEK'}>
-            <option value="WEEK">Por semana (seg a dom)</option>
-            <option value="MONTH">Por mês</option>
-          </select>
-        </div>
-        <div>
-          <label className="glass-label" htmlFor="c-target">Quantas vezes</label>
-          <input id="c-target" name="target" type="number" min={1} max={60} inputMode="numeric" className="glass-input" defaultValue={state.values?.target ?? 2} required />
-        </div>
-        <div>
-          <label className="glass-label" htmlFor="c-bonus">Bônus (pontos)</label>
-          <input id="c-bonus" name="bonusPoints" type="number" min={1} inputMode="numeric" className="glass-input" defaultValue={state.values?.bonusPoints} placeholder="Ex.: 200" required />
-        </div>
-      </div>
-      {kind === 'PURCHASES' && (
-        <div>
-          <label className="glass-label" htmlFor="c-min">Valor mínimo de cada compra (R$) <span className="font-normal text-slate-500">— opcional</span></label>
-          <input id="c-min" name="minAmount" inputMode="decimal" className="glass-input" defaultValue={state.values?.minAmount} placeholder="Ex.: 42,00" />
-        </div>
-      )}
-      <FormMessage state={state} />
-      <SubmitButton variant="ghost" pendingText="Criando…">Criar desafio</SubmitButton>
-    </form>
-  );
-}
-
-const WEEKDAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-
-/** Nova campanha de pontos: multiplicador ou pontos extras, com período, dias da semana e horário opcionais. */
-export function AddPromotionForm() {
-  const [state, action] = useActionState(addPromotion, {});
-  const [kind, setKind] = useState<'MULTIPLIER' | 'BONUS'>((state.values?.kind as 'MULTIPLIER' | 'BONUS') ?? 'MULTIPLIER');
-  const [audience, setAudience] = useState<'ALL' | 'NEW' | 'INACTIVE'>((state.values?.audience as 'ALL' | 'NEW' | 'INACTIVE') ?? 'ALL');
-  const [draft, setDraft] = useState({ title: '', multiplier: '2', bonus: '', color: '', days: [] as number[], start: '', end: '', min: '' });
-  useEffect(() => {
-    if (state.ok) setDraft({ title: '', multiplier: '2', bonus: '', color: '', days: [], start: '', end: '', min: '' });
-  }, [state.ok]);
-  const color = colorOf(draft.color || promoDefaultColor(audience));
-  const big = kind === 'MULTIPLIER' ? `${draft.multiplier.replace('.', ',')}x` : `+${parseInt(draft.bonus, 10) || 0}`;
-  const dayNames = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
-  const when = [
-    draft.days.length === 0 || draft.days.length === 7 ? 'Todos os dias' : draft.days.map((d) => dayNames[d]).join(', ').replace(/^./, (c) => c.toUpperCase()),
-    draft.start && draft.end ? `das ${draft.start} às ${draft.end}` : draft.start ? `a partir das ${draft.start}` : draft.end ? `até as ${draft.end}` : '',
-    parseFloat(draft.min.replace(',', '.')) > 0 ? `em compras a partir de R$ ${draft.min}` : '',
-    audience === 'NEW' ? 'só na primeira compra' : audience === 'INACTIVE' ? 'para quem não compra há um tempo' : '',
-  ].filter(Boolean).join(', ');
-  return (
-    <form
-      action={action}
-      className="space-y-4"
-      key={state.ok ?? 'idle'}
-      onChange={(e) => {
-        const fd = new FormData(e.currentTarget);
-        setDraft({
-          title: String(fd.get('title') ?? ''),
-          multiplier: String(fd.get('multiplier') ?? '2'),
-          bonus: String(fd.get('bonusPoints') ?? ''),
-          color: String(fd.get('color') ?? ''),
-          days: fd.getAll('weekdays').map(Number),
-          start: String(fd.get('startTime') ?? ''),
-          end: String(fd.get('endTime') ?? ''),
-          min: String(fd.get('minAmount') ?? ''),
-        });
-      }}
-    >
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="sm:col-span-2">
-          <label className="glass-label" htmlFor="p-title">Nome da campanha</label>
-          <input id="p-title" name="title" className="glass-input" placeholder="Ex.: Terça em dobro" defaultValue={state.values?.title} maxLength={60} required />
-        </div>
-        <div>
-          <label className="glass-label" htmlFor="p-kind">Tipo</label>
-          <select id="p-kind" name="kind" className="glass-input" value={kind} onChange={(e) => setKind(e.target.value as 'MULTIPLIER' | 'BONUS')}>
-            <option value="MULTIPLIER">Multiplicar os pontos da compra</option>
-            <option value="BONUS">Dar pontos extras na compra</option>
-          </select>
-        </div>
-        {kind === 'MULTIPLIER' ? (
-          <div>
-            <label className="glass-label" htmlFor="p-mult">Multiplicador</label>
-            <select id="p-mult" name="multiplier" className="glass-input" defaultValue={state.values?.multiplier ?? '2'}>
-              <option value="1.5">1,5x</option>
-              <option value="2">2x (pontos em dobro)</option>
-              <option value="3">3x (pontos em triplo)</option>
-              <option value="4">4x</option>
-              <option value="5">5x</option>
-            </select>
-          </div>
-        ) : (
-          <div>
-            <label className="glass-label" htmlFor="p-bonus">Pontos extras por compra</label>
-            <input id="p-bonus" name="bonusPoints" type="number" min={1} inputMode="numeric" className="glass-input" placeholder="Ex.: 50" defaultValue={state.values?.bonusPoints} required />
-          </div>
-        )}
-        <div>
-          <label className="glass-label" htmlFor="p-audience">Para quem</label>
-          <select id="p-audience" name="audience" className="glass-input" value={audience} onChange={(e) => setAudience(e.target.value as 'ALL' | 'NEW' | 'INACTIVE')}>
-            <option value="ALL">Todos os clientes</option>
-            <option value="NEW">Só na primeira compra (clientes novos)</option>
-            <option value="INACTIVE">Quem não compra há um tempo</option>
-          </select>
-        </div>
-        {audience === 'INACTIVE' ? (
-          <div>
-            <label className="glass-label" htmlFor="p-inactive">Sem comprar há (dias)</label>
-            <input id="p-inactive" name="inactiveDays" type="number" min={7} max={365} inputMode="numeric" className="glass-input" defaultValue={state.values?.inactiveDays ?? 30} required />
-          </div>
-        ) : (
-          <div className="hidden sm:block" />
-        )}
-        <div className="sm:col-span-2">
-          <ColorSwatches name="color" label="Cor da campanha" hint="aparece no cartão do cliente; sem escolher, usamos azul (todos), verde (clientes novos) ou laranja (quem sumiu)" />
-        </div>
-        <div className="sm:col-span-2">
-          <label className="glass-label" htmlFor="p-min">Valor mínimo da compra (R$) <span className="font-normal text-slate-500">— opcional</span></label>
-          <input id="p-min" name="minAmount" inputMode="decimal" className="glass-input" placeholder="Ex.: 40,00" defaultValue={state.values?.minAmount} />
-        </div>
-      </div>
-
-      <fieldset>
-        <legend className="glass-label">Dias da semana <span className="font-normal text-slate-500">— nenhum marcado = todos os dias</span></legend>
-        <div className="flex flex-wrap gap-2">
-          {WEEKDAY_LABELS.map((d, i) => (
-            <label key={d} className="inline-flex items-center gap-2 rounded-md border border-[#D5DAE3] bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 has-[:checked]:border-electric-500 has-[:checked]:bg-electric-500 has-[:checked]:text-white">
-              <input type="checkbox" name="weekdays" value={i} className="sr-only" />
-              {d}
-            </label>
-          ))}
-        </div>
-      </fieldset>
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div>
-          <label className="glass-label" htmlFor="p-start-time">Horário inicial <span className="font-normal text-slate-500">— opcional</span></label>
-          <input id="p-start-time" name="startTime" type="time" className="glass-input" defaultValue={state.values?.startTime} />
-        </div>
-        <div>
-          <label className="glass-label" htmlFor="p-end-time">Horário final <span className="font-normal text-slate-500">— opcional</span></label>
-          <input id="p-end-time" name="endTime" type="time" className="glass-input" defaultValue={state.values?.endTime} />
-        </div>
-        <div>
-          <label className="glass-label" htmlFor="p-start-date">Começa em <span className="font-normal text-slate-500">— opcional</span></label>
-          <input id="p-start-date" name="startDate" type="date" className="glass-input" defaultValue={state.values?.startDate} />
-        </div>
-        <div>
-          <label className="glass-label" htmlFor="p-end-date">Termina em <span className="font-normal text-slate-500">— opcional</span></label>
-          <input id="p-end-date" name="endDate" type="date" className="glass-input" defaultValue={state.values?.endDate} />
-        </div>
-      </div>
-      <p className="text-xs text-slate-500">
-        A campanha vale no caixa, no horário de Brasília, e já aparece como card na vitrine “Lugares”. Multiplicadores não se somam (vale o maior); pontos extras se somam. Campanhas para um público específico (clientes novos ou quem sumiu) entram quando o cliente lê o QR Code, porque só então sabemos quem ele é.
-      </p>
-      <PreviewFrame where="vitrine Lugares, página do seu lugar e cartão da carteira">
-        <div data-testid="promo-preview"><CampaignTile big={big} title={draft.title || 'Nome da campanha'} when={when} color={color} live /></div>
-      </PreviewFrame>
-      <FormMessage state={state} />
-      <SubmitButton variant="ghost" pendingText="Criando…">Criar campanha</SubmitButton>
-    </form>
-  );
-}
-
 export type UnitFormData = {
   id: string | null;
   name: string;
@@ -769,6 +648,7 @@ export function UnitForm({ unit, uid }: { unit: UnitFormData; uid: string }) {
     lng: state.values?.longitude ?? (unit.longitude != null ? String(unit.longitude) : ''),
   });
   const isNew = unit.id === null;
+  const [activeOn, setActiveOn] = useState(state.values ? state.values.active === 'on' : unit.active);
 
   // Endereço: o CEP preenche rua, bairro, cidade e UF; número e complemento o dono completa.
   const v = state.values;
@@ -894,7 +774,7 @@ export function UnitForm({ unit, uid }: { unit: UnitFormData; uid: string }) {
 
       {!isNew && (
         <label className="flex items-center gap-3">
-          <input type="checkbox" name="active" defaultChecked={state.values ? state.values.active === 'on' : unit.active} className="h-5 w-5 rounded accent-electric-500" />
+          <input type="checkbox" name="active" checked={activeOn} onChange={(e) => setActiveOn(e.target.checked)} className="h-5 w-5 rounded accent-electric-500" />
           <span className="text-sm text-slate-700"><span className="font-semibold">Unidade ativa</span> — aparece para os clientes e pode lançar pontos</span>
         </label>
       )}

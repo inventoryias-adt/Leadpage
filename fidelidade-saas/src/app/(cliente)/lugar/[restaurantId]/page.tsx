@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { BirthdayCard } from '@/components/BirthdayCard';
 import { CampaignTile } from '@/components/CampaignTile';
+import { CollapsibleSection } from '@/components/CollapsibleSection';
 import { CheckInButton } from '@/components/CheckInButton';
 import { JaFizButton } from '@/components/JaFizButton';
 import { CopyButton } from '@/components/CopyButton';
@@ -112,6 +113,17 @@ export default async function LugarPage({
   const open = schedule ? isOpenNow(schedule) : null;
   const balance = wallet?.balance ?? 0;
   const hasCoords = units.some((u) => u.latitude != null && u.longitude != null); // check-in vale em qualquer unidade com localização
+  // Resumos que aparecem nas seções fechadas (Ações, Campanhas e Desafios).
+  const pts = (n: number) => `${formatPoints(n)} ${n === 1 ? 'pt' : 'pts'}`;
+  const actionPoints = [restaurant.checkInPoints, restaurant.referralPoints, ...rules.map((r) => r.points)].filter((n) => n > 0);
+  const actionsSummary = actionPoints.length ? `${actionPoints.length} ${actionPoints.length === 1 ? 'jeito' : 'jeitos'} de ganhar · até +${pts(Math.max(...actionPoints))}` : 'Toda compra já gera pontos';
+  const shownPromos = promotions.filter((p) => promoStatus(p, nowDate) !== 'ended');
+  const livePromos = shownPromos.filter((p) => promoActiveAt(p, nowDate)).length;
+  const promosSummary = `${shownPromos.length} ${shownPromos.length === 1 ? 'campanha' : 'campanhas'}${livePromos ? ` · ${livePromos} valendo agora` : ''}`;
+  const doneChallenges = customer ? progress.filter((c) => c.done).length : 0;
+  const challengesSummary = progress.length
+    ? `${progress.length} ${progress.length === 1 ? 'desafio' : 'desafios'} · bônus de até +${pts(Math.max(...progress.map((c) => c.bonusPoints)))}${doneChallenges ? ` · ${doneChallenges} ${doneChallenges === 1 ? 'concluído' : 'concluídos'}` : ''}`
+    : 'Toda compra gera pontos';
   const directions = unit?.latitude != null && unit.longitude != null
     ? `https://www.google.com/maps/dir/?api=1&destination=${unit.latitude},${unit.longitude}`
     : unit?.address
@@ -223,17 +235,16 @@ export default async function LugarPage({
         )}
 
         {/* Ações da unidade */}
-        <section aria-labelledby="acoes">
-          <h2 id="acoes" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Ações para ganhar pontos</h2>
-          <ul className="glass-panel-sm divide-y divide-slate-200/70">
+        <CollapsibleSection id="acoes" icon="star" title="Ações para ganhar pontos" summary={actionsSummary}>
+          <ul className="glass-panel-sm divide-y divide-slate-200/70 overflow-hidden">
             {restaurant.checkInPoints > 0 && (
-              <li className="p-4">
+              <li className="hover-tint p-4">
                 <div className="flex items-start gap-3">
                   <span className="icon-tile"><Icon name="pin" /></span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-bold text-slate-800">Check-in no local</p>
-                      <span className="chip-lima">+{restaurant.checkInPoints} {restaurant.checkInPoints === 1 ? 'pt' : 'pts'}</span>
+                      <span className="chip-soft">+{restaurant.checkInPoints} {restaurant.checkInPoints === 1 ? 'pt' : 'pts'}</span>
                     </div>
                     <p className="text-sm text-slate-500">Uma vez por dia, estando no restaurante.</p>
                     {customer && hasCoords && <div className="mt-3"><CheckInButton restaurantId={restaurantId} points={restaurant.checkInPoints} /></div>}
@@ -245,13 +256,13 @@ export default async function LugarPage({
             {rules.map((r) => {
               const meta = actionMeta(r.label, { googleReviewUrl: unit?.googleReviewUrl ?? null, instagram: restaurant.instagram });
               return (
-                <li key={r.id} className="p-4">
+                <li key={r.id} className="hover-tint p-4">
                   <div className="flex items-start gap-3">
                     <span className="icon-tile"><Icon name={meta.icon} /></span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
                         <p className="font-bold text-slate-800">{r.label}</p>
-                        <span className="chip-lima shrink-0">+{formatPoints(r.points)} pts</span>
+                        <span className="chip-soft shrink-0">+{formatPoints(r.points)} pts</span>
                       </div>
                       {(() => {
                         const last = lastClaim.get(r.id);
@@ -283,13 +294,13 @@ export default async function LugarPage({
               );
             })}
             {restaurant.referralPoints > 0 && (
-              <li className="p-4">
+              <li className="hover-tint p-4">
                 <div className="flex items-start gap-3">
                   <span className="icon-tile"><Icon name="users" /></span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-bold text-slate-800">Indique amigos</p>
-                      <span className="chip-lima shrink-0">+{formatPoints(restaurant.referralPoints)} pts</span>
+                      <span className="chip-soft shrink-0">+{formatPoints(restaurant.referralPoints)} pts</span>
                     </div>
                     <p className="text-sm text-slate-500">Você ganha quando seu amigo faz a primeira compra aqui.</p>
                     <div className="mt-3">
@@ -307,7 +318,7 @@ export default async function LugarPage({
               <li className="p-4 text-sm text-slate-500">Este lugar ainda não cadastrou ações extras. Toda compra já gera pontos.</li>
             )}
           </ul>
-        </section>
+        </CollapsibleSection>
 
         {/* Prêmios */}
         <section aria-labelledby="premios">
@@ -348,32 +359,30 @@ export default async function LugarPage({
 
         </div>
         <div className="space-y-6 lg:col-span-2">
-        {promotions.length > 0 && (
-          <section aria-labelledby="promocoes">
-            <h2 id="promocoes" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Campanhas de pontos</h2>
-            <ul className="space-y-3">
-              {promotions.filter((p) => promoStatus(p, nowDate) !== 'ended').map((p) => (
+        {shownPromos.length > 0 && (
+          <CollapsibleSection id="promocoes" icon="spark" title="Campanhas de pontos" summary={promosSummary}>
+            <ul className="space-y-2">
+              {shownPromos.map((p) => (
                 <li key={p.id}>
-                  <CampaignTile big={promoBig(p)} title={p.title} when={promoWhen(p, formatBRL)} color={promoColor(p)} live={promoActiveAt(p, nowDate)} />
+                  <CampaignTile compact big={promoBig(p)} title={p.title} when={promoWhen(p, formatBRL)} color={promoColor(p)} live={promoActiveAt(p, nowDate)} />
                 </li>
               ))}
             </ul>
-          </section>
+          </CollapsibleSection>
         )}
 
         {/* Desafios */}
-        <section aria-labelledby="desafios">
-          <h2 id="desafios" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Desafios da casa</h2>
-          <ul className="space-y-3">
-            <li className="glass-panel-sm flex items-center justify-between gap-3 p-3.5">
+        <CollapsibleSection id="desafios" icon="trophy" title="Desafios da casa" summary={challengesSummary}>
+          <ul className="space-y-2">
+            <li className="hover-tint flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3.5">
               <span className="flex items-center gap-3 font-semibold text-slate-800"><span className="icon-tile"><Icon name="target" /></span> Toda compra aqui</span>
-              <span className="chip-lima">{restaurant.pointsPerReal} pts a cada R$ 1</span>
+              <span className="chip-soft">{restaurant.pointsPerReal} pts a cada R$ 1</span>
             </li>
             {progress.map((c) => (
-              <li key={c.id} className="glass-panel-sm space-y-2.5 p-3.5">
+              <li key={c.id} className="hover-tint space-y-2.5 rounded-2xl border border-slate-200 bg-white p-3.5">
                 <div className="flex items-start justify-between gap-3">
-                  <span className="flex items-start gap-3 font-semibold text-slate-800"><span className="icon-tile !bg-[#F1EAFE] !text-[#7C3AED]"><Icon name="trophy" /></span><span className="pt-2">{describeChallenge(c)}</span></span>
-                  <span className="chip-lima shrink-0">+{formatPoints(c.bonusPoints)} pts</span>
+                  <span className="flex items-start gap-3 font-semibold text-slate-800"><span className="icon-tile"><Icon name="trophy" /></span><span className="pt-2">{describeChallenge(c)}</span></span>
+                  <span className="chip-soft shrink-0">+{formatPoints(c.bonusPoints)} pts</span>
                 </div>
                 {customer ? (
                   c.done ? (
@@ -390,7 +399,7 @@ export default async function LugarPage({
               </li>
             ))}
           </ul>
-        </section>
+        </CollapsibleSection>
 
         {/* Horários */}
         {schedule && (
