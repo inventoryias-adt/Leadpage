@@ -77,7 +77,7 @@ await l.check('input[type=checkbox] >> nth=0'); await l.click('text=Usar o máxi
 await l.click('button:has-text("Confirmar agendamento")'); await l.waitForURL('**/perfil/agendamentos**');
 const todayStart = `((date_trunc('day', now() at time zone 'America/Sao_Paulo') at time zone 'America/Sao_Paulo') at time zone 'UTC')`;
 sql(`update "Booking" set "startsAt"=${todayStart}+interval '1 hour', "endsAt"=${todayStart}+interval '90 minutes' where status='CONFIRMED'`);
-await o.goto(BASE + '/dashboard/agenda'); await o.waitForSelector('text=a cobrar R$ 25,00'); await o.waitForSelector('text=Desconto de R$ 25,00 com 2.500 pontos');
+await o.goto(BASE + '/dashboard/agenda?vista=lista'); await o.waitForSelector('text=a cobrar R$ 25,00'); await o.waitForSelector('text=Desconto de R$ 25,00 com 2.500 pontos');
 await o.screenshot({ path: 'desc-dono.png', fullPage: true });
 await o.click('button:has-text("Concluir")'); await o.waitForSelector('text=pontos creditados ao cliente');
 assert.equal(sql(`select c."amountCents" from "Claim" c join "Booking" b on b."claimId"=c.id`), '2500', 'a venda é o valor pago');

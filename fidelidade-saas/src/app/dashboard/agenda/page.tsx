@@ -7,7 +7,8 @@ import { addDaysKey, dateKeyOf, formatBookingWhen, hmOf, parseDateKey, todayKey,
 import { formatPhone } from '@/lib/br';
 import { imageUrl } from '@/lib/images';
 import { prisma } from '@/lib/db';
-import { DAY_NAMES } from '@/lib/hours';
+import { dayWindow, unionWindow, windowLabel } from '@/lib/agenda-hours';
+import { DAY_NAMES, parseSchedule } from '@/lib/hours';
 import { resourceColor } from '@/lib/palette';
 import { formatBRL, formatPoints } from '@/lib/points';
 import { requireActiveRestaurant } from '@/lib/session';
@@ -105,7 +106,7 @@ const toExport = (b: Row): ExportRow => ({
   note: b.note,
 });
 
-export default async function AgendaPage({ searchParams }: { searchParams: Promise<{ data?: string; per?: string; prof?: string; ok?: string; erro?: string }> }) {
+export default async function AgendaPage({ searchParams }: { searchParams: Promise<{ data?: string; per?: string; prof?: string; vista?: string; ok?: string; erro?: string }> }) {
   const restaurant = await requireActiveRestaurant();
   const sp = await searchParams;
   const today = todayKey();
@@ -114,26 +115,33 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
   const range = periodRange(per, date);
   const { start, end } = rangeBounds(range.from, range.to);
 
-  const staff = await prisma.resource.findMany({ where: { restaurantId: restaurant.id }, orderBy: { name: 'asc' }, select: { id: true, name: true, phone: true, color: true, photoImageId: true, active: true } });
+  const staff = await prisma.resource.findMany({ where: { restaurantId: restaurant.id }, orderBy: { name: 'asc' }, select: { id: true, name: true, phone: true, color: true, photoImageId: true, active: true, schedule: true } });
   const who = staff.find((r) => r.id === sp.prof) ?? null; // só aceita profissional deste estabelecimento
 
-  const qs = (over: { data?: string; per?: AgendaPeriod; prof?: string | null }) => {
+  // No dia, a grade é a vista principal; "Ver agendamentos" troca para a lista (com os botões de confirmar, concluir, etc.).
+  const vista: 'grade' | 'lista' = per === 'dia' && sp.vista === 'lista' ? 'lista' : 'grade';
+  const qs = (over: { data?: string; per?: AgendaPeriod; prof?: string | null; vista?: 'grade' | 'lista' }) => {
     const q = new URLSearchParams();
     const d = over.data ?? date, p = over.per ?? per, f = over.prof === undefined ? who?.id : over.prof;
+    const v = over.vista ?? vista;
     if (d !== today) q.set('data', d);
     if (p !== 'dia') q.set('per', p);
     if (f) q.set('prof', f);
+    if (p === 'dia' && v === 'lista') q.set('vista', 'lista');
     const text = q.toString();
     return text ? `?${text}` : '';
   };
   const href = (over: Parameters<typeof qs>[0]) => `/dashboard/agenda${qs(over)}`;
   const back = href({});
 
-  const [list, pending, setup] = await Promise.all([
+  const [list, pending, setup, units] = await Promise.all([
     load(restaurant.id, start, end, { resourceId: who?.id }),
     load(restaurant.id, new Date(), new Date(Date.now() + 365 * 24 * 3_600_000), { statuses: ['PENDING'], resourceId: who?.id }),
     prisma.service.count({ where: { restaurantId: restaurant.id, active: true } }),
+    prisma.unit.findMany({ where: { restaurantId: restaurant.id, active: true }, select: { openingSchedule: true } }),
   ]);
+  const weekday = weekdayOf(date);
+  const openWindow = unionWindow(units.map((u) => dayWindow(parseSchedule(u.openingSchedule), weekday)));
   const pendingOtherDays = pending.filter((b) => b.startsAt < start || b.startsAt >= end);
 
   // Agrupa por dia (Brasília) para as visões de semana e mês.
@@ -160,7 +168,14 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
           <h1 className="text-2xl font-extrabold tracking-tight text-primary">Agenda</h1>
           <p className="text-sm text-slate-600">Confirme pedidos, conclua os atendimentos (os pontos entram sozinhos) e marque quem faltou.</p>
         </div>
-        <Link href="/dashboard/configuracoes#agenda" className="glass-button-ghost btn-sm"><Icon name="cog" size={16} /> Serviços e regras</Link>
+        <div className="flex flex-wrap gap-2">
+          {per === 'dia' && (
+            <Link href={href({ vista: vista === 'grade' ? 'lista' : 'grade' })} className="glass-button-navy btn-sm" data-testid="toggle-vista">
+              <Icon name={vista === 'grade' ? 'receipt' : 'clock'} size={16} /> {vista === 'grade' ? `Ver agendamentos${list.length ? ` (${list.length})` : ''}` : 'Ver grade do dia'}
+            </Link>
+          )}
+          <Link href="/dashboard/configuracoes#agenda" className="glass-button-ghost btn-sm"><Icon name="cog" size={16} /> Serviços e regras</Link>
+        </div>
       </header>
 
       {sp.ok && <p role="status" className="glass-success">{sp.ok}</p>}
@@ -212,9 +227,12 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
       </div>
       {who && !who.phone && <p className="text-xs text-slate-500">{who.name} não tem WhatsApp cadastrado: o WhatsApp abrirá para você escolher o contato. Cadastre em Regras → Agenda e serviços.</p>}
 
-      {per === 'dia' && list.length > 0 && (
+      {per === 'dia' && vista === 'grade' && list.length > 0 && (
         <AgendaGrid
-          staff={(who ? [who] : staff.filter((r) => r.active || list.some((b) => b.resourceId === r.id))).map((r) => ({ id: r.id, name: r.name, color: r.color, photoUrl: imageUrl(r.photoImageId) }))}
+          open={openWindow}
+          openLabel={openWindow && openWindow !== 'closed' ? windowLabel(openWindow) : undefined}
+          linkBase={href({ vista: 'lista' })}
+          staff={(who ? [who] : staff.filter((r) => r.active || list.some((b) => b.resourceId === r.id))).map((r) => ({ id: r.id, name: r.name, color: r.color, photoUrl: imageUrl(r.photoImageId), work: dayWindow(parseSchedule(r.schedule), weekday) }))}
           bookings={list.map((b) => ({ id: b.id, resourceId: b.resourceId, startsAt: b.startsAt, endsAt: b.endsAt, serviceName: b.serviceName, customerName: b.customer.name, status: b.status }))}
           nowMin={date === today ? (() => { const hm = hmOf(new Date()); return Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3, 5)); })() : null}
         />
@@ -223,7 +241,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
       {list.length === 0 ? (
         <p className="glass-panel-sm p-4 text-sm text-slate-600">Nenhum agendamento {per === 'dia' ? 'neste dia' : 'neste período'}{who ? ` para ${who.name}` : ''}.</p>
       ) : per === 'dia' ? (
-        <ul className="space-y-3">{list.map((b) => <Item key={b.id} b={b} back={back} />)}</ul>
+        vista === 'lista' && <ul className="space-y-3" aria-label="Agendamentos do dia">{list.map((b) => <Item key={b.id} b={b} back={back} />)}</ul>
       ) : (
         <div className="space-y-5">
           {[...byDay.entries()].map(([key, items]) => (

@@ -81,7 +81,7 @@ await octx.addInitScript(() => localStorage.setItem('fz_intro_v1', '1'));
 const o = await octx.newPage();
 await o.goto(BASE + '/login'); await o.fill('#email', 'ze@burger.com'); await o.fill('#password', 'senha-segura-1'); await o.click('button[type=submit]'); await o.waitForURL('**/dashboard');
 const diaA = sql(`select to_char(("startsAt" - interval '3 hours'), 'YYYY-MM-DD') from "Booking" where id='${A}'`); // dia (Brasília) do horário de teste, que pode virar amanhã perto da meia-noite
-await o.goto(BASE + '/dashboard/agenda?data=' + diaA);
+await o.goto(BASE + '/dashboard/agenda?vista=lista&data=' + diaA);
 await o.waitForSelector('text=Cliente confirmou presença no lembrete');
 assert.ok(await o.locator('text=ainda não respondeu').count());
 assert.ok(await o.locator('text=avisou que não vai e liberou o horário').count());
