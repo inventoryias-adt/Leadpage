@@ -161,8 +161,8 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
           {SECTIONS.map(([id, label], i) => {
             const on = !abrirTudo && id === etapa;
             return (
-              <Link key={id} href={hrefOf(id)} aria-current={on ? 'step' : undefined} className={`nav-tab ${on ? 'nav-tab-active nav-tab-lime' : ''} flex items-center gap-2.5 !px-3 !py-2 !text-sm`}>
-                <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold ${on ? 'bg-[#0f1f3d] text-[#c6f432]' : 'bg-[#0f1f3d]/10 text-[#0f1f3d]'}`}>{i + 1}</span>
+              <Link key={id} href={hrefOf(id)} aria-current={on ? 'step' : undefined} className={`nav-tab ${on ? 'nav-tab-active' : ''} flex items-center gap-2.5 !px-3 !py-2 !text-sm`}>
+                <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold ${on ? 'bg-white/20 text-white' : 'bg-[#0f1f3d]/10 text-[#0f1f3d]'}`}>{i + 1}</span>
                 {label}
               </Link>
             );
