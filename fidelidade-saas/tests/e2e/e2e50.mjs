@@ -85,3 +85,4 @@ for (const e of ['negocio', 'regras', 'premios', 'agenda']) {
 assert.ok(await m.locator('nav.chip-row a.chip-link-active').count());
 console.log('7. celular: chips de etapas e sem rolagem lateral OK');
 await b.close();
+console.log('ALL OK (regras por etapa)');

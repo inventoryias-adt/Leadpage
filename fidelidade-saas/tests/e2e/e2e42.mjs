@@ -27,8 +27,8 @@ console.log('1. Perfil mostra o ID da conta', code, 'OK');
 await o.goto(BASE + '/login'); await o.fill('#email', 'ze@burger.com'); await o.fill('#password', 'senha-segura-1'); await o.click('button[type=submit]'); await o.waitForURL('**/dashboard');
 await o.goto(BASE + '/dashboard/caixa'); await o.waitForSelector('#cpf');
 await o.fill('#cpf', code.toLowerCase().replace('-', ''));
-await o.waitForSelector('text=já tem conta no Fidelize');
-assert.match(await o.locator('[aria-live=polite]').first().innerText(), /✓ \w+ \w\. já tem conta/);
+await o.waitForSelector('text=Conta encontrada');
+assert.match(await o.locator('[aria-live=polite]').first().innerText(), /Conta encontrada:\s+\w+ \w\./);
 console.log('2. Caixa acha o cliente pelo ID OK');
 
 // 3. lança R$ 40,00 pelo ID: 400 pontos na carteira
@@ -48,7 +48,7 @@ console.log('4. ID inexistente: aviso e sem botão de lançar OK');
 // 5. CPF continua funcionando no mesmo campo
 const cpf = sql(`select cpf from "Customer" where id='${cid}'`);
 await o.fill('#cpf', cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4'));
-await o.waitForSelector('text=já tem conta no Fidelize');
+await o.waitForSelector('text=Conta encontrada');
 console.log('5. CPF segue valendo no mesmo campo OK');
 
 // 6. a lista de clientes encontra pelo ID

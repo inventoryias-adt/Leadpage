@@ -20,8 +20,8 @@ await o.goto(BASE + '/dashboard/caixa'); await o.waitForSelector('#cpf');
 
 // 1. CPF de quem tem conta: nome abreviado e botão de lançar direto
 await o.fill('#cpf', cpfFmt);
-await o.waitForSelector('text=já tem conta no Fidelize');
-assert.match(await o.locator('[aria-live=polite]').first().innerText(), /✓ \w+ \w\. já tem conta/);
+await o.waitForSelector('text=Conta encontrada');
+assert.match(await o.locator('[aria-live=polite]').first().innerText(), /Conta encontrada:\s+\w+ \w\./);
 assert.ok(await o.locator('[data-testid=lancar-direto]').count());
 console.log('1. CPF com conta: nome abreviado e botão de lançar direto OK');
 
@@ -37,7 +37,7 @@ console.log('2. lançamento direto: carteira +500, extrato, aviso ao cliente e l
 
 // 3. repetido em segundos: recusado
 await o.click('button:has-text("Novo lançamento")');
-await o.fill('#cpf', cpfFmt); await o.waitForSelector('text=já tem conta no Fidelize');
+await o.fill('#cpf', cpfFmt); await o.waitForSelector('text=Conta encontrada');
 await o.fill('#amount', '50,00'); await o.click('[data-testid=lancar-direto]');
 await o.waitForSelector('text=acabou de ser feito');
 assert.equal(sql(`select balance from "Wallet" where "customerId"='${cid}' and "restaurantId"='${rid}'`), '500', 'não creditou duas vezes');

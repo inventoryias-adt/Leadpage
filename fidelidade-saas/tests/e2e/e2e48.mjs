@@ -8,7 +8,7 @@ sql(`truncate "RateLimit"; update "Restaurant" set "guideDoneAt"=now(); delete f
 const rid = sql(`select id from "Restaurant" where email='ze@burger.com'`);
 const uid = sql(`select id from "Unit" where "restaurantId"='${rid}' order by "createdAt" limit 1`);
 const sched = (open, close, closedDay = -1) => JSON.stringify(Array.from({ length: 7 }, (_, day) => ({ day, open, close, closed: day === closedDay })));
-sql(`update "Unit" set "openingSchedule"='${sched('10:00', '16:00')}'::jsonb where id='${uid}'`);
+sql(`update "Unit" set "openingSchedule"='${sched('10:00', '16:00')}'::jsonb where "restaurantId"='${rid}'`);
 const lucas = sql(`select id from "Customer" where email='lucas@teste.com'`);
 const svc = sql(`insert into "Service"(id,"restaurantId",name,"durationMin","priceCents") values (gen_random_uuid(),'${rid}','Corte',30,5000) returning id`).split('\n')[0];
 const rl = sql(`insert into "Resource"(id,"restaurantId","unitId",name,capacity,color) values (gen_random_uuid(),'${rid}','${uid}','Lucas',1,'azul') returning id`).split('\n')[0];
