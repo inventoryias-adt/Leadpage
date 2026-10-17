@@ -1,7 +1,7 @@
 import type { SavedAddress } from '@/app/actions/location';
 import { Brand } from '@/components/Brand';
 import { Reveal } from '@/components/Reveal';
-import { PlacesExplorer, type PlaceCard } from '@/components/PlacesExplorer';
+import { PlacesExplorer, type PlaceCard, type PlaceOffer } from '@/components/PlacesExplorer';
 import { buildCampaigns } from '@/lib/campaigns';
 import { cashbackPct } from '@/lib/points-discount';
 import { offerEndText, promoActive } from '@/lib/orders';
@@ -30,7 +30,7 @@ export default async function LugaresPage() {
         pointsPerRealOff: true,
         instagram: true,
         ordersEnabled: true,
-        menuItems: { where: { active: true, spotlight: true, promoCents: { not: null } }, take: 1 },
+        menuItems: { where: { active: true, promoCents: { not: null } }, orderBy: [{ spotlight: 'desc' }, { createdAt: 'desc' }], take: 8 }, // com promoção; a oferta em destaque (spotlight) vem primeiro
         units: {
           where: { active: true },
           orderBy: { createdAt: 'asc' },
@@ -51,6 +51,16 @@ export default async function LugaresPage() {
 
   const balances = new Map(wallets.map((w) => [w.restaurantId, w.balance]));
   const now = new Date();
+  const toOffer = (m: (typeof restaurants)[number]['menuItems'][number]): PlaceOffer => ({
+    itemId: m.id,
+    name: m.name,
+    priceCents: m.priceCents,
+    promoCents: m.promoCents as number,
+    imageUrl: imageUrl(m.imageId),
+    endsText: m.offerEndsAt ? offerEndText(m.offerEndsAt) : null,
+    stock: m.offerStock,
+    stockTotal: m.offerStockTotal,
+  });
   const places: PlaceCard[] = restaurants
     .filter((r) => r.units.length > 0)
     .map((r) => ({
@@ -64,10 +74,12 @@ export default async function LugaresPage() {
       hasGoogle: r.units.some((u) => !!u.googleReviewUrl),
       hasInstagram: !!r.instagram,
       hasRewards: r.rewards.length > 0,
+      // Cartão grande na lista: a oferta em destaque que ainda vale. "Promoções de hoje": todo item com promoção que ainda vale.
       offer: (() => {
-        const m = r.ordersEnabled ? r.menuItems.find((i) => promoActive(i, now)) : undefined; // oferta em destaque que ainda vale
-        return m ? { itemId: m.id, name: m.name, priceCents: m.priceCents, promoCents: m.promoCents as number, imageUrl: imageUrl(m.imageId), endsText: m.offerEndsAt ? offerEndText(m.offerEndsAt) : null, stock: m.offerStock, stockTotal: m.offerStockTotal } : null;
+        const m = r.ordersEnabled ? r.menuItems.find((i) => i.spotlight && promoActive(i, now)) : undefined;
+        return m ? toOffer(m) : null;
       })(),
+      deals: r.ordersEnabled ? r.menuItems.filter((i) => promoActive(i, now)).map(toOffer) : [],
       balance: customer ? (balances.get(r.id) ?? 0) : null,
       minReward: r.rewards[0]?.pointsCost ?? null,
       challenges: r.challenges.length,

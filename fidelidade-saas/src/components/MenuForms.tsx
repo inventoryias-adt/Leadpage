@@ -59,7 +59,7 @@ export function MenuItemForm({ item = EMPTY, categories, onDone }: { item?: Menu
           <datalist id={`m-cats-${uid}`}>{categories.map((c) => <option key={c} value={c} />)}</datalist>
         </div>
       </div>
-      <p className="text-xs text-slate-500">Com preço promocional, o cliente vê o preço normal riscado e paga o promocional. Itens da mesma categoria aparecem juntos no cardápio.</p>
+      <p className="text-xs text-slate-500">Com preço promocional, o cliente vê o preço normal riscado e paga o promocional, e o produto entra em <b>Promoções de hoje</b> na tela Lugares do app. Itens da mesma categoria aparecem juntos no cardápio.</p>
       <fieldset className="space-y-3 rounded-xl border border-slate-200 bg-white p-3">
         <legend className="px-1 text-sm font-bold text-slate-800">Oferta por tempo ou estoque limitado <span className="font-normal text-slate-500">(opcional)</span></legend>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -74,9 +74,9 @@ export function MenuItemForm({ item = EMPTY, categories, onDone }: { item?: Menu
         </div>
         <label className="flex cursor-pointer items-start gap-3 text-sm">
           <input type="checkbox" name="spotlight" defaultChecked={item.spotlight} className="mt-0.5 h-4 w-4 rounded accent-electric-500" />
-          <span><span className="block font-semibold text-slate-800">Mostrar como oferta na lista de Lugares</span><span className="block text-xs text-slate-500">Aparece um cartão com o prazo e “restam N”. Uma oferta em destaque por vez.</span></span>
+          <span><span className="block font-semibold text-slate-800">Também mostrar o cartão grande na lista de Lugares</span><span className="block text-xs text-slate-500">Além de “Promoções de hoje”, aparece um cartão grande com o prazo e “restam N” junto do seu lugar. Um por vez.</span></span>
         </label>
-        <p className="text-xs text-slate-500">Acabou o prazo ou o estoque, o produto volta sozinho ao preço normal. Precisa do preço promocional.</p>
+        <p className="text-xs text-slate-500">Com prazo e unidades, o cliente vê “restam N” e até quando vale. Acabou o prazo ou o estoque, o produto volta sozinho ao preço normal e sai de “Promoções de hoje”. Precisa do preço promocional.</p>
       </fieldset>
       <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-3 text-sm has-[:checked]:border-electric-500 has-[:checked]:bg-[#F3F6FD]">
         <input type="checkbox" name="featured" defaultChecked={item.featured} className="mt-0.5 h-4 w-4 rounded accent-electric-500" />
