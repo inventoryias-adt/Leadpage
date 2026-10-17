@@ -190,8 +190,8 @@ await r.waitForSelector('text=+1.650');
 await shot(r, 'pontos');
 await r.goto(BASE + '/dashboard');
 await r.click('a.card-link:has-text("a entregar")');
-await r.waitForSelector('text=Resgates do mês');
-await r.waitForSelector('text=1 resgate · 500 pts usados');
+await r.waitForSelector('[data-testid=resgates-resumo]:has-text("1 resgate")');
+await r.waitForSelector('[data-testid=resgates-resumo]:has-text("500 pts usados")');
 // segurança: cliente de outro restaurante não aparece
 await r.goto(BASE + '/dashboard/clientes/00000000-0000-0000-0000-000000000000');
 await r.waitForSelector('text=Página não encontrada');

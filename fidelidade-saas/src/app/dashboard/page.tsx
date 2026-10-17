@@ -145,7 +145,7 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
         <KpiCard label="Vendas lançadas" value={compactBRL(revenue)} exact={formatBRL(revenue)} hint={`${cur.length} ${cur.length === 1 ? 'compra' : 'compras'}`} delta={deltaPct(revenue, revenuePrev)} />
         <KpiCard label="Ticket médio" value={compactBRL(ticket)} exact={formatBRL(ticket)} hint="por compra" delta={deltaPct(ticket, ticketPrev)} />
         <Link href="/dashboard/pontos" className="card-link rounded-2xl"><KpiCard label="Pontos emitidos" value={compactNumber(pointsIssued)} exact={formatPoints(pointsIssued)} hint="creditados aos clientes" delta={deltaPct(pointsIssued, sum(prev, 'points'))} /></Link>
-        <Link href="/dashboard/resgates#mes" className="card-link rounded-2xl"><KpiCard label="Resgates" value={compactNumber(redCur.length)} hint={`${pending} ${pending === 1 ? 'prêmio a entregar' : 'prêmios a entregar'}`} delta={deltaPct(redCur.length, redPrev)} /></Link>
+        <Link href="/dashboard/resgates?st=todos&periodo=mes" className="card-link rounded-2xl"><KpiCard label="Resgates" value={compactNumber(redCur.length)} hint={`${pending} ${pending === 1 ? 'prêmio a entregar' : 'prêmios a entregar'}`} delta={deltaPct(redCur.length, redPrev)} /></Link>
         <Link href="/dashboard/clientes" className="card-link rounded-2xl"><KpiCard label="Clientes na carteira" value={compactNumber(wallets._count)} hint="ver todos →" /></Link>
         <Link href="/dashboard/clientes?seg=novos" className="card-link rounded-2xl"><KpiCard label="Clientes novos" value={compactNumber(newCustomers)} hint={`nos últimos ${days} dias`} /></Link>
         <KpiCard label="Taxa de retorno" value={`${returnRate}%`} hint="clientes com 2+ compras" />

@@ -141,7 +141,7 @@ await rctx.close();
 await o.goto(BASE + '/dashboard/resgates'); await wait(o, 2500);
 const usedBefore = sql(`select count(*) from "Redemption" where status='USED'`);
 await o.click('button:has-text("Entregar")');
-await o.waitForSelector('text=Entregues recentemente');
+await o.waitForSelector('[data-testid=resgates-resumo]');
 // a lista já pode mostrar entregas antigas: espera a nova gravar no banco
 for (let i = 0; i < 60 && sql(`select count(*) from "Redemption" where status='USED'`) === usedBefore; i++) await wait(o, 500);
 const usedUnit = sql(`select "usedUnitId" from "Redemption" where status='USED' order by "usedAt" desc limit 1`);

@@ -82,7 +82,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
           ))}
         </nav>
         {seg && <p className="mb-3 text-sm text-slate-600">{SEGMENT_HINT[seg]}</p>}
-        <form className="flex gap-2" role="search">
+        <form className="flex gap-2" role="search" autoComplete="off">
           {seg && <input type="hidden" name="seg" value={seg} />}
           <input name="q" defaultValue={q} className="glass-input" placeholder="Buscar por nome, CPF, telefone ou ID da conta" aria-label="Buscar cliente" />
           <button className="glass-button-ghost !w-auto">Buscar</button>
