@@ -122,12 +122,12 @@ body {
 
   .glass-button {
     color: #fff;
-    border-color: #2150c9;
-    background-color: #2150c9;
+    border-color: #0f1f3d;
+    background-color: #0f1f3d;
   }
   .glass-button:not(:disabled):hover {
-    border-color: #1a3fa3;
-    background-color: #1a3fa3;
+    border-color: #0b1b3a;
+    background-color: #0b1b3a;
   }
 
   /* Botão de ação principal da tela (ex.: "Fazer pedido"): azul-marinho, mais firme que o azul comum. */
@@ -198,19 +198,22 @@ body {
 
   /* Abas de navegação do painel. */
   .nav-tab {
-    @apply rounded-md border border-transparent px-3 py-2 text-sm font-medium text-slate-600;
+    @apply rounded-full border border-transparent px-3.5 py-2 text-sm font-medium text-slate-600;
     cursor: pointer;
     transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   }
   .nav-tab:hover {
-    @apply border-slate-400 text-slate-900;
-    background-color: #e9edf3;
+    @apply text-primary;
+    background-color: #eaf0ff;
   }
+  /* Aba ativa: pílula lima com texto marinho, igual nas barras do celular (cliente e gestor). */
   .nav-tab-active {
-    @apply border-[#C3D2F4] bg-[#E8EEFB] font-semibold text-electric-600;
+    @apply border-transparent font-bold text-primary;
+    background-color: #c6f432;
   }
   .nav-tab-active:hover {
-    @apply border-electric-500 bg-[#DCE6F9] text-electric-600;
+    @apply text-primary;
+    background-color: #b3e01c;
   }
 
   /* Aba ativa das barras do celular: pílula lima com ícone e texto marinhos. */
@@ -254,10 +257,11 @@ body {
     @apply bg-[#F3F6FD];
     border-color: #2150c9;
   }
-  .chip-link-active {
-    @apply font-semibold;
-    background-color: #e8eefb;
-    border-color: #c3d2f4;
+  .chip-link-active,
+  .chip-link-active:hover {
+    @apply font-semibold text-white;
+    background-color: #0f1f3d;
+    border-color: #0f1f3d;
   }
 
   /* Link de texto dentro de conteúdo. */

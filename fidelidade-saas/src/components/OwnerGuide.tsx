@@ -214,7 +214,7 @@ export function OwnerGuide({ autoOpen, progress, clientUrl }: { autoOpen: boolea
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="fixed bottom-24 left-4 z-30 inline-flex items-center gap-2 rounded-md border border-electric-500 bg-white px-4 py-2.5 text-sm font-semibold text-electric-600 shadow-lg shadow-blue-900/15 transition-colors hover:bg-electric-500 hover:text-white md:bottom-6"
+          className="fixed bottom-24 left-4 z-30 inline-flex items-center gap-2 rounded-full border border-[#0F1F3D] bg-white px-4 py-2.5 text-sm font-semibold text-primary shadow-lg shadow-blue-900/15 transition-colors hover:bg-[#0F1F3D] hover:text-white md:bottom-6"
         >
           <Icon name="info" size={16} /> Guia · passo {step + 1} de {STEPS.length}
         </button>

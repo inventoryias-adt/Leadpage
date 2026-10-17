@@ -119,9 +119,9 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
           <p className="text-sm text-slate-600">Como está o seu estabelecimento nos últimos {days} dias.</p>
         </div>
         <div className="flex items-center gap-3">
-          <nav aria-label="Período" className="flex gap-1 rounded-md bg-[#F1F3F6] p-1">
+          <nav aria-label="Período" className="flex gap-1.5">
             {PERIODS.map((p) => (
-              <Link key={p} href={`/dashboard?dias=${p}`} aria-current={p === days ? 'true' : undefined} className={`rounded-md border px-3.5 py-1.5 text-sm font-semibold transition-colors ${p === days ? 'border-electric-500 bg-electric-500 text-white' : 'border-transparent text-slate-600 hover:border-slate-400 hover:bg-white hover:text-slate-900'}`}>
+              <Link key={p} href={`/dashboard?dias=${p}`} aria-current={p === days ? 'true' : undefined} className={`chip-link ${p === days ? 'chip-link-active' : ''}`}>
                 {p} dias
               </Link>
             ))}

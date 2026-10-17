@@ -192,16 +192,16 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
       <section aria-label="Filtros" className="space-y-2">
         <div className="flex flex-wrap gap-2" role="group" aria-label="Período">
           {PERIODS.map((p) => (
-            <Link key={p} href={href({ per: p, data: p === 'mes-passado' ? date : date })} aria-current={p === per ? 'true' : undefined} className={`rounded-full px-3 py-1.5 text-sm font-semibold ${p === per ? 'bg-electric-500 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50'}`}>
+            <Link key={p} href={href({ per: p, data: p === 'mes-passado' ? date : date })} aria-current={p === per ? 'true' : undefined} className={`chip-link ${p === per ? 'chip-link-active' : ''}`}>
               {PERIOD_LABEL[p]}
             </Link>
           ))}
         </div>
         {staff.length > 0 && (
           <div className="flex flex-wrap gap-2" role="group" aria-label="Profissional">
-            <Link href={href({ prof: null })} aria-current={!who ? 'true' : undefined} className={`rounded-full px-3 py-1.5 text-sm font-semibold ${!who ? 'bg-electric-500 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50'}`}>Todos</Link>
+            <Link href={href({ prof: null })} aria-current={!who ? 'true' : undefined} className={`chip-link ${!who ? 'chip-link-active' : ''}`}>Todos</Link>
             {staff.map((r) => (
-              <Link key={r.id} href={href({ prof: r.id })} aria-current={who?.id === r.id ? 'true' : undefined} className={`rounded-full px-3 py-1.5 text-sm font-semibold ${who?.id === r.id ? 'bg-electric-500 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50'}`}><span className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full align-baseline" style={{ background: resourceColor(r).hex }} />{r.name}</Link>
+              <Link key={r.id} href={href({ prof: r.id })} aria-current={who?.id === r.id ? 'true' : undefined} className={`chip-link ${who?.id === r.id ? 'chip-link-active' : ''}`}><span className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full align-baseline" style={{ background: resourceColor(r).hex }} />{r.name}</Link>
             ))}
           </div>
         )}
