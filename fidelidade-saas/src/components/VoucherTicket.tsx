@@ -27,7 +27,7 @@ export function VoucherTicket({
         <div className="min-w-0 flex-1">
           <p className="truncate text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">{placeName}</p>
           <h3 className={`font-extrabold leading-snug ${compact ? 'truncate text-base' : 'text-xl'}`}>{rewardName}</h3>
-          {cashCents > 0 && <p className="text-xs text-white/70">Pague {formatBRL(cashCents)} no balcão ao retirar</p>}
+          {cashCents > 0 && <p className="text-xs text-white/70">Retire no balcão e pague {formatBRL(cashCents)}</p>}
         </div>
         {used && <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-bold">Entregue</span>}
       </div>

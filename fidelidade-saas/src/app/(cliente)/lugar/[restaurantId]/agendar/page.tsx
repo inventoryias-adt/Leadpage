@@ -116,7 +116,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
           <Link href={url({ servico: undefined, hora: undefined })} className="link-inline text-xs">trocar</Link>
         </p>
         {points > 0 && <p className="mt-1.5"><span className="chip-lima">Ao concluir você ganha {formatPoints(points)} pontos aqui</span></p>}
-        {service.pointsDiscountMaxPct > 0 && service.priceCents > 0 && <p className="mt-1.5"><span className="glass-chip">Aceita pontos como desconto, até {service.pointsDiscountMaxPct}% do preço</span></p>}
+        {service.pointsDiscountMaxPct > 0 && service.priceCents > 0 && <p className="mt-1.5"><span className="glass-chip">Aceita pontos como desconto, até {service.pointsDiscountMaxPct}% do preço.</span></p>}
       </header>
 
       {units.length > 1 && (
