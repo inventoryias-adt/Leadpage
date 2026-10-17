@@ -95,43 +95,39 @@ export default async function PerfilPage() {
       <div className="space-y-6 lg:order-2 lg:col-span-3">
         <Reveal from="left">
         <section aria-labelledby="atalhos">
-          <h2 id="atalhos" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Seu movimento</h2>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Link href="/perfil/pontos" className="glass-panel-sm card-link flex items-center gap-3 p-4">
+          <h2 id="atalhos" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Atalhos</h2>
+          <div className="grid grid-cols-2 gap-3">
+            <Link href="/perfil/pontos" className="glass-panel-sm card-link flex flex-col items-start gap-2.5 p-4">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#E8EEFB] text-electric-600"><Icon name="receipt" size={22} /></span>
-              <span className="min-w-0 flex-1">
+              <span className="min-w-0">
                 <span className="block font-bold text-slate-800">Histórico de pontos</span>
                 <span className="block text-xs text-slate-500">Tudo o que você ganhou e usou</span>
               </span>
-              <Icon name="chevron" size={18} className="text-slate-400" />
             </Link>
-            {ordersTotal > 0 && (
-              <Link href="/perfil/pedidos" className="glass-panel-sm card-link flex items-center gap-3 p-4" data-testid="my-orders-link">
+            {(
+              <Link href="/perfil/pedidos" className="glass-panel-sm card-link flex flex-col items-start gap-2.5 p-4" data-testid="my-orders-link">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#E8EEFB] text-electric-600"><Icon name="bag" size={22} /></span>
-                <span className="min-w-0 flex-1">
+                <span className="min-w-0">
                   <span className="block font-bold text-slate-800">Meus pedidos</span>
-                  <span className="block text-xs text-slate-500">{openOrders > 0 ? `${openOrders} ${openOrders === 1 ? 'pedido em andamento' : 'pedidos em andamento'}` : 'Veja o que você já pediu'}</span>
+                  <span className="block text-xs text-slate-500">{openOrders > 0 ? `${openOrders} ${openOrders === 1 ? 'pedido em andamento' : 'pedidos em andamento'}` : ordersTotal > 0 ? 'Veja o que você já pediu' : 'Peça pelo app e retire no balcão'}</span>
                 </span>
-                <Icon name="chevron" size={18} className="text-slate-400" />
               </Link>
             )}
-            <Link href="/perfil/agendamentos" className="glass-panel-sm card-link flex items-center gap-3 p-4">
+            <Link href="/perfil/agendamentos" className="glass-panel-sm card-link flex flex-col items-start gap-2.5 p-4">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#E8EEFB] text-electric-600"><Icon name="clock" size={22} /></span>
-              <span className="min-w-0 flex-1">
+              <span className="min-w-0">
                 <span className="block font-bold text-slate-800">Meus agendamentos</span>
                 <span className="block text-xs text-slate-500">{upcomingBookings > 0 ? `${upcomingBookings} ${upcomingBookings === 1 ? 'horário marcado' : 'horários marcados'}` : 'Marque um horário nos lugares'}</span>
               </span>
-              <Icon name="chevron" size={18} className="text-slate-400" />
             </Link>
-            <Link href="/perfil/premios" className="glass-panel-sm card-link flex items-center gap-3 p-4">
+            <Link href="/perfil/premios" className="glass-panel-sm card-link flex flex-col items-start gap-2.5 p-4">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#E8EEFB] text-electric-600"><Icon name="gift" size={22} /></span>
-              <span className="min-w-0 flex-1">
+              <span className="min-w-0">
                 <span className="block font-bold text-slate-800">Meus prêmios</span>
                 <span className="block text-xs text-slate-500">
                   {pending > 0 ? `${pending} para retirar · ` : ''}{usedCount} já resgatado{usedCount === 1 ? '' : 's'}
                 </span>
               </span>
-              <Icon name="chevron" size={18} className="text-slate-400" />
             </Link>
           </div>
         </section>

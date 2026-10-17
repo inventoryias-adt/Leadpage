@@ -186,14 +186,14 @@ await r.waitForSelector('text=Sobremesa grátis');
 await r.waitForSelector('text=Entregue');
 await shot(r, 'cliente-detalhe');
 await r.goto(BASE + '/dashboard');
-await r.click('a.card-link:has-text("Pontos emitidos")');
+await r.click('[data-testid=kpi-faixa] a:has-text("Pontos emitidos")');
 await r.waitForURL('**/dashboard/pontos');
 await r.waitForSelector('text=Quem recebeu pontos');
 await r.waitForSelector('a:has-text("Lucas Silva")');
 await r.waitForSelector('text=+1.650');
 await shot(r, 'pontos');
 await r.goto(BASE + '/dashboard');
-await r.click('a.card-link:has-text("a entregar")');
+await r.click('[data-testid=kpi-faixa] a:has-text("a entregar")');
 await r.waitForSelector('[data-testid=resgates-resumo]:has-text("1 resgate")');
 await r.waitForSelector('[data-testid=resgates-resumo]:has-text("500 pts usados")');
 // segurança: cliente de outro restaurante não aparece

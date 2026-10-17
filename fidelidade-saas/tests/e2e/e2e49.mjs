@@ -79,5 +79,18 @@ await o.reload(); await o.waitForSelector('[data-testid=resgate-row]');
 assert.equal(await o.locator('[data-testid=resgate-row]').count(), 1);
 console.log('5. entregar atualiza a lista OK');
 
+// 6. validar código: confere o cliente e o prêmio e entrega com um toque; código errado avisa
+await o.goto(BASE + '/dashboard/resgates?codigo=zzz999'); await o.waitForSelector('[data-testid=codigo-invalido]');
+await o.fill('[data-testid=validar-codigo] input[name=codigo]', 'bbb222'); await o.click('[data-testid=validar-codigo] button:has-text("Validar")');
+await o.waitForSelector('[data-testid=codigo-valido]');
+const ok = await o.locator('[data-testid=codigo-valido]').innerText();
+assert.match(ok, /Válido/); assert.match(ok, /Ana Costa/); assert.match(ok, /Café coado/); assert.match(ok, /Cobrar R\$\s*3,00/);
+await o.click('[data-testid=codigo-valido] button:has-text("Entregar prêmio e dar baixa")');
+for (let i = 0; i < 40 && sql(`select status from "Redemption" where code='BBB222'`) !== 'USED'; i++) await o.waitForTimeout(250);
+assert.equal(sql(`select status from "Redemption" where code='BBB222'`), 'USED');
+await o.goto(BASE + '/dashboard/resgates?codigo=BBB222'); await o.waitForSelector('[data-testid=codigo-valido]:has-text("Já entregue")');
+assert.equal(await o.locator('[data-testid=codigo-valido] button').count(), 0);
+console.log('6. validar código do prêmio e dar baixa OK');
+
 await b.close();
 console.log('ALL OK (resgates)');

@@ -16,12 +16,15 @@ const PAGE = 25;
 const when = (d: Date) => d.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' });
 const TABS: [RedemptionStatusTab, string][] = [['pendentes', 'Para entregar'], ['entregues', 'Entregues'], ['todos', 'Todos']];
 
-export default async function ResgatesPage({ searchParams }: { searchParams: Promise<{ st?: string; q?: string; de?: string; ate?: string; periodo?: string; unid?: string; pg?: string }> }) {
+export default async function ResgatesPage({ searchParams }: { searchParams: Promise<{ st?: string; q?: string; de?: string; ate?: string; periodo?: string; unid?: string; pg?: string; codigo?: string }> }) {
   const restaurant = await requireActiveRestaurant();
   const sp = await searchParams;
   const f = parseFilter(sp);
   const page = Math.max(1, Math.floor(Number(sp.pg) || 1));
   const where = buildWhere(restaurant.id, f);
+  // "Validar código do prêmio": o cliente mostra o código, o caixa confere e entrega com um toque.
+  const codigo = (sp.codigo ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12);
+  const checked = codigo ? await prisma.redemption.findFirst({ where: { restaurantId: restaurant.id, code: codigo }, include: { customer: { select: { name: true } } } }) : null;
 
   const [rows, total, sums, nPending, nUsed, units] = await Promise.all([
     prisma.redemption.findMany({
@@ -52,6 +55,35 @@ export default async function ResgatesPage({ searchParams }: { searchParams: Pro
         </div>
         <a href={exportHref} className="glass-button-navy btn-sm" download data-testid="export-resgates"><Icon name="receipt" size={16} /> Exportar planilha (CSV)</a>
       </header>
+
+      <section aria-labelledby="validar" className="glass-panel space-y-3 !rounded-[22px] p-4 sm:p-5" data-testid="validar-codigo">
+        <h2 id="validar" className="font-bold text-primary">Validar código do prêmio</h2>
+        <form method="get" action="/dashboard/resgates" autoComplete="off" className="flex gap-2" role="search">
+          <input name="codigo" defaultValue={codigo} autoComplete="off" maxLength={12} className="glass-input !font-mono !text-xl !font-bold !uppercase !tracking-[0.2em]" placeholder="K7M4QX" aria-label="Código do prêmio" />
+          <button className="glass-button-navy !w-auto px-6">Validar</button>
+        </form>
+        {codigo && !checked && (
+          <p role="alert" className="flex items-center gap-2 rounded-2xl bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700" data-testid="codigo-invalido">Código não encontrado neste estabelecimento. Confira com o cliente.</p>
+        )}
+        {checked && (
+          <div className={`space-y-3 rounded-2xl px-4 py-3 ${checked.status === 'PENDING' ? 'bg-emerald-50' : 'bg-slate-100'}`} data-testid="codigo-valido">
+            <p className={`flex items-start gap-2 text-sm font-bold ${checked.status === 'PENDING' ? 'text-emerald-700' : 'text-slate-600'}`}>
+              <Icon name="check" size={20} className="mt-px shrink-0" />
+              <span>
+                {checked.status === 'PENDING' ? 'Válido' : checked.status === 'USED' ? 'Já entregue' : 'Código sem validade'} · <span className="text-primary">{checked.customer.name}</span> · {checked.rewardName} · {formatPoints(checked.pointsCost)} pts
+                {checked.cashCents > 0 && checked.status === 'PENDING' && <span className="block font-semibold text-primary">Cobrar {formatBRL(checked.cashCents)} no balcão</span>}
+                {checked.status === 'USED' && checked.usedAt && <span className="block font-medium">Entregue em {when(checked.usedAt)}</span>}
+              </span>
+            </p>
+            {checked.status === 'PENDING' && (
+              <form action={markRedemptionUsed} autoComplete="off">
+                <input type="hidden" name="id" value={checked.id} />
+                <SubmitButton variant="lime" pendingText="Entregando…">Entregar prêmio e dar baixa</SubmitButton>
+              </form>
+            )}
+          </div>
+        )}
+      </section>
 
       <nav aria-label="Situação" className="chip-row">
         {TABS.map(([k, label]) => (
