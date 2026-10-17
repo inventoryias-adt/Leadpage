@@ -500,3 +500,14 @@ Regra do projeto: **o que o PDF mostra tem de existir no app**. Esta rodada alin
 - **Resgates**: novo painel **Validar código do prêmio** (`?codigo=`): confere cliente, prêmio e valor a cobrar e entrega com "Entregar prêmio e dar baixa".
 - **Perfil do cliente**: "Atalhos" em grade 2×2 (Histórico de pontos, Meus prêmios, Meus pedidos, Meus agendamentos).
 - Testes ajustados/novos: `e2e48` (modal da agenda), `e2e49` (validar código), seletores do Caixa e do Painel em `e2e`, `e2e9`, `e2e29`, `e2e42`.
+
+## Captação de interessados: "Quero o Fidelize no meu negócio" (migration: 0032)
+
+Quem lê o QR Code do cartaz cai no app do cliente (`/entrar`); o comerciante interessado não pode ficar no limbo.
+
+- **Onde aparece**: card **"Tem um comércio? Quero o Fidelize no meu negócio"** em `/entrar` (abre em `/quero-o-fidelize?origem=qr`) e botão no **Perfil** do cliente (`?origem=app`). O link do QR do cartaz é `/entrar?criar=1`, que já abre na aba **Criar conta**.
+- **Formulário** (`/quero-o-fidelize`, público): nome, nome do negócio, WhatsApp/telefone, e-mail, cidade, estado, ramo (mesmas categorias do app; "Outros" pede qual) e mensagem opcional. Validação em `src/lib/lead.ts` (testes em `lead.test.ts`).
+- **O contato nunca se perde**: é gravado na tabela `Lead` (migração `0032_contatos_de_interessados`, já com dono `fidelize_app` e RLS, como as demais; aplique antes do deploy) e **chega por e-mail** em `LEAD_EMAIL` (ou `SUPPORT_EMAIL` se não existir), com o link do WhatsApp do interessado e o ramo por extenso. `Lead.emailSent` mostra se o e-mail saiu.
+- **Antispam**: campo-isca escondido (robô que preenche é ignorado sem gravar), no máximo 6 envios por hora por IP e 3 por dia por e-mail.
+- **Administração**: `/admin/contatos` lista os interessados (Novos / Todos), com WhatsApp, e-mail, mensagem, origem (QR Code, app, site), e botões *Marcar como contatado*, *Virou cliente*, *Sem interesse* e *Reabrir*. O menu mostra a quantidade de novos.
+- Teste: `e2e51`.

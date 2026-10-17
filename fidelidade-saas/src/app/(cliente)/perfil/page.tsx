@@ -215,6 +215,7 @@ export default async function PerfilPage() {
       <Reveal from="bottom" delay={80}>
       <section className="space-y-3">
         <Link href="/lugares" className="glass-button-ghost"><Icon name="compass" size={18} /> Explorar lugares</Link>
+        <Link href="/quero-o-fidelize?origem=app" data-testid="sou-comerciante" className="glass-button-ghost"><Icon name="receipt" size={18} /> Tenho um comércio e quero o Fidelize</Link>
         <form action={customerLogout}>
           <button className="btn-danger">Sair da conta</button>
         </form>
