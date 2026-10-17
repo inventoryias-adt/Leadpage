@@ -5,7 +5,7 @@ import { LogoMark } from './Brand';
 
 /**
  * Abertura do app: fundo marinho com um degradê leve, o símbolo inteiro surge com um fade, cresce devagar (zoom suave no logo todo,
- * sem foco na moeda) e o fundo se dissolve para mostrar o app (animação em globals.css, ~2,6 s). Toca uma vez por sessão, só no app (não na landing nem nos textos legais)
+ * sem foco no ponto) e o fundo se dissolve para mostrar o app (animação em globals.css, ~2,6 s). Toca uma vez por sessão, só no app (não na landing nem nos textos legais)
  * e nunca com "reduzir movimento" ou navegador automatizado; `?splash=1` força (para testar).
  * A decisão de pular é tomada antes da primeira pintura por SPLASH_GATE (no <head>), que marca <html data-splash="off">.
  */

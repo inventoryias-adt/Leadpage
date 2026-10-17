@@ -605,7 +605,7 @@ html[data-splash='off'] .splash {
   display: block;
   animation: splash-logo-in 0.9s cubic-bezier(0.22, 0.8, 0.3, 1) both;
 }
-/* Cresce devagar de 25% para 40% (o símbolo todo, sem foco na moeda). */
+/* Cresce devagar de 25% para 40% (o símbolo todo, sem foco no ponto). */
 @keyframes splash-zoom {
   from { transform: scale(0.25); }
   to { transform: scale(0.4); }
