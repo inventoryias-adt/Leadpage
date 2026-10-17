@@ -288,6 +288,43 @@ body {
     box-shadow: 0 1px 3px rgba(15, 31, 61, 0.1);
   }
 
+  /* Etiqueta calma (azul bem claro): para listas cheias, em vez da lima que chama atenção. */
+  .chip-soft {
+    @apply inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold text-primary;
+    background-color: #eaf0ff;
+  }
+  /* Passar o mouse (ou o teclado) "vira" o cartão: azul-marinho com texto branco. Só em aparelhos com mouse. */
+  .hover-flip {
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+  /* Linhas de lista com botões dentro: o fundo só ganha um azul bem claro. */
+  .hover-tint {
+    transition: background-color 0.2s ease;
+  }
+  @media (hover: hover) {
+    .hover-flip:hover,
+    .hover-flip:focus-visible {
+      background-color: #0f1f3d;
+      border-color: #0f1f3d;
+    }
+    .hover-flip:hover .hf-t,
+    .hover-flip:focus-visible .hf-t {
+      color: #fff;
+    }
+    .hover-flip:hover .hf-s,
+    .hover-flip:focus-visible .hf-s {
+      color: rgba(255, 255, 255, 0.75);
+    }
+    .hover-flip:hover .icon-tile,
+    .hover-flip:focus-visible .icon-tile {
+      background-color: rgba(255, 255, 255, 0.14);
+      color: #c6f432;
+    }
+    .hover-tint:hover {
+      background-color: #eef3fd;
+    }
+  }
+
   .glass-label {
     @apply mb-1.5 block text-[13px] font-medium text-slate-700;
   }
