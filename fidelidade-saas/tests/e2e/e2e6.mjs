@@ -29,7 +29,7 @@ await o.goto(BASE+'/dashboard/caixa'); await wait(o,2500);
 await o.waitForSelector('text=Campanha valendo agora');
 await o.fill('#amount','100,00');
 const expected = 100*ppr*2;
-await o.waitForSelector(`text=/${String(expected).replace(/(\d)(?=(\d{3})+$)/g,'$1.')} pts/`);
+await o.waitForSelector(`text=/${String(expected).replace(/(\d)(?=(\d{3})+$)/g,'$1.')} pontos/`);
 await o.click('text=Gerar QR Code'); await o.waitForSelector('text=Enviar por WhatsApp');
 let row = sql(`select points||'|'||description from "Claim" order by "createdAt" desc limit 1`);
 console.log(row);
@@ -45,9 +45,9 @@ await o.click('button:has-text("Criar campanha")');
 await o.waitForSelector('li:has-text("Bonus acima de 40"):has-text("+50 pontos")');
 await o.goto(BASE+'/dashboard/caixa'); await wait(o,2500);
 await o.fill('#amount','100,00');
-await o.waitForSelector(`text=/${String(expected+50).replace(/(\d)(?=(\d{3})+$)/g,'$1.')} pts/`);
+await o.waitForSelector(`text=/${String(expected+50).replace(/(\d)(?=(\d{3})+$)/g,'$1.')} pontos/`);
 await o.fill('#amount','30,00'); // abaixo do mínimo: só o 2x
-await o.waitForSelector(`text=/${String(30*ppr*2).replace(/(\d)(?=(\d{3})+$)/g,'$1.')} pts/`);
+await o.waitForSelector(`text=/${String(30*ppr*2).replace(/(\d)(?=(\d{3})+$)/g,'$1.')} pontos/`);
 console.log('3. pontos extras com valor mínimo OK');
 
 // ---------- cliente vê o card e a seção

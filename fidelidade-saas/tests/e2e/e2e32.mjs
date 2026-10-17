@@ -38,6 +38,7 @@ assert.ok(await p.locator('#agenda-conteudo >> text=1 serviço').count());
 console.log('3. na configuração, a agenda vem aberta com o serviço padrão OK');
 
 // 4. categoria sem atendimento: some o aviso e (sem serviços) a aba
+await p.goto(BASE + '/dashboard/configuracoes?etapa=negocio'); await p.waitForSelector('#i-cat');
 await p.waitForTimeout(1200);
 await p.selectOption('#i-cat', 'pizza'); await p.waitForSelector('text=✓ Categoria salva');
 assert.equal(await p.locator('text=Esse tipo de negócio costuma atender com hora marcada').count(), 0);
