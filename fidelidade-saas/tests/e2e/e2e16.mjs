@@ -14,10 +14,10 @@ await l.click('button[type=submit]'); await l.waitForURL('**/carteira**');
 const noOverflow = async (p, what) => assert.ok(await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `${what}: sem rolagem lateral`);
 
 // 1. Início limpo: Olá → (campanhas do app) → pontos por lugar → explorar; sem listas de códigos
-await l.waitForSelector('text=Seus pontos por lugar');
-const order = await l.evaluate(() => ['Olá,', 'Seus pontos por lugar'].map((t) => { const el = [...document.querySelectorAll('h1,h2')].find((e) => e.textContent.includes(t)); return el ? el.getBoundingClientRect().top + window.scrollY : -1; }));
+await l.waitForSelector('text=Suas carteiras');
+const order = await l.evaluate(() => ['Olá,', 'Suas carteiras'].map((t) => { const el = [...document.querySelectorAll('h1,h2')].find((e) => e.textContent.includes(t)); return el ? el.getBoundingClientRect().top + window.scrollY : -1; }));
 assert.ok(order.every((v) => v >= 0), `títulos presentes ${order}`);
-assert.deepEqual([...order].sort((a, b) => a - b), order, 'ordem: Olá → pontos por lugar');
+assert.deepEqual([...order].sort((a, b) => a - b), order, 'ordem: Olá → carteiras');
 for (const gone of ['Prêmios para retirar', 'Você pode resgatar agora', 'Vantagens de usar']) assert.equal(await l.locator(`text=${gone}`).count(), 0, `${gone} saiu do Início`);
 await noOverflow(l, 'início'); await l.screenshot({ path: 'nov-inicio.png', fullPage: true });
 console.log('1. início limpo: pontos por lugar e atalho para explorar OK');
