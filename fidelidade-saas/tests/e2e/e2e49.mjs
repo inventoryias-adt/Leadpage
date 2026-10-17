@@ -92,5 +92,15 @@ await o.goto(BASE + '/dashboard/resgates?codigo=BBB222'); await o.waitForSelecto
 assert.equal(await o.locator('[data-testid=codigo-valido] button').count(), 0);
 console.log('6. validar código do prêmio e dar baixa OK');
 
+// 7. buscar a partir de "Para entregar" (aba padrão) procura no histórico todo, não só nos pendentes
+await o.goto(BASE + '/dashboard/resgates'); await o.waitForSelector('#rq');
+await o.fill('#rq', 'ana'); await o.click('form[aria-label="Filtros"] button:has-text("Filtrar")'); await o.waitForURL('**st=todos**');
+await o.waitForSelector('[data-testid=resgate-row]');
+assert.ok(await o.locator('text=DDD444').count(), 'achou o resgate já entregue pela aba padrão');
+await o.goto(BASE + '/dashboard/resgates'); await o.waitForSelector('#rq');
+await o.click('[aria-label="Períodos rápidos"] a:has-text("Últimos 7 dias")'); await o.waitForURL('**st=todos**');
+await o.waitForSelector('[data-testid=resgate-row]');
+console.log('7. buscar e escolher período na aba Para entregar procura no histórico todo OK');
+
 await b.close();
 console.log('ALL OK (resgates)');

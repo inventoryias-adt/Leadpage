@@ -804,3 +804,24 @@ model Booking {
   @@index([resourceId, startsAt])
   @@index([status, startsAt])
 }
+
+/// Contato de um comerciante interessado no Fidelize (veio pelo QR Code, pelo app do cliente ou pelo site). status = NEW | CONTACTED | WON | LOST.
+model Lead {
+  id            String    @id @default(uuid())
+  name          String
+  business      String
+  phone         String
+  email         String
+  city          String
+  state         String?
+  category      String
+  categoryOther String?
+  message       String?
+  source        String    @default("app")
+  status        String    @default("NEW")
+  emailSent     Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  contactedAt   DateTime?
+
+  @@index([status, createdAt])
+}

@@ -94,7 +94,8 @@ export default async function ResgatesPage({ searchParams }: { searchParams: Pro
       </nav>
 
       <form method="get" action="/dashboard/resgates" autoComplete="off" role="search" className="glass-panel space-y-3 !rounded-[22px] p-4" aria-label="Filtros">
-        {f.st !== 'pendentes' && <input type="hidden" name="st" value={f.st} />}
+        {/* Buscar ou escolher datas na aba "Para entregar" (quase sempre vazia) procura no histórico todo, não só nos pendentes */}
+        <input type="hidden" name="st" value={f.st === 'pendentes' ? 'todos' : f.st} />
         <div className="grid gap-3 sm:grid-cols-[minmax(0,2fr)_1fr_1fr]">
           <div>
             <label htmlFor="rq" className="glass-label">Buscar</label>
@@ -125,7 +126,7 @@ export default async function ResgatesPage({ searchParams }: { searchParams: Pro
             {PRESETS.map((p) => {
               const r = presetRange(p);
               const on = f.de === r.de && f.ate === r.ate;
-              return <Link key={p} href={link({ de: r.de, ate: r.ate, pg: null })} aria-current={on ? 'true' : undefined} className={`chip-link ${on ? 'chip-link-active' : ''}`}>{PRESET_LABEL[p]}</Link>;
+              return <Link key={p} href={link({ de: r.de, ate: r.ate, pg: null, ...(f.st === 'pendentes' ? { st: 'todos' } : {}) })} aria-current={on ? 'true' : undefined} className={`chip-link ${on ? 'chip-link-active' : ''}`}>{PRESET_LABEL[p]}</Link>;
             })}
           </span>
         </div>
