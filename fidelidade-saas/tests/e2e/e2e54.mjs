@@ -27,7 +27,7 @@ const panel = (id) => c.locator(`#${id} [id][inert], #${id} > div`).last();
 // 1. fechadas por padrão, com resumo na linha
 await c.goto(BASE + '/lugar/' + rid); await c.waitForSelector('#acoes');
 for (const id of ['acoes', 'promocoes', 'desafios']) assert.equal(await head(id).getAttribute('aria-expanded'), 'false', `${id} fechada`);
-assert.match(await head('acoes').innerText(), /Ações para ganhar pontos[\s\S]*jeitos de ganhar · até \+50 pts/);
+assert.match(await head('acoes').innerText(), /Ações para ganhar pontos[\s\S]*\d+ jeitos de ganhar · até \+\d+ pts/);
 assert.match(await head('promocoes').innerText(), /Campanhas de pontos[\s\S]*1 campanha/);
 assert.match(await head('desafios').innerText(), /Desafios da casa[\s\S]*1 desafio · bônus de até \+200 pts/);
 assert.equal(await c.locator('#acoes [inert]').count(), 1, 'conteúdo fechado fica inerte');

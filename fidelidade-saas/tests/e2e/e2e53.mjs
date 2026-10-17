@@ -7,7 +7,7 @@ const BASE = 'http://localhost:3000';
 const DB = 'postgresql://postgres:postgres@localhost:5432/fidelidade';
 const sql = (q) => execFileSync('psql', [DB, '-At', '-c', q]).toString().trim();
 const wait = (p, t) => p.waitForTimeout(t);
-const nb = (s) => s.replace(/ /g, ' ');
+const nb = (s) => s.replace(/\u00a0/g, ' ');
 
 sql('truncate "RateLimit"');
 const rid = sql(`select id from "Restaurant" where email='ze@burger.com'`);
