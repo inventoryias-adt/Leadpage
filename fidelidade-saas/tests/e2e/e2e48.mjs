@@ -63,7 +63,7 @@ await o.goto(url()); await o.waitForSelector('[data-testid=agenda-grid]');
 const h2 = await o.locator('[data-testid=agenda-grid] span.absolute.right-2').allInnerTexts();
 assert.equal(h2[0], '09:00'); assert.equal(h2.at(-1), '16:00');
 const wd = new Date(`${key(day)}T12:00:00Z`).getUTCDay();
-sql(`update "Unit" set "openingSchedule"='${sched('10:00', '16:00', wd)}'::jsonb where id='${uid}'`);
+sql(`update "Unit" set "openingSchedule"='${sched('10:00', '16:00', wd)}'::jsonb where "restaurantId"='${rid}'`);
 await o.goto(url()); await o.waitForSelector('[data-testid=agenda-hours]');
 assert.match(await o.locator('[data-testid=agenda-hours]').innerText(), /fechado neste dia/i);
 console.log('6. grade cresce para caber o agendamento das 9h e avisa dia fechado OK');
