@@ -59,7 +59,7 @@ export async function createPortalUrl(restaurant: { paymentCustomerId: string | 
   if (paymentProvider() === 'mock' || !restaurant.paymentCustomerId) return null;
   const session = await stripe().billingPortal.sessions.create({
     customer: restaurant.paymentCustomerId,
-    return_url: `${appUrl()}/dashboard/configuracoes#conta`,
+    return_url: `${appUrl()}/dashboard/configuracoes?etapa=conta#conta`,
     locale: 'pt-BR',
   });
   return session.url;

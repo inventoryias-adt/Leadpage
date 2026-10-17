@@ -17,7 +17,7 @@ const STATUS: Record<string, { label: string; cls: string }> = {
   NO_SHOW: { label: 'Não compareceu', cls: 'bg-slate-100 text-slate-500' },
 };
 
-export default async function MeusAgendamentosPage({ searchParams }: { searchParams: Promise<{ novo?: string; cancelado?: string; erro?: string; lembrete?: string; presenca?: string; liberado?: string }> }) {
+export default async function MeusAgendamentosPage({ searchParams }: { searchParams: Promise<{ novo?: string; remarcado?: string; cancelado?: string; erro?: string; lembrete?: string; presenca?: string; liberado?: string }> }) {
   const customer = await requireCustomer('/perfil/agendamentos');
   const sp = await searchParams;
   const now = new Date();
@@ -34,7 +34,7 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
     const st = STATUS[b.status];
     const cancelable = withCancel && canCustomerCancel(b, b.restaurant.bookingCancelHours, now);
     return (
-      <li key={b.id} className={`glass-panel-sm space-y-2 p-4 ${sp.novo === b.id ? 'ring-2 ring-electric-500' : ''}`}>
+      <li key={b.id} className={`glass-panel-sm space-y-2 p-4 ${sp.novo === b.id || sp.remarcado === b.id ? 'ring-2 ring-electric-500' : ''}`}>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="truncate font-bold text-slate-800">{b.serviceName}</p>
@@ -69,10 +69,17 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
         {withCancel && b.reminderAnswer === 'OK' && <p className="text-xs font-semibold text-emerald-700">Você confirmou que vai. Até já!</p>}
         {withCancel && (
           cancelable ? (
-            <form action={cancelMyBooking}>
-              <input type="hidden" name="id" value={b.id} />
-              <button className="btn-danger btn-sm" aria-label={`Cancelar ${b.serviceName}`}>Cancelar agendamento</button>
-            </form>
+            <div className="flex flex-wrap gap-2">
+              {b.serviceId && b.unitId && (
+                <Link href={`/lugar/${b.restaurant.id}/agendar?reagendar=${b.id}`} className="glass-button-navy btn-sm" aria-label={`Reagendar ${b.serviceName}`} data-testid="reschedule">
+                  <Icon name="clock" size={15} /> Reagendar
+                </Link>
+              )}
+              <form action={cancelMyBooking}>
+                <input type="hidden" name="id" value={b.id} />
+                <button className="btn-danger btn-sm" aria-label={`Cancelar ${b.serviceName}`}>Cancelar agendamento</button>
+              </form>
+            </div>
           ) : (
             <p className="text-xs text-slate-500">O prazo para cancelar pelo app já passou. Fale com o lugar.</p>
           )
@@ -91,6 +98,7 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
 
       {sp.novo && <p role="status" className="glass-success">Agendamento feito! Ele aparece abaixo.</p>}
       {sp.cancelado && <p role="status" className="glass-success">Agendamento cancelado.</p>}
+      {sp.remarcado && <p role="status" className="glass-success">Horário remarcado! O novo horário aparece abaixo.</p>}
       {sp.presenca && <p role="status" className="glass-success">Combinado! Avisamos o lugar que você vai.</p>}
       {sp.liberado && <p role="status" className="glass-success">Horário liberado. Obrigado por avisar!</p>}
       {sp.erro && sp.erro !== 'prazo' && <p role="alert" className="glass-error">{sp.erro}</p>}

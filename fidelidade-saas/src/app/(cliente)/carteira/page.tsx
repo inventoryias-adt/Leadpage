@@ -7,12 +7,15 @@ import { Illustration } from '@/components/Illustrations';
 import { Reveal } from '@/components/Reveal';
 import { IntroSlides } from '@/components/IntroSlides';
 import { NextBookingCard } from '@/components/NextBookingCard';
-import { PlaceAvatar, ProgressBar } from '@/components/Visual';
+import { PlaceAvatar, ProgressBar, RewardImage } from '@/components/Visual';
 import { campaignsForCustomers } from '@/lib/app-campaigns-db';
 import { prisma } from '@/lib/db';
 import { affordableRewards, pendingVouchers } from '@/lib/customer-rewards';
 import { imageUrl } from '@/lib/images';
-import { formatPoints } from '@/lib/points';
+import { categoryLabel } from '@/lib/categories';
+import { isOpenNow, parseSchedule } from '@/lib/hours';
+import { agoText } from '@/lib/interaction-approval';
+import { formatPoints, startOfMonthBR } from '@/lib/points';
 import { requireCustomer } from '@/lib/session';
 
 export const metadata = { title: 'Início' };
@@ -24,7 +27,7 @@ export default async function CarteiraPage() {
   const [wallets, vouchers, affordable, nextBooking, appCampaigns] = await Promise.all([
     prisma.wallet.findMany({
       where: { customerId: customer.id },
-      include: { restaurant: { select: { id: true, name: true, logoImageId: true, subscriptionStatus: true } } },
+      include: { restaurant: { select: { id: true, name: true, logoImageId: true, subscriptionStatus: true, category: true, categoryOther: true, units: { where: { active: true }, select: { openingSchedule: true } } } } },
       orderBy: { balance: 'desc' },
     }),
     pendingVouchers(customer.id),
@@ -42,6 +45,18 @@ export default async function CarteiraPage() {
     : [];
   const nextGoal = (restaurantId: string, balance: number) => rewardRows.find((r) => r.restaurantId === restaurantId && r.pointsCost > balance) ?? null;
   const total = wallets.reduce((n, w) => n + w.balance, 0);
+  // Números do cartão de resumo e a atividade recente (últimas movimentações em todos os lugares).
+  const [earnedMonth, recent] = wallets.length
+    ? await Promise.all([
+        prisma.transaction.aggregate({ where: { walletId: { in: wallets.map((w) => w.id) }, type: 'EARN', createdAt: { gte: startOfMonthBR() } }, _sum: { points: true } }),
+        prisma.transaction.findMany({ where: { walletId: { in: wallets.map((w) => w.id) }, type: { in: ['EARN', 'REDEEM'] } }, orderBy: { createdAt: 'desc' }, take: 4, select: { id: true, type: true, points: true, description: true, createdAt: true, wallet: { select: { restaurant: { select: { name: true } } } } } }),
+      ])
+    : [null, []];
+  const placeStatus = (w: (typeof wallets)[number]) => {
+    const schedules = w.restaurant.units.map((u) => parseSchedule(u.openingSchedule)).filter((x): x is NonNullable<typeof x> => !!x);
+    if (schedules.length === 0) return null;
+    return schedules.some((sc) => isOpenNow(sc)) ? 'Aberto agora' : 'Fechado agora';
+  };
   // O que está esperando em cada lugar: códigos para retirar e prêmios que já dá para resgatar.
   const toPickUp = new Map<string, number>();
   for (const v of vouchers) toPickUp.set(v.restaurant.id, (toPickUp.get(v.restaurant.id) ?? 0) + 1);
@@ -61,13 +76,33 @@ export default async function CarteiraPage() {
         )}
       </Reveal>
 
-      {nextBooking && <Reveal from="left"><NextBookingCard booking={nextBooking} /></Reveal>}
-
-      {appCampaigns.length > 0 && <Reveal from="right"><AppCampaignStrip campaigns={appCampaigns} /></Reveal>}
+      {wallets.length > 0 && (
+        <Reveal from="zoom">
+          <section aria-label="Resumo" className="grid grid-cols-2 gap-3" data-testid="home-summary">
+            <Link href="/perfil/pontos" className="card-link col-span-2 flex items-center gap-4 rounded-[22px] bg-[#0F1F3D] p-4 text-white shadow-[0_10px_26px_rgba(15,31,61,.25)]">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-lima text-primary"><Icon name="star" size={24} /></span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[11px] font-bold uppercase tracking-[0.16em] text-white/70">Saldo total</span>
+                <span className="block text-3xl font-extrabold leading-tight text-lima">{formatPoints(total)} <span className="text-sm font-semibold text-white/70">pontos</span></span>
+              </span>
+              <span className="chip-lima shrink-0">+{formatPoints(earnedMonth?._sum.points ?? 0)} no mês</span>
+            </Link>
+            {[
+              { href: '/perfil/premios?aba=disponiveis', icon: 'gift' as const, n: affordable.length, label: affordable.length === 1 ? 'Prêmio ao alcance' : 'Prêmios ao alcance' },
+              { href: '/perfil/premios?aba=retirar', icon: 'receipt' as const, n: vouchers.length, label: vouchers.length === 1 ? 'Cupom a retirar' : 'Cupons a retirar' },
+            ].map((t) => (
+              <Link key={t.label} href={t.href} className="glass-panel card-link flex items-center gap-3 !rounded-[20px] p-3.5">
+                <span className="icon-tile"><Icon name={t.icon} size={20} /></span>
+                <span><span className="block text-2xl font-extrabold leading-none text-primary">{t.n}</span><span className="block text-xs font-semibold text-slate-500">{t.label}</span></span>
+              </Link>
+            ))}
+          </section>
+        </Reveal>
+      )}
 
       <Reveal from="bottom" delay={60}>
       <section aria-labelledby="carteiras">
-        <h2 id="carteiras" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Seus pontos por lugar</h2>
+        <h2 id="carteiras" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Suas carteiras</h2>
         {wallets.length === 0 ? (
           <div className="glass-panel flex flex-col items-center !rounded-[22px] p-6 text-center">
             <Illustration variant="qr" size={170} />
@@ -78,7 +113,7 @@ export default async function CarteiraPage() {
             <Link href="/lugares" className="glass-button !rounded-full"><Icon name="compass" size={18} /> Explorar lugares</Link>
           </div>
         ) : (
-          <Carousel label="Seus pontos por lugar">
+          <Carousel label="Suas carteiras">
             {wallets.map((w) => {
               const pick = toPickUp.get(w.restaurantId) ?? 0;
               const can = canRedeem.has(w.restaurantId);
@@ -86,8 +121,16 @@ export default async function CarteiraPage() {
               return (
                 <li key={w.id} className="w-[13rem] shrink-0 snap-start">
                   <Link href={`/carteira/${w.restaurantId}`} className="glass-panel card-link flex h-full flex-col items-start gap-2 !rounded-[22px] p-4" aria-label={`${w.restaurant.name}: ${formatPoints(w.balance)} pontos${pick ? `, ${pick} para retirar` : ''}${can ? ', já dá para resgatar' : ''}`}>
-                    <PlaceAvatar name={w.restaurant.name} src={imageUrl(w.restaurant.logoImageId)} size={44} />
-                    <p className="w-full truncate text-sm font-bold text-slate-900">{w.restaurant.name}</p>
+                    <span className="flex w-full items-center gap-2.5">
+                      <PlaceAvatar name={w.restaurant.name} src={imageUrl(w.restaurant.logoImageId)} size={44} />
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-bold text-slate-900">{w.restaurant.name}</span>
+                        <span className="block truncate text-xs text-slate-500">
+                          {[categoryLabel(w.restaurant.category, w.restaurant.categoryOther)].filter(Boolean).join('')}
+                          {placeStatus(w) && <>{categoryLabel(w.restaurant.category, w.restaurant.categoryOther) ? ' · ' : ''}<span className={placeStatus(w) === 'Aberto agora' ? 'font-semibold text-emerald-700' : ''}>{placeStatus(w)?.toLowerCase()}</span></>}
+                        </span>
+                      </span>
+                    </span>
                     <p className="leading-none">
                       <span className="text-3xl font-extrabold text-primary">{formatPoints(w.balance)}</span>
                       <span className="ml-1 text-xs font-semibold text-electric-600">pontos</span>
@@ -110,6 +153,60 @@ export default async function CarteiraPage() {
         )}
       </section>
       </Reveal>
+
+      {nextBooking && <Reveal from="left"><NextBookingCard booking={nextBooking} /></Reveal>}
+
+      {affordable.length > 0 && (
+        <Reveal from="bottom">
+          <section aria-labelledby="alcance">
+            <div className="mb-3 flex items-baseline justify-between gap-3">
+              <h2 id="alcance" className="text-xs font-bold uppercase tracking-wider text-slate-500">Prêmios ao seu alcance</h2>
+              <Link href="/perfil/premios?aba=disponiveis" className="text-xs font-bold text-electric-600">Ver todos</Link>
+            </div>
+            <ul className="glass-panel divide-y divide-slate-100 !rounded-[20px]">
+              {affordable.slice(0, 3).map((r) => (
+                <li key={r.id}>
+                  <Link href={`/lugar/${r.place.id}/premios`} className="card-link flex items-center gap-3 px-4 py-3">
+                    <RewardImage src={imageUrl(r.imageId)} name={r.name} className="h-12 w-12 shrink-0 rounded-xl" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-bold text-slate-800">{r.name}</span>
+                      <span className="block truncate text-xs text-slate-500">{r.place.name}</span>
+                    </span>
+                    <span className="chip-lima shrink-0">{formatPoints(r.pointsCost)} pts</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </Reveal>
+      )}
+
+      {appCampaigns.length > 0 && <Reveal from="right"><AppCampaignStrip campaigns={appCampaigns} /></Reveal>}
+
+      {recent.length > 0 && (
+        <Reveal from="bottom">
+          <section aria-labelledby="atividade-recente">
+            <div className="mb-3 flex items-baseline justify-between gap-3">
+              <h2 id="atividade-recente" className="text-xs font-bold uppercase tracking-wider text-slate-500">Atividade recente</h2>
+              <Link href="/perfil/pontos" className="text-xs font-bold text-electric-600">Ver histórico</Link>
+            </div>
+            <ul className="glass-panel divide-y divide-slate-100 !rounded-[20px]">
+              {recent.map((t) => (
+                <li key={t.id} className="flex items-center gap-3 px-4 py-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={t.type === 'EARN' ? { background: '#E6F7EC', color: '#15803D' } : { background: '#FFEFE3', color: '#C2410C' }}>
+                    <Icon name={t.type === 'EARN' ? 'star' : 'gift'} size={20} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold text-slate-800">{t.description}</span>
+                    <span className="block truncate text-xs text-slate-500">{t.wallet.restaurant.name} · {agoText(t.createdAt)}</span>
+                  </span>
+                  <span className={`shrink-0 text-sm font-extrabold ${t.type === 'EARN' ? 'text-emerald-700' : 'text-orange-700'}`}>{t.type === 'EARN' ? '+' : '−'}{formatPoints(t.points)}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </Reveal>
+      )}
 
       <Reveal from="zoom">
       <Link href="/lugares" className="glass-panel-sm card-link flex items-center gap-3 !rounded-full px-5 py-3">

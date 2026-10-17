@@ -34,8 +34,9 @@ export function DashboardNav({ variant, agenda = false, pending: pendingBookings
             key={i.href}
             href={i.href}
             onClick={() => setPending(i.href)}
-            className={`nav-tab ${active(i.href) ? 'nav-tab-active' : ''}`}
+            className={`nav-tab inline-flex items-center gap-1.5 ${active(i.href) ? 'nav-tab-active' : ''}`}
           >
+            <Icon name={i.icon} size={15} />
             {i.label}
             {badge(i.href)}
           </Link>

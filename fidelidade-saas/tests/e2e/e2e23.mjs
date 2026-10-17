@@ -26,7 +26,7 @@ const p = await ctx.newPage(); p.on('pageerror', (e) => console.log('PAGEERROR',
 await p.goto(BASE + '/login'); await p.fill('#email', 'ze@burger.com'); await p.fill('#password', 'senha-segura-1'); await p.click('button[type=submit]'); await p.waitForURL('**/dashboard');
 
 // 1. dia: todos
-await p.goto(BASE + '/dashboard/agenda');
+await p.goto(BASE + '/dashboard/agenda?vista=lista');
 assert.equal(await p.locator('li:has-text("Corte")').count() >= 2, true);
 assert.ok(await p.locator('[aria-label=Profissional] a:has-text("Lucas")').count());
 console.log('1. dia com filtro de profissionais OK');

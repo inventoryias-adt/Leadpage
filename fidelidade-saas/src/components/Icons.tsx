@@ -135,6 +135,12 @@ const paths = {
       <path d="M12 11v5M12 8v.01" />
     </>
   ),
+  phone: (
+    <>
+      <rect x="7" y="3" width="10" height="18" rx="2.5" />
+      <path d="M11 18h2" />
+    </>
+  ),
 } as const;
 
 export type IconName = keyof typeof paths;

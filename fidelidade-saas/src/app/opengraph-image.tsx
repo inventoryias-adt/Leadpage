@@ -30,11 +30,7 @@ export default function OpenGraphImage() {
             <rect x="18" y="12" width="10" height="40" rx="5" fill="#0B1B3A" />
             <rect x="18" y="12" width="30" height="10" rx="5" fill="#0B1B3A" />
             <rect x="18" y="27" width="21" height="10" rx="5" fill="#0B1B3A" />
-            <g transform="translate(43.5 47)">
-              <circle r="5.4" fill="#2150C9" />
-              <path d="M0 -4.6V-2.9M0 2.9V4.6" fill="none" stroke="#C6F432" strokeWidth=".9" strokeLinecap="round" />
-              <path d="M2 -1.9C1.8 -3.3 -2 -3.5 -2 -1.4C-2 0.3 2 -0.2 2 1.6C2 3.5 -1.8 3.4 -2 1.9" fill="none" stroke="#fff" strokeWidth="1.1" strokeLinecap="round" />
-            </g>
+            <circle cx="43.5" cy="47" r="5.4" fill="#0B1B3A" />
           </g>
         </svg>
         <div style={{ fontSize: 112, fontWeight: 700, letterSpacing: -6, marginTop: 6 }}>fidelize</div>

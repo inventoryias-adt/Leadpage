@@ -115,13 +115,13 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-primary">Painel</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-primary">Painel</h1>
           <p className="text-sm text-slate-600">Como está o seu estabelecimento nos últimos {days} dias.</p>
         </div>
         <div className="flex items-center gap-3">
-          <nav aria-label="Período" className="flex gap-1 rounded-md bg-[#F1F3F6] p-1">
+          <nav aria-label="Período" className="flex gap-1.5">
             {PERIODS.map((p) => (
-              <Link key={p} href={`/dashboard?dias=${p}`} aria-current={p === days ? 'true' : undefined} className={`rounded-md border px-3.5 py-1.5 text-sm font-semibold transition-colors ${p === days ? 'border-electric-500 bg-electric-500 text-white' : 'border-transparent text-slate-600 hover:border-slate-400 hover:bg-white hover:text-slate-900'}`}>
+              <Link key={p} href={`/dashboard?dias=${p}`} aria-current={p === days ? 'true' : undefined} className={`chip-link ${p === days ? 'chip-link-active' : ''}`}>
                 {p} dias
               </Link>
             ))}
@@ -141,56 +141,36 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
         />
       )}
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard label="Vendas lançadas" value={compactBRL(revenue)} exact={formatBRL(revenue)} hint={`${cur.length} ${cur.length === 1 ? 'compra' : 'compras'}`} delta={deltaPct(revenue, revenuePrev)} />
-        <KpiCard label="Ticket médio" value={compactBRL(ticket)} exact={formatBRL(ticket)} hint="por compra" delta={deltaPct(ticket, ticketPrev)} />
-        <Link href="/dashboard/pontos" className="card-link rounded-2xl"><KpiCard label="Pontos emitidos" value={compactNumber(pointsIssued)} exact={formatPoints(pointsIssued)} hint="creditados aos clientes" delta={deltaPct(pointsIssued, sum(prev, 'points'))} /></Link>
-        <Link href="/dashboard/resgates#mes" className="card-link rounded-2xl"><KpiCard label="Resgates" value={compactNumber(redCur.length)} hint={`${pending} ${pending === 1 ? 'prêmio a entregar' : 'prêmios a entregar'}`} delta={deltaPct(redCur.length, redPrev)} /></Link>
-        <Link href="/dashboard/clientes" className="card-link rounded-2xl"><KpiCard label="Clientes na carteira" value={compactNumber(wallets._count)} hint="ver todos →" /></Link>
-        <Link href="/dashboard/clientes?seg=novos" className="card-link rounded-2xl"><KpiCard label="Clientes novos" value={compactNumber(newCustomers)} hint={`nos últimos ${days} dias`} /></Link>
-        <KpiCard label="Taxa de retorno" value={`${returnRate}%`} hint="clientes com 2+ compras" />
-        <KpiCard label="Pontos em circulação" value={compactNumber(wallets._sum.balance ?? 0)} exact={formatPoints(wallets._sum.balance ?? 0)} hint="saldo ainda não resgatado" />
+      <div className="glass-panel !rounded-[22px] overflow-hidden !p-0" data-testid="kpi-faixa">
+      <div className="grid grid-cols-2 gap-px bg-slate-200/70 lg:grid-cols-4">
+        <div className="bg-white"><KpiCard label="Vendas lançadas" value={compactBRL(revenue)} exact={formatBRL(revenue)} hint={`${cur.length} ${cur.length === 1 ? 'compra' : 'compras'}`} delta={deltaPct(revenue, revenuePrev)} /></div>
+        <div className="bg-white"><KpiCard label="Ticket médio" value={compactBRL(ticket)} exact={formatBRL(ticket)} hint="por compra" delta={deltaPct(ticket, ticketPrev)} /></div>
+        <Link href="/dashboard/pontos" className="block bg-white transition-colors hover:bg-[#f3f6fd]"><KpiCard label="Pontos emitidos" value={compactNumber(pointsIssued)} exact={formatPoints(pointsIssued)} hint="creditados aos clientes" delta={deltaPct(pointsIssued, sum(prev, 'points'))} /></Link>
+        <Link href="/dashboard/resgates?st=todos&periodo=mes" className="block bg-white transition-colors hover:bg-[#f3f6fd]"><KpiCard label="Resgates" value={compactNumber(redCur.length)} hint={`${pending} ${pending === 1 ? 'prêmio a entregar' : 'prêmios a entregar'}`} delta={deltaPct(redCur.length, redPrev)} /></Link>
+        <Link href="/dashboard/clientes" className="block bg-white transition-colors hover:bg-[#f3f6fd]"><KpiCard label="Clientes na carteira" value={compactNumber(wallets._count)} hint="ver todos →" /></Link>
+        <Link href="/dashboard/clientes?seg=novos" className="block bg-white transition-colors hover:bg-[#f3f6fd]"><KpiCard label="Clientes novos" value={compactNumber(newCustomers)} hint={`nos últimos ${days} dias`} /></Link>
+        <div className="bg-white"><KpiCard label="Taxa de retorno" value={`${returnRate}%`} hint="clientes com 2+ compras" /></div>
+        <div className="bg-white"><KpiCard label="Pontos em circulação" value={compactNumber(wallets._sum.balance ?? 0)} exact={formatPoints(wallets._sum.balance ?? 0)} hint="saldo ainda não resgatado" /></div>
+      </div>
       </div>
 
-      <section className="glass-panel p-5 sm:p-6" aria-labelledby="vendas-dia">
-        <h2 id="vendas-dia" className="mb-1 font-semibold text-primary">Vendas por dia</h2>
-        <p className="mb-3 text-sm text-slate-500">Soma das compras lançadas no caixa e lidas pelos clientes.</p>
-        {cur.length === 0 ? (
-          <EmptyState compact variant="chart" title="Sem compras neste período" text="Quando houver lançamentos, as vendas de cada dia aparecem aqui." />
-        ) : (
-          <SalesArea days={series} />
-        )}
-      </section>
 
       <div className="grid gap-6 lg:grid-cols-5">
-        <section className="glass-panel p-5 sm:p-6 lg:col-span-3" aria-labelledby="picos">
+        <section className="glass-panel p-5 sm:p-6 lg:col-span-3" aria-labelledby="vendas-dia">
+          <h2 id="vendas-dia" className="mb-1 font-semibold text-primary">Vendas por dia</h2>
+          <p className="mb-3 text-sm text-slate-500">Soma das compras lançadas no caixa e lidas pelos clientes.</p>
+          {cur.length === 0 ? (
+            <EmptyState compact variant="chart" title="Sem compras neste período" text="Quando houver lançamentos, as vendas de cada dia aparecem aqui." />
+          ) : (
+            <SalesArea days={series} />
+          )}
+        </section>
+        <section className="glass-panel p-5 sm:p-6 lg:col-span-2" aria-labelledby="picos">
           <h2 id="picos" className="mb-1 font-semibold text-primary">Dias e horários de pico</h2>
           <p className="mb-4 text-sm text-slate-500">
             {peak ? <>Seu movimento é maior na <strong className="text-slate-800">{WEEKDAYS[peak.dow]}, perto das {peak.hour}h</strong>. Últimos 90 dias.</> : 'Mostra quando os clientes mais compram (últimos 90 dias).'}
           </p>
           <PeakHeatmap grid={grid} />
-        </section>
-
-        <section className="glass-panel p-5 sm:p-6 lg:col-span-2" aria-labelledby="top-clientes">
-          <h2 id="top-clientes" className="mb-4 font-semibold text-primary">Melhores clientes do período</h2>
-          {topClients.length === 0 ? (
-            <p className="text-sm text-slate-500">Ainda sem compras no período.</p>
-          ) : (
-            <ol className="space-y-3">
-              {topClients.map(([id, v], i) => (
-                <li key={id}>
-                  <Link href={`/dashboard/clientes/${id}`} className="flex items-center gap-3 rounded-lg border border-transparent p-2 transition-colors hover:border-slate-300 hover:bg-[#EDF0F5]">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-electric-500/10 text-sm font-bold text-electric-600">{i + 1}</span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate font-semibold text-slate-800">{nameById.get(id) ?? 'Cliente'}</span>
-                      <span className="text-xs text-slate-500">{v.count} {v.count === 1 ? 'compra' : 'compras'}</span>
-                    </span>
-                    <span className="shrink-0 font-bold text-primary">{formatBRL(v.cents)}</span>
-                  </Link>
-                </li>
-              ))}
-            </ol>
-          )}
         </section>
       </div>
 
@@ -246,6 +226,27 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
+        <section className="glass-panel p-5 sm:p-6" aria-labelledby="top-clientes">
+          <h2 id="top-clientes" className="mb-4 font-semibold text-primary">Melhores clientes do período</h2>
+          {topClients.length === 0 ? (
+            <p className="text-sm text-slate-500">Ainda sem compras no período.</p>
+          ) : (
+            <ol className="space-y-3">
+              {topClients.map(([id, v], i) => (
+                <li key={id}>
+                  <Link href={`/dashboard/clientes/${id}`} className="flex items-center gap-3 rounded-lg border border-transparent p-2 transition-colors hover:border-slate-300 hover:bg-[#EDF0F5]">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-electric-500/10 text-sm font-bold text-electric-600">{i + 1}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-semibold text-slate-800">{nameById.get(id) ?? 'Cliente'}</span>
+                      <span className="text-xs text-slate-500">{v.count} {v.count === 1 ? 'compra' : 'compras'}</span>
+                    </span>
+                    <span className="shrink-0 font-bold text-primary">{formatBRL(v.cents)}</span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
         <section className="glass-panel p-5 sm:p-6" aria-labelledby="premios-top">
           <h2 id="premios-top" className="mb-4 font-semibold text-primary">Prêmios mais resgatados</h2>
           {topRewards.length === 0 ? (
@@ -255,26 +256,27 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
           )}
         </section>
 
-        <section className="glass-panel p-5 sm:p-6" aria-labelledby="ideias">
-          <h2 id="ideias" className="mb-1 font-semibold text-primary">Ideias para vender mais</h2>
-          <p className="mb-4 text-sm text-slate-500">Sugestões escolhidas pelo que os seus números mostram.</p>
-          {tips.length === 0 ? (
-            <EmptyState compact variant="shield" title="Tudo em dia por aqui" text="Você já usa as principais ferramentas. Acompanhe os números e teste campanhas novas." />
-          ) : (
-            <ul className="space-y-3">
-              {tips.map((t) => (
-                <li key={t.id} className="glass-inset flex items-start justify-between gap-3 p-3.5">
-                  <span className="min-w-0">
-                    <span className="block font-semibold text-slate-800">{t.title}</span>
-                    <span className="text-sm text-slate-600">{t.text}</span>
-                  </span>
-                  <Link href={t.href} className="glass-button-ghost btn-sm shrink-0">{t.cta}</Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
       </div>
+
+      <section className="glass-panel p-5 sm:p-6" aria-labelledby="ideias">
+        <h2 id="ideias" className="mb-1 font-semibold text-primary">Ideias para vender mais</h2>
+        <p className="mb-4 text-sm text-slate-500">Sugestões escolhidas pelo que os seus números mostram.</p>
+        {tips.length === 0 ? (
+          <EmptyState compact variant="shield" title="Tudo em dia por aqui" text="Você já usa as principais ferramentas. Acompanhe os números e teste campanhas novas." />
+        ) : (
+          <ul className="space-y-3">
+            {tips.map((t) => (
+              <li key={t.id} className="glass-inset flex items-start justify-between gap-3 p-3.5">
+                <span className="min-w-0">
+                  <span className="block font-semibold text-slate-800">{t.title}</span>
+                  <span className="text-sm text-slate-600">{t.text}</span>
+                </span>
+                <Link href={t.href} className="glass-button-ghost btn-sm shrink-0">{t.cta}</Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

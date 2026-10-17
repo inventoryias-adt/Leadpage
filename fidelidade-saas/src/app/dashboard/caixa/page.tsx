@@ -35,17 +35,17 @@ export default async function CaixaPage() {
     c.redeemedAt ? `Creditado a ${c.customer?.name ?? 'cliente'}` : c.expiresAt.getTime() < now ? 'Expirado' : 'Aguardando leitura';
 
   return (
-    <div className="mx-auto grid max-w-5xl grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
-      <div>
+    <div className="mx-auto max-w-5xl space-y-5">
+      <div className="space-y-4">
         {units.length > 1 && unit && (
-          <p className="glass-inset mb-4 flex items-center gap-2 px-4 py-3 text-sm text-slate-700">
+          <p className="glass-inset flex items-center gap-2 px-4 py-3 text-sm text-slate-700">
             <Icon name="pin" size={16} className="text-electric-600" />
             Lançando pela unidade <strong className="text-primary">{unit.name}</strong>
             <span className="text-slate-500">(troque no topo da tela)</span>
           </p>
         )}
         {requests.length > 0 && (
-          <div className="mb-4">
+          <div>
             <InteractionRequests items={requests.map((r) => ({ id: r.id, label: r.label, points: r.points, createdAt: r.createdAt, autoAt: r.autoAt, customerName: r.customer.name }))} />
           </div>
         )}
@@ -57,7 +57,7 @@ export default async function CaixaPage() {
         />
       </div>
 
-      <section className="glass-panel h-fit p-5">
+      <section className="glass-panel p-5">
         <h2 className="mb-3 font-bold text-primary">Últimos lançamentos</h2>
         {recent.length === 0 ? (
           <p className="text-sm text-slate-500">Nada por aqui ainda.</p>

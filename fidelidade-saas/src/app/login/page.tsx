@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { LoginForm } from '@/components/AuthForms';
+import { InstallApp } from '@/components/InstallApp';
 import { LegalLinks } from '@/components/LegalLinks';
 import { getRestaurant } from '@/lib/session';
 
@@ -9,7 +10,8 @@ export const metadata = { title: 'Entrar' };
 export default async function LoginPage() {
   if (await getRestaurant()) redirect('/dashboard');
   return (
-    <main className="flex min-h-screen items-center justify-center p-5">
+    <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-5">
+      <InstallApp variant="gestor" className="w-full max-w-md" />
       <div className="glass-panel w-full max-w-md p-8">
         <h1 className="mb-1 text-2xl font-bold text-primary">Entrar no painel</h1>
         <p className="mb-6 text-sm text-slate-500">Acesso do estabelecimento.</p>

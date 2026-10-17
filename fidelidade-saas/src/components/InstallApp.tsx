@@ -11,14 +11,14 @@ declare global {
   }
 }
 
-const read = (key = DISMISS_KEY) => {
+const read = (key: string) => {
   try {
     return localStorage.getItem(key);
   } catch {
     return null;
   }
 };
-const write = (v: string, key = DISMISS_KEY) => {
+const write = (v: string, key: string) => {
   try {
     localStorage.setItem(key, v);
   } catch {
@@ -30,7 +30,14 @@ const write = (v: string, key = DISMISS_KEY) => {
  * Convite para adicionar o Fidelize à tela inicial. Só aparece no celular, fora do app já instalado.
  * Android/Chrome: botão que abre o instalador do sistema. iPhone e demais: passo a passo curto.
  */
-export function InstallApp({ className = '' }: { className?: string }) {
+export function InstallApp({ className = '', variant = 'cliente' }: { className?: string; variant?: 'cliente' | 'gestor' }) {
+  const gestor = variant === 'gestor';
+  const copy = gestor
+    ? { name: 'Fidelize Gestor', title: 'Tenha o Fidelize Gestor na tela inicial', text: 'Caixa, agenda, pedidos e clientes com um toque, mesmo longe do balcão. Sem baixar nada na loja.', icon: '/gestor-icon-96.png?v=1' }
+    : { name: 'Fidelize', title: 'Tenha o Fidelize na tela inicial', text: 'Abra seus pontos com um toque, como um app — sem baixar nada na loja.', icon: '/icon-96.png?v=4' };
+  // O app do gestor guarda "agora não" e "já instalei" à parte: instalar um não esconde o convite do outro.
+  const sfx = gestor ? ':gestor' : '';
+  const kDismiss = DISMISS_KEY + sfx, kIntro = INTRO_KEY + sfx, kCollapse = COLLAPSE_KEY + sfx;
   const [platform, setPlatform] = useState<InstallPlatform>('other');
   const [visible, setVisible] = useState(false);
   const [inApp, setInApp] = useState(false);
@@ -52,18 +59,18 @@ export function InstallApp({ className = '' }: { className?: string }) {
     // ?instalar na URL reabre tudo (para testar ou ajudar alguém): esquece o que já foi recolhido/aberto neste aparelho
     if (new URLSearchParams(window.location.search).has('instalar')) {
       try {
-        localStorage.removeItem(DISMISS_KEY);
-        localStorage.removeItem(INTRO_KEY);
-        localStorage.removeItem(COLLAPSE_KEY);
+        localStorage.removeItem(kDismiss);
+        localStorage.removeItem(kIntro);
+        localStorage.removeItem(kCollapse);
       } catch {
         /* sem armazenamento */
       }
     }
-    const stored = read();
+    const stored = read(kDismiss);
     setVisible(shouldOffer({ platform: p, standalone, stored }));
-    setCollapsed(read(COLLAPSE_KEY) === '1');
-    if (shouldShowIntro({ platform: p, standalone, stored, introSeen: !!read(INTRO_KEY) })) {
-      write('1', INTRO_KEY); // o pop-up abre só na primeira visita de cada aparelho
+    setCollapsed(read(kCollapse) === '1');
+    if (!gestor && shouldShowIntro({ platform: p, standalone, stored, introSeen: !!read(kIntro) })) {
+      write('1', kIntro); // o pop-up abre só na primeira visita de cada aparelho (no painel não: o guia inicial já abre uma janela)
       setIntro(true);
     }
 
@@ -73,7 +80,7 @@ export function InstallApp({ className = '' }: { className?: string }) {
       setPrompt(e as DeferredPrompt);
     };
     const onInstalled = () => {
-      write('installed');
+      write('installed', kDismiss);
       setVisible(false);
     };
     window.addEventListener('beforeinstallprompt', onPrompt);
@@ -82,7 +89,7 @@ export function InstallApp({ className = '' }: { className?: string }) {
       window.removeEventListener('beforeinstallprompt', onPrompt);
       window.removeEventListener('appinstalled', onInstalled);
     };
-  }, []);
+  }, [gestor, kDismiss, kIntro, kCollapse]);
 
   if (!visible) return null;
 
@@ -97,14 +104,14 @@ export function InstallApp({ className = '' }: { className?: string }) {
     window.__fzInstall = undefined;
     setPrompt(null);
     if (outcome === 'accepted') {
-      write('installed');
+      write('installed', kDismiss);
       setVisible(false);
     }
   }
 
   /** "Agora não": só comprime o cartão numa tira fina; a informação continua fixa no topo. */
   function collapse() {
-    write('1', COLLAPSE_KEY);
+    write('1', kCollapse);
     setCollapsed(true);
     setOpen(false);
     setIntro(false);
@@ -117,7 +124,7 @@ export function InstallApp({ className = '' }: { className?: string }) {
           type="button"
           onClick={() => setOpen(true)}
           aria-expanded={false}
-          aria-label="Mostrar como adicionar o Fidelize à tela inicial"
+          aria-label={`Mostrar como adicionar o ${copy.name} à tela inicial`}
           className={`flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white py-1 text-xs font-medium text-slate-500 transition-colors hover:border-slate-400 hover:text-slate-700 ${className}`}
         >
           Adicionar à tela inicial
@@ -127,10 +134,10 @@ export function InstallApp({ className = '' }: { className?: string }) {
       <section aria-label="Adicionar à tela inicial" className={`glass-panel p-4 ${className}`}>
         <div className="flex items-start gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icon-96.png?v=4" alt="" width={48} height={48} className="h-12 w-12 shrink-0 rounded-xl" />
+          <img src={copy.icon} alt="" width={48} height={48} className="h-12 w-12 shrink-0 rounded-xl" />
           <div className="min-w-0 flex-1">
-            <p className="font-semibold text-primary">Tenha o Fidelize na tela inicial</p>
-            <p className="mt-0.5 text-sm text-slate-600">Abra seus pontos com um toque, como um app — sem baixar nada na loja.</p>
+            <p className="font-semibold text-primary">{copy.title}</p>
+            <p className="mt-0.5 text-sm text-slate-600">{copy.text}</p>
           </div>
         </div>
         <div className="mt-3 flex items-center gap-2">
@@ -142,13 +149,13 @@ export function InstallApp({ className = '' }: { className?: string }) {
       </section>
       )}
       {intro && <InstallIntro onInstall={() => void install()} onClose={collapse} />}
-      {guide && <InstallGuide platform={platform} inApp={inApp} safari={safari} onClose={() => setGuide(false)} />}
+      {guide && <InstallGuide platform={platform} inApp={inApp} safari={safari} name={copy.name} onClose={() => setGuide(false)} />}
     </>
   );
 }
 
 /** Guia de um toque só para quem não tem o instalador automático (iPhone e alguns navegadores). */
-function InstallGuide({ platform, inApp, safari, onClose }: { platform: InstallPlatform; inApp: boolean; safari: boolean; onClose: () => void }) {
+function InstallGuide({ platform, inApp, safari, name, onClose }: { platform: InstallPlatform; inApp: boolean; safari: boolean; name: string; onClose: () => void }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
@@ -178,7 +185,7 @@ function InstallGuide({ platform, inApp, safari, onClose }: { platform: InstallP
     <div className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-900/50 p-3 sm:items-center" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-labelledby="install-guide-title" className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <h2 id="install-guide-title" className="text-lg font-bold text-primary">Adicionar à tela inicial</h2>
-        <p className="mt-0.5 text-sm text-slate-600">São 3 toques e o Fidelize fica no seu celular, como um app.</p>
+        <p className="mt-0.5 text-sm text-slate-600">São 3 toques e o {name} fica no seu celular, como um app.</p>
         <ol className="mt-4 space-y-3">
           {steps.map((st) => (
             <li key={st.n} className="flex items-start gap-3 text-sm text-slate-800">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { Icon } from './Icons';
 import { WebImageSearch, type WebImage } from './WebImageSearch';
 
@@ -27,6 +27,7 @@ export function ImageUpload({
   maxSide = 640,
   shape = 'square',
   webSearch = false,
+  onPreview,
 }: {
   name: string;
   label: string;
@@ -36,6 +37,8 @@ export function ImageUpload({
   shape?: 'square' | 'wide';
   /** Mostra "Buscar na web": o dono acha a foto por nome ou código de barras. */
   webSearch?: boolean;
+  /** Avisa a foto escolhida (ou vazio), para mostrar a prévia de como fica no app. */
+  onPreview?: (url: string) => void;
 }) {
   const id = useId();
   const [data, setData] = useState('');
@@ -44,6 +47,10 @@ export function ImageUpload({
   const [web, setWeb] = useState<WebImage | null>(null);
   const [searching, setSearching] = useState(false);
   const preview = data || web?.thumb || currentUrl || '';
+  useEffect(() => {
+    onPreview?.(preview);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preview]);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];

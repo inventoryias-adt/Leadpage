@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   description:
     'Clube de pontos para comércios: o cliente volta, gasta mais e indica amigos. Lance pontos pelo CPF ou QR Code, sem app para baixar.',
   applicationName: 'Fidelize',
+  manifest: '/manifest.webmanifest',
   metadataBase: new URL(process.env.APP_URL ?? 'https://fidelize-nu.vercel.app'),
   icons: {
     // O número depois do "?v=" faz o navegador (e o Google) baixarem o ícone de novo: some junto com o ícone antigo.

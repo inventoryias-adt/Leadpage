@@ -40,7 +40,7 @@ const STEPS: Step[] = [
     title: 'Identidade da marca',
     text: 'É como o seu estabelecimento aparece para os clientes no app.',
     bullets: ['Envie a logo e uma foto de capa', 'Escolha a categoria (Açaí, Café, Padaria…)', 'Informe o Instagram, se tiver'],
-    cta: { label: 'Ir para Identidade', href: '/dashboard/configuracoes#identidade' },
+    cta: { label: 'Ir para Identidade', href: '/dashboard/configuracoes?etapa=negocio#identidade' },
     done: (p) => p.identity,
   },
   {
@@ -49,7 +49,7 @@ const STEPS: Step[] = [
     title: 'Endereço, horário e localização',
     text: 'Cada unidade tem endereço, horário e localização próprios. É o que o cliente vê para saber quando pode vir.',
     bullets: ['Digite o CEP: rua, bairro e cidade são preenchidos sozinhos', 'Informe o número e o complemento', 'Defina o horário de cada dia da semana', 'Toque em “Usar minha localização atual” (GPS) ou “Localizar pelo endereço”, para o check-in funcionar'],
-    cta: { label: 'Ir para Unidades', href: '/dashboard/configuracoes#unidades' },
+    cta: { label: 'Ir para Unidades', href: '/dashboard/configuracoes?etapa=negocio#unidades' },
     done: (p) => p.unit,
   },
   {
@@ -58,7 +58,7 @@ const STEPS: Step[] = [
     title: 'Quanto vale cada real',
     text: 'Defina quantos pontos o cliente ganha a cada R$ 1,00 e quantos resgates cada CPF pode fazer por mês.',
     bullets: ['Exemplo: R$ 1 = 10 pontos, então uma conta de R$ 150 vale 1.500 pontos', 'Opcional: pontos por check-in e por indicar amigos', 'Opcional: interações (avaliar no Google, postar no Instagram) e desafios'],
-    cta: { label: 'Ir para Conversão', href: '/dashboard/configuracoes#pontos' },
+    cta: { label: 'Ir para Conversão', href: '/dashboard/configuracoes?etapa=regras#pontos' },
   },
   {
     id: 'produtos',
@@ -66,7 +66,7 @@ const STEPS: Step[] = [
     title: 'Cadastre os prêmios',
     text: 'São os produtos que o cliente troca por pontos. Cadastre pelo menos um; com foto, o resgate vende mais.',
     bullets: ['Nome, pontos necessários e uma descrição curta', 'Foto do produto (opcional, mas ajuda muito)'],
-    cta: { label: 'Ir para Produtos', href: '/dashboard/configuracoes#produtos' },
+    cta: { label: 'Ir para Produtos', href: '/dashboard/configuracoes?etapa=premios#produtos' },
     done: (p) => p.rewards,
   },
   {
@@ -75,7 +75,7 @@ const STEPS: Step[] = [
     title: 'Finalize a configuração',
     text: 'No fim da página de Regras, toque em “Concluir configuração”. Só depois disso o caixa e a vitrine ficam liberados.',
     bullets: ['É preciso ter endereço, horário e pelo menos um produto', 'Você pode mudar tudo depois, quando quiser'],
-    cta: { label: 'Ir para o final da página', href: '/dashboard/configuracoes#finalizar' },
+    cta: { label: 'Ir para o final da página', href: '/dashboard/configuracoes?etapa=conta#finalizar' },
     done: (p) => p.onboarded,
   },
   {
@@ -108,7 +108,7 @@ const STEPS: Step[] = [
     title: 'Crie campanhas de pontos',
     text: 'Pontos em dobro na terça, +50 pontos em compras acima de R$ 40… As campanhas valem no caixa e viram cards na vitrine dos clientes.',
     bullets: ['Escolha multiplicador ou pontos extras', 'Defina dias, horário e período', 'Pause ou remova quando quiser'],
-    cta: { label: 'Criar uma campanha', href: '/dashboard/configuracoes#campanhas' },
+    cta: { label: 'Criar uma campanha', href: '/dashboard/configuracoes?etapa=regras&abrir=campanhas#campanhas' },
     done: (p) => p.promos,
   },
   {
@@ -214,7 +214,7 @@ export function OwnerGuide({ autoOpen, progress, clientUrl }: { autoOpen: boolea
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="fixed bottom-24 left-4 z-30 inline-flex items-center gap-2 rounded-md border border-electric-500 bg-white px-4 py-2.5 text-sm font-semibold text-electric-600 shadow-lg shadow-blue-900/15 transition-colors hover:bg-electric-500 hover:text-white md:bottom-6"
+          className="fixed bottom-24 left-4 z-30 inline-flex items-center gap-2 rounded-full border border-[#0F1F3D] bg-white px-4 py-2.5 text-sm font-semibold text-primary shadow-lg shadow-blue-900/15 transition-colors hover:bg-[#0F1F3D] hover:text-white md:bottom-6"
         >
           <Icon name="info" size={16} /> Guia · passo {step + 1} de {STEPS.length}
         </button>
