@@ -75,6 +75,13 @@ const paths = {
       <path d="M12 7v5l3.5 2" />
     </>
   ),
+  calendar: (
+    <>
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+      <path d="M3.5 10h17M8 3v4M16 3v4" />
+    </>
+  ),
+  list: <path d="M9 6.5h11M9 12h11M9 17.5h11M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01" />,
   chevron: <path d="m9 5 7 7-7 7" />,
   back: <path d="M15 5 8 12l7 7" />,
   down: <path d="m5 9 7 7 7-7" />,

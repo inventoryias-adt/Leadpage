@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { bookingAction } from '@/app/actions/agenda';
 import { AgendaGrid } from '@/components/AgendaGrid';
+import { AgendaMonth } from '@/components/AgendaMonth';
+import { AgendaWeek } from '@/components/AgendaWeek';
 import { Icon } from '@/components/Icons';
 import { PERIODS, PERIOD_LABEL, fmtDay, periodRange, rangeBounds, whatsappText, type AgendaPeriod, type ExportRow } from '@/lib/agenda-export';
 import { addDaysKey, dateKeyOf, formatBookingWhen, hmOf, parseDateKey, todayKey, weekdayOf } from '@/lib/booking';
@@ -15,6 +17,10 @@ import { requireActiveRestaurant } from '@/lib/session';
 
 export const metadata = { title: 'Agenda' };
 export const dynamic = 'force-dynamic';
+
+/** Linha de chips: no celular fica numa fila só que rola de lado (ocupa menos altura); no computador quebra linha. */
+const ROW = 'flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden';
+const CHIP = 'shrink-0 whitespace-nowrap';
 
 const STATUS: Record<string, { label: string; cls: string }> = {
   PENDING: { label: 'Aguardando', cls: 'bg-amber-100 text-amber-800' },
@@ -118,8 +124,8 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
   const staff = await prisma.resource.findMany({ where: { restaurantId: restaurant.id }, orderBy: { name: 'asc' }, select: { id: true, name: true, phone: true, color: true, photoImageId: true, active: true, schedule: true } });
   const who = staff.find((r) => r.id === sp.prof) ?? null; // só aceita profissional deste estabelecimento
 
-  // No dia, a grade é a vista principal; "Ver agendamentos" troca para a lista (com os botões de confirmar, concluir, etc.).
-  const vista: 'grade' | 'lista' = per === 'dia' && sp.vista === 'lista' ? 'lista' : 'grade';
+  // A escolha entre calendário (grade) e lista vale para todos os períodos e acompanha a pessoa ao trocar de dia, semana ou mês.
+  const vista: 'grade' | 'lista' = sp.vista === 'lista' ? 'lista' : 'grade';
   const qs = (over: { data?: string; per?: AgendaPeriod; prof?: string | null; vista?: 'grade' | 'lista' }) => {
     const q = new URLSearchParams();
     const d = over.data ?? date, p = over.per ?? per, f = over.prof === undefined ? who?.id : over.prof;
@@ -127,7 +133,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
     if (d !== today) q.set('data', d);
     if (p !== 'dia') q.set('per', p);
     if (f) q.set('prof', f);
-    if (p === 'dia' && v === 'lista') q.set('vista', 'lista');
+    if (v === 'lista') q.set('vista', 'lista');
     const text = q.toString();
     return text ? `?${text}` : '';
   };
@@ -157,6 +163,12 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
   const heading = per === 'dia' ? title : PERIOD_LABEL[per];
   const sub = per === 'dia' ? `${d}/${m}/${y}` : range.label;
 
+  // Semana e mês em calendário: dias do período, horário de funcionamento de cada dia e contagem por situação.
+  const weekDays = per === 'semana' ? Array.from({ length: 7 }, (_, i) => addDaysKey(range.from, i)) : [];
+  const live = list.filter((b) => b.status !== 'CANCELED');
+  const count = (st: string) => live.filter((b) => b.status === st).length;
+  const nowMin = (() => { const hm = hmOf(new Date()); return Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3, 5)); })();
+
   const text = whatsappText(list.map(toExport), { who: who?.name ?? null, label: range.label });
   const waHref = `https://wa.me/${who?.phone ? `55${who.phone}` : ''}?text=${encodeURIComponent(text)}`;
   const csvHref = `/dashboard/agenda/exportar${(() => { const q = new URLSearchParams({ data: date, per }); if (who) q.set('prof', who.id); return `?${q}`; })()}`;
@@ -166,15 +178,23 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-primary">Agenda</h1>
-          <p className="text-sm text-slate-600">Confirme pedidos, conclua os atendimentos (os pontos entram sozinhos) e marque quem faltou.</p>
+          <p className="hidden text-sm text-slate-600 sm:block">Confirme pedidos, conclua os atendimentos (os pontos entram sozinhos) e marque quem faltou.</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {per === 'dia' && (
-            <Link href={href({ vista: vista === 'grade' ? 'lista' : 'grade' })} className="glass-button-navy btn-sm" data-testid="toggle-vista">
-              <Icon name={vista === 'grade' ? 'receipt' : 'clock'} size={16} /> {vista === 'grade' ? `Ver agendamentos${list.length ? ` (${list.length})` : ''}` : 'Ver grade do dia'}
-            </Link>
-          )}
-          <Link href="/dashboard/configuracoes?etapa=agenda&abrir=agenda-conteudo#agenda" className="glass-button-ghost btn-sm"><Icon name="cog" size={16} /> Serviços e regras</Link>
+        <div className="flex items-center gap-2">
+          <div role="group" aria-label="Visão da agenda" className="inline-flex rounded-full border border-[#cbd2dc] bg-white p-0.5">
+            {([['grade', 'Calendário', 'calendar'], ['lista', `Lista${live.length ? ` (${live.length})` : ''}`, 'list']] as const).map(([v, label, icon]) => (
+              <Link
+                key={v}
+                href={href({ vista: v })}
+                aria-current={vista === v ? 'true' : undefined}
+                data-testid={`vista-${v}`}
+                className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${vista === v ? 'bg-primary text-white' : 'text-slate-600 hover:text-primary'}`}
+              >
+                <Icon name={icon} size={16} /> {label}
+              </Link>
+            ))}
+          </div>
+          <Link href="/dashboard/configuracoes?etapa=agenda&abrir=agenda-conteudo#agenda" className="glass-button-ghost btn-sm" aria-label="Serviços e regras"><Icon name="cog" size={16} /> <span className="hidden sm:inline">Serviços e regras</span></Link>
         </div>
       </header>
 
@@ -190,18 +210,18 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
       )}
 
       <section aria-label="Filtros" className="space-y-2">
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Período">
+        <div className={ROW} role="group" aria-label="Período">
           {PERIODS.map((p) => (
-            <Link key={p} href={href({ per: p, data: p === 'mes-passado' ? date : date })} aria-current={p === per ? 'true' : undefined} className={`chip-link ${p === per ? 'chip-link-active' : ''}`}>
+            <Link key={p} href={href({ per: p, data: p === 'mes-passado' ? date : date })} aria-current={p === per ? 'true' : undefined} className={`chip-link ${CHIP} ${p === per ? 'chip-link-active' : ''}`}>
               {PERIOD_LABEL[p]}
             </Link>
           ))}
         </div>
         {staff.length > 0 && (
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Profissional">
-            <Link href={href({ prof: null })} aria-current={!who ? 'true' : undefined} className={`chip-link ${!who ? 'chip-link-active' : ''}`}>Todos</Link>
+          <div className={ROW} role="group" aria-label="Profissional">
+            <Link href={href({ prof: null })} aria-current={!who ? 'true' : undefined} className={`chip-link ${CHIP} ${!who ? 'chip-link-active' : ''}`}>Todos</Link>
             {staff.map((r) => (
-              <Link key={r.id} href={href({ prof: r.id })} aria-current={who?.id === r.id ? 'true' : undefined} className={`chip-link ${who?.id === r.id ? 'chip-link-active' : ''}`}><span className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full align-baseline" style={{ background: resourceColor(r).hex }} />{r.name}</Link>
+              <Link key={r.id} href={href({ prof: r.id })} aria-current={who?.id === r.id ? 'true' : undefined} className={`chip-link ${CHIP} ${who?.id === r.id ? 'chip-link-active' : ''}`}><span className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full align-baseline" style={{ background: resourceColor(r).hex }} />{r.name}</Link>
             ))}
           </div>
         )}
@@ -219,14 +239,36 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
         </div>
       </nav>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600" data-testid="agenda-resumo">
+        <strong className="text-primary">{live.length} {live.length === 1 ? 'agendamento' : 'agendamentos'}</strong>
+        {count('PENDING') > 0 && <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">{count('PENDING')} aguardando</span>}
+        {count('CONFIRMED') > 0 && <span className="rounded-md bg-[#EAF0FF] px-2 py-0.5 text-xs font-semibold text-electric-600">{count('CONFIRMED')} {count('CONFIRMED') === 1 ? 'confirmado' : 'confirmados'}</span>}
+        {count('COMPLETED') > 0 && <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">{count('COMPLETED')} {count('COMPLETED') === 1 ? 'concluído' : 'concluídos'}</span>}
+        {count('NO_SHOW') > 0 && <span className="rounded-md bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">{count('NO_SHOW')} {count('NO_SHOW') === 1 ? 'faltou' : 'faltaram'}</span>}
+      </p>
+
+      <div className="flex gap-2">
         <a href={waHref} target="_blank" rel="noopener noreferrer" className="glass-button btn-sm">
-          Enviar pelo WhatsApp{who ? ` para ${who.name.split(' ')[0]}` : ''}
+          <Icon name="whatsapp" size={15} /> <span className="sm:hidden">WhatsApp</span><span className="hidden sm:inline">Enviar pelo WhatsApp{who ? ` para ${who.name.split(' ')[0]}` : ''}</span>
         </a>
-        <a href={csvHref} className="glass-button-ghost btn-sm" download>Baixar planilha (CSV)</a>
+        <a href={csvHref} className="glass-button-ghost btn-sm" download><span className="sm:hidden">CSV</span><span className="hidden sm:inline">Baixar planilha (CSV)</span></a>
+      </div>
       </div>
       {who && !who.phone && <p className="text-xs text-slate-500">{who.name} não tem WhatsApp cadastrado: o WhatsApp abrirá para você escolher o contato. Cadastre em Regras → Agenda e serviços.</p>}
 
+      {vista === 'grade' && per === 'semana' && (
+        <AgendaWeek
+          days={weekDays.map((k) => ({ key: k, weekday: DAY_NAMES[weekdayOf(k)].slice(0, 3), num: String(Number(k.slice(8))), today: k === today, open: unionWindow(units.map((u) => dayWindow(parseSchedule(u.openingSchedule), weekdayOf(k)))) }))}
+          bookings={list.map((b) => ({ id: b.id, resourceId: b.resourceId, resourceColor: b.resource?.color ?? null, startsAt: b.startsAt, endsAt: b.endsAt, serviceName: b.serviceName, customerName: b.customer.name, status: b.status }))}
+          nowMin={weekDays.includes(today) ? nowMin : null}
+          linkBase={back}
+          dayHref={(k) => href({ per: 'dia', data: k })}
+        />
+      )}
+      {vista === 'grade' && (per === 'mes' || per === 'mes-passado') && (
+        <AgendaMonth from={range.from} to={range.to} today={today} bookings={list.map((b) => ({ startsAt: b.startsAt, status: b.status }))} dayHref={(k) => href({ per: 'dia', data: k })} />
+      )}
       {per === 'dia' && vista === 'grade' && list.length > 0 && (
         <AgendaGrid
           open={openWindow}
@@ -234,7 +276,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
           linkBase={back}
           staff={(who ? [who] : staff.filter((r) => r.active || list.some((b) => b.resourceId === r.id))).map((r) => ({ id: r.id, name: r.name, color: r.color, photoUrl: imageUrl(r.photoImageId), work: dayWindow(parseSchedule(r.schedule), weekday) }))}
           bookings={list.map((b) => ({ id: b.id, resourceId: b.resourceId, startsAt: b.startsAt, endsAt: b.endsAt, serviceName: b.serviceName, customerName: b.customer.name, status: b.status }))}
-          nowMin={date === today ? (() => { const hm = hmOf(new Date()); return Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3, 5)); })() : null}
+          nowMin={date === today ? nowMin : null}
         />
       )}
 
@@ -254,18 +296,20 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
 
       {list.length === 0 ? (
         <p className="glass-panel-sm p-4 text-sm text-slate-600">Nenhum agendamento {per === 'dia' ? 'neste dia' : 'neste período'}{who ? ` para ${who.name}` : ''}.</p>
-      ) : per === 'dia' ? (
-        vista === 'lista' && <ul className="space-y-3" aria-label="Agendamentos do dia">{list.map((b) => <Item key={b.id} b={b} back={back} />)}</ul>
-      ) : (
-        <div className="space-y-5">
-          {[...byDay.entries()].map(([key, items]) => (
-            <section key={key} aria-label={`${DAY_NAMES[weekdayOf(key)]}, ${fmtDay(key)}`}>
-              <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">{DAY_NAMES[weekdayOf(key)]}, {fmtDay(key)} · {items.length}</h2>
-              <ul className="space-y-3">{items.map((b) => <Item key={b.id} b={b} back={back} />)}</ul>
-            </section>
-          ))}
-        </div>
-      )}
+      ) : vista === 'lista' ? (
+        per === 'dia' ? (
+          <ul className="space-y-3" aria-label="Agendamentos do dia">{list.map((b) => <Item key={b.id} b={b} back={back} />)}</ul>
+        ) : (
+          <div className="space-y-5">
+            {[...byDay.entries()].map(([key, items]) => (
+              <section key={key} aria-label={`${DAY_NAMES[weekdayOf(key)]}, ${fmtDay(key)}`}>
+                <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">{DAY_NAMES[weekdayOf(key)]}, {fmtDay(key)} · {items.length}</h2>
+                <ul className="space-y-3">{items.map((b) => <Item key={b.id} b={b} back={back} />)}</ul>
+              </section>
+            ))}
+          </div>
+        )
+      ) : null}
     </div>
   );
 }

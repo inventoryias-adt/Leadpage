@@ -50,9 +50,13 @@ console.log('3. profissional sem WhatsApp OK');
 
 // 4. semana agrupada por dia (hoje e outro dia da mesma semana) e mês passado
 await p.click('[aria-label=Profissional] a:has-text("Todos")'); await p.waitForSelector('[aria-label=Profissional] a:has-text("Todos")[aria-current=true]');
+await p.click('[data-testid=vista-grade]'); await p.waitForFunction(() => !location.search.includes('vista=lista')); // o teste começou na lista: volta ao calendário
 await p.click('[role=group][aria-label="Período"] a:has-text("Semana")'); await p.waitForURL('**per=semana**');
+await p.waitForSelector('[data-testid=agenda-week]'); // a visão em calendário acompanha a pessoa para a semana
+assert.ok(await p.locator('[data-testid=week-block]').count() >= 1);
+await p.click('[data-testid=vista-lista]'); await p.waitForURL('**vista=lista**');
 assert.ok(await p.locator('section[aria-label*="/"] h2').count() >= 1);
-await p.click('[role=group][aria-label="Período"] a:has-text("Mês passado")'); await p.waitForURL('**per=mes-passado**');
+await p.click('[role=group][aria-label="Período"] a:has-text("Mês passado")'); await p.waitForURL('**per=mes-passado**'); // a lista também acompanha
 const lastMonth = new Date(Date.parse(today + 'T00:00:00Z')); lastMonth.setUTCDate(1); lastMonth.setUTCMonth(lastMonth.getUTCMonth() - 1);
 const inLast = new Date(Date.parse(day(-35)) + 3 * 3600e3).toISOString().slice(0, 7) === lastMonth.toISOString().slice(0, 7);
 assert.equal(await p.locator('li:has-text("Concluído")').count(), inLast ? 1 : 0, 'só entra o que é do mês passado');
@@ -81,7 +85,7 @@ assert.ok(!x.t.includes('Lucas') && !x.t.includes('Ana') || other === '', 'id al
 console.log('6. ?prof= de outro estabelecimento não vaza dados OK');
 
 // 7. concluir pela visão da semana volta para a mesma visão
-await p.goto(BASE + '/dashboard/agenda?per=semana'); 
+await p.goto(BASE + '/dashboard/agenda?per=semana&vista=lista'); 
 await p.click('li:has-text("10:00") button:has-text("Concluir")').catch(async () => p.click('li:has-text("10h") button:has-text("Concluir")'));
 await p.waitForSelector('[role=status]'); assert.match(p.url(), /per=semana/);
 console.log('7. ação mantém período/filtro ao voltar OK');

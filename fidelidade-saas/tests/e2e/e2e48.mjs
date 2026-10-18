@@ -31,8 +31,9 @@ const url = (extra = '') => `${BASE}/dashboard/agenda?data=${key(day)}${extra}`;
 await o.goto(url()); await o.waitForSelector('[data-testid=agenda-grid]');
 assert.equal(await o.locator('ul[aria-label="Agendamentos do dia"]').count(), 0, 'lista escondida na grade');
 assert.equal(await o.locator('button:has-text("Confirmar")').count(), 0);
-assert.ok(await o.locator('[data-testid=toggle-vista]:has-text("Ver agendamentos (2)")').count());
-console.log('1. grade primeiro; botão "Ver agendamentos (2)" no topo OK');
+assert.ok(await o.locator('[data-testid=vista-lista]:has-text("Lista (2)")').count());
+assert.equal(await o.locator('[data-testid=vista-grade]').getAttribute('aria-current'), 'true', 'calendário é a visão marcada');
+console.log('1. calendário primeiro; chave "Calendário | Lista (2)" no topo OK');
 
 // 2. as horas da grade seguem o horário do estabelecimento (10h às 16h): nada de 8h ou 18h
 const hours = await o.locator('[data-testid=agenda-grid] span.absolute.right-2').allInnerTexts();
@@ -44,12 +45,12 @@ console.log('2. grade de', hours[0], 'a', hours.at(-1), '= horário do estabelec
 assert.ok(await o.locator('[data-testid=agenda-grid] div[aria-hidden].bg-slate-200\\/60').count() >= 2, 'trechos fora do atendimento sombreados');
 console.log('3. fora do horário sombreado OK');
 
-// 4. o botão leva à lista com as ações; "Ver grade do dia" volta
-await o.click('[data-testid=toggle-vista]'); await o.waitForURL('**vista=lista**');
+// 4. a chave leva à lista com as ações; "Calendário" volta
+await o.click('[data-testid=vista-lista]'); await o.waitForURL('**vista=lista**');
 await o.waitForSelector('ul[aria-label="Agendamentos do dia"]');
 assert.ok(await o.locator('button:has-text("Confirmar")').count(), 'ações na lista');
 assert.equal(await o.locator('[data-testid=agenda-grid]').count(), 0);
-await o.click('[data-testid=toggle-vista]:has-text("Ver grade do dia")'); await o.waitForSelector('[data-testid=agenda-grid]');
+await o.click('[data-testid=vista-grade]'); await o.waitForSelector('[data-testid=agenda-grid]');
 console.log('4. alterna entre grade e lista OK');
 
 // 5. clicar num bloco da grade abre a lista naquele agendamento
