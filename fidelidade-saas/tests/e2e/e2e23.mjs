@@ -15,7 +15,9 @@ const lucas = mk('Lucas', '11988887777'), ana = mk('Ana', null);
 const today = new Date(Date.now() - 3 * 3600e3).toISOString().slice(0, 10);
 const day = (n) => new Date(Date.parse(today + 'T00:00:00Z') + n * 86400e3).toISOString().slice(0, 10);
 const add = (res, dn, h, status = 'CONFIRMED', note = 'null') => sql(`insert into "Booking"(id,"restaurantId","unitId","customerId","serviceId","resourceId","startsAt","endsAt",status,"serviceName","durationMin","priceCents",note) values (gen_random_uuid(),'${rid}','${uid}','${cid}','${svc}','${res}','${day(dn)}T${String(h + 3).padStart(2, '0')}:00:00Z','${day(dn)}T${String(h + 3).padStart(2, '0')}:40:00Z','${status}','Corte',40,5000,${note})`);
-add(lucas, 0, 10); add(lucas, 0, 11, 'CANCELED'); add(ana, 0, 14); add(lucas, 1, 9, 'PENDING', `'=HYPERLINK("x")'`);
+// A semana vai de segunda a domingo: no domingo, "amanhã" já é a semana seguinte, então o agendamento extra cai em ontem.
+const sameWeek = new Date(Date.parse(today + 'T00:00:00Z')).getUTCDay() === 0 ? -1 : 1;
+add(lucas, 0, 10); add(lucas, 0, 11, 'CANCELED'); add(ana, 0, 14); add(lucas, sameWeek, 9, 'PENDING', `'=HYPERLINK("x")'`);
 const eom = new Date(Date.parse(today + 'T00:00:00Z')); // ao menos um no mês passado
 add(ana, -35, 10, 'COMPLETED');
 
@@ -46,7 +48,7 @@ assert.match(await p.getAttribute('a:has-text("Enviar pelo WhatsApp")', 'href'),
 assert.ok(await p.locator('text=não tem WhatsApp cadastrado').count());
 console.log('3. profissional sem WhatsApp OK');
 
-// 4. semana agrupada por dia (hoje e amanhã) e mês passado
+// 4. semana agrupada por dia (hoje e outro dia da mesma semana) e mês passado
 await p.click('[aria-label=Profissional] a:has-text("Todos")'); await p.waitForSelector('[aria-label=Profissional] a:has-text("Todos")[aria-current=true]');
 await p.click('[role=group][aria-label="Período"] a:has-text("Semana")'); await p.waitForURL('**per=semana**');
 assert.ok(await p.locator('section[aria-label*="/"] h2').count() >= 1);

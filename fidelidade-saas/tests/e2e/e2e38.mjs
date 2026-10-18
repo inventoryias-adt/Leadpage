@@ -27,9 +27,20 @@ const octx = await b.newContext({ viewport: { width: 1100, height: 900 } }); awa
 const o = await octx.newPage(); o.on('pageerror', (e) => console.log('PAGEERROR', e.message));
 await o.goto(BASE + '/login'); await o.fill('#email', 'ze@burger.com'); await o.fill('#password', 'senha-segura-1');
 await o.click('button[type=submit]'); await o.waitForURL('**/dashboard**');
+// O controle deslizante guarda a posição na escala. Se a página ainda não hidratou, o React devolve o valor antigo:
+// espera o React assumir o controle (propriedade __reactProps) e repete o preenchimento até o número na tela acompanhar.
+const slide = async (value) => {
+  await o.waitForFunction(() => { const e = document.querySelector('#e-rad'); return !!e && Object.keys(e).some((k) => k.startsWith('__reactProps')); }, null, { timeout: 60000 });
+  for (let i = 0; i < 20; i++) {
+    await o.fill('#e-rad', String(STEPS.indexOf(value)));
+    await wait(o, 300);
+    if ((await o.locator('[data-testid=radius-value]').innerText()).replace(/\s/g, '') === `${value}m`) return;
+  }
+  assert.fail(`o controle deslizante não foi para ${value} m`);
+};
 const setRadius = async (value) => {
   await o.goto(BASE + '/dashboard/configuracoes?abrir=tudo'); await o.waitForSelector('#e-rad');
-  await o.fill('#e-rad', String(STEPS.indexOf(value))); // o controle deslizante guarda a posição na escala
+  await slide(value);
   await o.click('form:has(#e-rad) button[type=submit]');
   for (let i = 0; i < 40 && radius() !== String(value); i++) await wait(o, 500);
   assert.equal(radius(), String(value));
@@ -53,9 +64,9 @@ assert.equal(await o.locator('#e-rad').getAttribute('type'), 'range'); // contro
 assert.equal(await o.locator('#e-rad').inputValue(), '0'); // posição 0 = 10 m (padrão)
 assert.equal(await o.locator('#e-rad').getAttribute('max'), String(STEPS.length - 1)); // vai até 500 m
 assert.equal((await o.locator('[data-testid=radius-value]').innerText()).trim(), '10 m');
-await o.fill('#e-rad', String(STEPS.length - 1)); assert.equal((await o.locator('[data-testid=radius-value]').innerText()).trim(), '500 m');
+await slide(500); assert.equal((await o.locator('[data-testid=radius-value]').innerText()).trim(), '500 m');
 assert.match(await o.locator('[data-testid=radius-hint]').innerText(), /máximo/i);
-await o.fill('#e-rad', '0'); // volta ao padrão sem salvar
+await slide(10); // volta ao padrão sem salvar
 let msg = await tryCheckIn();
 assert.match(msg, /dentro do local/); assert.doesNotMatch(msg, /\d/);
 assert.equal(sql(`select count(*) from "CheckIn" where "restaurantId"='${rid}'`), '0');
