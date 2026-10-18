@@ -11,6 +11,10 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
+  // Metadados sempre no <head> do HTML inicial, para qualquer navegador. Por padrão o Next 15 "transmite" os metadados
+  // para o fim do <body>, e o iPhone (Safari e Chrome) só lê o <link rel="manifest"> e o apple-mobile-web-app-title no
+  // <head>: o "Adicionar à Tela de Início" do painel ignorava o /gestor.webmanifest e instalava o app do cliente (/carteira).
+  htmlLimitedBots: /.*/,
   // Só no modo desenvolvimento (os testes de tela do CI): mantém as rotas já compiladas na memória em vez de descartá-las depois de um tempo parado,
   // para a volta a uma tela não ter de compilar de novo (isso passava de 60 s no CI e estourava a navegação).
   onDemandEntries: { maxInactiveAge: 60 * 60 * 1000, pagesBufferLength: 200 },
