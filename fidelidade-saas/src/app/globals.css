@@ -18,6 +18,34 @@
   --ice: #f7f8fa;
 }
 
+/* Toque longo no celular: sem o menu "Abrir / Copiar link / Compartilhar" com a pré-visualização da página nos links e botões,
+   e sem selecionar o texto da barra de abas nem dos botões (era isso que deixava o "toque fantasma" depois de segurar). */
+a,
+button,
+summary,
+[role='button'],
+img {
+  -webkit-touch-callout: none;
+}
+button,
+summary,
+[role='button'],
+.nav-tab,
+.action-tile,
+.chip-link,
+.card-link,
+.glass-button,
+.glass-button-ghost,
+.glass-button-lime,
+.glass-button-navy {
+  -webkit-user-select: none;
+  user-select: none;
+}
+a,
+img {
+  -webkit-user-drag: none;
+}
+
 html {
   -webkit-tap-highlight-color: transparent;
   /* Sem isso o iPhone aumenta a fonte ao girar e a página "vaza" para o lado. */
@@ -125,9 +153,11 @@ body {
     border-color: #0f1f3d;
     background-color: #0f1f3d;
   }
-  .glass-button:not(:disabled):hover {
-    border-color: #0b1b3a;
-    background-color: #0b1b3a;
+  @media (hover: hover) {
+    .glass-button:not(:disabled):hover {
+      border-color: #0b1b3a;
+      background-color: #0b1b3a;
+    }
   }
 
   /* Botão de ação principal da tela (ex.: "Fazer pedido"): azul-marinho, mais firme que o azul comum. */
@@ -136,9 +166,11 @@ body {
     border-color: #0f1f3d;
     background-color: #0f1f3d;
   }
-  .glass-button-navy:not(:disabled):hover {
-    border-color: #0b1b3a;
-    background-color: #0b1b3a;
+  @media (hover: hover) {
+    .glass-button-navy:not(:disabled):hover {
+      border-color: #0b1b3a;
+      background-color: #0b1b3a;
+    }
   }
 
   /* Botão principal em destaque: lima da marca com texto marinho. */
@@ -147,9 +179,11 @@ body {
     border-color: #c6f432;
     background-color: #c6f432;
   }
-  .glass-button-lime:not(:disabled):hover {
-    border-color: #b3e01c;
-    background-color: #b3e01c;
+  @media (hover: hover) {
+    .glass-button-lime:not(:disabled):hover {
+      border-color: #b3e01c;
+      background-color: #b3e01c;
+    }
   }
 
   .glass-button-ghost {
@@ -157,9 +191,11 @@ body {
     border-color: #cbd2dc;
     background-color: #fff;
   }
-  .glass-button-ghost:not(:disabled):hover {
-    border-color: #94a3b8;
-    background-color: #e9edf3;
+  @media (hover: hover) {
+    .glass-button-ghost:not(:disabled):hover {
+      border-color: #94a3b8;
+      background-color: #e9edf3;
+    }
   }
 
   .btn-danger {
@@ -167,9 +203,11 @@ body {
     border-color: #e5b4b4;
     background-color: #fff;
   }
-  .btn-danger:not(:disabled):hover {
-    border-color: #dc2626;
-    background-color: #fef2f2;
+  @media (hover: hover) {
+    .btn-danger:not(:disabled):hover {
+      border-color: #dc2626;
+      background-color: #fef2f2;
+    }
   }
 
   /* Botão-ícone de ação (foto, buscar, editar): mesmo tamanho lado a lado, ícone em cima do texto. */
@@ -177,9 +215,11 @@ body {
     @apply flex min-h-[3.5rem] cursor-pointer select-none flex-col items-center justify-center gap-1 rounded-lg border bg-white px-1 py-2 text-center text-xs font-semibold leading-tight text-slate-800 transition-colors;
     border-color: #cbd2dc;
   }
-  .action-tile:hover {
-    border-color: #94a3b8;
-    background-color: #e9edf3;
+  @media (hover: hover) {
+    .action-tile:hover {
+      border-color: #94a3b8;
+      background-color: #e9edf3;
+    }
   }
   .action-tile[aria-expanded='true'] {
     border-color: #2150c9;
@@ -202,18 +242,22 @@ body {
     cursor: pointer;
     transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   }
-  .nav-tab:hover {
-    @apply text-primary;
-    background-color: #eaf0ff;
+  @media (hover: hover) {
+    .nav-tab:hover {
+      @apply text-primary;
+      background-color: #eaf0ff;
+    }
   }
   /* Aba ativa do painel: pílula marinho com texto branco (igual ao PDF). */
   .nav-tab-active {
     @apply border-transparent font-bold text-white;
     background-color: #0f1f3d;
   }
-  .nav-tab-active:hover {
-    @apply text-white;
-    background-color: #0b1b3a;
+  @media (hover: hover) {
+    .nav-tab-active:hover {
+      @apply text-white;
+      background-color: #0b1b3a;
+    }
   }
 
   /* Aba ativa das barras do celular e do app do cliente: pílula lima com ícone e texto marinhos. */
@@ -256,15 +300,19 @@ body {
     cursor: pointer;
     transition: background-color 0.15s ease, border-color 0.15s ease;
   }
-  .chip-link:hover {
-    @apply bg-[#F3F6FD];
-    border-color: #2150c9;
+  @media (hover: hover) {
+    .chip-link:hover {
+      @apply bg-[#F3F6FD];
+      border-color: #2150c9;
+    }
   }
   .chip-link-active,
-  .chip-link-active:hover {
-    @apply font-semibold text-white;
-    background-color: #0f1f3d;
-    border-color: #0f1f3d;
+  @media (hover: hover) {
+    .chip-link-active:hover {
+      @apply font-semibold text-white;
+      background-color: #0f1f3d;
+      border-color: #0f1f3d;
+    }
   }
 
   /* Link de texto dentro de conteúdo. */
@@ -273,8 +321,10 @@ body {
     cursor: pointer;
     transition: color 0.15s ease;
   }
-  .link-inline:hover {
-    @apply text-primary underline;
+  @media (hover: hover) {
+    .link-inline:hover {
+      @apply text-primary underline;
+    }
   }
 
   /* Cartão inteiro clicável. */
@@ -282,10 +332,12 @@ body {
     cursor: pointer;
     transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
   }
-  .card-link:hover {
-    border-color: #94a3b8;
-    background-color: #fff;
-    box-shadow: 0 1px 3px rgba(15, 31, 61, 0.1);
+  @media (hover: hover) {
+    .card-link:hover {
+      border-color: #94a3b8;
+      background-color: #fff;
+      box-shadow: 0 1px 3px rgba(15, 31, 61, 0.1);
+    }
   }
 
   /* Etiqueta calma (azul bem claro): para listas cheias, em vez da lima que chama atenção. */

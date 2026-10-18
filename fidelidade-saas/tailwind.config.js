@@ -1,5 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  // `hover:` só vale em aparelhos com mouse: no celular o efeito não fica "grudado" depois do toque.
+  future: { hoverOnlyWhenSupported: true },
   content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     extend: {
