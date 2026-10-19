@@ -36,7 +36,7 @@ export default async function ClaimPage({ params }: { params: Promise<{ token: s
 
   if (!claim) return <Message title="QR Code inválido" text="Confira o link ou peça um novo no balcão." />;
   if (claim.redeemedAt) return <Message title="QR Code já utilizado" text="Esses pontos já foram creditados em uma carteira." />;
-  if (claim.expiresAt < new Date()) return <Message title="QR Code expirado" text="Peça um novo no balcão do restaurante." />;
+  if (claim.expiresAt < new Date()) return <Message title="QR Code expirado" text="Peça um novo no balcão do estabelecimento." />;
 
   // Mostra a unidade onde a compra foi lançada (ou todas, se não houver registro).
   const hoursUnits = claim.unit ? [claim.unit] : claim.restaurant.units;

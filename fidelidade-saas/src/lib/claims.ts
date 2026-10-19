@@ -254,7 +254,7 @@ export async function redeemItems(customerId: string, restaurantId: string, rawI
     });
     const limit = restaurant.maxRedeemsPerMonth;
     if (usedThisMonth >= limit) {
-      throw new BusinessError(`Limite de ${limit} resgates por mês atingido neste restaurante.`);
+      throw new BusinessError(`Limite de ${limit} resgates por mês atingido neste estabelecimento.`);
     }
     if (usedThisMonth + totalQty > limit) {
       const left = limit - usedThisMonth;

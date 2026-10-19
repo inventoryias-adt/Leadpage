@@ -412,7 +412,7 @@ export function IdentityForm({ defaults, placeName, supportEnv }: { defaults: Id
   return (
     <form action={action} className="space-y-5">
       <div className="grid gap-5 sm:grid-cols-2">
-        <ImageUpload name="logoData" label="Logo do restaurante" currentUrl={defaults.logoUrl} maxSide={320} hint="Quadrada, fundo claro funciona melhor." />
+        <ImageUpload name="logoData" label="Logo do estabelecimento" currentUrl={defaults.logoUrl} maxSide={320} hint="Quadrada, fundo claro funciona melhor." />
         <ImageUpload name="coverData" label="Foto de capa" currentUrl={defaults.coverUrl} maxSide={1100} shape="wide" hint="A foto que o cliente vê no topo da sua página." />
       </div>
 
@@ -446,7 +446,7 @@ export function IdentityForm({ defaults, placeName, supportEnv }: { defaults: Id
         </div>
         <div>
           <label className="glass-label" htmlFor="i-ig">Instagram</label>
-          <input id="i-ig" name="instagram" className="glass-input" placeholder="@seurestaurante" defaultValue={state.values?.instagram ?? defaults.instagram} autoCapitalize="none" />
+          <input id="i-ig" name="instagram" className="glass-input" placeholder="@seunegocio" defaultValue={state.values?.instagram ?? defaults.instagram} autoCapitalize="none" />
         </div>
       </div>
 

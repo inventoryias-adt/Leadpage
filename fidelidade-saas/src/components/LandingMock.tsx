@@ -26,9 +26,9 @@ function Area() {
 
 function Stat({ label, value, delta, up }: { label: string; value: string; delta: string; up?: boolean }) {
   return (
-    <div className="min-w-0 flex-1 border-l border-[#E5E7EB] px-4 first:border-l-0">
-      <div className="flex items-center justify-between gap-2">
-        <p className="truncate text-xs font-semibold text-slate-700">{label}</p>
+    <div className="min-w-0 flex-1 border-l border-[#E5E7EB] px-3 first:border-l-0 sm:px-4">
+      <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+        <p className="text-xs font-semibold text-slate-700 sm:truncate">{label}</p>
         <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold ${up ? 'bg-blue-100 text-electric-600' : 'bg-rose-100 text-rose-600'}`}>{delta}</span>
       </div>
       <p className="mt-1 text-xl font-extrabold text-primary">{value}</p>

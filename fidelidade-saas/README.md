@@ -527,3 +527,11 @@ Antes, o botão "Ver agendamentos / Ver grade do dia" só existia no período **
 - **Lista**: como antes, agrupada por dia na semana e no mês.
 - **Tela mais enxuta no celular**: descrição escondida, "Serviços e regras" vira o ícone ao lado da chave, filtros em uma fila que rola de lado, resumo do período ("3 agendamentos · 1 aguardando · 1 confirmado…") e WhatsApp/CSV na mesma linha.
 - Testes: `e2e55` (novo); ajustados `e2e23` (também ganhou o domingo: "amanhã" cai na semana seguinte) e `e2e48`; `e2e38` espera o React assumir o controle deslizante antes de preencher.
+
+## Ajustes antes de vender (pré-lançamento)
+
+- **Assistente escondido**: o botão "em breve" só aparece com `NEXT_PUBLIC_ASSISTANT=1` (`src/lib/features.ts`). O componente continua no código; o `e2e44` agora confere que ele não aparece nem para o cliente nem para o dono.
+- **Texto neutro**: "restaurante" saiu das telas que servem qualquer tipo de negócio (configurações, pontos por foto, página do lugar, QR do balcão, limite de resgates) e virou "estabelecimento"/"seu negócio". Os exemplos de segmentos na página de venda continuam.
+- **Página de venda no celular**: na amostra do painel, o nome de cada número (Pontuações, Resgates, Clientes) fica acima da variação em vez de ser cortado.
+- **Buscadores**: `robots.txt` (libera só as páginas públicas) e `sitemap.xml`, usando `APP_URL` como endereço base — troque `APP_URL` ao ligar o domínio próprio. Teste: `e2e56`.
+- **Migração `0033_rls_nas_tabelas_restantes`**: liga o RLS (sem políticas) em `AppCampaign`, `Booking`, `CustomerAddress`, `PasswordReset`, `Resource`, `ResourceService` e `Service`, como já foi feito nas demais na `0032`. O app é dono das tabelas e não é afetado. **Aplicar em produção só com OK do responsável.**
