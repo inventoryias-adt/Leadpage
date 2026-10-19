@@ -515,3 +515,15 @@ Quem lê o QR Code do cartaz cai no app do cliente (`/entrar`); o comerciante in
 - **Antispam**: campo-isca escondido (robô que preenche é ignorado sem gravar), no máximo 6 envios por hora por IP e 3 por dia por e-mail.
 - **Administração**: `/admin/contatos` lista os interessados (Novos / Todos), com WhatsApp, e-mail, mensagem, origem (QR Code, app, site), e botões *Marcar como contatado*, *Virou cliente*, *Sem interesse* e *Reabrir*. O menu mostra a quantidade de novos.
 - Teste: `e2e51`.
+
+## Agenda do dono: Calendário e Lista em todos os períodos (migration: nenhuma)
+
+Antes, o botão "Ver agendamentos / Ver grade do dia" só existia no período **Dia**; ao tocar em Semana ou Mês ele sumia e só restava a lista.
+
+- **Chave "Calendário | Lista"** no topo, sempre visível (Dia, Semana, Mês e Mês passado). A escolha vai na URL (`?vista=lista`; calendário é o padrão) e **acompanha a pessoa** ao trocar de período, de dia ou de profissional, e ao voltar de uma ação (concluir, faltou, cancelar).
+- **Dia**: a grade por profissional de sempre (`AgendaGrid`).
+- **Semana** (`AgendaWeek`): sete colunas (segunda a domingo) com horas na lateral; cada atendimento é um bloco na cor da situação, com a faixa da cor do profissional; atendimentos que se sobrepõem ficam lado a lado e a coluna do dia cresce para o texto caber. Tocar no cabeçalho do dia abre o dia; tocar no bloco abre os detalhes e as ações. No celular a semana abre **centrada no dia de hoje** (`ScrollToToday`).
+- **Mês** (`AgendaMonth`): calendário com a contagem de cada dia e pontinhos por situação (aguardando, confirmado, concluído, faltou); tocar num dia abre aquele dia.
+- **Lista**: como antes, agrupada por dia na semana e no mês.
+- **Tela mais enxuta no celular**: descrição escondida, "Serviços e regras" vira o ícone ao lado da chave, filtros em uma fila que rola de lado, resumo do período ("3 agendamentos · 1 aguardando · 1 confirmado…") e WhatsApp/CSV na mesma linha.
+- Testes: `e2e55` (novo); ajustados `e2e23` (também ganhou o domingo: "amanhã" cai na semana seguinte) e `e2e48`; `e2e38` espera o React assumir o controle deslizante antes de preencher.
