@@ -9,6 +9,7 @@ import { appUrl } from '@/lib/payments';
 import { parseSchedule } from '@/lib/hours';
 import { logout } from '@/app/actions/auth';
 import { AssistantFab } from '@/components/AssistantFab';
+import { ASSISTANT_ON } from '@/lib/features';
 import { DashboardNav } from '@/components/DashboardNav';
 import { requireRestaurant } from '@/lib/session';
 import { UnitSwitcher } from '@/components/UnitSwitcher';
@@ -87,7 +88,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
       {children}
 
-      {ready && <AssistantFab role="dono" />}
+      {ASSISTANT_ON && ready && <AssistantFab role="dono" />}
 
       {/* Barra inferior no celular: o caixa usa o painel com uma mão só. */}
       {ready && (

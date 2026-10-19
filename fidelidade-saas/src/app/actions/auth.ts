@@ -43,7 +43,7 @@ export async function signup(_: FormState, formData: FormData): Promise<FormStat
       // Sugestões iniciais de interação — o dono ajusta no onboarding.
       interactionRules: {
         create: [
-          { label: 'Foto no Instagram marcando o restaurante', points: 50 },
+          { label: 'Foto no Instagram marcando o estabelecimento', points: 50 },
           { label: 'Avaliação 5 estrelas no Google', points: 100 },
         ],
       },

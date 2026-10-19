@@ -33,7 +33,7 @@ export function SignupForm() {
       </div>
       <div>
         <label className="glass-label" htmlFor="email">E-mail profissional</label>
-        <input id="email" name="email" type="email" defaultValue={state.values?.email} className="glass-input" placeholder="contato@restaurante.com" autoComplete="off" required />
+        <input id="email" name="email" type="email" defaultValue={state.values?.email} className="glass-input" placeholder="contato@seunegocio.com.br" autoComplete="off" required />
       </div>
       <div>
         <label className="glass-label" htmlFor="phone">Telefone / WhatsApp</label>

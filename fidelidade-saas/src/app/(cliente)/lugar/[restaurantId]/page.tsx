@@ -246,9 +246,9 @@ export default async function LugarPage({
                       <p className="font-bold text-slate-800">Check-in no local</p>
                       <span className="chip-soft">+{restaurant.checkInPoints} {restaurant.checkInPoints === 1 ? 'pt' : 'pts'}</span>
                     </div>
-                    <p className="text-sm text-slate-500">Uma vez por dia, estando no restaurante.</p>
+                    <p className="text-sm text-slate-500">Uma vez por dia, estando no local.</p>
                     {customer && hasCoords && <div className="mt-3"><CheckInButton restaurantId={restaurantId} points={restaurant.checkInPoints} /></div>}
-                    {customer && !hasCoords && <p className="mt-2 text-xs text-slate-500">O restaurante ainda não configurou a localização.</p>}
+                    {customer && !hasCoords && <p className="mt-2 text-xs text-slate-500">O estabelecimento ainda não configurou a localização.</p>}
                   </div>
                 </div>
               </li>

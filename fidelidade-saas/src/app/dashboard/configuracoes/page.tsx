@@ -164,7 +164,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
       {onboarding && (
         <div className="glass-panel p-6 text-center">
           <h1 className="mb-1 text-2xl font-extrabold text-primary">Pagamento confirmado!</h1>
-          <p className="text-slate-600">Configure seu restaurante em poucos passos e comece a pontuar. O essencial: endereço, horários e ao menos um produto.</p>
+          <p className="text-slate-600">Configure seu negócio em poucos passos e comece a pontuar. O essencial: endereço, horários e ao menos um produto.</p>
         </div>
       )}
 
@@ -211,7 +211,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
         <BasicsForm defaults={{ name: restaurant.name }} />
       </Block>
 
-      <Block id="identidade" title="Identidade da marca" hint="Como seu restaurante aparece para os clientes no app.">
+      <Block id="identidade" title="Identidade da marca" hint="Como seu negócio aparece para os clientes no app.">
         <IdentityForm
           placeName={restaurant.name}
           supportEnv={{ email: process.env.SUPPORT_EMAIL, whatsapp: process.env.SUPPORT_WHATSAPP }}
