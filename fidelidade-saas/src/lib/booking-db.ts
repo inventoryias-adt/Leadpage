@@ -2,7 +2,7 @@ import 'server-only';
 import type { Prisma } from '@prisma/client';
 import { prisma } from './db';
 import { BusinessError, creditClaimWith } from './claims';
-import { REMINDER_LEAD_MIN, REMINDER_MIN_AHEAD_MIN, availableSlots, bookingPoints, canCustomerCancel, dayStartUtc, formatBookingWhen, hmOf, parseDateKey, pickResource, reminderDue, type BusyRange, type Slot } from './booking';
+import { REMINDER_LEAD_MIN, REMINDER_MIN_AHEAD_MIN, availableSlots, bookingPoints, canCustomerCancel, dayStartUtc, formatBookingWhen, hmOf, addDaysKey, nearestSlots, parseDateKey, pickResource, reminderDue, todayKey, type BusyRange, type Slot } from './booking';
 import { suggestsBooking } from './categories';
 import { parseSchedule } from './hours';
 import { sendEmail } from './mailer';
@@ -14,6 +14,12 @@ import { formatPhone } from './br';
 import { newClaimToken } from './tokens';
 
 type Db = Prisma.TransactionClient | typeof prisma;
+
+/** O horário escolhido já não está livre (alguém fechou antes). Quem captura mostra outras opções ao cliente. */
+export class SlotGoneError extends BusinessError {}
+
+/** Por quantos minutos um horário fica segurado para quem está confirmando. */
+export const HOLD_MIN = 5;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 type Policy = { bookingMinNoticeMin: number; bookingMaxDaysAhead: number };
@@ -78,14 +84,15 @@ export async function staffFor(db: Db, args: { restaurantId: string; service: Se
 /** Horários livres de um serviço numa unidade em um dia, com o que está ocupado (para escolher o profissional). */
 export async function slotsForDay(
   db: Db,
-  args: { restaurantId: string; policy: Policy; service: ServiceLike; unit: { id: string; openingSchedule: unknown }; date: string; now?: Date; resourceId?: string | null; ignoreBookingId?: string },
+  args: { restaurantId: string; policy: Policy; service: ServiceLike; unit: { id: string; openingSchedule: unknown }; date: string; now?: Date; resourceId?: string | null; ignoreBookingId?: string; customerId?: string },
 ): Promise<{ slots: Slot[]; busy: BusyRange[] }> {
   const { restaurantId, policy, service, unit, date } = args;
   if (!parseDateKey(date)) return { slots: [], busy: [] };
   const staff = await staffFor(db, { restaurantId, service, unitId: unit.id, resourceId: args.resourceId });
   if (staff.length === 0) return { slots: [], busy: [] };
   const start = dayStartUtc(date);
-  const busy = await db.booking.findMany({
+  const now = args.now ?? new Date();
+  const busyBookings = await db.booking.findMany({
     where: {
       resourceId: { in: staff.map((r) => r.id) },
       ...(args.ignoreBookingId ? { id: { not: args.ignoreBookingId } } : {}), // reagendando: o horário atual do próprio cliente não conta como ocupado
@@ -95,17 +102,90 @@ export async function slotsForDay(
     },
     select: { resourceId: true, startsAt: true, endsAt: true },
   });
+  // Horários que outras pessoas estão confirmando agora (a reserva de poucos minutos) também contam como ocupados; a do próprio cliente não.
+  const holds = await db.slotHold.findMany({
+    where: {
+      resourceId: { in: staff.map((r) => r.id) },
+      expiresAt: { gt: now },
+      ...(args.customerId ? { customerId: { not: args.customerId } } : {}),
+      startsAt: { lt: new Date(start.getTime() + 2 * DAY_MS) },
+      endsAt: { gt: start },
+    },
+    select: { resourceId: true, startsAt: true, endsAt: true },
+  });
+  const busy: BusyRange[] = [...busyBookings, ...holds];
   const slots = availableSlots({
     date,
     schedule: parseSchedule(unit.openingSchedule),
     durationMin: service.durationMin,
     resources: staff.map((r) => ({ id: r.id, capacity: r.capacity, durationMin: r.durationMin, schedule: r.schedule })),
     busy,
-    now: args.now ?? new Date(),
+    now,
     minNoticeMin: policy.bookingMinNoticeMin,
     maxDaysAhead: policy.bookingMaxDaysAhead,
   });
   return { slots, busy };
+}
+
+export type FreeSlot = { date: string; time: string };
+type DayArgs = { restaurantId: string; policy: Policy; service: ServiceLike; unit: { id: string; openingSchedule: unknown }; resourceId?: string | null; customerId?: string; ignoreBookingId?: string };
+
+/** Os próximos horários livres a partir de um dia (até `days` dias à frente): o primeiro de cada dia, para dar opções variadas. */
+export async function firstFreeSlots(db: Db, args: DayArgs & { from: string; days?: number; limit?: number }): Promise<FreeSlot[]> {
+  const out: FreeSlot[] = [];
+  const limit = args.limit ?? 3;
+  for (let i = 0; i < (args.days ?? 14) && out.length < limit; i++) {
+    const date = addDaysKey(args.from, i);
+    const { slots } = await slotsForDay(db, { ...args, date });
+    if (slots[0]) out.push({ date, time: slots[0].time });
+  }
+  return out;
+}
+
+/** Saídas para quem perdeu o horário: os mais próximos no mesmo dia e, se faltar, o primeiro de cada um dos próximos dias. */
+export async function alternativeSlots(db: Db, args: DayArgs & { date: string; time: string; limit?: number }): Promise<FreeSlot[]> {
+  const limit = args.limit ?? 3;
+  const { slots } = await slotsForDay(db, args);
+  const out: FreeSlot[] = nearestSlots(slots, args.time, limit).map((s) => ({ date: args.date, time: s.time }));
+  if (out.length < limit) out.push(...(await firstFreeSlots(db, { ...args, from: addDaysKey(args.date, 1), days: 7, limit: limit - out.length })));
+  return out;
+}
+
+export type HoldInput = { restaurantId: string; serviceId: string; unitId: string; date: string; time: string; resourceId?: string | null };
+
+/**
+ * Segura o horário para o cliente por HOLD_MIN minutos enquanto ele confirma: some da lista dos outros e volta sozinho se ele
+ * desistir. Cada cliente segura um horário por vez em cada lugar. Mesmo cadeado do agendamento, então não há corrida.
+ */
+export async function holdSlot(customerId: string, input: HoldInput) {
+  return prisma.$transaction(
+    async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${input.restaurantId}))`;
+      const restaurant = await tx.restaurant.findUnique({ where: { id: input.restaurantId } });
+      if (!restaurant || restaurant.subscriptionStatus !== 'ACTIVE' || !restaurant.onboardedAt) throw new BusinessError('Este lugar não está recebendo agendamentos agora.');
+      const [service, unit] = await Promise.all([
+        tx.service.findFirst({ where: { id: input.serviceId, restaurantId: restaurant.id, active: true } }),
+        tx.unit.findFirst({ where: { id: input.unitId, restaurantId: restaurant.id, active: true } }),
+      ]);
+      if (!service || !unit) throw new BusinessError('Este serviço não está mais disponível.');
+      if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(input.time)) throw new BusinessError('Horário inválido.');
+      const now = new Date();
+      await tx.slotHold.deleteMany({ where: { restaurantId: restaurant.id, expiresAt: { lte: now } } }); // limpeza das reservas vencidas
+
+      const { slots, busy } = await slotsForDay(tx, { restaurantId: restaurant.id, policy: restaurant, service, unit, date: input.date, resourceId: input.resourceId || null, customerId, now });
+      const slot = slots.find((s) => s.time === input.time);
+      if (!slot) throw new SlotGoneError('Esse horário acabou de ser ocupado ou não está mais disponível.');
+      const resourceId = pickResource(slot.resourceIds, busy);
+      if (!resourceId) throw new SlotGoneError('Esse horário não está mais disponível.');
+      const durationMin = slot.durationByResource[resourceId] ?? service.durationMin;
+      const endsAt = new Date(slot.startsAt.getTime() + durationMin * 60_000);
+      const expiresAt = new Date(now.getTime() + HOLD_MIN * 60_000);
+      const data = { unitId: unit.id, resourceId, startsAt: slot.startsAt, endsAt, expiresAt };
+      await tx.slotHold.upsert({ where: { customerId_restaurantId: { customerId, restaurantId: restaurant.id } }, create: { customerId, restaurantId: restaurant.id, ...data }, update: data });
+      return { expiresAt, resourceId };
+    },
+    { timeout: 15_000 },
+  );
 }
 
 export type BookInput = { restaurantId: string; serviceId: string; unitId: string; date: string; time: string; partySize?: number | null; note?: string; usePoints?: number; resourceId?: string | null };
@@ -142,11 +222,14 @@ async function bookSlotTx(customerId: string, input: BookInput) {
         if (!Number.isInteger(partySize) || partySize < 1 || partySize > 30) throw new BusinessError('Informe quantas pessoas (de 1 a 30).');
       }
 
-      const { slots, busy } = await slotsForDay(tx, { restaurantId: restaurant.id, policy: restaurant, service, unit, date: input.date, resourceId: input.resourceId || null });
+      const { slots, busy } = await slotsForDay(tx, { restaurantId: restaurant.id, policy: restaurant, service, unit, date: input.date, resourceId: input.resourceId || null, customerId });
       const slot = slots.find((s) => s.time === input.time);
-      if (!slot) throw new BusinessError('Esse horário acabou de ser ocupado ou não está mais disponível. Escolha outro.');
-      const resourceId = pickResource(slot.resourceIds, busy);
-      if (!resourceId) throw new BusinessError('Esse horário não está mais disponível. Escolha outro.');
+      if (!slot) throw new SlotGoneError('Esse horário acabou de ser ocupado ou não está mais disponível. Escolha outro.');
+      // Se o cliente tinha este horário reservado, fica com o mesmo profissional da reserva.
+      const mine = await tx.slotHold.findUnique({ where: { customerId_restaurantId: { customerId, restaurantId: restaurant.id } } });
+      const held = mine && mine.expiresAt > new Date() && mine.startsAt.getTime() === slot.startsAt.getTime() && slot.resourceIds.includes(mine.resourceId) ? mine.resourceId : null;
+      const resourceId = held ?? pickResource(slot.resourceIds, busy);
+      if (!resourceId) throw new SlotGoneError('Esse horário não está mais disponível. Escolha outro.');
       const durationMin = slot.durationByResource[resourceId] ?? service.durationMin; // cada profissional leva o seu tempo
       const endsAt = new Date(slot.startsAt.getTime() + durationMin * 60_000);
       const clash = await tx.booking.count({
@@ -194,6 +277,7 @@ async function bookSlotTx(customerId: string, input: BookInput) {
           discountCents,
         },
       });
+      await tx.slotHold.deleteMany({ where: { customerId, restaurantId: restaurant.id } });
       await notify(tx, {
         customerId,
         restaurantId: restaurant.id,
@@ -233,13 +317,13 @@ export async function rescheduleBooking(customerId: string, bookingId: string, i
       if (!service || !unit) throw new BusinessError('Este serviço não está mais disponível para remarcar. Cancele e agende de novo.');
       if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(input.time)) throw new BusinessError('Horário inválido.');
 
-      const { slots, busy } = await slotsForDay(tx, { restaurantId: restaurant.id, policy: restaurant, service, unit, date: input.date, resourceId: input.resourceId || null, ignoreBookingId: booking.id });
+      const { slots, busy } = await slotsForDay(tx, { restaurantId: restaurant.id, policy: restaurant, service, unit, date: input.date, resourceId: input.resourceId || null, ignoreBookingId: booking.id, customerId });
       const slot = slots.find((s) => s.time === input.time);
-      if (!slot) throw new BusinessError('Esse horário acabou de ser ocupado ou não está mais disponível. Escolha outro.');
+      if (!slot) throw new SlotGoneError('Esse horário acabou de ser ocupado ou não está mais disponível. Escolha outro.');
       // Mantém o mesmo profissional quando ele está livre (a menos que o cliente tenha escolhido outro).
       const preferred = !input.resourceId && booking.resourceId && slot.resourceIds.includes(booking.resourceId) ? booking.resourceId : null;
       const resourceId = preferred ?? pickResource(slot.resourceIds, busy);
-      if (!resourceId) throw new BusinessError('Esse horário não está mais disponível. Escolha outro.');
+      if (!resourceId) throw new SlotGoneError('Esse horário não está mais disponível. Escolha outro.');
       if (resourceId === booking.resourceId && slot.startsAt.getTime() === booking.startsAt.getTime()) throw new BusinessError('Escolha um dia, horário ou profissional diferente do atual.');
       const durationMin = slot.durationByResource[resourceId] ?? service.durationMin;
       const endsAt = new Date(slot.startsAt.getTime() + durationMin * 60_000);

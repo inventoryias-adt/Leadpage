@@ -5,9 +5,9 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { canCustomerCancel } from '@/lib/booking';
-import { answerReminder, bookSlot, cancelBooking, rescheduleBooking } from '@/lib/booking-db';
+import { SlotGoneError, alternativeSlots, answerReminder, bookSlot, cancelBooking, holdSlot, rescheduleBooking } from '@/lib/booking-db';
 import { BusinessError } from '@/lib/claims';
-import { fail, type FormState } from '@/lib/form';
+import { fail, type BookingState, type FormState, type HoldState } from '@/lib/form';
 import { TOO_MANY, allow } from '@/lib/rate-limit';
 import { getCustomer } from '@/lib/session';
 
@@ -24,7 +24,7 @@ const schema = z.object({
 });
 
 /** O cliente confirma o horário escolhido. Tudo é conferido de novo aqui (nada vem pronto do navegador). */
-export async function createBooking(_: FormState, formData: FormData): Promise<FormState> {
+export async function createBooking(_: BookingState, formData: FormData): Promise<BookingState> {
   const customer = await getCustomer();
   if (!customer) return { error: 'Sua sessão expirou. Entre novamente para agendar.' };
   const parsed = schema.safeParse({
@@ -47,6 +47,8 @@ export async function createBooking(_: FormState, formData: FormData): Promise<F
     const booking = await bookSlot(customer.id, { ...d, partySize: d.partySize ? Number(d.partySize) : null, usePoints: Number(d.usePoints) || 0, resourceId: /^[0-9a-f-]{36}$/.test(d.resourceId) ? d.resourceId : null });
     id = booking.id;
   } catch (e) {
+    // Alguém fechou o horário antes: em vez de só avisar, já oferece os mais próximos.
+    if (e instanceof SlotGoneError) return { ...fail(e.message, formData), alternatives: await suggestAlternatives(customer.id, d.restaurantId, d.serviceId, d.unitId, d.date, d.time, d.resourceId) };
     if (e instanceof BusinessError) return fail(e.message, formData);
     throw e;
   }
@@ -116,4 +118,47 @@ export async function answerBookingReminder(formData: FormData) {
   revalidatePath('/perfil/agendamentos');
   revalidatePath(base);
   redirect(result.canceled ? `${base}?liberado=1` : `${base}?presenca=1`);
+}
+
+
+/** Os horários livres mais próximos do que o cliente queria, para oferecer quando alguém pegou o horário antes. */
+async function suggestAlternatives(customerId: string, restaurantId: string, serviceId: string, unitId: string, date: string, time: string, resourceId: string) {
+  try {
+    const [restaurant, service, unit] = await Promise.all([
+      prisma.restaurant.findUnique({ where: { id: restaurantId } }),
+      prisma.service.findFirst({ where: { id: serviceId, restaurantId, active: true } }),
+      prisma.unit.findFirst({ where: { id: unitId, restaurantId, active: true } }),
+    ]);
+    if (!restaurant || !service || !unit) return [];
+    return await alternativeSlots(prisma, { restaurantId, policy: restaurant, service, unit, date, time, resourceId: /^[0-9a-f-]{36}$/.test(resourceId) ? resourceId : null, customerId, limit: 3 });
+  } catch {
+    return [];
+  }
+}
+
+const holdSchema = z.object({
+  restaurantId: z.string().regex(/^[0-9a-f-]{36}$/),
+  serviceId: z.string().regex(/^[0-9a-f-]{36}$/),
+  unitId: z.string().regex(/^[0-9a-f-]{36}$/),
+  resourceId: z.string().default(''),
+  date: z.string(),
+  time: z.string(),
+});
+
+/** Segura o horário escolhido para o cliente por alguns minutos (a tela chama assim que ele abre o "Confirmar"). */
+export async function holdBookingSlot(input: z.input<typeof holdSchema>): Promise<HoldState> {
+  const customer = await getCustomer();
+  if (!customer) return { ok: false, error: 'Sua sessão expirou. Entre novamente para agendar.' };
+  const parsed = holdSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: 'Não foi possível ler o horário. Escolha de novo.' };
+  if (!(await allow(`hold:${customer.id}`, 60, 3600))) return { ok: false, error: TOO_MANY };
+  const d = parsed.data;
+  try {
+    const hold = await holdSlot(customer.id, { ...d, resourceId: /^[0-9a-f-]{36}$/.test(d.resourceId) ? d.resourceId : null });
+    return { ok: true, expiresAt: hold.expiresAt.toISOString() };
+  } catch (e) {
+    if (e instanceof SlotGoneError) return { ok: false, gone: true, error: e.message, alternatives: await suggestAlternatives(customer.id, d.restaurantId, d.serviceId, d.unitId, d.date, d.time, d.resourceId) };
+    if (e instanceof BusinessError) return { ok: false, error: e.message };
+    throw e;
+  }
 }

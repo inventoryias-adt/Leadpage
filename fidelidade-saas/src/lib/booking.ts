@@ -173,3 +173,24 @@ export function formatBookingWhen(at: Date): string {
   const hora = m === '00' ? `${Number(h)}h` : `${Number(h)}h${m}`;
   return `${dias[local.getUTCDay()]}, ${String(local.getUTCDate()).padStart(2, '0')}/${String(local.getUTCMonth() + 1).padStart(2, '0')} às ${hora}`;
 }
+
+/**
+ * Os horários livres mais perto do que a pessoa queria (do mais próximo ao mais distante; em empate, o mais cedo),
+ * sem repetir o próprio horário pedido. Usado para oferecer saídas quando alguém pegou o horário antes.
+ */
+export function nearestSlots<T extends { time: string }>(slots: T[], time: string, n: number): T[] {
+  const want = toMin(time);
+  return slots
+    .filter((s) => s.time !== time)
+    .sort((a, b) => Math.abs(toMin(a.time) - want) - Math.abs(toMin(b.time) - want) || toMin(a.time) - toMin(b.time))
+    .slice(0, n);
+}
+
+/** "02:35" para o contador da reserva do horário. */
+export const formatCountdown = (ms: number) => {
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+};
+
+/** Link de um horário sugerido, mantendo serviço, unidade e profissional já escolhidos na tela de agendar. */
+export const slotHref = (hrefBase: string, o: { date: string; time: string }) => `${hrefBase}${hrefBase.includes('?') ? '&' : '?'}data=${o.date}&hora=${o.time}`;

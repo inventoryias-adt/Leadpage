@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { answerBookingReminder, cancelMyBooking } from '@/app/actions/booking';
 import { Icon } from '@/components/Icons';
-import { canCustomerCancel, formatBookingWhen } from '@/lib/booking';
+import { bookingPoints, canCustomerCancel, formatBookingWhen } from '@/lib/booking';
+import { directionsUrl, googleCalendarUrl } from '@/lib/calendar-links';
 import { prisma } from '@/lib/db';
 import { formatBRL, formatPoints } from '@/lib/points';
 import { requireCustomer } from '@/lib/session';
@@ -25,12 +26,32 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
     where: { customerId: customer.id },
     orderBy: { startsAt: 'desc' },
     take: 100,
-    include: { restaurant: { select: { id: true, name: true, bookingCancelHours: true } }, unit: { select: { name: true, address: true } }, resource: { select: { name: true } } },
+    include: { restaurant: { select: { id: true, name: true, bookingCancelHours: true, pointsPerReal: true } }, unit: { select: { name: true, address: true } }, resource: { select: { name: true } } },
   });
   const upcoming = all.filter((b) => (b.status === 'PENDING' || b.status === 'CONFIRMED') && b.endsAt > now).sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
   const past = all.filter((b) => !upcoming.includes(b));
+  const fresh = sp.novo ? all.find((b) => b.id === sp.novo) ?? null : null;
+  const freshPoints = fresh ? bookingPoints(fresh.priceCents - fresh.discountCents, fresh.restaurant.pointsPerReal) : 0;
 
-  const card = (b: (typeof all)[number], withCancel: boolean) => {
+  type Row = (typeof all)[number];
+  const eventOf = (b: Row) => ({
+    uid: b.id,
+    title: `${b.serviceName} · ${b.restaurant.name}`,
+    startsAt: b.startsAt,
+    endsAt: b.endsAt,
+    location: b.unit.address ?? b.restaurant.name,
+    description: `${b.resource ? `Com ${b.resource.name}. ` : ''}Agendado pelo Fidelize.`,
+  });
+  /** Levar o horário para o calendário do celular e chegar lá. */
+  const calendarLinks = (b: Row) => (
+    <div className="flex flex-wrap gap-2" data-testid="calendar-links">
+      <a href={`/perfil/agendamentos/${b.id}/calendario`} className="glass-button btn-sm" aria-label={`Adicionar ${b.serviceName} ao calendário`}><Icon name="calendar" size={15} /> Adicionar ao calendário</a>
+      <a href={googleCalendarUrl(eventOf(b))} target="_blank" rel="noopener noreferrer" className="glass-button btn-sm">Google Agenda</a>
+      {b.unit.address && <a href={directionsUrl(b.unit.address)} target="_blank" rel="noopener noreferrer" className="glass-button btn-sm"><Icon name="pin" size={15} /> Como chegar</a>}
+    </div>
+  );
+
+  const card = (b: Row, withCancel: boolean) => {
     const st = STATUS[b.status];
     const cancelable = withCancel && canCustomerCancel(b, b.restaurant.bookingCancelHours, now);
     return (
@@ -66,6 +87,7 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
             </div>
           </div>
         )}
+        {withCancel && calendarLinks(b)}
         {withCancel && b.reminderAnswer === 'OK' && <p className="text-xs font-semibold text-emerald-700">Você confirmou que vai. Até já!</p>}
         {withCancel && (
           cancelable ? (
@@ -96,7 +118,17 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
         <p className="text-sm text-slate-600">Seus horários marcados e o histórico. Quando o atendimento é concluído, os pontos entram na carteira.</p>
       </header>
 
-      {sp.novo && <p role="status" className="glass-success">Agendamento feito! Ele aparece abaixo.</p>}
+      {fresh && (
+        <section role="status" data-testid="booking-success" aria-label="Agendamento feito" className="space-y-3 rounded-[24px] bg-primary p-5 text-white">
+          <p className="flex items-center gap-2 text-sm font-semibold text-lime-300"><Icon name="check" size={18} /> {fresh.status === 'CONFIRMED' ? 'Horário garantido!' : 'Pedido enviado! O lugar vai confirmar.'}</p>
+          <div>
+            <p className="text-xl font-extrabold tracking-tight">{fresh.serviceName}</p>
+            <p className="text-sm text-white/80">{formatBookingWhen(fresh.startsAt)}{fresh.resource ? ` · com ${fresh.resource.name}` : ''}</p>
+            <p className="text-sm text-white/70">{fresh.restaurant.name}{fresh.unit.address ? ` · ${fresh.unit.address}` : ''}</p>
+          </div>
+          {freshPoints > 0 && <p className="text-sm"><span className="chip-lima">Ao concluir você ganha +{formatPoints(freshPoints)} pontos</span></p>}
+        </section>
+      )}
       {sp.cancelado && <p role="status" className="glass-success">Agendamento cancelado.</p>}
       {sp.remarcado && <p role="status" className="glass-success">Horário remarcado! O novo horário aparece abaixo.</p>}
       {sp.presenca && <p role="status" className="glass-success">Combinado! Avisamos o lugar que você vai.</p>}

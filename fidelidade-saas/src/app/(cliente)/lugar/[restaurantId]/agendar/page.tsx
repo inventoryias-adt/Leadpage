@@ -1,12 +1,14 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { BookingForm } from '@/components/BookingForm';
+import { LiveRefresh } from '@/components/LiveRefresh';
 import { RescheduleForm } from '@/components/RescheduleForm';
+import { AlternativeSlots, SlotHoldBanner } from '@/components/SlotHoldBanner';
 import { Icon } from '@/components/Icons';
 import { PlaceAvatar } from '@/components/Visual';
 import { imageUrl } from '@/lib/images';
-import { addDaysKey, bookingPoints, canCustomerCancel, formatBookingWhen, parseDateKey, todayKey, weekdayOf } from '@/lib/booking';
-import { ensureDefaultService, slotsForDay, staffFor } from '@/lib/booking-db';
+import { addDaysKey, bookingPoints, canCustomerCancel, formatBookingWhen, parseDateKey, slotHref, todayKey, weekdayOf } from '@/lib/booking';
+import { alternativeSlots, ensureDefaultService, firstFreeSlots, slotsForDay, staffFor } from '@/lib/booking-db';
 import { prisma } from '@/lib/db';
 import { DAY_SHORT, parseSchedule } from '@/lib/hours';
 import { formatBRL, formatPoints } from '@/lib/points';
@@ -124,9 +126,14 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
   const schedule = parseSchedule(unit.openingSchedule);
   const staff = await staffFor(prisma, { restaurantId, service, unitId: unit.id });
   const prof = staff.find((p) => p.id === sp.prof) ?? null; // quem o cliente escolheu (vazio = qualquer)
-  const { slots } = await slotsForDay(prisma, { restaurantId, policy: restaurant, service, unit, date, now, resourceId: prof?.id, ignoreBookingId: rb?.id });
+  const { slots } = await slotsForDay(prisma, { restaurantId, policy: restaurant, service, unit, date, now, resourceId: prof?.id, ignoreBookingId: rb?.id, customerId: customer?.id });
   const days = Array.from({ length: Math.min(14, restaurant.bookingMaxDaysAhead + 1) }, (_, i) => addDaysKey(today, i));
   const chosen = sp.hora ? slots.find((s) => s.time === sp.hora) ?? null : null;
+  const dayArgs = { restaurantId, policy: restaurant, service, unit, resourceId: prof?.id, customerId: customer?.id, ignoreBookingId: rb?.id };
+  // Atalho para quem não quer escolher: o primeiro horário livre dos próximos dias. Se o horário pedido na URL sumiu, já oferece saídas.
+  const nextFree = !sp.hora ? (await firstFreeSlots(prisma, { ...dayArgs, from: today, days: 14, limit: 1 }))[0] ?? null : null;
+  const lost = sp.hora && !chosen ? await alternativeSlots(prisma, { ...dayArgs, date, time: sp.hora, limit: 3 }) : null;
+  const hrefBase = url({ data: undefined, hora: undefined });
   const label = (key: string, i: number) => (i === 0 ? 'Hoje' : i === 1 ? 'Amanhã' : DAY_SHORT[weekdayOf(key)]);
   const points = bookingPoints(service.priceCents, restaurant.pointsPerReal);
   const wallet = customer && service.pointsDiscountMaxPct > 0 && service.priceCents > 0 ? await prisma.wallet.findUnique({ where: { customerId_restaurantId: { customerId: customer.id, restaurantId } } }) : null;
@@ -224,8 +231,21 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
         )}
       </section>
 
+      <LiveRefresh />
       <section aria-labelledby="hora">
         <h2 id="hora" className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Horários de {formatBookingWhen(new Date(`${date}T15:00:00Z`)).split(' às ')[0]}</h2>
+        {nextFree && (
+          <Link href={slotHref(hrefBase, nextFree)} data-testid="next-free" className="mb-3 flex items-center justify-between gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white">
+            <span className="flex items-center gap-2"><Icon name="clock" size={16} /> Próximo horário livre</span>
+            <span className="text-lime-300">{formatBookingWhen(new Date(`${nextFree.date}T${nextFree.time}:00-03:00`))}</span>
+          </Link>
+        )}
+        {lost && (
+          <div role="alert" data-testid="slot-lost" className="mb-3 space-y-3 rounded-2xl bg-amber-50 p-3 ring-1 ring-amber-200">
+            <p className="text-sm font-semibold text-amber-900">Esse horário não está mais livre.</p>
+            <AlternativeSlots hrefBase={hrefBase} options={lost} />
+          </div>
+        )}
         {slots.length === 0 ? (
           <p className="glass-panel-sm p-4 text-sm text-slate-600">Sem horários livres neste dia. Escolha outro dia.</p>
         ) : (
@@ -279,7 +299,10 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
           {rb && customer ? (
             <RescheduleForm bookingId={rb.id} date={date} time={chosen.time} resourceId={prof?.id ?? ''} />
           ) : customer ? (
-            <BookingForm hidden={{ restaurantId, serviceId: service.id, unitId: unit.id, date, time: chosen.time, resourceId: prof?.id ?? '' }} askPartySize={service.askPartySize} discount={{ priceCents: service.priceCents, balance, rate: restaurant.pointsPerRealOff, maxPoints: discount.maxPoints, maxPct: service.pointsDiscountMaxPct }} />
+            <>
+              <SlotHoldBanner params={{ restaurantId, serviceId: service.id, unitId: unit.id, date, time: chosen.time, resourceId: prof?.id ?? '' }} hrefBase={hrefBase} />
+              <BookingForm hrefBase={hrefBase} hidden={{ restaurantId, serviceId: service.id, unitId: unit.id, date, time: chosen.time, resourceId: prof?.id ?? '' }} askPartySize={service.askPartySize} discount={{ priceCents: service.priceCents, balance, rate: restaurant.pointsPerRealOff, maxPoints: discount.maxPoints, maxPct: service.pointsDiscountMaxPct }} />
+            </>
           ) : (
             <Link href={`/entrar?next=${encodeURIComponent(url({ data: date, hora: chosen.time }))}`} className="glass-button-navy w-full">Entrar para confirmar</Link>
           )}
