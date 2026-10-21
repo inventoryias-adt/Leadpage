@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { answerBookingReminder, cancelMyBooking } from '@/app/actions/booking';
+import { answerBookingReminder, cancelMyBooking, leaveWaitingList } from '@/app/actions/booking';
 import { Icon } from '@/components/Icons';
-import { bookingPoints, canCustomerCancel, formatBookingWhen } from '@/lib/booking';
+import { WAIT_PERIODS, bookingPoints, canCustomerCancel, formatBookingWhen, todayKey } from '@/lib/booking';
+import { waitPosition } from '@/lib/booking-db';
 import { directionsUrl, googleCalendarUrl } from '@/lib/calendar-links';
 import { prisma } from '@/lib/db';
 import { formatBRL, formatPoints } from '@/lib/points';
@@ -18,7 +19,7 @@ const STATUS: Record<string, { label: string; cls: string }> = {
   NO_SHOW: { label: 'Não compareceu', cls: 'bg-slate-100 text-slate-500' },
 };
 
-export default async function MeusAgendamentosPage({ searchParams }: { searchParams: Promise<{ novo?: string; remarcado?: string; cancelado?: string; erro?: string; lembrete?: string; presenca?: string; liberado?: string }> }) {
+export default async function MeusAgendamentosPage({ searchParams }: { searchParams: Promise<{ novo?: string; remarcado?: string; cancelado?: string; erro?: string; lembrete?: string; presenca?: string; liberado?: string; espera?: string }> }) {
   const customer = await requireCustomer('/perfil/agendamentos');
   const sp = await searchParams;
   const now = new Date();
@@ -28,6 +29,12 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
     take: 100,
     include: { restaurant: { select: { id: true, name: true, bookingCancelHours: true, pointsPerReal: true } }, unit: { select: { name: true, address: true } }, resource: { select: { name: true } } },
   });
+  const waiting = await prisma.waitlistEntry.findMany({
+    where: { customerId: customer.id, status: 'WAITING', date: { gte: todayKey(now) } },
+    orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],
+    include: { service: { select: { name: true } }, restaurant: { select: { id: true, name: true } }, resource: { select: { name: true } } },
+  });
+  const waitingAt = await Promise.all(waiting.map((w) => waitPosition(w)));
   const upcoming = all.filter((b) => (b.status === 'PENDING' || b.status === 'CONFIRMED') && b.endsAt > now).sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
   const past = all.filter((b) => !upcoming.includes(b));
   const fresh = sp.novo ? all.find((b) => b.id === sp.novo) ?? null : null;
@@ -132,6 +139,7 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
       {sp.cancelado && <p role="status" className="glass-success">Agendamento cancelado.</p>}
       {sp.remarcado && <p role="status" className="glass-success">Horário remarcado! O novo horário aparece abaixo.</p>}
       {sp.presenca && <p role="status" className="glass-success">Combinado! Avisamos o lugar que você vai.</p>}
+      {sp.espera === 'saiu' && <p role="status" className="glass-success">Você saiu da lista de espera.</p>}
       {sp.liberado && <p role="status" className="glass-success">Horário liberado. Obrigado por avisar!</p>}
       {sp.erro && sp.erro !== 'prazo' && <p role="alert" className="glass-error">{sp.erro}</p>}
       {sp.erro === 'prazo' && <p role="alert" className="glass-error">O prazo para cancelar pelo app já passou. Fale com o lugar.</p>}
@@ -146,6 +154,34 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
           <ul className="space-y-3">{upcoming.map((b) => card(b, true))}</ul>
         )}
       </section>
+
+      {waiting.length > 0 && (
+        <section aria-labelledby="espera" data-testid="my-waitlist">
+          <h2 id="espera" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Lista de espera</h2>
+          <ul className="space-y-3">
+            {waiting.map((w, i) => (
+              <li key={w.id} className="glass-panel-sm space-y-2 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-bold text-slate-800">{w.service.name}</p>
+                    <p className="truncate text-sm text-slate-600">{formatBookingWhen(new Date(`${w.date}T12:00:00-03:00`)).split(' às ')[0]} · {WAIT_PERIODS[w.period as keyof typeof WAIT_PERIODS] ?? 'Qualquer horário'}{w.resource ? ` · com ${w.resource.name}` : ''}</p>
+                    <p className="truncate text-xs text-slate-500"><Link href={`/lugar/${w.restaurant.id}`} className="link-inline !font-medium">{w.restaurant.name}</Link> · {waitingAt[i]}º da fila</p>
+                  </div>
+                  <span className="shrink-0 rounded-md bg-[#EAF0FF] px-2 py-0.5 text-xs font-semibold text-electric-600">Esperando</span>
+                </div>
+                <p className="text-xs text-slate-500">Avisamos no app quando abrir um horário. Quem confirmar primeiro fica com ele.</p>
+                <div className="flex flex-wrap gap-2">
+                  <Link href={`/lugar/${w.restaurant.id}/agendar?servico=${w.serviceId}&unidade=${w.unitId}&data=${w.date}`} className="glass-button btn-sm">Ver horários</Link>
+                  <form action={leaveWaitingList}>
+                    <input type="hidden" name="id" value={w.id} />
+                    <button className="btn-danger btn-sm" aria-label={`Sair da lista de ${w.service.name}`}>Sair da lista</button>
+                  </form>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {past.length > 0 && (
         <section aria-labelledby="ant">

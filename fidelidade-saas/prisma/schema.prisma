@@ -136,6 +136,7 @@ model Restaurant {
   services         Service[]
   bookings         Booking[]
   slotHolds SlotHold[]
+  waitlist  WaitlistEntry[]
   timeOffs  TimeOff[]
   menuItems        MenuItem[]
   orders           Order[]
@@ -234,6 +235,7 @@ model Customer {
   promotionUses     PromotionUse[]
   bookings          Booking[]
   slotHolds SlotHold[]
+  waitlist  WaitlistEntry[]
   photo             CustomerPhoto?
   orders            Order[]
   birthdayGifts     BirthdayGift[]
@@ -453,6 +455,7 @@ model Unit {
   bookings   Booking[]
   orders     Order[]
 
+  waitlist  WaitlistEntry[]
   @@index([restaurantId])
 }
 
@@ -640,6 +643,7 @@ model Resource {
   services   Service[]
   bookings   Booking[]
   slotHolds SlotHold[]
+  waitlist  WaitlistEntry[]
   timeOffs  TimeOff[]
   offers     ResourceService[]
 
@@ -665,6 +669,7 @@ model Service {
   bookings   Booking[]
   offers     ResourceService[]
 
+  waitlist  WaitlistEntry[]
   @@index([restaurantId])
 }
 
@@ -872,4 +877,35 @@ model TimeOff {
 
   @@index([restaurantId, startsAt])
   @@index([resourceId, startsAt])
+}
+
+enum WaitlistStatus {
+  WAITING // esperando abrir um horário
+  BOOKED // conseguiu marcar
+  CANCELED // saiu da lista
+}
+
+/// Cliente que quer um dia que está lotado: quando um horário abre (cancelamento, remarcação, folga removida), os primeiros da fila são avisados.
+model WaitlistEntry {
+  id           String         @id @default(uuid())
+  restaurantId String
+  unitId       String
+  customerId   String
+  serviceId    String
+  resourceId   String? // vazio = qualquer profissional
+  date         String // AAAA-MM-DD (Brasília)
+  period       String         @default("ANY") // ANY, MORNING (até 12h), AFTERNOON (12h às 18h) ou EVENING (a partir das 18h)
+  status       WaitlistStatus @default(WAITING)
+  notifiedAt   DateTime? // último aviso de horário aberto
+  createdAt    DateTime       @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  unit       Unit       @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  customer   Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  service    Service    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  resource   Resource?  @relation(fields: [resourceId], references: [id], onDelete: SetNull)
+
+  /// Um pedido por cliente, serviço e dia; entrar de novo reaproveita a mesma linha.
+  @@unique([customerId, restaurantId, serviceId, date])
+  @@index([restaurantId, date, status])
 }

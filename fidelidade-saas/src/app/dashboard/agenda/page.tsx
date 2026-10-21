@@ -196,6 +196,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
           </div>
           <Link href="/dashboard/agenda/novo" className="glass-button-navy btn-sm" data-testid="novo-agendamento"><Icon name="plus" size={16} /> <span>Novo</span><span className="sr-only"> agendamento</span></Link>
           <Link href="/dashboard/agenda/folgas" className="glass-button-ghost btn-sm" aria-label="Folgas e bloqueios" data-testid="folgas"><Icon name="clock" size={16} /> <span className="hidden sm:inline">Folgas</span></Link>
+          <Link href="/dashboard/agenda/ocupacao" className="glass-button-ghost btn-sm" aria-label="Ocupação da agenda" data-testid="ocupacao"><Icon name="chart" size={16} /> <span className="hidden sm:inline">Ocupação</span></Link>
           <Link href="/dashboard/configuracoes?etapa=agenda&abrir=agenda-conteudo#agenda" className="glass-button-ghost btn-sm" aria-label="Serviços e regras"><Icon name="cog" size={16} /> <span className="hidden sm:inline">Serviços e regras</span></Link>
         </div>
       </header>

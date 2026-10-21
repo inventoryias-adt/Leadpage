@@ -45,7 +45,8 @@ jobs:
   telas:
     name: Testes de tela (e2e)
     needs: qualidade
-    runs-on: ubuntu-latest
+    # Fixo: o ubuntu-latest virou 26.04, que o Playwright ainda não suporta (não instala o Chromium).
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     services:
       postgres:

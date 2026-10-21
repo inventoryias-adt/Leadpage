@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { canCustomerCancel } from '@/lib/booking';
-import { SlotGoneError, alternativeSlots, answerReminder, bookSlot, cancelBooking, holdSlot, rescheduleBooking } from '@/lib/booking-db';
+import { SlotGoneError, alternativeSlots, answerReminder, bookSlot, cancelBooking, holdSlot, joinWaitlist, leaveWaitlist, rescheduleBooking } from '@/lib/booking-db';
 import { BusinessError } from '@/lib/claims';
 import { fail, type BookingState, type FormState, type HoldState } from '@/lib/form';
 import { TOO_MANY, allow } from '@/lib/rate-limit';
@@ -161,4 +161,64 @@ export async function holdBookingSlot(input: z.input<typeof holdSchema>): Promis
     if (e instanceof BusinessError) return { ok: false, error: e.message };
     throw e;
   }
+}
+
+const waitSchema = z.object({
+  restaurantId: z.string().regex(/^[0-9a-f-]{36}$/),
+  serviceId: z.string().regex(/^[0-9a-f-]{36}$/),
+  unitId: z.string().regex(/^[0-9a-f-]{36}$/),
+  resourceId: z.string().default(''),
+  date: z.string(),
+  period: z.string(),
+});
+
+/** Volta para a tela de agendar do mesmo serviço e dia, com um recado (?espera=ok) ou um erro (?erro=...). */
+function agendarUrl(d: { restaurantId: string; serviceId: string; unitId: string; resourceId: string; date: string }, extra: Record<string, string>) {
+  const q = new URLSearchParams({ servico: d.serviceId, unidade: d.unitId, data: d.date, ...extra });
+  if (/^[0-9a-f-]{36}$/.test(d.resourceId)) q.set('prof', d.resourceId);
+  return `/lugar/${d.restaurantId}/agendar?${q.toString()}`;
+}
+
+/** O cliente pede para ser avisado quando abrir um horário num dia lotado. */
+export async function joinWaitingList(formData: FormData) {
+  const parsed = waitSchema.safeParse({
+    restaurantId: formData.get('restaurantId') ?? '',
+    serviceId: formData.get('serviceId') ?? '',
+    unitId: formData.get('unitId') ?? '',
+    resourceId: formData.get('resourceId') ?? '',
+    date: formData.get('date') ?? '',
+    period: formData.get('period') ?? '',
+  });
+  if (!parsed.success) redirect('/lugares');
+  const d = parsed.data;
+  const customer = await getCustomer();
+  if (!customer) redirect(`/entrar?next=${encodeURIComponent(agendarUrl(d, {}))}`);
+  if (!(await allow(`wait:${customer.id}`, 20, 3600))) redirect(agendarUrl(d, { erro: TOO_MANY }));
+  try {
+    await joinWaitlist(customer.id, { ...d, resourceId: /^[0-9a-f-]{36}$/.test(d.resourceId) ? d.resourceId : null });
+  } catch (e) {
+    if (!(e instanceof BusinessError)) throw e;
+    redirect(agendarUrl(d, { erro: e.message }));
+  }
+  revalidatePath('/perfil/agendamentos');
+  redirect(agendarUrl(d, { espera: 'ok' }));
+}
+
+/** O cliente sai da lista de espera. Volta para a tela de onde saiu (agendar ou meus agendamentos). */
+export async function leaveWaitingList(formData: FormData) {
+  const customer = await getCustomer();
+  if (!customer) redirect('/entrar?next=/perfil/agendamentos');
+  const id = String(formData.get('id') ?? '');
+  const back = String(formData.get('back') ?? '');
+  const to = back.startsWith('/lugar/') && !back.startsWith('//') ? back : '/perfil/agendamentos';
+  const sep = to.includes('?') ? '&' : '?';
+  if (/^[0-9a-f-]{36}$/.test(id)) {
+    try {
+      await leaveWaitlist(customer.id, id);
+    } catch (e) {
+      if (!(e instanceof BusinessError)) throw e;
+    }
+  }
+  revalidatePath('/perfil/agendamentos');
+  redirect(`${to}${sep}espera=saiu`);
 }

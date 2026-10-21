@@ -3,12 +3,13 @@ import { notFound, redirect } from 'next/navigation';
 import { BookingForm } from '@/components/BookingForm';
 import { LiveRefresh } from '@/components/LiveRefresh';
 import { RescheduleForm } from '@/components/RescheduleForm';
+import { joinWaitingList, leaveWaitingList } from '@/app/actions/booking';
 import { AlternativeSlots, SlotHoldBanner } from '@/components/SlotHoldBanner';
 import { Icon } from '@/components/Icons';
 import { PlaceAvatar } from '@/components/Visual';
 import { imageUrl } from '@/lib/images';
-import { addDaysKey, bookingPoints, canCustomerCancel, formatBookingWhen, parseDateKey, slotHref, todayKey, weekdayOf } from '@/lib/booking';
-import { alternativeSlots, ensureDefaultService, firstFreeSlots, slotsForDay, staffFor } from '@/lib/booking-db';
+import { WAIT_PERIODS, addDaysKey, bookingPoints, canCustomerCancel, dayOccupancy, formatBookingWhen, parseDateKey, slotHref, todayKey, weekdayOf } from '@/lib/booking';
+import { alternativeSlots, ensureDefaultService, firstFreeSlots, slotsForDay, staffFor, waitPosition } from '@/lib/booking-db';
 import { prisma } from '@/lib/db';
 import { DAY_SHORT, parseSchedule } from '@/lib/hours';
 import { formatBRL, formatPoints } from '@/lib/points';
@@ -19,7 +20,7 @@ import { getCustomer } from '@/lib/session';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Agendar' };
 
-type SP = { servico?: string; unidade?: string; data?: string; hora?: string; prof?: string; reagendar?: string };
+type SP = { servico?: string; unidade?: string; data?: string; hora?: string; prof?: string; reagendar?: string; espera?: string; erro?: string };
 
 export default async function AgendarPage({ params, searchParams }: { params: Promise<{ restaurantId: string }>; searchParams: Promise<SP> }) {
   const { restaurantId } = await params;
@@ -134,6 +135,11 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
   const nextFree = !sp.hora ? (await firstFreeSlots(prisma, { ...dayArgs, from: today, days: 14, limit: 1 }))[0] ?? null : null;
   const lost = sp.hora && !chosen ? await alternativeSlots(prisma, { ...dayArgs, date, time: sp.hora, limit: 3 }) : null;
   const hrefBase = url({ data: undefined, hora: undefined });
+  // Lista de espera: dia que o lugar atende mas sem horário livre. Quem já pediu vê a posição na fila.
+  const dayOpen = dayOccupancy({ date, schedule, resources: prof ? [prof] : staff, bookings: [], timeOffs: [] }).capacityMin > 0;
+  const waitEntry = customer && !rb ? await prisma.waitlistEntry.findFirst({ where: { customerId: customer.id, restaurantId, serviceId: service.id, date, status: 'WAITING' } }) : null;
+  const waitAt = waitEntry ? await waitPosition(waitEntry) : 0;
+  const waitFields = { restaurantId, serviceId: service.id, unitId: unit.id, resourceId: prof?.id ?? '', date };
   const label = (key: string, i: number) => (i === 0 ? 'Hoje' : i === 1 ? 'Amanhã' : DAY_SHORT[weekdayOf(key)]);
   const points = bookingPoints(service.priceCents, restaurant.pointsPerReal);
   const wallet = customer && service.pointsDiscountMaxPct > 0 && service.priceCents > 0 ? await prisma.wallet.findUnique({ where: { customerId_restaurantId: { customerId: customer.id, restaurantId } } }) : null;
@@ -231,6 +237,9 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
         )}
       </section>
 
+      {sp.espera === 'ok' && <p role="status" className="glass-success">Pronto! Você está na lista de espera. Avisamos no app assim que abrir um horário.</p>}
+      {sp.espera === 'saiu' && <p role="status" className="glass-success">Você saiu da lista de espera.</p>}
+      {sp.erro && <p role="alert" className="glass-error">{sp.erro}</p>}
       <LiveRefresh />
       <section aria-labelledby="hora">
         <h2 id="hora" className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Horários de {formatBookingWhen(new Date(`${date}T15:00:00Z`)).split(' às ')[0]}</h2>
@@ -260,6 +269,42 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
           </ul>
         )}
       </section>
+
+      {waitEntry && (
+        <section aria-labelledby="espera" data-testid="waitlist-on" className="space-y-3 rounded-[22px] bg-[#EAF0FF] p-4">
+          <div>
+            <h2 id="espera" className="flex items-center gap-2 text-base font-bold text-primary"><Icon name="bell" size={18} className="text-electric-600" /> Você está na lista de espera</h2>
+            <p className="text-sm text-slate-700">{WAIT_PERIODS[waitEntry.period as keyof typeof WAIT_PERIODS] ?? 'Qualquer horário'} · {waitAt}º da fila neste dia. Avisamos no app assim que abrir um horário; quem confirmar primeiro fica com ele.</p>
+          </div>
+          <form action={leaveWaitingList}>
+            <input type="hidden" name="id" value={waitEntry.id} />
+            <input type="hidden" name="back" value={url({ data: date, hora: undefined })} />
+            <button className="btn-danger btn-sm">Sair da lista</button>
+          </form>
+        </section>
+      )}
+      {!waitEntry && !rb && slots.length === 0 && dayOpen && (
+        <section aria-labelledby="espera" data-testid="waitlist-offer" className="space-y-3 rounded-[22px] border border-dashed border-electric-500/50 bg-white p-4">
+          <div>
+            <h2 id="espera" className="flex items-center gap-2 text-base font-bold text-primary"><Icon name="bell" size={18} className="text-electric-600" /> Dia lotado? Entre na lista de espera</h2>
+            <p className="text-sm text-slate-600">Se alguém cancelar ou remarcar, você é avisado no app e pode pegar o horário antes dos outros.</p>
+          </div>
+          {customer ? (
+            <form action={joinWaitingList} className="flex flex-wrap items-end gap-2">
+              {Object.entries(waitFields).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
+              <div>
+                <label className="glass-label" htmlFor="wait-period">Qual faixa de horário?</label>
+                <select id="wait-period" name="period" className="glass-input !w-auto" defaultValue="ANY">
+                  {Object.entries(WAIT_PERIODS).map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+                </select>
+              </div>
+              <button className="glass-button-navy btn-sm" data-testid="waitlist-join">Avisar-me se abrir</button>
+            </form>
+          ) : (
+            <Link href={`/entrar?next=${encodeURIComponent(url({ data: date }))}`} className="glass-button-navy btn-sm">Entrar para pedir aviso</Link>
+          )}
+        </section>
+      )}
 
       {chosen && (
         <section aria-labelledby="confirmar" className="glass-panel space-y-4 !rounded-[22px] p-4">

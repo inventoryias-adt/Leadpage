@@ -21,7 +21,7 @@ await o.goto(BASE + '/login'); await o.fill('#email', 'ze@burger.com'); await o.
 // 1. dono: regra de conversão com a dica de quanto volta, e serviço que aceita pontos
 await o.goto(BASE + '/dashboard/configuracoes?abrir=tudo'); await o.waitForSelector('#ag-rate');
 await o.waitForSelector('text=voltam cerca de'); assert.match(await o.locator('#agenda').innerText(), /10%/);
-await o.fill('#ag-rate', '200'); assert.match(await o.locator('#agenda').innerText(), /5%/, 'a dica acompanha o número digitado');
+await o.fill('#ag-rate', '200'); await o.waitForFunction(() => /5%/.test(document.querySelector('#agenda')?.innerText ?? ''), null, { timeout: 10000 }).catch(() => {}); assert.match(await o.locator('#agenda').innerText(), /5%/, 'a dica acompanha o número digitado');
 await o.fill('#ag-rate', '100'); await o.click('#agenda button:has-text("Salvar regras")'); await o.waitForSelector('#agenda >> text=Regras de agendamento salvas.');
 assert.equal(sql(`select "pointsPerRealOff" from "Restaurant" where id='${rid}'`), '100');
 await o.fill('#sv-name', 'Corte masculino'); await o.fill('#sv-dur', '30'); await o.fill('#sv-price', '50,00'); await o.selectOption('#sv-pts', '50');

@@ -11,8 +11,8 @@ import { saveImageFromDataUrl } from '@/lib/images';
 import { COLORS, isColorKey } from '@/lib/palette';
 import { parseMoneyToCents } from '@/lib/points';
 import { redirect } from 'next/navigation';
-import { SlotGoneError, cancelByOwner, completeBooking, confirmBooking, markNoShow, ownerBookSlot } from '@/lib/booking-db';
-import { dateKeyOf, formatBookingWhen, timeOffRange } from '@/lib/booking';
+import { SlotGoneError, cancelByOwner, completeBooking, confirmBooking, markNoShow, notifyWaitlist, ownerBookSlot } from '@/lib/booking-db';
+import { addDaysKey, dateKeyOf, formatBookingWhen, timeOffRange } from '@/lib/booking';
 import { BusinessError } from '@/lib/claims';
 import { requireActiveRestaurant, requirePaidRestaurant } from '@/lib/session';
 
@@ -302,6 +302,17 @@ export async function addTimeOff(_: FormState, formData: FormData): Promise<Form
 export async function removeTimeOff(formData: FormData) {
   const restaurant = await requireActiveRestaurant();
   const id = String(formData.get('id') ?? '');
-  if (/^[0-9a-f-]{36}$/.test(id)) await prisma.timeOff.deleteMany({ where: { id, restaurantId: restaurant.id } });
+  if (/^[0-9a-f-]{36}$/.test(id)) {
+    const off = await prisma.timeOff.findFirst({ where: { id, restaurantId: restaurant.id } });
+    if (off) {
+      await prisma.timeOff.delete({ where: { id } });
+      // Horários que voltaram à agenda: avisa a lista de espera dos primeiros dias do bloqueio (até duas semanas).
+      const first = dateKeyOf(off.startsAt);
+      const last = dateKeyOf(new Date(off.endsAt.getTime() - 1));
+      for (let i = 0; i < 14 && addDaysKey(first, i) <= last; i++) {
+        void notifyWaitlist(restaurant.id, addDaysKey(first, i)).catch((e) => console.error('Falha ao avisar a lista de espera', e instanceof Error ? e.message : e));
+      }
+    }
+  }
   refresh();
 }
