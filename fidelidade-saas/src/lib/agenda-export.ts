@@ -104,3 +104,24 @@ export function toCsv(rows: ExportRow[]): string {
     );
   return `﻿${[head.map(csvCell).join(';'), ...lines].join('\r\n')}\r\n`;
 }
+
+/** Quanto do texto cabe num link do WhatsApp (o link inteiro, já codificado, fica abaixo disso para os navegadores aceitarem). */
+const WA_MAX_ENCODED = 5500;
+
+/**
+ * Link do WhatsApp com a agenda do período: com número (DDD + telefone, sem o 55) abre a conversa com a pessoa; sem número,
+ * o WhatsApp deixa escolher o contato. Agenda muito longa (mês cheio) é cortada em linha inteira, com aviso de que há mais.
+ */
+export function whatsappUrl(rows: ExportRow[], opts: { who: string | null; label: string; phone?: string | null }): { href: string; truncated: boolean } {
+  let text = whatsappText(rows, opts);
+  let truncated = false;
+  if (encodeURIComponent(text).length > WA_MAX_ENCODED) {
+    truncated = true;
+    const note = '\n\n… agenda maior que o limite do WhatsApp: veja o restante no app ou na planilha.';
+    const lines = text.split('\n');
+    while (lines.length > 3 && encodeURIComponent(`${lines.join('\n')}${note}`).length > WA_MAX_ENCODED) lines.pop();
+    text = `${lines.join('\n').trimEnd()}${note}`;
+  }
+  const to = opts.phone ? `55${opts.phone}` : '';
+  return { href: `https://wa.me/${to}?text=${encodeURIComponent(text)}`, truncated };
+}

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { csvCell, periodRange, rangeBounds, toCsv, whatsappText, type ExportRow } from './agenda-export';
+import { csvCell, periodRange, rangeBounds, toCsv, whatsappText, whatsappUrl, type ExportRow } from './agenda-export';
 
 const row = (over: Partial<ExportRow> = {}): ExportRow => ({
   startsAt: new Date('2026-10-12T13:00:00Z'), // 10h em Brasília
@@ -63,4 +63,25 @@ test('CSV: cabeçalho, BOM, separador ; e proteção contra fórmula', () => {
   assert.equal(line[0], '12/10/2026'); assert.equal(line[1], '10:00'); assert.equal(line[2], '10:45');
   assert.equal(line[7], 'Confirmado');
   assert.ok(csv.includes(`"'=cmd|""/c calc""!A0"`), 'recado malicioso vira texto');
+});
+
+test('link do WhatsApp: com número abre a conversa, sem número deixa escolher o contato', () => {
+  const rows = [row()];
+  const withPhone = whatsappUrl(rows, { who: 'Lucas Barbeiro', label: 'semana de 12/10 a 18/10', phone: '11988887777' });
+  assert.ok(withPhone.href.startsWith('https://wa.me/5511988887777?text='));
+  assert.equal(withPhone.truncated, false);
+  assert.match(decodeURIComponent(withPhone.href.split('text=')[1]), /^Agenda de Lucas Barbeiro · semana de 12\/10 a 18\/10/);
+  assert.ok(whatsappUrl(rows, { who: null, label: 'x' }).href.startsWith('https://wa.me/?text='));
+  assert.ok(whatsappUrl(rows, { who: null, label: 'x', phone: null }).href.startsWith('https://wa.me/?text='));
+});
+
+test('link do WhatsApp: agenda enorme é cortada em linha inteira e avisa', () => {
+  const many = Array.from({ length: 300 }, (_, i) => row({ startsAt: new Date(Date.parse('2026-10-12T13:00:00Z') + i * 3_600_000), endsAt: new Date(Date.parse('2026-10-12T13:30:00Z') + i * 3_600_000) }));
+  const { href, truncated } = whatsappUrl(many, { who: null, label: 'mês' });
+  assert.equal(truncated, true);
+  assert.ok(href.length < 6200, `link com ${href.length} caracteres`);
+  const text = decodeURIComponent(href.split('text=')[1]);
+  assert.match(text, /agenda maior que o limite do WhatsApp/);
+  assert.match(text, /^Agenda · mês/);
+  assert.ok(text.split('\n\n… agenda')[0].split('\n').pop()!.startsWith('•'), 'a última linha mantida está inteira');
 });

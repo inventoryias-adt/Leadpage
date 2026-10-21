@@ -30,33 +30,62 @@ await p.goto(BASE + '/login'); await p.fill('#email', 'ze@burger.com'); await p.
 // 1. dia: todos
 await p.goto(BASE + '/dashboard/agenda?vista=lista');
 assert.equal(await p.locator('li:has-text("Corte")').count() >= 2, true);
-assert.ok(await p.locator('[aria-label=Profissional] a:has-text("Lucas")').count());
+assert.ok(await p.locator('select[aria-label=Profissional] option:has-text("Lucas")').count());
 console.log('1. dia com filtro de profissionais OK');
 
 // 2. filtrar por Lucas: só os dele, WhatsApp vai para o número dele
-await p.click('[aria-label=Profissional] a:has-text("Lucas")'); await p.waitForURL('**prof=*');
-const wa = await p.getAttribute('a:has-text("Enviar pelo WhatsApp")', 'href');
-assert.match(wa, /^https:\/\/wa\.me\/5511988887777\?text=/);
-const txt = decodeURIComponent(wa.split('text=')[1]);
-assert.match(txt, /^Agenda de Lucas · /); assert.match(txt, /10h–10h40 Corte — Lucas Silva/); assert.ok(!txt.includes('Ana'));
-assert.ok(!txt.includes('11h'), 'cancelado fora');
+// (o WhatsApp abre em outra aba pelo servidor, que responde com um redirecionamento para o wa.me; aqui o redirecionamento é capturado, sem sair da máquina)
+let waLocation = '';
+await ctx.route('**/dashboard/agenda/whatsapp**', async (r) => {
+  const res = await r.fetch({ maxRedirects: 0 });
+  waLocation = res.headers()['location'] ?? '';
+  await r.fulfill({ status: 200, contentType: 'text/html', body: 'ok' });
+});
+const sendWa = async ({ per, prof, para } = {}) => {
+  await p.click('[data-testid=whatsapp-abrir]'); await p.waitForSelector('[data-testid=whatsapp-janela]');
+  if (per) await p.selectOption('#wa-per', per);
+  if (prof !== undefined) await p.selectOption('#wa-prof', prof);
+  if (para) await p.check(`input[name=para][value=${para}]`);
+  waLocation = '';
+  const [popup] = await Promise.all([ctx.waitForEvent('page'), p.click('[data-testid=whatsapp-enviar]')]);
+  await popup.waitForLoadState('domcontentloaded'); await popup.close();
+  assert.ok(waLocation, 'o servidor redirecionou para o WhatsApp');
+  return { url: waLocation, text: decodeURIComponent(waLocation.split('text=')[1] ?? '') };
+};
+await p.selectOption('select[aria-label=Profissional]', { label: 'Lucas' }); await p.waitForURL('**prof=*');
+const one = await sendWa();
+assert.match(one.url, /^https:\/\/wa\.me\/5511988887777\?text=/);
+assert.match(one.text, /^Agenda de Lucas · /); assert.match(one.text, /10h–10h40 Corte — Lucas Silva/); assert.ok(!one.text.includes('Ana'));
+assert.ok(!one.text.includes('11h'), 'cancelado fora');
 console.log('2. filtro por profissional + WhatsApp com o número e o texto dele OK');
 
-// 3. Ana sem WhatsApp: abre o contato livre e avisa
-await p.click('[aria-label=Profissional] a:has-text("Ana")'); await p.waitForSelector('[aria-label=Profissional] a:has-text("Ana")[aria-current=true]');
-assert.match(await p.getAttribute('a:has-text("Enviar pelo WhatsApp")', 'href'), /^https:\/\/wa\.me\/\?text=/);
+// 3. Ana sem WhatsApp: a janela avisa e abre o contato livre
+await p.selectOption('select[aria-label=Profissional]', { label: 'Ana' }); await p.waitForFunction(() => document.querySelector('#ag-prof').selectedOptions[0].text === 'Ana');
+await p.click('[data-testid=whatsapp-abrir]'); await p.waitForSelector('[data-testid=whatsapp-janela]');
 assert.ok(await p.locator('text=não tem WhatsApp cadastrado').count());
+assert.ok(await p.locator('input[name=para][value=atendente]').isDisabled());
+await p.click('button:has-text("Cancelar")');
+const noPhone = await sendWa();
+assert.match(noPhone.url, /^https:\/\/wa\.me\/\?text=/); assert.match(noPhone.text, /^Agenda de Ana · /);
 console.log('3. profissional sem WhatsApp OK');
 
+// 3b. na própria janela: todos da semana para mim; e só o Lucas, mas para outro contato (eu escolho no WhatsApp)
+const week = await sendWa({ per: 'semana', prof: '' });
+assert.match(week.url, /^https:\/\/wa\.me\/\?text=/); assert.match(week.text, /^Agenda · semana de /);
+assert.ok(week.text.includes('com Lucas') && week.text.includes('com Ana'), 'agenda de todos, com o nome de quem atende');
+const lucasToMe = await sendWa({ per: 'dia', prof: lucas, para: 'escolher' });
+assert.match(lucasToMe.url, /^https:\/\/wa\.me\/\?text=/); assert.match(lucasToMe.text, /^Agenda de Lucas · /); assert.ok(!lucasToMe.text.includes('Ana'));
+console.log('3b. escolher período, atendente e para quem enviar na própria janela OK');
+
 // 4. semana agrupada por dia (hoje e outro dia da mesma semana) e mês passado
-await p.click('[aria-label=Profissional] a:has-text("Todos")'); await p.waitForSelector('[aria-label=Profissional] a:has-text("Todos")[aria-current=true]');
+await p.selectOption('select[aria-label=Profissional]', { label: 'Todos os atendentes' }); await p.waitForFunction(() => !location.search.includes('prof='));
 await p.click('[data-testid=vista-grade]'); await p.waitForFunction(() => !location.search.includes('vista=lista')); // o teste começou na lista: volta ao calendário
-await p.click('[role=group][aria-label="Período"] a:has-text("Semana")'); await p.waitForURL('**per=semana**');
+await p.selectOption('select[aria-label=Período]', { label: 'Semana' }); await p.waitForURL('**per=semana**');
 await p.waitForSelector('[data-testid=agenda-week]'); // a visão em calendário acompanha a pessoa para a semana
 assert.ok(await p.locator('[data-testid=week-block]').count() >= 1);
 await p.click('[data-testid=vista-lista]'); await p.waitForURL('**vista=lista**');
 assert.ok(await p.locator('section[aria-label*="/"] h2').count() >= 1);
-await p.click('[role=group][aria-label="Período"] a:has-text("Mês passado")'); await p.waitForURL('**per=mes-passado**'); // a lista também acompanha
+await p.selectOption('select[aria-label=Período]', { label: 'Mês passado' }); await p.waitForURL('**per=mes-passado**'); // a lista também acompanha
 const lastMonth = new Date(Date.parse(today + 'T00:00:00Z')); lastMonth.setUTCDate(1); lastMonth.setUTCMonth(lastMonth.getUTCMonth() - 1);
 const inLast = new Date(Date.parse(day(-35)) + 3 * 3600e3).toISOString().slice(0, 7) === lastMonth.toISOString().slice(0, 7);
 assert.equal(await p.locator('li:has-text("Concluído")').count(), inLast ? 1 : 0, 'só entra o que é do mês passado');
