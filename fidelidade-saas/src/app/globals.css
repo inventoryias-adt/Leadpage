@@ -306,7 +306,11 @@ body {
       border-color: #2150c9;
     }
   }
-  .chip-link-active,
+  .chip-link-active {
+    @apply font-semibold text-white;
+    background-color: #0f1f3d;
+    border-color: #0f1f3d;
+  }
   @media (hover: hover) {
     .chip-link-active:hover {
       @apply font-semibold text-white;

@@ -28,6 +28,7 @@ import { getSupport } from '@/lib/support-env';
 import { parseSchedule } from '@/lib/hours';
 import { removeResource, removeService } from '@/app/actions/agenda';
 import { AddServiceForm, BookingPolicyForm, StaffForm } from '@/components/AgendaSettings';
+import { ScrollActiveIntoView } from '@/components/ScrollActiveIntoView';
 import { imageUrl } from '@/lib/images';
 import { formatBRL, formatPoints, formatPrice } from '@/lib/points';
 import { ColorDots } from '@/components/ColorSwatches';
@@ -169,8 +170,9 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
       )}
 
       <nav aria-label="Seções" className="chip-row lg:hidden">
+        <ScrollActiveIntoView />
         {SECTIONS.map(([id, label], i) => (
-          <Link key={id} href={hrefOf(id)} aria-current={!abrirTudo && id === etapa ? 'step' : undefined} className={`${!abrirTudo && id === etapa ? 'chip-link-active' : 'chip-link'} shrink-0`}>
+          <Link key={id} href={hrefOf(id)} aria-current={!abrirTudo && id === etapa ? 'step' : undefined} className={`chip-link shrink-0 ${!abrirTudo && id === etapa ? 'chip-link-active' : ''}`}>
             {i + 1}. {label}
           </Link>
         ))}
