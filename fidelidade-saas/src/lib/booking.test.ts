@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { addDaysKey, availableSlots, bookingPoints, canCustomerCancel, dateKeyOf, dayStartUtc, formatBookingWhen, hmOf, parseDateKey, pickResource, weekdayOf, type SlotInput } from './booking';
+import { addDaysKey, availableSlots, bookingPoints, canCustomerCancel, dateKeyOf, dayStartUtc, formatBookingWhen, formatTimeOff, guestOf, hmOf, parseDateKey, pickResource, timeOffBusy, timeOffRange, weekdayOf, withBuffer, type SlotInput } from './booking';
 import type { Schedule } from './hours';
 
 const week = (open: string, close: string, closedDays: number[] = []): Schedule => Array.from({ length: 7 }, (_, day) => ({ day, closed: closedDays.includes(day), open, close }));
@@ -153,4 +153,49 @@ test('lembrete: só confirmados, uma vez, entre 5 e 30 min antes e que não fora
   assert.equal(reminderDue({ ...base, reminderSentAt: now }, now), false, 'não repete');
   assert.equal(reminderDue({ ...base, createdAt: at(-1) }, now), false, 'agendado com só 29 min de antecedência: sem lembrete');
   assert.equal(reminderDue({ ...base, createdAt: at(-10) }, now), true, 'agendado com 38 min de antecedência: lembra');
+});
+
+test('intervalo entre atendimentos: o vizinho só abre depois do intervalo, dos dois lados', () => {
+  const busy = [{ resourceId: 'r1', startsAt: at('10:00'), endsAt: at('10:30') }];
+  const t = (buffer: number) => times({ durationMin: 30, minNoticeMin: 0, busy: withBuffer(busy, buffer) });
+  assert.deepEqual(t(0), ['09:00', '09:30', '10:30', '11:00', '11:30']);
+  assert.deepEqual(t(15), ['09:00', '11:00', '11:30'], 'os vizinhos 09:30 e 10:30 ficam fechados');
+  assert.equal(withBuffer(busy, 0), busy, 'sem intervalo não mexe em nada');
+});
+
+test('folga: de um profissional fecha só ele; sem profissional fecha todos', () => {
+  const off = { startsAt: new Date('2026-10-21T13:00:00Z'), endsAt: new Date('2026-10-21T16:00:00Z') };
+  assert.deepEqual(timeOffBusy([{ ...off, resourceId: 'a' }], ['a', 'b']).map((b) => b.resourceId), ['a']);
+  assert.deepEqual(timeOffBusy([{ ...off, resourceId: null }], ['a', 'b']).map((b) => b.resourceId), ['a', 'b']);
+  assert.deepEqual(timeOffBusy([{ ...off, resourceId: 'x' }], ['a', 'b']), [], 'folga de quem não atende este serviço não interfere');
+});
+
+test('timeOffRange: dia inteiro, janela de horas e entradas inválidas', () => {
+  const dia = timeOffRange('2026-10-21', '2026-10-21')!;
+  assert.equal(dia.startsAt.toISOString(), '2026-10-21T03:00:00.000Z');
+  assert.equal(dia.endsAt.toISOString(), '2026-10-22T03:00:00.000Z');
+  const semana = timeOffRange('2026-10-21', '2026-10-23')!;
+  assert.equal(semana.endsAt.toISOString(), '2026-10-24T03:00:00.000Z', 'férias: até o fim do último dia');
+  const almoco = timeOffRange('2026-10-21', '2026-10-21', '12:00', '13:30')!;
+  assert.equal(almoco.startsAt.toISOString(), '2026-10-21T15:00:00.000Z');
+  assert.equal(almoco.endsAt.toISOString(), '2026-10-21T16:30:00.000Z');
+  assert.equal(timeOffRange('2026-10-22', '2026-10-21'), null, 'fim antes do início');
+  assert.equal(timeOffRange('2026-10-21', '2026-10-21', '14:00', '13:00'), null, 'hora de fim antes da de início');
+  assert.equal(timeOffRange('2026-10-21', '2026-10-21', '12:00'), null, 'só uma das horas');
+  assert.equal(timeOffRange('2026-13-01', '2026-13-01'), null, 'data inexistente');
+});
+
+test('guestOf: cliente do app ou convidado do encaixe', () => {
+  assert.deepEqual(guestOf({ customer: { name: 'Ana', phone: '11999990000' }, guestName: null, guestPhone: null }), { name: 'Ana', phone: '11999990000', hasAccount: true });
+  assert.deepEqual(guestOf({ customer: null, guestName: 'João', guestPhone: '11988887777' }), { name: 'João', phone: '11988887777', hasAccount: false });
+  assert.equal(guestOf({ customer: null, guestName: null, guestPhone: null }).name, 'Cliente');
+});
+
+test('formatTimeOff: dia inteiro, janela no mesmo dia e períodos longos', () => {
+  const r = (a: string, b: string, h1?: string, h2?: string) => { const x = timeOffRange(a, b, h1, h2)!; return formatTimeOff(x.startsAt, x.endsAt); };
+  assert.equal(r('2026-10-21', '2026-10-21'), 'Qua, 21/10 · dia inteiro');
+  assert.equal(r('2026-10-21', '2026-10-23'), 'Qua, 21/10 a Sex, 23/10 · dias inteiros');
+  assert.equal(r('2026-10-21', '2026-10-21', '14:00', '16:00'), 'Qua, 21/10 · 14h–16h');
+  assert.equal(r('2026-10-21', '2026-10-21', '12:30', '13:30'), 'Qua, 21/10 · 12h30–13h30');
+  assert.equal(r('2026-10-21', '2026-10-22', '18:00', '09:00'), 'Qua, 21/10 às 18h até Qui, 22/10 às 9h');
 });

@@ -194,3 +194,43 @@ export const formatCountdown = (ms: number) => {
 
 /** Link de um horário sugerido, mantendo serviço, unidade e profissional já escolhidos na tela de agendar. */
 export const slotHref = (hrefBase: string, o: { date: string; time: string }) => `${hrefBase}${hrefBase.includes('?') ? '&' : '?'}data=${o.date}&hora=${o.time}`;
+
+/** Nome e telefone de quem marcou: o cliente do app ou, no encaixe feito pelo dono, o nome e o telefone informados na hora. */
+export function guestOf(b: { customer: { name: string; phone: string } | null; guestName: string | null; guestPhone: string | null }): { name: string; phone: string; hasAccount: boolean } {
+  return { name: b.customer?.name ?? b.guestName ?? 'Cliente', phone: b.customer?.phone ?? b.guestPhone ?? '', hasAccount: !!b.customer };
+}
+
+/** Intervalo entre atendimentos (limpeza, troca de cliente): cada ocupação engorda dos dois lados, então o horário vizinho só abre depois do intervalo. */
+export function withBuffer(busy: BusyRange[], bufferMin: number): BusyRange[] {
+  if (bufferMin <= 0) return busy;
+  const ms = bufferMin * 60_000;
+  return busy.map((b) => ({ ...b, startsAt: new Date(b.startsAt.getTime() - ms), endsAt: new Date(b.endsAt.getTime() + ms) }));
+}
+
+/** Folgas e bloqueios viram ocupação: do profissional indicado ou, sem profissional, de todos os que atendem. */
+export function timeOffBusy(offs: { resourceId: string | null; startsAt: Date; endsAt: Date }[], staffIds: string[]): BusyRange[] {
+  return offs.flatMap((o) => (o.resourceId ? (staffIds.includes(o.resourceId) ? [{ resourceId: o.resourceId, startsAt: o.startsAt, endsAt: o.endsAt }] : []) : staffIds.map((id) => ({ resourceId: id, startsAt: o.startsAt, endsAt: o.endsAt }))));
+}
+
+/** Início e fim (instantes UTC) de uma folga a partir de datas e horas de Brasília; sem horas = o dia inteiro. */
+export function timeOffRange(startDate: string, endDate: string, startTime?: string, endTime?: string): { startsAt: Date; endsAt: Date } | null {
+  if (!parseDateKey(startDate) || !parseDateKey(endDate) || endDate < startDate) return null;
+  const hm = /^([01]\d|2[0-3]):[0-5]\d$/;
+  const wholeDay = !startTime && !endTime;
+  if (!wholeDay && (!startTime || !endTime || !hm.test(startTime) || !hm.test(endTime))) return null;
+  const startsAt = wholeDay ? dayStartUtc(startDate) : new Date(dayStartUtc(startDate).getTime() + toMin(startTime!) * 60_000);
+  const endsAt = wholeDay ? new Date(dayStartUtc(endDate).getTime() + DAY_MS) : new Date(dayStartUtc(endDate).getTime() + toMin(endTime!) * 60_000);
+  return endsAt > startsAt ? { startsAt, endsAt } : null;
+}
+
+/** Como mostrar um bloqueio: "Qua, 21/10 · dia inteiro", "Qua, 21/10 · 14h–16h" ou o período completo. */
+export function formatTimeOff(startsAt: Date, endsAt: Date): string {
+  const day = (d: Date) => formatBookingWhen(d).split(' às ')[0];
+  const hour = (d: Date) => hmOf(d).replace(/^0/, '').replace(':00', 'h').replace(':', 'h');
+  const lastMoment = new Date(endsAt.getTime() - 1);
+  const wholeDays = hmOf(startsAt) === '00:00' && hmOf(endsAt) === '00:00';
+  const sameDay = dateKeyOf(startsAt) === dateKeyOf(lastMoment);
+  if (wholeDays) return sameDay ? `${day(startsAt)} · dia inteiro` : `${day(startsAt)} a ${day(lastMoment)} · dias inteiros`;
+  if (sameDay) return `${day(startsAt)} · ${hour(startsAt)}–${hour(endsAt)}`;
+  return `${formatBookingWhen(startsAt)} até ${formatBookingWhen(endsAt)}`;
+}

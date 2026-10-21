@@ -12,12 +12,13 @@ import { FormMessage, SubmitButton } from './ui';
 
 const NOTICE: [number, string][] = [[0, 'Sem antecedência'], [30, '30 minutos'], [60, '1 hora'], [120, '2 horas'], [240, '4 horas'], [720, '12 horas'], [1440, '1 dia']];
 const AHEAD: [number, string][] = [[7, '7 dias'], [14, '14 dias'], [30, '30 dias'], [60, '60 dias'], [90, '90 dias']];
+const BUFFER: [number, string][] = [[0, 'Sem intervalo'], [5, '5 minutos'], [10, '10 minutos'], [15, '15 minutos'], [30, '30 minutos']];
 const CANCEL: [number, string][] = [[0, 'Até a hora marcada'], [1, '1 hora antes'], [2, '2 horas antes'], [4, '4 horas antes'], [12, '12 horas antes'], [24, '1 dia antes'], [48, '2 dias antes']];
 
 /** Escolhe a opção da lista mais próxima do valor salvo (o valor pode ter vindo de uma versão anterior). */
 const pick = (list: [number, string][], v: number) => list.reduce((best, o) => (Math.abs(o[0] - v) < Math.abs(best[0] - v) ? o : best))[0];
 
-export function BookingPolicyForm({ defaults }: { defaults: { auto: boolean; minNotice: number; maxAhead: number; cancelHours: number; pointsPerRealOff: number; earnPerReal: number; notifyEmail: string; accountEmail: string } }) {
+export function BookingPolicyForm({ defaults }: { defaults: { auto: boolean; minNotice: number; maxAhead: number; cancelHours: number; bufferMin: number; pointsPerRealOff: number; earnPerReal: number; notifyEmail: string; accountEmail: string } }) {
   const [state, action] = useActionState(saveBookingPolicy, {});
   const [rate, setRate] = useState(String(defaults.pointsPerRealOff));
   return (
@@ -29,7 +30,7 @@ export function BookingPolicyForm({ defaults }: { defaults: { auto: boolean; min
           <span className="block text-xs text-slate-500">Desmarcado: cada pedido chega como “aguardando” e só vale depois que você confirmar na Agenda.</span>
         </span>
       </label>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <label className="glass-label" htmlFor="ag-notice">Antecedência mínima</label>
           <select id="ag-notice" name="bookingMinNoticeMin" className="glass-input" defaultValue={pick(NOTICE, defaults.minNotice)}>
@@ -40,6 +41,12 @@ export function BookingPolicyForm({ defaults }: { defaults: { auto: boolean; min
           <label className="glass-label" htmlFor="ag-ahead">Marcar até</label>
           <select id="ag-ahead" name="bookingMaxDaysAhead" className="glass-input" defaultValue={pick(AHEAD, defaults.maxAhead)}>
             {AHEAD.map(([v, l]) => <option key={v} value={v}>{l} à frente</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="glass-label" htmlFor="ag-buffer">Intervalo entre atendimentos</label>
+          <select id="ag-buffer" name="bookingBufferMin" className="glass-input" defaultValue={pick(BUFFER, defaults.bufferMin)}>
+            {BUFFER.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
         </div>
         <div>
