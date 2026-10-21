@@ -11,11 +11,14 @@ sql(`delete from "Restaurant" where email like 'avisos-teste-%'`);
 const r2 = sql(`insert into "Restaurant"(id,name,email,"passwordHash",phone,"subscriptionStatus","onboardedAt","pointsPerReal","createdAt") values (gen_random_uuid(),'Loja dos Avisos','avisos-teste-${Date.now()}@t.com','x','11900000001','ACTIVE',now(),5,now()) returning id`).split('\n')[0];
 const n1 = sql(`select name from "Restaurant" where id='${r1}'`), n2 = sql(`select name from "Restaurant" where id='${r2}'`);
 sql(`delete from "Notification" where "customerId"='${cid}'`);
+// Horários ancorados no começo do dia de Brasília (e não em "agora menos X"): perto da meia-noite, "agora − 30 min" cai em ontem e o teste
+// passava a ver 4 dias em vez de 3.
+const today0 = `(date_trunc('day', now() at time zone 'America/Sao_Paulo') at time zone 'America/Sao_Paulo')`;
 sql(`insert into "Notification" (id,"customerId","restaurantId",title,body,href,"createdAt","readAt") values
- (gen_random_uuid(),'${cid}','${r1}','Você ganhou 940 pontos','Faltam 160 pontos','/lugar/${r1}',now()-interval '10 minutes',null),
- (gen_random_uuid(),'${cid}','${r1}','Seu pedido está pronto','Retire no balcão. Código 4F7K.','/perfil/pedidos',now()-interval '30 minutes',null),
- (gen_random_uuid(),'${cid}','${r2}','Agendamento confirmado','Corte com Lucas amanhã às 11:00.','/perfil/agendamentos',now()-interval '30 hours',null),
- (gen_random_uuid(),'${cid}','${r1}','Resgate confirmado','Pastel de nata entregue.',null,now()-interval '5 days',now())`);
+ (gen_random_uuid(),'${cid}','${r1}','Você ganhou 940 pontos','Faltam 160 pontos','/lugar/${r1}',${today0}+interval '2 seconds',null),
+ (gen_random_uuid(),'${cid}','${r1}','Seu pedido está pronto','Retire no balcão. Código 4F7K.','/perfil/pedidos',${today0}+interval '1 second',null),
+ (gen_random_uuid(),'${cid}','${r2}','Agendamento confirmado','Corte com Lucas amanhã às 11:00.','/perfil/agendamentos',${today0}-interval '6 hours',null),
+ (gen_random_uuid(),'${cid}','${r1}','Resgate confirmado','Pastel de nata entregue.',null,${today0}-interval '5 days',now())`);
 
 const b = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });
 const ctx = await b.newContext({ viewport: { width: 420, height: 900 }, isMobile: true, hasTouch: true });
