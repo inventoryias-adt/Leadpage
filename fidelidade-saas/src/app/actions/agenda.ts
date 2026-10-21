@@ -11,7 +11,8 @@ import { saveImageFromDataUrl } from '@/lib/images';
 import { COLORS, isColorKey } from '@/lib/palette';
 import { parseMoneyToCents } from '@/lib/points';
 import { redirect } from 'next/navigation';
-import { cancelByOwner, completeBooking, confirmBooking, markNoShow } from '@/lib/booking-db';
+import { SlotGoneError, cancelByOwner, completeBooking, confirmBooking, markNoShow, ownerBookSlot } from '@/lib/booking-db';
+import { dateKeyOf, formatBookingWhen, timeOffRange } from '@/lib/booking';
 import { BusinessError } from '@/lib/claims';
 import { requireActiveRestaurant, requirePaidRestaurant } from '@/lib/session';
 
@@ -24,6 +25,7 @@ const policySchema = z.object({
   bookingMinNoticeMin: z.coerce.number().int().min(0).max(7 * 24 * 60),
   bookingMaxDaysAhead: z.coerce.number().int().min(1).max(180),
   bookingCancelHours: z.coerce.number().int().min(0).max(14 * 24),
+  bookingBufferMin: z.coerce.number().int().min(0).max(120).default(0),
   pointsPerRealOff: z.coerce.number().int().min(10, 'Use ao menos 10 pontos por R$ 1,00 de desconto.').max(10_000),
   bookingNotifyEmail: z.string().trim().toLowerCase().max(120).default(''),
 });
@@ -227,4 +229,79 @@ export async function bookingAction(formData: FormData) {
   }
   revalidatePath('/dashboard', 'layout');
   redirect(notice ? `${back}${sep}${notice}` : back);
+}
+
+
+// ---------------------------------------------------------------- Encaixe: o próprio lugar marca um horário
+
+const ownerBookSchema = z.object({
+  serviceId: z.string().regex(/^[0-9a-f-]{36}$/),
+  unitId: z.string().regex(/^[0-9a-f-]{36}$/),
+  resourceId: z.string().default(''),
+  date: z.string(),
+  time: z.string(),
+  cpf: z.string().default(''),
+  guestName: z.string().default(''),
+  guestPhone: z.string().default(''),
+  partySize: z.string().default(''),
+  note: z.string().max(300, 'O recado pode ter até 300 caracteres.').default(''),
+});
+
+/** O dono marca um horário para um cliente (com conta, pelo CPF, ou sem conta, com nome e telefone). */
+export async function createOwnerBooking(_: FormState, formData: FormData): Promise<FormState> {
+  const restaurant = await requireActiveRestaurant();
+  const parsed = ownerBookSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return fail(parsed.error.issues[0].message.includes('300') ? parsed.error.issues[0].message : 'Não foi possível ler o horário. Escolha de novo.', formData);
+  const d = parsed.data;
+  let when: string;
+  try {
+    const booking = await ownerBookSlot(restaurant.id, { ...d, partySize: d.partySize ? Number(d.partySize) : null, resourceId: /^[0-9a-f-]{36}$/.test(d.resourceId) ? d.resourceId : null });
+    when = `${formatBookingWhen(booking.startsAt)}`;
+    refresh();
+    redirect(`/dashboard/agenda?data=${dateKeyOf(booking.startsAt)}&ok=${encodeURIComponent(`Horário marcado: ${when}.`)}`);
+  } catch (e) {
+    if (e instanceof BusinessError || e instanceof SlotGoneError) return fail(e.message, formData);
+    throw e;
+  }
+}
+
+// ---------------------------------------------------------------- Folgas e bloqueios
+
+const timeOffSchema = z.object({
+  resourceId: z.string().default(''),
+  startDate: z.string(),
+  endDate: z.string().default(''),
+  startTime: z.string().default(''),
+  endTime: z.string().default(''),
+  reason: z.string().trim().max(80, 'O motivo pode ter até 80 caracteres.').default(''),
+});
+
+/** Bloqueia um período (folga, férias, almoço, manutenção): do profissional escolhido ou de todos. Os horários somem para o cliente. */
+export async function addTimeOff(_: FormState, formData: FormData): Promise<FormState> {
+  const restaurant = await requireActiveRestaurant();
+  const parsed = timeOffSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return fail(parsed.error.issues[0].message.includes('80') ? parsed.error.issues[0].message : 'Confira as datas e os horários.', formData);
+  const d = parsed.data;
+  const range = timeOffRange(d.startDate, d.endDate || d.startDate, d.startTime || undefined, d.endTime || undefined);
+  if (!range) return fail('Confira as datas e os horários: o fim precisa vir depois do começo (e informe as duas horas, ou nenhuma para o dia inteiro).', formData);
+  let resourceId: string | null = null;
+  if (/^[0-9a-f-]{36}$/.test(d.resourceId)) {
+    const found = await prisma.resource.findFirst({ where: { id: d.resourceId, restaurantId: restaurant.id }, select: { id: true } });
+    if (!found) return fail('Profissional não encontrado.', formData);
+    resourceId = found.id;
+  }
+  await prisma.timeOff.create({ data: { restaurantId: restaurant.id, resourceId, startsAt: range.startsAt, endsAt: range.endsAt, reason: d.reason || null } });
+  // Não cancelamos nada sozinho: quem já tinha horário marcado nesse período continua valendo, e o dono é avisado.
+  const clash = await prisma.booking.count({
+    where: { restaurantId: restaurant.id, status: { in: ['PENDING', 'CONFIRMED'] }, startsAt: { lt: range.endsAt }, endsAt: { gt: range.startsAt }, ...(resourceId ? { resourceId } : {}) },
+  });
+  refresh();
+  return { ok: clash > 0 ? `Bloqueio salvo. Atenção: ${clash} ${clash === 1 ? 'agendamento já marcado nesse período continua valendo' : 'agendamentos já marcados nesse período continuam valendo'}. Remarque ou cancele na Agenda.` : 'Bloqueio salvo. Esses horários não aparecem mais para os clientes.' };
+}
+
+export async function removeTimeOff(formData: FormData) {
+  const restaurant = await requireActiveRestaurant();
+  const id = String(formData.get('id') ?? '');
+  if (/^[0-9a-f-]{36}$/.test(id)) await prisma.timeOff.deleteMany({ where: { id, restaurantId: restaurant.id } });
+  refresh();
 }

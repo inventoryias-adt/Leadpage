@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { PERIODS, periodRange, rangeBounds, toCsv, type AgendaPeriod } from '@/lib/agenda-export';
-import { parseDateKey, todayKey } from '@/lib/booking';
+import { guestOf, parseDateKey, todayKey } from '@/lib/booking';
 import { prisma } from '@/lib/db';
 import { getRestaurant } from '@/lib/session';
 
@@ -30,7 +30,7 @@ export async function GET(req: Request) {
 
   const csv = toCsv(
     rows.map((b) => ({
-      startsAt: b.startsAt, endsAt: b.endsAt, serviceName: b.serviceName, customerName: b.customer.name, customerPhone: b.customer.phone,
+      startsAt: b.startsAt, endsAt: b.endsAt, serviceName: b.serviceName, customerName: guestOf(b).name, customerPhone: guestOf(b).phone,
       resourceName: b.resource?.name ?? null, status: b.status, priceCents: b.priceCents, discountCents: b.discountCents, partySize: b.partySize, note: b.note,
     })),
   );

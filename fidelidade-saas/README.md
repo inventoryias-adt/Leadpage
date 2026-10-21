@@ -546,3 +546,11 @@ O servidor já impedia dois clientes no mesmo horário (cadeado por estabelecime
 - **Tela de sucesso** em Meus agendamentos: cartão "Horário garantido!" com os pontos que o cliente ganha, e em cada próximo agendamento **Adicionar ao calendário** (`/perfil/agendamentos/:id/calendario`, arquivo `.ics` só do dono do agendamento), **Google Agenda** e **Como chegar** (`lib/calendar-links.ts`).
 - Testes: `e2e57` (novo: dois clientes disputando o horário, reserva, saídas, `.ics` e reserva vencida); `calendar-links.test.ts`; `e2e19` ajustado para a nova tela de sucesso.
 - **Produção**: aplicar a migração `0034` **antes** do deploy (a lista de horários consulta `SlotHold`).
+
+## Agenda: encaixe do dono, folgas e intervalo entre atendimentos
+
+- **Novo agendamento (encaixe)** — `Agenda → Novo` (`/dashboard/agenda/novo`): o dono escolhe serviço, profissional, dia e um horário livre e informa quem é o cliente. Com **CPF** de quem já tem conta, o agendamento vai para a conta dele (aviso no app, pontos ao concluir); sem conta, só **nome e telefone** (`Booking.customerId` ficou opcional; `guestName`/`guestPhone`/`createdBy = OWNER`). Passa pela mesma trava e pelas mesmas regras do cliente (`ownerBookSlot`), sem a antecedência mínima, e já nasce confirmado. Na agenda aparece a etiqueta "encaixe". Concluir um encaixe sem conta não credita pontos; lembretes e avisos só vão a quem tem conta.
+- **Folgas e bloqueios** — `Agenda → Folgas` (`/dashboard/agenda/folgas`, tabela `TimeOff`): férias, folga, almoço, feriado, manutenção; de um profissional ou de todos, dia inteiro ou só algumas horas. O período some da agenda do cliente (`timeOffBusy`). O que já estava marcado **continua valendo**: o dono recebe o aviso "N agendamentos já marcados nesse período" e remarca ou cancela na Agenda.
+- **Intervalo entre atendimentos** — em `Configurações → Agenda → Regras` (`Restaurant.bookingBufferMin`: 0 a 30 min): cada agendamento e cada reserva de 5 minutos "engorda" dos dois lados (`withBuffer`), então o horário vizinho só abre depois do intervalo.
+- Migração **`0035`** (`TimeOff`, colunas novas em `Booking` e `Restaurant`). Em produção, aplicar **antes** do deploy.
+- Testes: `e2e58` (novo) e testes unitários de `withBuffer`, `timeOffBusy`, `timeOffRange` e `guestOf` em `booking.test.ts`.

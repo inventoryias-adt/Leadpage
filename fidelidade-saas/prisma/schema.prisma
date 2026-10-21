@@ -95,6 +95,7 @@ model Restaurant {
   bookingMinNoticeMin Int     @default(60) // antecedência mínima para marcar, em minutos
   bookingMaxDaysAhead Int     @default(30) // até quantos dias à frente o cliente pode marcar
   bookingCancelHours  Int     @default(2) // o cliente cancela sozinho até X horas antes
+  bookingBufferMin    Int     @default(0) // intervalo entre atendimentos (limpeza, troca de cliente), em minutos
   pointsPerRealOff    Int     @default(100) // quantos pontos valem R$ 1,00 de desconto num serviço (padrão: ganha 10 por real, 100 pontos = R$ 1,00)
   bookingNotifyEmail  String? // e-mail que recebe cada novo agendamento (vazio = o e-mail da conta)
 
@@ -135,6 +136,7 @@ model Restaurant {
   services         Service[]
   bookings         Booking[]
   slotHolds SlotHold[]
+  timeOffs  TimeOff[]
   menuItems        MenuItem[]
   orders           Order[]
   birthdayGifts    BirthdayGift[]
@@ -638,6 +640,7 @@ model Resource {
   services   Service[]
   bookings   Booking[]
   slotHolds SlotHold[]
+  timeOffs  TimeOff[]
   offers     ResourceService[]
 
   @@index([restaurantId])
@@ -770,7 +773,10 @@ model Booking {
   id           String        @id @default(uuid())
   restaurantId String
   unitId       String
-  customerId   String
+  customerId   String? // vazio = encaixe feito pelo dono para quem não tem conta (guestName/guestPhone)
+  guestName    String?
+  guestPhone   String?
+  createdBy    String? // OWNER quando o próprio lugar marcou
   serviceId    String?
   resourceId   String?
   startsAt     DateTime
@@ -797,7 +803,7 @@ model Booking {
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   unit       Unit       @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  customer   Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer   Customer?  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   service    Service?   @relation(fields: [serviceId], references: [id], onDelete: SetNull)
   resource   Resource?  @relation(fields: [resourceId], references: [id], onDelete: SetNull)
   claim      Claim?     @relation(fields: [claimId], references: [id], onDelete: SetNull)
@@ -848,4 +854,22 @@ model SlotHold {
   /// Cada cliente segura um horário por vez em cada lugar.
   @@unique([customerId, restaurantId])
   @@index([resourceId, expiresAt])
+}
+
+/// Folga, férias, almoço ou qualquer bloqueio: o horário some da agenda do cliente. resourceId vazio = vale para todos os profissionais.
+model TimeOff {
+  id           String   @id @default(uuid())
+  restaurantId String
+  unitId       String? // vazio = todas as unidades
+  resourceId   String? // vazio = todos os profissionais
+  startsAt     DateTime
+  endsAt       DateTime
+  reason       String?
+  createdAt    DateTime @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  resource   Resource?  @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, startsAt])
+  @@index([resourceId, startsAt])
 }

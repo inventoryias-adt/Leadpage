@@ -5,7 +5,7 @@ import { AgendaMonth } from '@/components/AgendaMonth';
 import { AgendaWeek } from '@/components/AgendaWeek';
 import { Icon } from '@/components/Icons';
 import { PERIODS, PERIOD_LABEL, fmtDay, periodRange, rangeBounds, whatsappText, type AgendaPeriod, type ExportRow } from '@/lib/agenda-export';
-import { addDaysKey, dateKeyOf, formatBookingWhen, hmOf, parseDateKey, todayKey, weekdayOf } from '@/lib/booking';
+import { addDaysKey, dateKeyOf, formatBookingWhen, guestOf, hmOf, parseDateKey, todayKey, weekdayOf } from '@/lib/booking';
 import { formatPhone } from '@/lib/br';
 import { imageUrl } from '@/lib/images';
 import { prisma } from '@/lib/db';
@@ -50,7 +50,7 @@ function Actions({ b, back }: { b: Row; back: string }) {
       <input type="hidden" name="id" value={b.id} />
       <input type="hidden" name="op" value={op} />
       <input type="hidden" name="back" value={back} />
-      <button className={`${cls} btn-sm`} aria-label={`${label}: ${b.serviceName} de ${b.customer.name}`}>{label}</button>
+      <button className={`${cls} btn-sm`} aria-label={`${label}: ${b.serviceName} de ${guestOf(b).name}`}>{label}</button>
     </form>
   );
   if (b.status === 'PENDING') return <div className="flex flex-wrap gap-2">{btn('confirm', 'Confirmar', 'glass-button')}{btn('cancel', 'Cancelar', 'btn-danger')}</div>;
@@ -75,7 +75,7 @@ function Item({ b, back, showDay }: { b: Row; back: string; showDay?: boolean })
             {showDay ? formatBookingWhen(b.startsAt) : `${hmOf(b.startsAt)} – ${hmOf(b.endsAt)}`} · {b.serviceName}
           </p>
           <p className="truncate text-sm text-slate-700">
-            {b.customer.name} · <a href={`https://wa.me/55${b.customer.phone}`} target="_blank" rel="noopener noreferrer" className="link-inline !font-medium">{formatPhone(b.customer.phone)}</a>
+            {guestOf(b).name}{b.createdBy === 'OWNER' ? <span className="ml-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">encaixe</span> : null}{guestOf(b).phone ? <> · <a href={`https://wa.me/55${guestOf(b).phone}`} target="_blank" rel="noopener noreferrer" className="link-inline !font-medium">{formatPhone(guestOf(b).phone)}</a></> : null}
           </p>
           <p className="truncate text-xs text-slate-500">
             {[b.resource?.name, b.unit.name, b.partySize ? `${b.partySize} ${b.partySize === 1 ? 'pessoa' : 'pessoas'}` : null, b.priceCents > 0 ? `a cobrar ${formatBRL(b.priceCents - b.discountCents)}` : null].filter(Boolean).join(' · ')}
@@ -102,8 +102,8 @@ const toExport = (b: Row): ExportRow => ({
   startsAt: b.startsAt,
   endsAt: b.endsAt,
   serviceName: b.serviceName,
-  customerName: b.customer.name,
-  customerPhone: b.customer.phone,
+  customerName: guestOf(b).name,
+  customerPhone: guestOf(b).phone,
   resourceName: b.resource?.name ?? null,
   status: b.status,
   priceCents: b.priceCents,
@@ -180,7 +180,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
           <h1 className="text-2xl font-extrabold tracking-tight text-primary">Agenda</h1>
           <p className="hidden text-sm text-slate-600 sm:block">Confirme pedidos, conclua os atendimentos (os pontos entram sozinhos) e marque quem faltou.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div role="group" aria-label="Visão da agenda" className="inline-flex rounded-full border border-[#cbd2dc] bg-white p-0.5">
             {([['grade', 'Calendário', 'calendar'], ['lista', `Lista${live.length ? ` (${live.length})` : ''}`, 'list']] as const).map(([v, label, icon]) => (
               <Link
@@ -194,6 +194,8 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
               </Link>
             ))}
           </div>
+          <Link href="/dashboard/agenda/novo" className="glass-button-navy btn-sm" data-testid="novo-agendamento"><Icon name="plus" size={16} /> <span>Novo</span><span className="sr-only"> agendamento</span></Link>
+          <Link href="/dashboard/agenda/folgas" className="glass-button-ghost btn-sm" aria-label="Folgas e bloqueios" data-testid="folgas"><Icon name="clock" size={16} /> <span className="hidden sm:inline">Folgas</span></Link>
           <Link href="/dashboard/configuracoes?etapa=agenda&abrir=agenda-conteudo#agenda" className="glass-button-ghost btn-sm" aria-label="Serviços e regras"><Icon name="cog" size={16} /> <span className="hidden sm:inline">Serviços e regras</span></Link>
         </div>
       </header>
@@ -260,7 +262,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
       {vista === 'grade' && per === 'semana' && (
         <AgendaWeek
           days={weekDays.map((k) => ({ key: k, weekday: DAY_NAMES[weekdayOf(k)].slice(0, 3), num: String(Number(k.slice(8))), today: k === today, open: unionWindow(units.map((u) => dayWindow(parseSchedule(u.openingSchedule), weekdayOf(k)))) }))}
-          bookings={list.map((b) => ({ id: b.id, resourceId: b.resourceId, resourceColor: b.resource?.color ?? null, startsAt: b.startsAt, endsAt: b.endsAt, serviceName: b.serviceName, customerName: b.customer.name, status: b.status }))}
+          bookings={list.map((b) => ({ id: b.id, resourceId: b.resourceId, resourceColor: b.resource?.color ?? null, startsAt: b.startsAt, endsAt: b.endsAt, serviceName: b.serviceName, customerName: guestOf(b).name, status: b.status }))}
           nowMin={weekDays.includes(today) ? nowMin : null}
           linkBase={back}
           dayHref={(k) => href({ per: 'dia', data: k })}
@@ -275,7 +277,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
           openLabel={openWindow && openWindow !== 'closed' ? windowLabel(openWindow) : undefined}
           linkBase={back}
           staff={(who ? [who] : staff.filter((r) => r.active || list.some((b) => b.resourceId === r.id))).map((r) => ({ id: r.id, name: r.name, color: r.color, photoUrl: imageUrl(r.photoImageId), work: dayWindow(parseSchedule(r.schedule), weekday) }))}
-          bookings={list.map((b) => ({ id: b.id, resourceId: b.resourceId, startsAt: b.startsAt, endsAt: b.endsAt, serviceName: b.serviceName, customerName: b.customer.name, status: b.status }))}
+          bookings={list.map((b) => ({ id: b.id, resourceId: b.resourceId, startsAt: b.startsAt, endsAt: b.endsAt, serviceName: b.serviceName, customerName: guestOf(b).name, status: b.status }))}
           nowMin={date === today ? nowMin : null}
         />
       )}
