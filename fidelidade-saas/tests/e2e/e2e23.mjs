@@ -78,7 +78,7 @@ assert.match(lucasToMe.url, /^https:\/\/wa\.me\/\?text=/); assert.match(lucasToM
 console.log('3b. escolher período, atendente e para quem enviar na própria janela OK');
 
 // 4. semana agrupada por dia (hoje e outro dia da mesma semana) e mês passado
-await p.selectOption('select[aria-label=Profissional]', { label: 'Todos os atendentes' }); await p.waitForFunction(() => !location.search.includes('prof='));
+await p.selectOption('select[aria-label=Profissional]', { label: 'Todos' }); await p.waitForFunction(() => !location.search.includes('prof='));
 await p.click('[data-testid=vista-grade]'); await p.waitForFunction(() => !location.search.includes('vista=lista')); // o teste começou na lista: volta ao calendário
 await p.selectOption('select[aria-label=Período]', { label: 'Semana' }); await p.waitForURL('**per=semana**');
 await p.waitForSelector('[data-testid=agenda-week]'); // a visão em calendário acompanha a pessoa para a semana
