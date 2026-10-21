@@ -134,6 +134,7 @@ model Restaurant {
   resources        Resource[]
   services         Service[]
   bookings         Booking[]
+  slotHolds SlotHold[]
   menuItems        MenuItem[]
   orders           Order[]
   birthdayGifts    BirthdayGift[]
@@ -230,6 +231,7 @@ model Customer {
   addresses         CustomerAddress[]
   promotionUses     PromotionUse[]
   bookings          Booking[]
+  slotHolds SlotHold[]
   photo             CustomerPhoto?
   orders            Order[]
   birthdayGifts     BirthdayGift[]
@@ -635,6 +637,7 @@ model Resource {
   unit       Unit?      @relation(fields: [unitId], references: [id], onDelete: SetNull)
   services   Service[]
   bookings   Booking[]
+  slotHolds SlotHold[]
   offers     ResourceService[]
 
   @@index([restaurantId])
@@ -824,4 +827,25 @@ model Lead {
   contactedAt   DateTime?
 
   @@index([status, createdAt])
+}
+
+/// Horário segurado por alguns minutos para quem está confirmando o agendamento: some da lista dos outros clientes até confirmar ou expirar.
+model SlotHold {
+  id           String   @id @default(uuid())
+  restaurantId String
+  unitId       String
+  customerId   String
+  resourceId   String
+  startsAt     DateTime
+  endsAt       DateTime
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  customer   Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  resource   Resource   @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  /// Cada cliente segura um horário por vez em cada lugar.
+  @@unique([customerId, restaurantId])
+  @@index([resourceId, expiresAt])
 }

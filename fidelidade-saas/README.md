@@ -535,3 +535,14 @@ Antes, o botão "Ver agendamentos / Ver grade do dia" só existia no período **
 - **Página de venda no celular**: na amostra do painel, o nome de cada número (Pontuações, Resgates, Clientes) fica acima da variação em vez de ser cortado.
 - **Buscadores**: `robots.txt` (libera só as páginas públicas) e `sitemap.xml`, usando `APP_URL` como endereço base — troque `APP_URL` ao ligar o domínio próprio. Teste: `e2e56`.
 - **Migração `0033_rls_nas_tabelas_restantes`**: liga o RLS (sem políticas) em `AppCampaign`, `Booking`, `CustomerAddress`, `PasswordReset`, `Resource`, `ResourceService` e `Service`, como já foi feito nas demais na `0032`. O app é dono das tabelas e não é afetado. **Aplicar em produção só com OK do responsável.**
+
+## Agendamento sem conflito: reserva de 5 minutos, saídas na hora e calendário
+
+O servidor já impedia dois clientes no mesmo horário (cadeado por estabelecimento e conferência dentro da transação). Agora o cliente também **vê** isso funcionando.
+
+- **Reserva de 5 minutos** (`SlotHold`, migração `0034`): ao abrir o "Confirmar", `holdBookingSlot` segura o horário para o cliente e a tela mostra a contagem (`SlotHoldBanner`). O horário some da lista dos outros (`slotsForDay` soma as reservas vigentes de outros clientes aos agendamentos como "ocupado"; a do próprio cliente não conta) e volta sozinho ao vencer. Um cliente segura um horário por vez em cada lugar. Ao confirmar, o agendamento fica com o mesmo profissional da reserva e a reserva é apagada; reservas vencidas são limpas a cada nova reserva do lugar.
+- **Saídas na hora**: se alguém fechou o horário antes (`SlotGoneError`), a tela e o "Confirmar" mostram os horários livres mais próximos (`alternativeSlots`: vizinhos do mesmo dia e, se faltar, o primeiro de cada um dos próximos dias). O link do horário que sumiu também mostra as saídas.
+- **Próximo horário livre**: atalho no topo da lista (`firstFreeSlots`, até 14 dias). A lista se atualiza sozinha a cada 20 s (`LiveRefresh`, só com a aba aberta).
+- **Tela de sucesso** em Meus agendamentos: cartão "Horário garantido!" com os pontos que o cliente ganha, e em cada próximo agendamento **Adicionar ao calendário** (`/perfil/agendamentos/:id/calendario`, arquivo `.ics` só do dono do agendamento), **Google Agenda** e **Como chegar** (`lib/calendar-links.ts`).
+- Testes: `e2e57` (novo: dois clientes disputando o horário, reserva, saídas, `.ics` e reserva vencida); `calendar-links.test.ts`; `e2e19` ajustado para a nova tela de sucesso.
+- **Produção**: aplicar a migração `0034` **antes** do deploy (a lista de horários consulta `SlotHold`).

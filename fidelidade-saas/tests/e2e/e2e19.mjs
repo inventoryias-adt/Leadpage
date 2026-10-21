@@ -32,7 +32,7 @@ await l.fill('#c-email', 'lucas@teste.com'); await l.fill('#c-password', 'senha-
 await l.waitForSelector('text=Confirmar'); await l.waitForSelector('button:has-text("Confirmar agendamento")');
 await noOverflow('confirmar'); await l.screenshot({ path: 'bk-confirmar.png', fullPage: true });
 await l.click('button:has-text("Confirmar agendamento")'); await l.waitForURL('**/perfil/agendamentos**');
-await l.waitForSelector('text=Agendamento feito!'); await l.waitForSelector('text=Corte masculino'); await l.waitForSelector('text=Confirmado');
+await l.waitForSelector('[data-testid=booking-success]'); await l.waitForSelector('text=Corte masculino'); await l.waitForSelector('text=Confirmado');
 assert.equal(sql(`select status||'|'||"serviceName"||'|'||"priceCents"||'|'||to_char(("startsAt" at time zone 'UTC') at time zone 'America/Sao_Paulo','HH24:MI') from "Booking"`), 'CONFIRMED|Corte masculino|5000|10:00');
 assert.equal(sql(`select count(*) from "Notification" n join "Customer" c on c.id=n."customerId" where c.email='lucas@teste.com' and n.title='Agendamento confirmado'`) >= '1', true);
 await noOverflow('meus agendamentos'); await l.screenshot({ path: 'bk-meus.png', fullPage: true });
