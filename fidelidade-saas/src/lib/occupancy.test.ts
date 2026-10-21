@@ -15,8 +15,8 @@ test('relatório de ocupação: soma por dia, profissional e totais; dia fechado
     units: [{ id: 'u1', schedule: week('09:00', '13:00', [6, 0]) }],
     resources: [{ id: 'a', unitId: null, capacity: 1 }, { id: 'b', unitId: null, capacity: 1 }],
     bookings: [
-      { unitId: 'u1', resourceId: 'a', startsAt: at('2026-10-12', 9), endsAt: at('2026-10-12', 11) },
-      { unitId: 'u1', resourceId: 'b', startsAt: at('2026-10-12', 9), endsAt: at('2026-10-12', 10) },
+      { resourceId: 'a', startsAt: at('2026-10-12', 9), endsAt: at('2026-10-12', 11) },
+      { resourceId: 'b', startsAt: at('2026-10-12', 9), endsAt: at('2026-10-12', 10) },
     ],
     timeOffs: [],
   });
@@ -39,6 +39,19 @@ test('relatório de ocupação: profissional de outra unidade e folga de uma uni
   assert.equal(report.totals.capacityMin, 60); // só a unidade 1 atende
   assert.deepEqual(Object.keys(report.byResource).sort(), ['a', 'b']);
   assert.equal(report.byResource.b.capacityMin, 0);
+});
+
+test('relatório de ocupação: profissional em duas unidades conta uma vez só', () => {
+  const report = occupancyReport({
+    from: '2026-10-12',
+    days: 1,
+    units: [{ id: 'u1', schedule: week('09:00', '18:00') }, { id: 'u2', schedule: week('09:00', '18:00') }],
+    resources: [{ id: 'ana', unitId: null, capacity: 1 }],
+    bookings: [{ resourceId: 'ana', startsAt: at('2026-10-12', 9), endsAt: at('2026-10-12', 18) }],
+    timeOffs: [],
+  });
+  assert.equal(report.totals.capacityMin, 540);
+  assert.equal(report.totals.pct, 100);
 });
 
 test('formatHours', () => {
