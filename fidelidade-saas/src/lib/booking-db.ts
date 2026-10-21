@@ -2,7 +2,7 @@ import 'server-only';
 import type { Prisma } from '@prisma/client';
 import { prisma } from './db';
 import { BusinessError, creditClaimWith } from './claims';
-import { REMINDER_LEAD_MIN, REMINDER_MIN_AHEAD_MIN, availableSlots, bookingPoints, canCustomerCancel, dayStartUtc, formatBookingWhen, guestOf, hmOf, addDaysKey, timeOffBusy, withBuffer, nearestSlots, parseDateKey, pickResource, reminderDue, todayKey, type BusyRange, type Slot } from './booking';
+import { REMINDER_LEAD_MIN, REMINDER_MIN_AHEAD_MIN, availableSlots, bookingPoints, canCustomerCancel, dateKeyOf, dayOccupancy, dayStartUtc, inPeriod, isWaitPeriod, formatBookingWhen, guestOf, hmOf, addDaysKey, timeOffBusy, withBuffer, nearestSlots, parseDateKey, pickResource, reminderDue, todayKey, type BusyRange, type Slot } from './booking';
 import { suggestsBooking } from './categories';
 import { parseSchedule } from './hours';
 import { sendEmail } from './mailer';
@@ -289,6 +289,8 @@ async function bookSlotTx(customerId: string, input: BookInput) {
         },
       });
       await tx.slotHold.deleteMany({ where: { customerId, restaurantId: restaurant.id } });
+      // Quem estava na lista de espera deste serviço neste dia e conseguiu marcar sai da fila.
+      await tx.waitlistEntry.updateMany({ where: { customerId, restaurantId: restaurant.id, serviceId: service.id, date: input.date, status: 'WAITING' }, data: { status: 'BOOKED' } });
       await notify(tx, {
         customerId,
         restaurantId: restaurant.id,
@@ -476,6 +478,7 @@ export async function rescheduleBooking(customerId: string, bookingId: string, i
     },
     { timeout: 15_000 },
   );
+  void notifyWaitlist(result.booking.restaurantId, dateKeyOf(result.before.startsAt)).catch((e) => console.error('Falha ao avisar a lista de espera', e instanceof Error ? e.message : e));
   void notifyStaffRescheduled(result.booking.id, result.before).catch((e) => console.error('Falha ao avisar a equipe da remarcação', e instanceof Error ? e.message : e));
   return result.booking;
 }
@@ -543,6 +546,13 @@ export async function notifyStaff(bookingId: string) {
 
 /** Cancela um agendamento em aberto; os pontos usados como desconto voltam para a carteira (uma única vez). */
 export async function cancelBooking(id: string, by: 'CUSTOMER' | 'OWNER', where: { customerId?: string; restaurantId?: string }) {
+  const booking = await cancelBookingTx(id, by, where);
+  // O horário voltou para a agenda: quem estava esperando esse dia é avisado.
+  void notifyWaitlist(booking.restaurantId, dateKeyOf(booking.startsAt)).catch((e) => console.error('Falha ao avisar a lista de espera', e instanceof Error ? e.message : e));
+  return booking;
+}
+
+async function cancelBookingTx(id: string, by: 'CUSTOMER' | 'OWNER', where: { customerId?: string; restaurantId?: string }) {
   return prisma.$transaction(async (tx) => {
     const booking = await tx.booking.findFirst({ where: { id, ...where, status: { in: ['PENDING', 'CONFIRMED'] } } });
     if (!booking) throw new BusinessError('Agendamento não encontrado ou já encerrado.');
@@ -727,4 +737,108 @@ export async function answerReminder(id: string, customerId: string, answer: 'ye
   await prisma.booking.update({ where: { id }, data: { reminderAnswer: 'NO', reminderAnsweredAt: now } });
   notifyStaffFreed(id).catch((e) => console.error('[lembretes] aviso à equipe falhou', id, e));
   return { canceled: true };
+}
+
+/** Quantos pedidos de espera um cliente pode ter em aberto num mesmo lugar. */
+export const MAX_WAITING_PER_PLACE = 5;
+/** Quantas pessoas da fila são avisadas a cada vez que um horário abre (as mais antigas primeiro). */
+const WAIT_NOTIFY_MAX = 3;
+/** Quem acabou de ser avisado só é avisado de novo depois deste tempo (se ainda não marcou). */
+const WAIT_RENOTIFY_MS = 30 * 60_000;
+
+export type WaitInput = { restaurantId: string; serviceId: string; unitId: string; date: string; period: string; resourceId?: string | null };
+
+/**
+ * O cliente entra na lista de espera de um dia sem horário na faixa escolhida (manhã, tarde, noite ou qualquer uma).
+ * Só vale para dia que o lugar atende e que ainda não tem horário livre nessa faixa; senão ele marca direto.
+ * Entrar de novo no mesmo serviço e dia reaproveita o pedido (quem saiu da fila volta para o fim).
+ */
+export async function joinWaitlist(customerId: string, input: WaitInput) {
+  return prisma.$transaction(
+    async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${input.restaurantId}))`;
+      const restaurant = await tx.restaurant.findUnique({ where: { id: input.restaurantId } });
+      if (!restaurant || restaurant.subscriptionStatus !== 'ACTIVE' || !restaurant.onboardedAt) throw new BusinessError('Este lugar não está recebendo agendamentos agora.');
+      const [service, unit] = await Promise.all([
+        tx.service.findFirst({ where: { id: input.serviceId, restaurantId: restaurant.id, active: true } }),
+        tx.unit.findFirst({ where: { id: input.unitId, restaurantId: restaurant.id, active: true } }),
+      ]);
+      if (!service) throw new BusinessError('Este serviço não está mais disponível.');
+      if (!unit) throw new BusinessError('Unidade não encontrada.');
+      if (!isWaitPeriod(input.period)) throw new BusinessError('Escolha a faixa de horário.');
+      const today = todayKey();
+      if (!parseDateKey(input.date) || input.date < today || input.date > addDaysKey(today, restaurant.bookingMaxDaysAhead)) throw new BusinessError('Escolha um dia dentro do prazo de agendamento.');
+
+      const resourceId = input.resourceId || null;
+      const staff = await staffFor(tx, { restaurantId: restaurant.id, service, unitId: unit.id, resourceId });
+      if (staff.length === 0) throw new BusinessError('Esse profissional não atende este serviço.');
+      const open = dayOccupancy({ date: input.date, schedule: parseSchedule(unit.openingSchedule), resources: staff, bookings: [], timeOffs: [] });
+      if (open.capacityMin <= 0) throw new BusinessError('O lugar não atende nesse dia.');
+      const { slots } = await slotsForDay(tx, { restaurantId: restaurant.id, policy: restaurant, service, unit, date: input.date, resourceId, customerId });
+      if (slots.some((s) => inPeriod(s.time, input.period))) throw new BusinessError('Ainda há horário livre nessa faixa. Escolha direto na lista de horários.');
+
+      const key = { customerId_restaurantId_serviceId_date: { customerId, restaurantId: restaurant.id, serviceId: service.id, date: input.date } };
+      const existing = await tx.waitlistEntry.findUnique({ where: key });
+      if (!existing || existing.status !== 'WAITING') {
+        const waiting = await tx.waitlistEntry.count({ where: { customerId, restaurantId: restaurant.id, status: 'WAITING', date: { gte: today } } });
+        if (waiting >= MAX_WAITING_PER_PLACE) throw new BusinessError(`Você já está em ${MAX_WAITING_PER_PLACE} listas de espera neste lugar. Saia de alguma para entrar em outra.`);
+      }
+      const data = { unitId: unit.id, resourceId, period: input.period };
+      const entry = existing
+        ? await tx.waitlistEntry.update({ where: key, data: existing.status === 'WAITING' ? data : { ...data, status: 'WAITING', notifiedAt: null, createdAt: new Date() } })
+        : await tx.waitlistEntry.create({ data: { ...data, restaurantId: restaurant.id, customerId, serviceId: service.id, date: input.date } });
+      return entry;
+    },
+    { timeout: 15_000 },
+  );
+}
+
+/** O cliente sai da fila. */
+export async function leaveWaitlist(customerId: string, entryId: string) {
+  const done = await prisma.waitlistEntry.updateMany({ where: { id: entryId, customerId, status: 'WAITING' }, data: { status: 'CANCELED' } });
+  if (done.count !== 1) throw new BusinessError('Esse pedido de espera não está mais ativo.');
+}
+
+/** Posição na fila (1 = o mais antigo) entre quem espera o mesmo serviço no mesmo dia. */
+export async function waitPosition(entry: { restaurantId: string; serviceId: string; date: string; createdAt: Date }) {
+  const ahead = await prisma.waitlistEntry.count({ where: { restaurantId: entry.restaurantId, serviceId: entry.serviceId, date: entry.date, status: 'WAITING', createdAt: { lt: entry.createdAt } } });
+  return ahead + 1;
+}
+
+/**
+ * Um horário abriu neste dia: avisa os primeiros da fila (por ordem de chegada) que agora têm horário na faixa que pediram.
+ * "Quem chegar primeiro marca primeiro": o aviso não reserva nada, só chama; a reserva de 5 minutos e o cadeado seguem valendo.
+ * Quem foi avisado há pouco espera um tempo antes de ser avisado de novo. Devolve quantos avisos saíram.
+ */
+export async function notifyWaitlist(restaurantId: string, date: string, now: Date = new Date()): Promise<number> {
+  if (date < todayKey(now)) return 0;
+  const cutoff = new Date(now.getTime() - WAIT_RENOTIFY_MS);
+  const queue = await prisma.waitlistEntry.findMany({
+    where: { restaurantId, date, status: 'WAITING', OR: [{ notifiedAt: null }, { notifiedAt: { lt: cutoff } }] },
+    orderBy: { createdAt: 'asc' },
+    include: { restaurant: true, service: true, unit: true },
+  });
+  let sent = 0;
+  for (const e of queue) {
+    if (sent >= WAIT_NOTIFY_MAX) break;
+    if (!e.service.active || !e.unit.active || e.restaurant.subscriptionStatus !== 'ACTIVE') continue;
+    const { slots } = await slotsForDay(prisma, { restaurantId, policy: e.restaurant, service: e.service, unit: e.unit, date, now, resourceId: e.resourceId, customerId: e.customerId });
+    const fits = slots.filter((s) => inPeriod(s.time, e.period));
+    if (fits.length === 0) continue;
+    // Marca antes de avisar: duas execuções ao mesmo tempo não mandam o mesmo aviso duas vezes.
+    const claimed = await prisma.waitlistEntry.updateMany({ where: { id: e.id, status: 'WAITING', OR: [{ notifiedAt: null }, { notifiedAt: { lt: cutoff } }] }, data: { notifiedAt: now } });
+    if (claimed.count !== 1) continue;
+    const q = new URLSearchParams({ servico: e.serviceId, unidade: e.unitId, data: date, hora: fits[0].time });
+    if (e.resourceId) q.set('prof', e.resourceId);
+    const times = fits.slice(0, 3).map((s) => s.time).join(', ');
+    await notify(prisma, {
+      customerId: e.customerId,
+      restaurantId,
+      title: 'Abriu um horário que você queria',
+      body: `${e.service.name} · ${formatBookingWhen(fits[0].startsAt).split(' às ')[0]} · ${e.restaurant.name}: ${times}. Quem confirmar primeiro fica com o horário.`,
+      href: `/lugar/${restaurantId}/agendar?${q.toString()}`,
+    });
+    sent++;
+  }
+  return sent;
 }

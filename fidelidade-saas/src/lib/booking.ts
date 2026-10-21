@@ -234,3 +234,72 @@ export function formatTimeOff(startsAt: Date, endsAt: Date): string {
   if (sameDay) return `${day(startsAt)} · ${hour(startsAt)}–${hour(endsAt)}`;
   return `${formatBookingWhen(startsAt)} até ${formatBookingWhen(endsAt)}`;
 }
+
+/** Faixas do dia que o cliente escolhe ao entrar na lista de espera. */
+export const WAIT_PERIODS = { ANY: 'Qualquer horário', MORNING: 'Manhã (até 12h)', AFTERNOON: 'Tarde (12h às 18h)', EVENING: 'Noite (a partir das 18h)' } as const;
+export type WaitPeriod = keyof typeof WAIT_PERIODS;
+export const isWaitPeriod = (v: string): v is WaitPeriod => v in WAIT_PERIODS;
+
+/** O horário "HH:MM" cai na faixa escolhida? */
+export function inPeriod(time: string, period: string): boolean {
+  const m = toMin(time);
+  if (period === 'MORNING') return m < 12 * 60;
+  if (period === 'AFTERNOON') return m >= 12 * 60 && m < 18 * 60;
+  if (period === 'EVENING') return m >= 18 * 60;
+  return true;
+}
+
+export type OccupancyInput = {
+  date: string;
+  schedule: Schedule | null; // horário da unidade
+  resources: { id: string; capacity: number; schedule?: Schedule | null }[];
+  bookings: BusyRange[]; // agendamentos pendentes/confirmados que tocam o dia
+  timeOffs: BusyRange[]; // folgas e bloqueios (resourceId vazio = de todos)
+};
+export type Occupancy = { capacityMin: number; bookedMin: number; byResource: Record<string, { capacityMin: number; bookedMin: number }> };
+
+const overlapMin = (aStart: number, aEnd: number, bStart: number, bEnd: number) => Math.max(0, Math.min(aEnd, bEnd) - Math.max(aStart, bStart)) / 60_000;
+
+/**
+ * Quanto do dia dá para atender (capacidade) e quanto já está marcado, em minutos, somando os profissionais.
+ * A capacidade é o expediente (unidade ∩ escala do profissional) menos as folgas, vezes quantos atendimentos ele faz ao mesmo tempo.
+ */
+export function dayOccupancy(input: OccupancyInput): Occupancy {
+  const { date, schedule, resources, bookings, timeOffs } = input;
+  const out: Occupancy = { capacityMin: 0, bookedMin: 0, byResource: {} };
+  if (!parseDateKey(date) || !schedule) return out;
+  const weekday = weekdayOf(date);
+  const unit = windowOf(schedule, weekday);
+  if (!unit) return out;
+  const base = dayStartUtc(date).getTime();
+  for (const r of resources) {
+    const own = r.schedule ? windowOf(r.schedule, weekday) : unit;
+    if (!own) continue;
+    const open = Math.max(unit.open, own.open);
+    const close = Math.min(unit.close, own.close);
+    if (close <= open) continue;
+    const wStart = base + open * 60_000;
+    const wEnd = base + close * 60_000;
+    // Folgas que valem para este profissional, unidas para não contar o mesmo minuto duas vezes.
+    const offs = timeOffs
+      .filter((o) => !o.resourceId || o.resourceId === r.id)
+      .map((o) => [Math.max(o.startsAt.getTime(), wStart), Math.min(o.endsAt.getTime(), wEnd)] as const)
+      .filter(([a, b]) => b > a)
+      .sort((x, y) => x[0] - y[0]);
+    let blocked = 0;
+    let cursor = wStart;
+    for (const [a, b] of offs) {
+      const from = Math.max(a, cursor);
+      if (b > from) { blocked += (b - from) / 60_000; cursor = b; }
+    }
+    const capacityMin = Math.max(0, close - open - blocked) * Math.max(1, r.capacity);
+    const bookedMin = Math.min(capacityMin, bookings.filter((b) => b.resourceId === r.id).reduce((sum, b) => sum + overlapMin(b.startsAt.getTime(), b.endsAt.getTime(), wStart, wEnd), 0));
+    out.byResource[r.id] = { capacityMin, bookedMin };
+    out.capacityMin += capacityMin;
+    out.bookedMin += bookedMin;
+  }
+  return out;
+}
+
+/** Percentual de ocupação (0 a 100) ou null quando o dia não tem capacidade (fechado ou tudo bloqueado). */
+export const occupancyPct = (o: { capacityMin: number; bookedMin: number }): number | null => (o.capacityMin > 0 ? Math.round((o.bookedMin / o.capacityMin) * 100) : null);

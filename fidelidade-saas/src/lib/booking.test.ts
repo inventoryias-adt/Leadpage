@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { addDaysKey, availableSlots, bookingPoints, canCustomerCancel, dateKeyOf, dayStartUtc, formatBookingWhen, formatTimeOff, guestOf, hmOf, parseDateKey, pickResource, timeOffBusy, timeOffRange, weekdayOf, withBuffer, type SlotInput } from './booking';
+import { addDaysKey, availableSlots, bookingPoints, canCustomerCancel, dateKeyOf, dayStartUtc, formatBookingWhen, formatTimeOff, guestOf, hmOf, inPeriod, dayOccupancy, occupancyPct, parseDateKey, pickResource, timeOffBusy, timeOffRange, weekdayOf, withBuffer, type SlotInput } from './booking';
 import type { Schedule } from './hours';
 
 const week = (open: string, close: string, closedDays: number[] = []): Schedule => Array.from({ length: 7 }, (_, day) => ({ day, closed: closedDays.includes(day), open, close }));
@@ -198,4 +198,53 @@ test('formatTimeOff: dia inteiro, janela no mesmo dia e períodos longos', () =>
   assert.equal(r('2026-10-21', '2026-10-21', '14:00', '16:00'), 'Qua, 21/10 · 14h–16h');
   assert.equal(r('2026-10-21', '2026-10-21', '12:30', '13:30'), 'Qua, 21/10 · 12h30–13h30');
   assert.equal(r('2026-10-21', '2026-10-22', '18:00', '09:00'), 'Qua, 21/10 às 18h até Qui, 22/10 às 9h');
+});
+
+test('inPeriod: manhã, tarde, noite e qualquer horário', () => {
+  assert.equal(inPeriod('09:30', 'MORNING'), true);
+  assert.equal(inPeriod('12:00', 'MORNING'), false);
+  assert.equal(inPeriod('12:00', 'AFTERNOON'), true);
+  assert.equal(inPeriod('17:45', 'AFTERNOON'), true);
+  assert.equal(inPeriod('18:00', 'AFTERNOON'), false);
+  assert.equal(inPeriod('18:00', 'EVENING'), true);
+  assert.equal(inPeriod('03:00', 'ANY'), true);
+});
+
+test('ocupação do dia: capacidade do expediente, folgas unidas e agendamentos contados', () => {
+  const r = { id: 'r1', capacity: 1 };
+  const empty = dayOccupancy({ date: '2026-10-12', schedule: week('09:00', '12:00'), resources: [r], bookings: [], timeOffs: [] });
+  assert.deepEqual([empty.capacityMin, empty.bookedMin, occupancyPct(empty)], [180, 0, 0]);
+
+  const busy = [{ resourceId: 'r1', startsAt: at('09:00'), endsAt: at('10:30') }];
+  const half = dayOccupancy({ date: '2026-10-12', schedule: week('09:00', '12:00'), resources: [r], bookings: busy, timeOffs: [] });
+  assert.equal(occupancyPct(half), 50);
+
+  // Duas folgas que se sobrepõem (10h–11h e 10h30–11h30) bloqueiam 90 min, não 120.
+  const offs = [
+    { resourceId: null, startsAt: at('10:00'), endsAt: at('11:00') },
+    { resourceId: 'r1', startsAt: at('10:30'), endsAt: at('11:30') },
+  ];
+  const withOff = dayOccupancy({ date: '2026-10-12', schedule: week('09:00', '12:00'), resources: [r], bookings: busy, timeOffs: offs });
+  assert.equal(withOff.capacityMin, 90);
+  assert.equal(withOff.bookedMin, 90);
+  assert.equal(occupancyPct(withOff), 100);
+
+  // Folga do dia inteiro: sem capacidade, sem percentual.
+  const allDay = dayOccupancy({ date: '2026-10-12', schedule: week('09:00', '12:00'), resources: [r], bookings: [], timeOffs: [{ resourceId: null, startsAt: at('00:00'), endsAt: at('00:00', '2026-10-13') }] });
+  assert.equal(occupancyPct(allDay), null);
+});
+
+test('ocupação do dia: escala do profissional, dia fechado e vagas simultâneas', () => {
+  const schedule = week('09:00', '18:00', [0]);
+  const ana = { id: 'ana', capacity: 1, schedule: week('13:00', '17:00') };
+  const mesa = { id: 'mesa', capacity: 3 };
+  const o = dayOccupancy({ date: '2026-10-12', schedule, resources: [ana, mesa], bookings: [], timeOffs: [] });
+  assert.equal(o.byResource.ana.capacityMin, 240); // só a escala dela (13h–17h)
+  assert.equal(o.byResource.mesa.capacityMin, 9 * 60 * 3); // três mesas ao mesmo tempo
+  // Domingo fechado: nada a atender.
+  const sunday = dayOccupancy({ date: '2026-10-11', schedule, resources: [ana, mesa], bookings: [], timeOffs: [] });
+  assert.deepEqual([sunday.capacityMin, occupancyPct(sunday)], [0, null]);
+  // Reservas além da capacidade não passam de 100%.
+  const crowded = dayOccupancy({ date: '2026-10-12', schedule: week('09:00', '10:00'), resources: [{ id: 'r', capacity: 1 }], bookings: [{ resourceId: 'r', startsAt: at('08:00'), endsAt: at('12:00') }], timeOffs: [] });
+  assert.equal(occupancyPct(crowded), 100);
 });
