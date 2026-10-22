@@ -26,7 +26,7 @@ const ctx = await b.newContext({ viewport: { width: 1280, height: 1000 } });
 await ctx.addInitScript(() => { localStorage.setItem('fz_intro_v1', '1'); localStorage.setItem('fz_install_intro_v1', '1'); try { sessionStorage.setItem('fz_splash', '1'); } catch {} });
 const o = await ctx.newPage(); o.on('pageerror', (e) => console.log('PAGEERROR', e.message));
 await o.goto(BASE + '/login'); await o.fill('#email', 'ze@burger.com'); await o.fill('#password', 'senha-segura-1'); await o.click('button[type=submit]'); await o.waitForURL('**/dashboard');
-const periodo = (nome) => o.click(`[role=group][aria-label="Período"] a:has-text("${nome}")`);
+const periodo = (nome) => o.selectOption('select[aria-label="Período"]', { label: nome });
 const current = (v) => o.locator(`[data-testid=vista-${v}]`).getAttribute('aria-current');
 
 // 1. no dia: chave no topo, calendário marcado, resumo do dia

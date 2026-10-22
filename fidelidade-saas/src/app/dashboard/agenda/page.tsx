@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { bookingAction } from '@/app/actions/agenda';
+import { AgendaFilters } from '@/components/AgendaFilters';
 import { AgendaGrid } from '@/components/AgendaGrid';
 import { AgendaMonth } from '@/components/AgendaMonth';
 import { AgendaWeek } from '@/components/AgendaWeek';
 import { Icon } from '@/components/Icons';
-import { PERIODS, PERIOD_LABEL, fmtDay, periodRange, rangeBounds, whatsappText, type AgendaPeriod, type ExportRow } from '@/lib/agenda-export';
+import { WhatsappSend } from '@/components/WhatsappSend';
+import { PERIODS, PERIOD_LABEL, fmtDay, periodRange, rangeBounds, type AgendaPeriod } from '@/lib/agenda-export';
 import { addDaysKey, dateKeyOf, formatBookingWhen, guestOf, hmOf, parseDateKey, todayKey, weekdayOf } from '@/lib/booking';
 import { formatPhone } from '@/lib/br';
 import { imageUrl } from '@/lib/images';
@@ -17,10 +19,6 @@ import { requireActiveRestaurant } from '@/lib/session';
 
 export const metadata = { title: 'Agenda' };
 export const dynamic = 'force-dynamic';
-
-/** Linha de chips: no celular fica numa fila só que rola de lado (ocupa menos altura); no computador quebra linha. */
-const ROW = 'flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden';
-const CHIP = 'shrink-0 whitespace-nowrap';
 
 const STATUS: Record<string, { label: string; cls: string }> = {
   PENDING: { label: 'Aguardando', cls: 'bg-amber-100 text-amber-800' },
@@ -98,20 +96,6 @@ function Item({ b, back, showDay }: { b: Row; back: string; showDay?: boolean })
   );
 }
 
-const toExport = (b: Row): ExportRow => ({
-  startsAt: b.startsAt,
-  endsAt: b.endsAt,
-  serviceName: b.serviceName,
-  customerName: guestOf(b).name,
-  customerPhone: guestOf(b).phone,
-  resourceName: b.resource?.name ?? null,
-  status: b.status,
-  priceCents: b.priceCents,
-  discountCents: b.discountCents,
-  partySize: b.partySize,
-  note: b.note,
-});
-
 export default async function AgendaPage({ searchParams }: { searchParams: Promise<{ data?: string; per?: string; prof?: string; vista?: string; ag?: string; ok?: string; erro?: string }> }) {
   const restaurant = await requireActiveRestaurant();
   const sp = await searchParams;
@@ -169,8 +153,6 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
   const count = (st: string) => live.filter((b) => b.status === st).length;
   const nowMin = (() => { const hm = hmOf(new Date()); return Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3, 5)); })();
 
-  const text = whatsappText(list.map(toExport), { who: who?.name ?? null, label: range.label });
-  const waHref = `https://wa.me/${who?.phone ? `55${who.phone}` : ''}?text=${encodeURIComponent(text)}`;
   const csvHref = `/dashboard/agenda/exportar${(() => { const q = new URLSearchParams({ data: date, per }); if (who) q.set('prof', who.id); return `?${q}`; })()}`;
 
   return (
@@ -195,9 +177,11 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
             ))}
           </div>
           <Link href="/dashboard/agenda/novo" className="glass-button-navy btn-sm" data-testid="novo-agendamento"><Icon name="plus" size={16} /> <span>Novo</span><span className="sr-only"> agendamento</span></Link>
-          <Link href="/dashboard/agenda/folgas" className="glass-button-ghost btn-sm" aria-label="Folgas e bloqueios" data-testid="folgas"><Icon name="clock" size={16} /> <span className="hidden sm:inline">Folgas</span></Link>
-          <Link href="/dashboard/agenda/ocupacao" className="glass-button-ghost btn-sm" aria-label="Ocupação da agenda" data-testid="ocupacao"><Icon name="chart" size={16} /> <span className="hidden sm:inline">Ocupação</span></Link>
-          <Link href="/dashboard/configuracoes?etapa=agenda&abrir=agenda-conteudo#agenda" className="glass-button-ghost btn-sm" aria-label="Serviços e regras"><Icon name="cog" size={16} /> <span className="hidden sm:inline">Serviços e regras</span></Link>
+          <div className="grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto">
+            <Link href="/dashboard/agenda/folgas" className="glass-button-ghost btn-sm" aria-label="Folgas e bloqueios" data-testid="folgas"><Icon name="clock" size={16} /> Folgas</Link>
+            <Link href="/dashboard/agenda/ocupacao" className="glass-button-ghost btn-sm" aria-label="Ocupação da agenda" data-testid="ocupacao"><Icon name="chart" size={16} /> Ocupação</Link>
+            <Link href="/dashboard/configuracoes?etapa=agenda&abrir=agenda-conteudo#agenda" className="glass-button-ghost btn-sm" aria-label="Serviços e regras"><Icon name="cog" size={16} /> <span className="sm:hidden">Regras</span><span className="hidden sm:inline">Serviços e regras</span></Link>
+          </div>
         </div>
       </header>
 
@@ -212,22 +196,13 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
         </section>
       )}
 
-      <section aria-label="Filtros" className="space-y-2">
-        <div className={ROW} role="group" aria-label="Período">
-          {PERIODS.map((p) => (
-            <Link key={p} href={href({ per: p, data: p === 'mes-passado' ? date : date })} aria-current={p === per ? 'true' : undefined} className={`chip-link ${CHIP} ${p === per ? 'chip-link-active' : ''}`}>
-              {PERIOD_LABEL[p]}
-            </Link>
-          ))}
-        </div>
-        {staff.length > 0 && (
-          <div className={ROW} role="group" aria-label="Profissional">
-            <Link href={href({ prof: null })} aria-current={!who ? 'true' : undefined} className={`chip-link ${CHIP} ${!who ? 'chip-link-active' : ''}`}>Todos</Link>
-            {staff.map((r) => (
-              <Link key={r.id} href={href({ prof: r.id })} aria-current={who?.id === r.id ? 'true' : undefined} className={`chip-link ${CHIP} ${who?.id === r.id ? 'chip-link-active' : ''}`}><span className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full align-baseline" style={{ background: resourceColor(r).hex }} />{r.name}</Link>
-            ))}
-          </div>
-        )}
+      <section aria-label="Filtros">
+        <AgendaFilters
+          period={per}
+          periods={PERIODS.map((p) => ({ value: p, label: PERIOD_LABEL[p], href: href({ per: p }) }))}
+          staffId={who?.id ?? ''}
+          staff={staff.length > 0 ? [{ value: '', label: 'Todos', href: href({ prof: null }) }, ...staff.map((r) => ({ value: r.id, label: r.name, href: href({ prof: r.id }) }))] : []}
+        />
       </section>
 
       <nav aria-label="Período" className="glass-panel-sm flex items-center justify-between gap-2 p-2">
@@ -252,13 +227,19 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
       </p>
 
       <div className="flex gap-2">
-        <a href={waHref} target="_blank" rel="noopener noreferrer" className="glass-button btn-sm">
-          <Icon name="whatsapp" size={15} /> <span className="sm:hidden">WhatsApp</span><span className="hidden sm:inline">Enviar pelo WhatsApp{who ? ` para ${who.name.split(' ')[0]}` : ''}</span>
-        </a>
+        <WhatsappSend
+          date={date}
+          period={per}
+          personId={who?.id ?? ''}
+          periods={PERIODS.map((p) => {
+            const r = periodRange(p, date);
+            return { value: p, label: p === 'dia' ? `Dia ${r.label}` : p === 'semana' ? `Semana de ${fmtDay(r.from)} a ${fmtDay(r.to)}` : `${PERIOD_LABEL[p]}: ${r.label}` };
+          })}
+          people={staff.map((r) => ({ id: r.id, name: r.name, hasPhone: !!r.phone }))}
+        />
         <a href={csvHref} className="glass-button-ghost btn-sm" download><span className="sm:hidden">CSV</span><span className="hidden sm:inline">Baixar planilha (CSV)</span></a>
       </div>
       </div>
-      {who && !who.phone && <p className="text-xs text-slate-500">{who.name} não tem WhatsApp cadastrado: o WhatsApp abrirá para você escolher o contato. Cadastre em Regras → Agenda e serviços.</p>}
 
       {vista === 'grade' && per === 'semana' && (
         <AgendaWeek
