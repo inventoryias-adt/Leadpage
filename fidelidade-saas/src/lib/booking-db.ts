@@ -7,6 +7,7 @@ import { suggestsBooking } from './categories';
 import { parseSchedule } from './hours';
 import { sendEmail } from './mailer';
 import { notify } from './notifications';
+import { askForReview } from './reviews-db';
 import { applyPoints } from './points-discount';
 import { appUrl } from './payments';
 import { formatBRL } from './points';
@@ -579,7 +580,7 @@ async function cancelBookingTx(id: string, by: 'CUSTOMER' | 'OWNER', where: { cu
  * valor entra nas vendas do painel. Serviço sem preço conclui sem pontos.
  */
 export async function completeBooking(id: string, restaurantId: string) {
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const booking = await tx.booking.findFirst({ where: { id, restaurantId, status: { in: ['PENDING', 'CONFIRMED'] } } });
     if (!booking) throw new BusinessError('Agendamento não encontrado ou já encerrado.');
     const restaurant = await tx.restaurant.findUnique({ where: { id: restaurantId }, select: { pointsPerReal: true } });
@@ -591,7 +592,7 @@ export async function completeBooking(id: string, restaurantId: string) {
     // Os pontos ganhos contam sobre o que o cliente realmente pagou (preço menos o desconto em pontos).
     const paidCents = Math.max(0, booking.priceCents - booking.discountCents);
     const points = bookingPoints(paidCents, restaurant.pointsPerReal);
-    if (paidCents <= 0 || points <= 0 || !booking.customerId) return { points: 0 };
+    if (paidCents <= 0 || points <= 0 || !booking.customerId) return { points: 0, booking };
 
     const token = newClaimToken();
     const claim = await tx.claim.create({
@@ -608,8 +609,11 @@ export async function completeBooking(id: string, restaurantId: string) {
     });
     const credited = await creditClaimWith(tx, token, booking.customerId);
     await tx.booking.update({ where: { id }, data: { claimId: claim.id, pointsAwarded: credited.points } });
-    return { points: credited.points };
+    return { points: credited.points, booking };
   });
+  // Atendimento concluído: convida o cliente a avaliar (depois de fechar a transação; se falhar, não atrapalha).
+  if (result.booking) await askForReview({ id, customerId: result.booking.customerId, restaurantId, serviceName: result.booking.serviceName });
+  return { points: result.points };
 }
 
 /** O estabelecimento confirma um pedido que estava aguardando. */

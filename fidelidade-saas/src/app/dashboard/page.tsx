@@ -6,6 +6,7 @@ import { prisma } from '@/lib/db';
 import { dailySeries, deltaPct, heatmap, peakSlot, suggestions, WEEKDAYS } from '@/lib/insights';
 import { loadCustomerRows } from '@/lib/insights-db';
 import { compactBRL, compactNumber, formatBRL, formatPoints } from '@/lib/points';
+import { formatAvg, summarize } from '@/lib/reviews';
 import { requireActiveRestaurant } from '@/lib/session';
 
 export const metadata = { title: 'Início' };
@@ -47,6 +48,7 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
     }),
   ]);
 
+  const reviewSummary = summarize((await prisma.review.findMany({ where: { restaurantId: rid, hiddenAt: null }, select: { placeRating: true } })).map((r) => r.placeRating));
   const inPeriod = (d: Date) => d >= since;
   const cur = sales.filter((s) => s.redeemedAt && inPeriod(s.redeemedAt));
   const prev = sales.filter((s) => s.redeemedAt && !inPeriod(s.redeemedAt));
@@ -154,6 +156,13 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
       </div>
       </div>
 
+
+      <Link href="/dashboard/avaliacoes" className="glass-panel-sm card-link flex items-center justify-between gap-3 !rounded-[22px] p-4" data-testid="reviews-shortcut">
+        <span className="flex items-center gap-2 font-semibold text-primary"><Icon name="star" size={18} /> Avaliações dos clientes</span>
+        <span className="text-sm text-slate-600">
+          {reviewSummary.count === 0 ? 'Ainda sem avaliações' : <><b className="text-slate-900">★ {formatAvg(reviewSummary.avg ?? 0)}</b> · {reviewSummary.count} {reviewSummary.count === 1 ? 'avaliação' : 'avaliações'} · ver e responder →</>}
+        </span>
+      </Link>
 
       <div className="grid gap-6 lg:grid-cols-5">
         <section className="glass-panel p-5 sm:p-6 lg:col-span-3" aria-labelledby="vendas-dia">

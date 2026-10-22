@@ -577,3 +577,13 @@ O servidor já impedia dois clientes no mesmo horário (cadeado por estabelecime
 - **Agenda → Enviar pelo WhatsApp**: abre uma janela para escolher o **período** (dia, semana, mês, mês passado), o **atendente** (todos ou só um) e **para quem enviar** (o número cadastrado do atendente ou outro contato que a pessoa escolhe no WhatsApp, por exemplo ela mesma). O servidor monta o texto (`/dashboard/agenda/whatsapp`, só para o dono logado, sem cancelados) e redireciona para o WhatsApp; agenda muito longa é cortada em linha inteira com aviso (`whatsappUrl`).
 - Testes: `e2e60` (novo, Caixa), `e2e23` e `e2e55` (ajustados para os menus e a janela do WhatsApp), testes unitários de `claim-filters` e `whatsappUrl`.
 - Passos de Regras no celular: o passo atual agora fica marinho e centralizado na faixa (`e2e61`); a regra de CSS do estado ativo estava quebrada e deixava todas as abas ativas sem cor em telas de toque.
+
+## Avaliações do lugar e de quem atendeu (migration `0037_avaliacoes`)
+
+- **Quem avalia:** só o cliente do atendimento, depois de o dono marcar como **Concluído** na agenda (o app avisa "Como foi o atendimento?"). Uma avaliação por agendamento, até 30 dias depois de concluído. Nota do lugar (1 a 5), nota de quem atendeu (opcional, quando houve profissional) e comentário de até 500 caracteres. Aparece como "Maria L.".
+- **Onde aparece:** seção "Avaliações" na página do lugar, nota nos cartões de **Lugares** (com o filtro "Mais bem avaliados") e nota do profissional ao escolher "Com quem?" no agendar.
+- **Nota só com 3+ avaliações** (`MIN_REVIEWS_FOR_RANK`): antes disso o comentário aparece, mas não há estrelas de média nem ranking, para uma única opinião não decidir sozinha.
+- **Dono:** `/dashboard/avaliacoes` (também atalho no Início) mostra a nota, a média por atendente, permite **responder** (a resposta aparece para todos) e **denunciar**. Ele não apaga avaliações.
+- **Administração:** `/admin/avaliacoes` lista as denúncias; **Ocultar** tira do app e da média, **Manter** encerra a denúncia. Tudo fica no Registro.
+- Regras puras em `src/lib/reviews.ts` (testadas em `reviews.test.ts`), banco em `src/lib/reviews-db.ts`, teste de tela `e2e63`.
+- **Produção:** aplicar a migration `0037` (tabela `Review`, com RLS ligado e sem acesso para `anon`/`authenticated`) antes do deploy.

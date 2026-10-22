@@ -14,7 +14,9 @@ import { Illustration } from './Illustrations';
 import { LocationBar } from './LocationBar';
 import { Reveal } from './Reveal';
 import { TodayDeals, type Deal } from './TodayDeals';
+import { RatingBadge } from './Stars';
 import { PlaceAvatar, RewardImage } from './Visual';
+import { compareByRating, type RatingSummary } from '@/lib/reviews';
 
 export type PlaceUnit = { id: string; name: string; address: string | null; lat: number | null; lng: number | null; openNow: boolean | null };
 
@@ -38,9 +40,10 @@ export type PlaceCard = {
   challenges: number;
   campaigns: CampaignItem[];
   units: PlaceUnit[];
+  rating: RatingSummary | null;
 };
 
-type Filter = 'all' | 'saldo' | 'aberto' | 'desafios' | 'promo';
+type Filter = 'all' | 'saldo' | 'aberto' | 'desafios' | 'promo' | 'nota';
 type Pos = { lat: number; lng: number };
 
 const FILTERS: { id: Filter; label: string }[] = [
@@ -49,6 +52,7 @@ const FILTERS: { id: Filter; label: string }[] = [
   { id: 'aberto', label: 'Abertos agora' },
   { id: 'desafios', label: 'Com desafios' },
   { id: 'promo', label: 'Em promoção' },
+  { id: 'nota', label: 'Mais bem avaliados' },
 ];
 
 const norm = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -109,6 +113,10 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses }:
         return true;
       });
     rows.sort((a, b) => {
+      if (filter === 'nota') {
+        const byRating = compareByRating(a.rating ?? { count: 0, avg: null, ranked: false }, b.rating ?? { count: 0, avg: null, ranked: false });
+        if (byRating) return byRating;
+      }
       if (a.meters != null && b.meters != null) return a.meters - b.meters;
       if (a.meters != null) return -1;
       if (b.meters != null) return 1;
@@ -376,6 +384,7 @@ function PlaceRow({ p }: { p: Row }) {
           <p className="truncate font-bold text-slate-900">{p.name}</p>
           {p.meters != null && <span className="shrink-0 text-xs font-semibold text-electric-600">{formatDistance(p.meters)}</span>}
         </div>
+        <RatingBadge summary={p.rating ?? undefined} className="mt-0.5" />
         <p className="truncate text-xs text-slate-500">{[p.categoryLabel, p.units.length > 1 ? p.unit.name : null, p.unit.address].filter(Boolean).join(' · ')}</p>
         {(p.hasGoogle || p.hasInstagram || p.hasRewards || p.challenges > 0) && (
           <ul className="mt-1.5 flex items-center gap-1.5 text-electric-600" aria-label="O que este lugar oferece" data-testid="offers-icons">

@@ -138,6 +138,7 @@ model Restaurant {
   slotHolds SlotHold[]
   waitlist  WaitlistEntry[]
   timeOffs  TimeOff[]
+  reviews   Review[]
   menuItems        MenuItem[]
   orders           Order[]
   birthdayGifts    BirthdayGift[]
@@ -236,6 +237,7 @@ model Customer {
   bookings          Booking[]
   slotHolds SlotHold[]
   waitlist  WaitlistEntry[]
+  reviews           Review[]
   photo             CustomerPhoto?
   orders            Order[]
   birthdayGifts     BirthdayGift[]
@@ -645,6 +647,7 @@ model Resource {
   slotHolds SlotHold[]
   waitlist  WaitlistEntry[]
   timeOffs  TimeOff[]
+  reviews   Review[]
   offers     ResourceService[]
 
   @@index([restaurantId])
@@ -812,6 +815,7 @@ model Booking {
   service    Service?   @relation(fields: [serviceId], references: [id], onDelete: SetNull)
   resource   Resource?  @relation(fields: [resourceId], references: [id], onDelete: SetNull)
   claim      Claim?     @relation(fields: [claimId], references: [id], onDelete: SetNull)
+  review     Review?
 
   @@index([restaurantId, startsAt])
   @@index([customerId, startsAt])
@@ -908,4 +912,32 @@ model WaitlistEntry {
   /// Um pedido por cliente, serviço e dia; entrar de novo reaproveita a mesma linha.
   @@unique([customerId, restaurantId, serviceId, date])
   @@index([restaurantId, date, status])
+}
+
+/// Avaliação de um atendimento concluído: nota do lugar (1 a 5), nota de quem atendeu (opcional) e comentário (opcional).
+/// Uma por agendamento. O dono responde e pode denunciar; a administração decide se oculta (hiddenAt).
+model Review {
+  id             String    @id @default(uuid())
+  restaurantId   String
+  customerId     String
+  bookingId      String    @unique
+  resourceId     String? // quem atendeu (vazio se o atendimento não tinha profissional)
+  placeRating    Int
+  staffRating    Int?
+  comment        String?
+  ownerReply     String?
+  ownerRepliedAt DateTime?
+  reportedAt     DateTime? // o dono denunciou
+  reportReason   String?
+  hiddenAt       DateTime? // a administração ocultou: some do app e da nota
+  createdAt      DateTime  @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  customer   Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  booking    Booking    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  resource   Resource?  @relation(fields: [resourceId], references: [id], onDelete: SetNull)
+
+  @@index([restaurantId, createdAt])
+  @@index([resourceId])
+  @@index([reportedAt])
 }

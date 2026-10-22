@@ -5,13 +5,14 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Icon, type IconName } from './Icons';
 
-const items: { href: string; label: string; icon: IconName }[] = [
+const items: { href: string; label: string; icon: IconName; desktopOnly?: boolean }[] = [
   { href: '/dashboard', label: 'Início', icon: 'home' },
   { href: '/dashboard/caixa', label: 'Caixa', icon: 'receipt' },
   { href: '/dashboard/agenda', label: 'Agenda', icon: 'clock' },
   { href: '/dashboard/pedidos', label: 'Pedidos', icon: 'bag' },
   { href: '/dashboard/clientes', label: 'Clientes', icon: 'users' },
   { href: '/dashboard/resgates', label: 'Resgates', icon: 'gift' },
+  { href: '/dashboard/avaliacoes', label: 'Avaliações', icon: 'star', desktopOnly: true }, // no celular o atalho fica no Início (a barra de baixo já está cheia)
   { href: '/dashboard/configuracoes', label: 'Regras', icon: 'cog' },
 ];
 
@@ -24,6 +25,7 @@ export function DashboardNav({ variant, agenda = false, pending: pendingBookings
   const visible = items.filter((i) => (agenda || i.href !== '/dashboard/agenda') && (orders || i.href !== '/dashboard/pedidos')); // Agenda e Pedidos só aparecem para quem usa
   const count = (href: string) => (href === '/dashboard/agenda' ? pendingBookings : href === '/dashboard/pedidos' ? newOrders : href === '/dashboard/caixa' ? caixa : 0);
   const badge = (href: string) => count(href) > 0 && <span className="ml-1 rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-4 text-white" aria-label={`${count(href)} aguardando`}>{count(href)}</span>;
+  const bottomItems = visible.filter((i) => !i.desktopOnly);
   const active = (href: string) => (href === '/dashboard' ? current === href : current.startsWith(href));
 
   if (variant === 'top') {
@@ -46,8 +48,8 @@ export function DashboardNav({ variant, agenda = false, pending: pendingBookings
   }
 
   return (
-    <nav className={`glass-panel grid ${visible.length > 6 ? 'grid-cols-7' : visible.length > 5 ? 'grid-cols-6' : 'grid-cols-5'} gap-1 p-1.5`}>
-      {visible.map((i) => (
+    <nav className={`glass-panel grid ${bottomItems.length > 6 ? 'grid-cols-7' : bottomItems.length > 5 ? 'grid-cols-6' : 'grid-cols-5'} gap-1 p-1.5`}>
+      {bottomItems.map((i) => (
         <Link
           key={i.href}
           href={i.href}

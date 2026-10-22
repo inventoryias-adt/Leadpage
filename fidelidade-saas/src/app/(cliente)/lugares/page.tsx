@@ -10,6 +10,7 @@ import { savedText } from '@/lib/customer-location';
 import { prisma } from '@/lib/db';
 import { isOpenNow, parseSchedule } from '@/lib/hours';
 import { imageUrl } from '@/lib/images';
+import { placeSummaries } from '@/lib/reviews-db';
 import { getCustomer } from '@/lib/session';
 
 export const metadata = { title: 'Lugares' };
@@ -61,6 +62,7 @@ export default async function LugaresPage() {
     stock: m.offerStock,
     stockTotal: m.offerStockTotal,
   });
+  const ratings = await placeSummaries(restaurants.map((r) => r.id));
   const places: PlaceCard[] = restaurants
     .filter((r) => r.units.length > 0)
     .map((r) => ({
@@ -83,6 +85,7 @@ export default async function LugaresPage() {
       balance: customer ? (balances.get(r.id) ?? 0) : null,
       minReward: r.rewards[0]?.pointsCost ?? null,
       challenges: r.challenges.length,
+      rating: ratings.get(r.id) ?? null,
       campaigns: buildCampaigns(r.id, {
         challenges: r.challenges,
         checkInPoints: r.checkInPoints,
