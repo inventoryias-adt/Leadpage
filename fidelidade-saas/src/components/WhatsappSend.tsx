@@ -18,19 +18,24 @@ export function WhatsappSend({ date, period, personId, periods, people }: { date
   const person = people.find((p) => p.id === prof) ?? null;
   const canSendToPerson = !!person?.hasPhone;
 
-  useEffect(() => {
-    if (!open) return;
+  // Ao abrir, a janela já nasce com o período e o atendente da tela (sem um quadro com o atendente anterior).
+  const openDialog = () => {
     setPer(period);
     setProf(personId);
     setPara('atendente');
+    setOpen(true);
+  };
+
+  useEffect(() => {
+    if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, period, personId]);
+  }, [open]);
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="glass-button btn-sm" data-testid="whatsapp-abrir" aria-haspopup="dialog">
+      <button type="button" onClick={openDialog} className="glass-button btn-sm" data-testid="whatsapp-abrir" aria-haspopup="dialog">
         <Icon name="whatsapp" size={15} /> <span className="sm:hidden">WhatsApp</span><span className="hidden sm:inline">Enviar pelo WhatsApp</span>
       </button>
       {open && (
