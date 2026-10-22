@@ -7,6 +7,8 @@ import { joinWaitingList, leaveWaitingList } from '@/app/actions/booking';
 import { AlternativeSlots, SlotHoldBanner } from '@/components/SlotHoldBanner';
 import { Icon } from '@/components/Icons';
 import { PlaceAvatar } from '@/components/Visual';
+import { formatAvg } from '@/lib/reviews';
+import { staffSummaries } from '@/lib/reviews-db';
 import { imageUrl } from '@/lib/images';
 import { WAIT_PERIODS, addDaysKey, bookingPoints, canCustomerCancel, dayOccupancy, formatBookingWhen, parseDateKey, slotHref, todayKey, weekdayOf } from '@/lib/booking';
 import { alternativeSlots, ensureDefaultService, firstFreeSlots, slotsForDay, staffFor, waitPosition } from '@/lib/booking-db';
@@ -126,6 +128,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
   const date = wanted < today ? today : wanted > maxKey ? maxKey : wanted;
   const schedule = parseSchedule(unit.openingSchedule);
   const staff = await staffFor(prisma, { restaurantId, service, unitId: unit.id });
+  const staffRatings = await staffSummaries(staff.map((p) => p.id));
   const prof = staff.find((p) => p.id === sp.prof) ?? null; // quem o cliente escolheu (vazio = qualquer)
   const { slots } = await slotsForDay(prisma, { restaurantId, policy: restaurant, service, unit, date, now, resourceId: prof?.id, ignoreBookingId: rb?.id, customerId: customer?.id });
   const days = Array.from({ length: Math.min(14, restaurant.bookingMaxDaysAhead + 1) }, (_, i) => addDaysKey(today, i));
@@ -189,6 +192,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
                 <li key={p.id} className="shrink-0">
                   <Link href={url({ prof: p.id, hora: undefined })} aria-current={on ? 'true' : undefined} className="chip-link gap-2 !py-1" style={on ? { background: tone.hex, borderColor: tone.hex, color: '#fff' } : { background: tone.soft, borderColor: tone.soft, color: tone.hex }}>
                     <span className="rounded-full ring-2" style={{ '--tw-ring-color': tone.hex } as React.CSSProperties}><PlaceAvatar name={p.name} src={imageUrl(p.photoImageId)} size={28} /></span> {p.name}
+                    {staffRatings.get(p.id)?.ranked && <span className="text-xs font-bold" data-testid="staff-rating" aria-label={`Nota ${formatAvg(staffRatings.get(p.id)!.avg!)} de 5`}>★ {formatAvg(staffRatings.get(p.id)!.avg!)}</span>}
                   </Link>
                 </li>
               );

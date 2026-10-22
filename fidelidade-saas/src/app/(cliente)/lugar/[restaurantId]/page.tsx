@@ -10,6 +10,7 @@ import { Icon, type IconName } from '@/components/Icons';
 import { OpeningHours } from '@/components/OpeningHours';
 import { ShareButtons } from '@/components/ShareButtons';
 import { PlaceAvatar, ProgressBar, RewardImage } from '@/components/Visual';
+import { RatingBadge, Stars } from '@/components/Stars';
 import { categoryLabel } from '@/lib/categories';
 import { challengeCount } from '@/lib/claims';
 import { describeChallenge, periodRange } from '@/lib/challenges';
@@ -22,6 +23,8 @@ import { formatBRL, formatPoints, formatPrice } from '@/lib/points';
 import { promoColor } from '@/lib/palette';
 import { promoActiveAt, promoBig, promoStatus, promoWhen } from '@/lib/promos';
 import { getCustomer } from '@/lib/session';
+import { displayName, formatAvg } from '@/lib/reviews';
+import { placeReviews, placeSummaries } from '@/lib/reviews-db';
 import { INTERACTION_COOLDOWN_DAYS, releaseText } from '@/lib/interaction-approval';
 import { settleDueInteractions } from '@/lib/interaction-claims';
 import { newReferralCode } from '@/lib/tokens';
@@ -79,6 +82,8 @@ export default async function LugarPage({
     prisma.menuItem.count({ where: { restaurantId, active: true } }),
   ]);
   // Último pedido "Já fiz" do cliente em cada interação deste lugar (para mostrar "em análise", "aprovado"…).
+  const [ratingMap, reviews] = await Promise.all([placeSummaries([restaurantId]), placeReviews(restaurantId, 10)]);
+  const rating = ratingMap.get(restaurantId);
   const claimRows = customer ? await prisma.interactionClaim.findMany({ where: { customerId: customer.id, restaurantId }, orderBy: { createdAt: 'desc' }, take: 40 }) : [];
   const lastClaim = new Map<string, (typeof claimRows)[number]>();
   for (const c of claimRows) if (c.ruleId && !lastClaim.has(c.ruleId)) lastClaim.set(c.ruleId, c);
@@ -164,6 +169,7 @@ export default async function LugarPage({
                 {open ? 'Aberto agora' : 'Fechado agora'}
               </span>
             )}
+            <RatingBadge summary={rating} className="!text-sm" />
             {schedule && <span className="flex items-center gap-1 text-slate-600"><Icon name="clock" size={15} /> {todayLabel(schedule).replace('Hoje: ', 'Hoje ')}</span>}
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
@@ -400,6 +406,27 @@ export default async function LugarPage({
             ))}
           </ul>
         </CollapsibleSection>
+
+        {/* Avaliações */}
+        {reviews.length > 0 && rating && (
+          <CollapsibleSection id="avaliacoes" icon="star" title="Avaliações" summary={rating.ranked && rating.avg != null ? `★ ${formatAvg(rating.avg)} · ${rating.count} avaliações` : `${rating.count} ${rating.count === 1 ? 'avaliação' : 'avaliações'} (a nota aparece com 3)`}>
+            <ul className="space-y-2.5" data-testid="place-reviews">
+              {reviews.map((rv) => (
+                <li key={rv.id} className="space-y-1.5 rounded-2xl border border-slate-200 bg-white p-3.5" data-testid="place-review">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-2 text-sm font-bold text-slate-800"><Stars value={rv.placeRating} size={15} /> {displayName(rv.customer.name)}</span>
+                    <span className="text-xs text-slate-500">{rv.createdAt.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                  </div>
+                  {rv.staffRating && rv.resource && <p className="flex items-center gap-2 text-xs text-slate-600"><Stars value={rv.staffRating} size={13} /> {rv.resource.name}</p>}
+                  {rv.comment && <p className="whitespace-pre-line text-sm text-slate-700">{rv.comment}</p>}
+                  {rv.ownerReply && (
+                    <p className="whitespace-pre-line rounded-xl bg-slate-50 p-2.5 text-sm text-slate-700"><span className="block text-xs font-bold text-slate-500">Resposta do lugar</span>{rv.ownerReply}</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </CollapsibleSection>
+        )}
 
         {/* Horários */}
         {schedule && (

@@ -6,6 +6,8 @@ import { waitPosition } from '@/lib/booking-db';
 import { directionsUrl, googleCalendarUrl } from '@/lib/calendar-links';
 import { prisma } from '@/lib/db';
 import { formatBRL, formatPoints } from '@/lib/points';
+import { reviewWindowOpen } from '@/lib/reviews';
+import { Stars } from '@/components/Stars';
 import { requireCustomer } from '@/lib/session';
 
 export const metadata = { title: 'Meus agendamentos' };
@@ -19,7 +21,7 @@ const STATUS: Record<string, { label: string; cls: string }> = {
   NO_SHOW: { label: 'Não compareceu', cls: 'bg-slate-100 text-slate-500' },
 };
 
-export default async function MeusAgendamentosPage({ searchParams }: { searchParams: Promise<{ novo?: string; remarcado?: string; cancelado?: string; erro?: string; lembrete?: string; presenca?: string; liberado?: string; espera?: string }> }) {
+export default async function MeusAgendamentosPage({ searchParams }: { searchParams: Promise<{ novo?: string; remarcado?: string; cancelado?: string; erro?: string; lembrete?: string; presenca?: string; liberado?: string; espera?: string; avaliado?: string }> }) {
   const customer = await requireCustomer('/perfil/agendamentos');
   const sp = await searchParams;
   const now = new Date();
@@ -27,7 +29,7 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
     where: { customerId: customer.id },
     orderBy: { startsAt: 'desc' },
     take: 100,
-    include: { restaurant: { select: { id: true, name: true, bookingCancelHours: true, pointsPerReal: true } }, unit: { select: { name: true, address: true } }, resource: { select: { name: true } } },
+    include: { restaurant: { select: { id: true, name: true, bookingCancelHours: true, pointsPerReal: true } }, unit: { select: { name: true, address: true } }, resource: { select: { name: true } }, review: { select: { placeRating: true } } },
   });
   const waiting = await prisma.waitlistEntry.findMany({
     where: { customerId: customer.id, status: 'WAITING', date: { gte: todayKey(now) } },
@@ -95,6 +97,13 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
           </div>
         )}
         {withCancel && calendarLinks(b)}
+        {b.status === 'COMPLETED' && (
+          b.review ? (
+            <p className="flex items-center gap-2 text-xs font-semibold text-slate-600" data-testid="review-given"><Stars value={b.review.placeRating} size={14} /> Você avaliou este atendimento</p>
+          ) : reviewWindowOpen(b.completedAt, now) ? (
+            <Link href={`/perfil/agendamentos/${b.id}/avaliar`} className="glass-button btn-sm" data-testid="review-cta" aria-label={`Avaliar ${b.serviceName}`}><Icon name="star" size={15} /> Avaliar atendimento</Link>
+          ) : null
+        )}
         {withCancel && b.reminderAnswer === 'OK' && <p className="text-xs font-semibold text-emerald-700">Você confirmou que vai. Até já!</p>}
         {withCancel && (
           cancelable ? (
@@ -136,6 +145,7 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
           {freshPoints > 0 && <p className="text-sm"><span className="chip-lima">Ao concluir você ganha +{formatPoints(freshPoints)} pontos</span></p>}
         </section>
       )}
+      {sp.avaliado && <p role="status" className="glass-success" data-testid="review-thanks">Obrigado pela avaliação! Ela ajuda outros clientes a escolher.</p>}
       {sp.cancelado && <p role="status" className="glass-success">Agendamento cancelado.</p>}
       {sp.remarcado && <p role="status" className="glass-success">Horário remarcado! O novo horário aparece abaixo.</p>}
       {sp.presenca && <p role="status" className="glass-success">Combinado! Avisamos o lugar que você vai.</p>}

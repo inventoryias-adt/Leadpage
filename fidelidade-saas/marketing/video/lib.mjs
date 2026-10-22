@@ -8,7 +8,7 @@ export const sql = (q) => execSync(`psql ${DB} -At -c ${JSON.stringify(q)}`).toS
 export const launch = () => chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });
 // Celular para gravar: janela de 390x844 com escala 2x (os quadros saem em 780x1688, nítidos).
 export const launchPhone = () => chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox', '--force-device-scale-factor=2', '--window-size=390,844', '--hide-scrollbars'] });
-export const phoneContext = async (b) => { const ctx = await b.newContext({ viewport: null }); await prepare(ctx); await touchDot(ctx); return ctx; };
+export const phoneContext = async (b, opts = {}) => { const ctx = await b.newContext({ viewport: null, ...opts }); await prepare(ctx); await touchDot(ctx); return ctx; };
 export const wait = (page, ms) => page.waitForTimeout(ms);
 
 // Marca "Li e concordo" nos cadastros e esconde avisos que não servem no vídeo.
@@ -104,7 +104,7 @@ export function beats(rec) {
 // Volta os dados da demonstração ao ponto de partida (Marina com 1.240 pontos, sem resgates nem lançamentos novos).
 export function resetDemo() {
   const first = `(select min("createdAt") from "Transaction" where type='EARN') + interval '5 seconds'`;
-  sql(`delete from "RateLimit"; delete from "Booking"; delete from "SlotHold"; delete from "Redemption"; delete from "Transaction" where "createdAt" > ${first}; delete from "Notification" where "createdAt" > ${first}; delete from "Claim" where "createdAt" > ${first}; update "Wallet" set balance=1240`);
+  sql(`delete from "RateLimit"; delete from "CheckIn"; delete from "Order"; delete from "BirthdayGift"; update "Customer" set "birthDay"=null, "birthMonth"=null; delete from "Booking"; delete from "SlotHold"; delete from "Redemption"; delete from "Transaction" where "createdAt" > ${first}; delete from "Notification" where "createdAt" > ${first}; delete from "Claim" where "createdAt" > ${first}; update "Wallet" set balance=1240`);
 }
 
 // Junta as partes gravadas (mesmo formato) num vídeo só e devolve os marcadores com o tempo somado.
