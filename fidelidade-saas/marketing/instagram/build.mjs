@@ -141,7 +141,7 @@ add('10-reter-cliente', shell('lime', (T) => `
 // ---------- POST 11 — preço / CTA (navy) ----------
 add('11-preco-cta', shell('navy', (T) => `
   <p class="tag" style="background:${T.chip};color:${LIME};align-self:flex-start">Um plano, tudo incluso</p>
-  <div><div class="big" style="color:${LIME}">R$ 69,90</div><div style="font-size:44px;font-weight:550;margin-top:10px;color:${T.mut}">por mês</div></div>
+  <div><div class="big" style="color:${LIME}">R$ 39,90</div><div style="font-size:44px;font-weight:550;margin-top:10px;color:${T.mut}">no primeiro mês</div><div style="font-size:40px;font-weight:700;margin-top:16px;color:#fff">Depois, R$ 69,90 por mês</div></div>
   <ul class="l"><li><b style="background:${LIME};color:${NAVY}">✓</b>Sem taxa de adesão</li><li><b style="background:${LIME};color:${NAVY}">✓</b>Sem fidelidade: cancele quando quiser</li><li><b style="background:${LIME};color:${NAVY}">✓</b>Pontos, prêmios, campanhas, agenda e painel</li></ul>`,
   { tag: 'Comece hoje', deco: blob('rgba(33,80,201,.55)', 760, 480, 700) }));
 

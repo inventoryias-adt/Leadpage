@@ -12,7 +12,7 @@
 ```
 Faça seu cliente voltar 💚
 Pontos, prêmios e agenda num só lugar.
-Sem app pra baixar. R$ 69,90/mês.
+Sem app pra baixar. 1º mês R$ 39,90.
 👇 Peça sua conta
 ```
 
@@ -34,7 +34,7 @@ Sem app pra baixar. R$ 69,90/mês.
 | Qua | 08 Agenda, reserva e pontos | Post único |
 | Sex | 09 Veja quem volta e quanto | Post único |
 | Seg | 10 Conquistar cliente novo custa caro | Post único |
-| Qua | 11 R$ 69,90 por mês | Post único (oferta) |
+| Qua | 11 R$ 39,90 no primeiro mês | Post único (oferta) |
 | Sex | 12 Pronto para fazer seu cliente voltar? | Post único (chamada final) |
 
 ## Legendas
@@ -98,8 +98,8 @@ Atrair alguém do zero costuma custar mais do que fazer voltar quem já conhece 
 Quem volta gasta de novo e ainda traz amigos 💚
 #retencao #clientefiel #marketing #pequenosnegocios
 
-**11 — R$ 69,90 por mês**
-Um plano, tudo incluso:
+**11 — R$ 39,90 no primeiro mês**
+Um plano, tudo incluso. O primeiro mês sai por R$ 39,90 e, depois, são R$ 69,90 por mês:
 ✅ Sem taxa de adesão
 ✅ Sem fidelidade: cancele quando quiser
 ✅ Pontos, prêmios, campanhas, agenda e painel
@@ -115,4 +115,5 @@ Peça sua conta pelo link da bio e comece a dar pontos ainda hoje 💚
 - Os números do painel (1.284 / 96 / 412) e o exemplo da Maria são **ilustrativos**; a arte 09 já avisa.
 - A arte 10 não traz percentual de propósito: não vamos citar número sem fonte.
 - A promessa de "lembrete antes de ir" vale para agendamentos; o "pontos em dobro" é um exemplo de campanha que o dono configura.
+- Preço: R$ 39,90 no primeiro mês e R$ 69,90 por mês depois, igual ao app. O valor do primeiro mês vale só na primeira contratação.
 - Formato: 1080×1350 (retrato 4:5), o que ocupa mais tela no feed.

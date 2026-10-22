@@ -64,6 +64,7 @@ console.log('5. automático: entra sozinho no prazo (+30) OK');
 // 6. automático que o dono recusa antes do prazo: nada entra e o cliente é avisado
 sql(`delete from "InteractionClaim" where "ruleId"='r-auto'`);
 await c.goto(`${BASE}/lugar/${rid}`);
+await c.waitForSelector('button[aria-expanded="true"]:has-text("jeitos de ganhar")'); // a seção abre depois da hidratação; o clique espera ela abrir
 await c.locator('li:has-text("Story no Instagram") button:has-text("Já fiz")').click(); await c.waitForSelector('[data-testid=claim-pending]');
 await o.goto(BASE + '/dashboard/caixa'); await o.waitForSelector('[data-testid=interaction-requests]');
 assert.ok(await o.locator('text=/libera em/').count(), 'mostra quando libera sozinho');

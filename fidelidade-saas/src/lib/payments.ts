@@ -1,7 +1,7 @@
 import 'server-only';
 import Stripe from 'stripe';
-
-export const PLAN_PRICE_CENTS = 19700;
+import { ensureFirstMonthCoupon, firstMonthDiscountCents } from './first-month';
+import { firstMonthEligible } from './plan';
 
 /** URL pública usada nos links/QR Codes: APP_URL, senão o domínio da própria Vercel, senão localhost. */
 export function appUrl() {
@@ -34,15 +34,24 @@ export function stripe() {
 }
 
 /** Devolve a URL para onde o restaurante deve ser enviado para pagar o plano mensal. */
-export async function createCheckoutUrl(restaurant: { id: string; email: string; name: string }) {
+export async function createCheckoutUrl(restaurant: { id: string; email: string; name: string; subscriptionStatus: string; paymentCustomerId: string | null }) {
   if (paymentProvider() === 'mock') return '/pagamento/simulado';
 
   const priceId = process.env.STRIPE_PRICE_ID;
   if (!priceId) throw new Error('STRIPE_PRICE_ID não configurado.');
 
+  // Primeiro mês com desconto, só para quem nunca pagou: cupom de uso único que abate o valor do plano até R$ 39,90.
+  let discounts: { coupon: string }[] | undefined;
+  if (firstMonthEligible(restaurant)) {
+    const price = await stripe().prices.retrieve(priceId);
+    const off = price.currency === 'brl' ? firstMonthDiscountCents(price.unit_amount) : 0;
+    if (off > 0) discounts = [{ coupon: await ensureFirstMonthCoupon(stripe().coupons, off) }];
+  }
+
   const session = await stripe().checkout.sessions.create({
     mode: 'subscription',
     line_items: [{ price: priceId, quantity: 1 }],
+    discounts,
     customer_email: restaurant.email,
     client_reference_id: restaurant.id,
     subscription_data: { metadata: { restaurantId: restaurant.id } },

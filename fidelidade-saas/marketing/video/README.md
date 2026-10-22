@@ -12,4 +12,7 @@ Prontos para postar em `mp4/`: `fidelize-video-cliente.mp4`, `fidelize-video-cai
 3. Gravar: `node marketing/video/record-cliente.mjs`, `record-caixa.mjs` ou `record-agenda.mjs` (gera `out/<nome>-raw.mp4` e os marcadores de tempo).
 4. Montar: `node marketing/video/compose.mjs cliente` (ou `caixa`, `agenda`). Os textos ficam em `stories.mjs`.
 
-Os valores, nomes e o `@usefidelize` do fechamento são ilustrativos/provisórios.
+O fechamento mostra o preço do app: **R$ 39,90 no primeiro mês**, depois R$ 69,90 por mês (valores em `stories.mjs`, iguais a `src/lib/plan.ts`).
+O vídeo do Caixa mostra os três jeitos de lançar: CPF, ID da conta e QR Code; o da agenda diz que concluir o atendimento credita os pontos.
+
+Os nomes (Café da Esquina, Barbearia do Léo, Marina) e o `@usefidelize` do fechamento são ilustrativos/provisórios.

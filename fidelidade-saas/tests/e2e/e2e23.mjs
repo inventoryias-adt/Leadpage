@@ -62,7 +62,7 @@ console.log('2. filtro por profissional + WhatsApp com o número e o texto dele 
 // 3. Ana sem WhatsApp: a janela avisa e abre o contato livre
 await p.selectOption('select[aria-label=Profissional]', { label: 'Ana' }); await p.waitForURL(`**prof=${ana}**`); // espera a agenda trocar de atendente (a janela do WhatsApp lê o atendente da página)
 await p.click('[data-testid=whatsapp-abrir]'); await p.waitForSelector('[data-testid=whatsapp-janela]');
-assert.ok(await p.locator('text=não tem WhatsApp cadastrado').count());
+await p.waitForSelector('text=não tem WhatsApp cadastrado');
 assert.ok(await p.locator('input[name=para][value=atendente]').isDisabled());
 await p.click('button:has-text("Cancelar")');
 const noPhone = await sendWa();

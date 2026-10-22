@@ -1,6 +1,6 @@
 # Fidelize — SaaS de pontos para restaurantes
 
-Next.js 15 (App Router) · React 19 · Tailwind 3 · Prisma 6 · PostgreSQL · Stripe (assinatura de R$ 69,90/mês).
+Next.js 15 (App Router) · React 19 · Tailwind 3 · Prisma 6 · PostgreSQL · Stripe (assinatura de R$ 69,90/mês, com o primeiro mês por R$ 39,90).
 Design **Liquid Glass** azul/branco (`src/app/globals.css`, `tailwind.config.js`).
 
 ## Rodando localmente
@@ -138,6 +138,13 @@ atalho **Entrar**, para validar novidades antes de liberar aos clientes. O dono 
 Regras → Minha conta.
 
 ## Stripe (assinatura de R$ 69,90/mês)
+
+**Primeiro mês por R$ 39,90.** Só para quem nunca pagou (conta `PENDING` sem `paymentCustomerId`): o checkout aplica um cupom do Stripe
+de uso único (`duration: once`) que abate a diferença entre o preço do plano e R$ 39,90, e a partir do segundo mês vale o preço
+cheio. O cupom é criado sozinho na primeira vez (id `primeiro-mes-3990-desc-<centavos>`) e reaproveitado; o valor do desconto é
+calculado do preço do `STRIPE_PRICE_ID` (em BRL), então o plano precisa estar em R$ 69,90 para a conta fechar em R$ 39,90. Quem
+cancelou ou atrasou paga o preço cheio. Valores em `src/lib/plan.ts`; lógica em `src/lib/first-month.ts`; teste de tela `e2e62`.
+Confira uma vez no modo de teste do Stripe (a primeira fatura deve sair R$ 39,90 e a próxima R$ 69,90).
 
 Checkout hospedado em modo assinatura, Customer Portal (trocar cartão, faturas, cancelar; botão em Regras → Minha conta) e
 webhook em `/api/webhooks/stripe` (`checkout.session.completed`, `customer.subscription.updated|deleted`, `invoice.paid`,

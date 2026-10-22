@@ -107,7 +107,7 @@ add('04-mito-ou-verdade', shell('sun', (T) => `
   <h1 class="m">"Programa de fidelidade é coisa de empresa grande."</h1>
   <div style="display:flex;flex-direction:column;gap:18px">
     <div style="background:${RED};color:#fff;border-radius:34px;padding:34px 38px;font-size:60px;font-weight:900;letter-spacing:-1px">MITO ✕</div>
-    <div style="background:${NAVY};color:#fff;border-radius:34px;padding:34px 38px;font-size:36px;line-height:1.35;font-weight:600">Qualquer lugar com balcão ou atendimento pode ter o seu. É um plano único de <span style="color:${LIME}">R$ 69,90 por mês</span>, sem taxa de adesão.</div>
+    <div style="background:${NAVY};color:#fff;border-radius:34px;padding:34px 38px;font-size:36px;line-height:1.35;font-weight:600">Qualquer lugar com balcão ou atendimento pode ter o seu. É um plano único: <span style="color:${LIME}">R$ 39,90 no primeiro mês</span> e depois R$ 69,90 por mês, sem taxa de adesão.</div>
   </div>`, { deco: blob('rgba(255,255,255,.35)', 560, 640, -180) }));
 
 // 05 — EXEMPLO NA PRÁTICA: R$ 80 → 800 pontos → prêmio

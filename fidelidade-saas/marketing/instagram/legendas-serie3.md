@@ -28,7 +28,7 @@ O @usefidelize no rodapé é nome provisório. Valores e exemplos (R$ 80, +200 p
 **03** 💡 5 ideias de prêmio que o cliente adora: 1) um item da casa; 2) desconto na próxima compra; 3) serviço extra; 4) brinde de marca; 5) algo só de cliente fiel. Salva este post para montar o seu 💾 No Fidelize você define o prêmio e quantos pontos ele custa.
 #dica #premios #fidelidade #empreendedorismo
 
-**04** ❓ "Programa de fidelidade é coisa de empresa grande." MITO! Qualquer lugar com balcão ou atendimento pode ter o seu. É um plano único de R$ 69,90 por mês, sem taxa de adesão.
+**04** ❓ "Programa de fidelidade é coisa de empresa grande." MITO! Qualquer lugar com balcão ou atendimento pode ter o seu. É um plano único: R$ 39,90 no primeiro mês e depois R$ 69,90 por mês, sem taxa de adesão.
 #mitoouverdade #fidelize #pequenasempresas
 
 **05** 🧮 Na prática: a Maria gasta R$ 80, ganha 800 pontos (R$ 1 = 10 pontos) e, na segunda visita, já troca por um prêmio de 1.500 pontos. As regras são suas! (Exemplo ilustrativo.)

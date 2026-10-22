@@ -6,7 +6,7 @@ import { KpiCard } from '@/components/DashboardCharts';
 import { EmptyState } from '@/components/EmptyState';
 import { prisma } from '@/lib/db';
 import { WEEKDAYS, brtParts } from '@/lib/insights';
-import { PLAN_PRICE_CENTS } from '@/lib/payments';
+import { PLAN_PRICE_CENTS } from '@/lib/plan';
 import { formatBRL, formatPoints } from '@/lib/points';
 
 export const metadata = { title: 'Visão geral' };

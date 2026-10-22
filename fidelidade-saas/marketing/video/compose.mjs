@@ -47,11 +47,14 @@ const outroHtml = (o) => page(`body{background:${LIME};color:${NAVY}}
 .top{position:absolute;left:84px;top:92px;display:flex;align-items:center;gap:20px;font-weight:700;font-size:52px;letter-spacing:-1.5px}
 .h{position:absolute;left:84px;right:84px;top:600px;font-size:130px;line-height:1;letter-spacing:-5px;font-weight:800}
 .h em{font-style:normal;color:${BLUE}}
-.sub{position:absolute;left:88px;right:120px;top:1100px;font-size:46px;line-height:1.25;font-weight:600;color:#3C4A1A}
-.cta{position:absolute;left:84px;top:1440px;display:flex;gap:22px;align-items:center}
+.h{top:520px}
+.price{position:absolute;left:84px;top:1000px;font-size:170px;line-height:1;font-weight:800;letter-spacing:-6px;color:${NAVY}}
+.pnote{position:absolute;left:92px;top:1190px;font-size:50px;font-weight:700;color:${BLUE};letter-spacing:-1px}
+.sub{position:absolute;left:88px;right:120px;top:1290px;font-size:44px;line-height:1.25;font-weight:600;color:#3C4A1A}
+.cta{position:absolute;left:84px;top:1480px;display:flex;gap:22px;align-items:center}
 .pill{background:${NAVY};color:#fff;font-size:54px;font-weight:800;padding:26px 56px;border-radius:999px;letter-spacing:-1px}
 .hd{font-size:44px;font-weight:700;color:#fff;position:absolute;left:92px;top:1640px}`,
-  `<div class="blob"></div><div class="top">${logo(NAVY, LIME)}<span>fidelize</span></div><div class="h">${o.lines}</div><div class="sub">${o.sub}</div><div class="cta"><div class="pill">${o.cta}</div></div><div class="hd">${o.handle}</div>`);
+  `<div class="blob"></div><div class="top">${logo(NAVY, LIME)}<span>fidelize</span></div><div class="h">${o.lines}</div>${o.price ? `<div class="price">${o.price}</div><div class="pnote">${o.priceNote ?? ''}</div>` : ''}<div class="sub">${o.sub}</div><div class="cta"><div class="pill">${o.cta}</div></div><div class="hd">${o.handle}</div>`);
 
 const shots = [
   ['bg', bgHtml], ['mask', maskHtml], ['intro', introHtml(story.intro)], ['outro', outroHtml({ ...OUTRO, ...(story.outro || {}) })],
