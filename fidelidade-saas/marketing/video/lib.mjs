@@ -104,7 +104,7 @@ export function beats(rec) {
 // Volta os dados da demonstração ao ponto de partida (Marina com 1.240 pontos, sem resgates nem lançamentos novos).
 export function resetDemo() {
   const first = `(select min("createdAt") from "Transaction" where type='EARN') + interval '5 seconds'`;
-  sql(`delete from "RateLimit"; delete from "Redemption"; delete from "Transaction" where "createdAt" > ${first}; delete from "Notification" where "createdAt" > ${first}; delete from "Claim" where "createdAt" > ${first}; update "Wallet" set balance=1240`);
+  sql(`delete from "RateLimit"; delete from "Booking"; delete from "SlotHold"; delete from "Redemption"; delete from "Transaction" where "createdAt" > ${first}; delete from "Notification" where "createdAt" > ${first}; delete from "Claim" where "createdAt" > ${first}; update "Wallet" set balance=1240`);
 }
 
 // Junta as partes gravadas (mesmo formato) num vídeo só e devolve os marcadores com o tempo somado.

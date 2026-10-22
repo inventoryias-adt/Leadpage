@@ -65,5 +65,7 @@ await c.fill('#s-password', 'senha-cliente-1');
 await c.click('text=Receber meus pontos');
 await c.waitForURL('**/carteira/*?credited=1');
 assert.equal(sql('select balance from "Wallet"'), '1240');
+// aberto o dia todo (assim o vídeo não depende da hora em que é gravado)
+sql(`update "Unit" set "openingSchedule" = (select jsonb_agg(jsonb_build_object('day', d, 'open', '06:00', 'close', '23:59', 'closed', false)) from generate_series(0,6) d) where "restaurantId"=(select id from "Restaurant" where email='cafe@demo.com')`);
 await b.close();
 console.log('Demo pronta: cafe@demo.com / senha-segura-1 (dono) e marina@demo.com / senha-cliente-1 (cliente), 1.240 pontos.');

@@ -5,7 +5,7 @@ import { Reveal } from '@/components/Reveal';
 import { SignupCta } from '@/components/SignupCta';
 import { LandingMock } from '@/components/LandingMock';
 import { SignupForm } from '@/components/AuthForms';
-import { PLAN_PRICE } from '@/lib/plan';
+import { FIRST_MONTH_PRICE, PLAN_PRICE } from '@/lib/plan';
 
 /** Como funciona, na ordem em que acontece. */
 const steps = [
@@ -78,7 +78,7 @@ const faqs = [
   { q: 'O cliente precisa baixar algum aplicativo?', a: 'Não. Ele abre o link ou o QR Code no navegador do celular e pode adicionar o Fidelize à tela inicial se quiser. Funciona como um app, sem loja de aplicativos.' },
   { q: 'Como eu lanço os pontos no caixa?', a: 'Digite o valor da conta. Se o cliente já tem conta, digite o CPF dele: aparece o nome abreviado e os pontos caem direto na carteira. Se ainda não tem, gere o QR Code (ou o link para o WhatsApp) e ele cria a conta ao abrir.' },
   { q: 'Como o cliente troca os pontos?', a: 'Pelo app, escolhendo o prêmio. Ele recebe um código, mostra no balcão e você entrega o prêmio e dá baixa. Você escolhe os prêmios e quanto custam.' },
-  { q: 'Como funciona a cobrança?', a: `Assinatura mensal de ${PLAN_PRICE}, sem taxa de adesão e sem fidelidade. Você pode cancelar quando quiser.` },
+  { q: 'Como funciona a cobrança?', a: `O primeiro mês sai por ${FIRST_MONTH_PRICE}. Depois, assinatura mensal de ${PLAN_PRICE}, sem taxa de adesão e sem fidelidade. Você pode cancelar quando quiser.` },
   { q: 'Em quanto tempo começo a usar?', a: 'Assim que o pagamento é confirmado você configura o estabelecimento em poucos minutos e já pode pontuar.' },
   { q: 'Funciona para outros negócios além de restaurante?', a: 'Sim. Cafeterias, padarias, açaí, barbearias, salões, clínicas de estética e qualquer lugar com atendimento ou balcão. Quem atende com hora marcada ainda usa a agenda do app.' },
   { q: 'Tenho mais de uma loja. Posso usar?', a: 'Pode. Cada unidade tem endereço, horário e localização próprios, e os pontos valem em todas.' },
@@ -131,7 +131,7 @@ export default function LandingPage() {
           <div className="enter-top flex flex-wrap items-center gap-5" style={d(360)}>
             <Cta>Começar agora</Cta>
             <p className="text-sm text-slate-500">
-              <span className="text-2xl font-semibold text-primary">{PLAN_PRICE}</span> / mês · sem taxa de adesão
+              <span className="text-3xl font-semibold text-primary">{FIRST_MONTH_PRICE}</span> no primeiro mês · <span className="whitespace-nowrap">depois {PLAN_PRICE}/mês</span>
             </p>
           </div>
         </div>
@@ -241,9 +241,10 @@ export default function LandingPage() {
         <Reveal from="flip" className="mb-5 flex justify-center"><Coin size={72} color="#C6F432" /></Reveal>
         <Reveal from="zoom">
           <h2 className="mx-auto mb-3 max-w-2xl text-3xl font-semibold text-white md:text-4xl">
-            Um plano, tudo incluso. <span className="text-lima">{PLAN_PRICE} por mês.</span>
+            Um plano, tudo incluso.
           </h2>
-          <p className="mx-auto mb-8 max-w-xl text-slate-300">Sem taxa de adesão e sem fidelidade. Cancele quando quiser.</p>
+          <p className="mb-2 text-lima"><span className="text-5xl font-extrabold md:text-6xl">{FIRST_MONTH_PRICE}</span> <span className="text-base font-semibold text-slate-300">no primeiro mês</span></p>
+          <p className="mx-auto mb-8 max-w-xl text-slate-300">Depois, {PLAN_PRICE} por mês. Sem taxa de adesão e sem fidelidade. Cancele quando quiser.</p>
         </Reveal>
         <div className="mx-auto mb-8 max-w-xl rounded-xl border border-white/15 bg-white/5 p-5 text-left sm:p-6">
           <p className="mb-3 text-sm font-semibold text-slate-300">O que está incluso</p>

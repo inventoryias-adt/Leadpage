@@ -54,5 +54,5 @@ Já passou por isso? 👇
 #humor #fidelidade #fidelize #cliente
 
 **09** Faça parte da mudança. Sem cartãozinho. 💚
-Peça sua conta pelo link da bio e comece a dar pontos ainda hoje. R$ 69,90 por mês, sem taxa de adesão e sem fidelidade.
+Peça sua conta pelo link da bio e comece a dar pontos ainda hoje. Primeiro mês por R$ 39,90 e depois R$ 69,90 por mês, sem taxa de adesão e sem fidelidade.
 #fidelize #fidelidade #cartaodefidelidade
