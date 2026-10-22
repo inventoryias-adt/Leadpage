@@ -53,13 +53,13 @@ export function TodayDeals({ deals }: { deals: Deal[] }) {
   return (
     <section aria-labelledby="promocoes-do-dia" className="space-y-3" data-testid="today-deals">
       <div className="flex items-end justify-between">
-        <h2 id="promocoes-do-dia" className="font-bold text-slate-800">Promoções de hoje</h2>
-        <span className="text-sm text-slate-500">{deals.length} {deals.length === 1 ? 'oferta' : 'ofertas'}</span>
+        <h2 id="promocoes-do-dia" className="text-[15px] font-bold text-slate-800">Promoções de hoje</h2>
+        <span className="text-xs text-slate-500">{deals.length} {deals.length === 1 ? 'oferta' : 'ofertas'}</span>
       </div>
 
       <Carousel label="Promoções de hoje">
         {shown.map((d) => (
-          <li key={`${d.placeId}-${d.itemId}`} className="w-[9.75rem] shrink-0 snap-start">
+          <li key={`${d.placeId}-${d.itemId}`} className="w-[8.5rem] shrink-0 snap-start">
             <button
               type="button"
               onClick={() => setOpen(d)}

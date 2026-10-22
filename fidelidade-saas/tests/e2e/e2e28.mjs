@@ -70,15 +70,16 @@ assert.ok((await radius('button[aria-pressed]:has-text("Tudo")')) >= 100, 'filtr
 assert.ok((await radius('button:has-text("Buscar lugar ou categoria")')) >= 100, 'busca em pílula');
 console.log('5. filtros e busca em formato oval OK');
 
-// 6. carrosséis deixam claro que deslizam
-assert.ok(await p.locator('[aria-label="Categorias"] >> text=Deslize para ver mais').count(), 'aviso escrito');
-assert.ok(await p.locator('button[aria-label="Categorias: próximos"]').isVisible(), 'seta no celular');
-assert.equal(await p.locator('button[aria-label="Categorias: anteriores"]').count(), 0, 'no começo não há seta para trás');
+// 6. carrosséis discretos: no celular só um risquinho de posição (sem setas grandes nem texto); a seta existe só no computador
+assert.equal(await p.locator('[aria-label="Categorias"] >> text=Deslize para ver mais').count(), 0, 'sem texto de aviso');
+assert.equal(await p.locator('button[aria-label="Categorias: próximos"]').isVisible(), false, 'sem seta no celular');
+assert.ok(await p.locator('[aria-label="Categorias"] .h-\\[3px\\]').isVisible(), 'risquinho de posição, pequeno e no canto');
+const barBox = await p.locator('[aria-label="Categorias"] .h-\\[3px\\]').boundingBox();
+assert.ok(barBox.width <= 48 && barBox.height <= 4, `risquinho pequeno (${barBox.width}x${barBox.height})`);
 await p.locator('[aria-label="Categorias"] ul').evaluate((e) => (e.scrollLeft = 200));
-await p.waitForSelector('button[aria-label="Categorias: anteriores"]');
-assert.equal(await p.locator('[aria-label="Categorias"] >> text=Deslize para ver mais').count(), 0, 'o aviso some depois da 1ª rolagem');
-await p.click('button[aria-label="Categorias: próximos"]');
-console.log('6. carrosséis: seta, barra de posição e aviso "Deslize" (some ao rolar) OK');
+await p.waitForTimeout(300);
+assert.equal(await p.locator('button[aria-label="Categorias: anteriores"]').isVisible(), false, 'sem seta no celular depois de rolar');
+console.log('6. carrosséis discretos: só o risquinho de posição no celular, sem setas nem texto OK');
 await p.screenshot({ path: 'lugares-novo.png' });
 console.log('ALL OK (início e lugares)');
 await b.close();

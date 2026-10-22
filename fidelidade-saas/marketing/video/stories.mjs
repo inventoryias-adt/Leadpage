@@ -83,4 +83,20 @@ export const stories = {
       { at: 'agendado', title: 'Horário <em>recuperado</em>', sub: 'Menos buraco na agenda, mais faturamento' },
     ],
   },
+  avaliacoes: {
+    intro: { lines: 'A <em>nota</em> do seu negócio, escrita por quem foi.', sub: 'Avaliações de verdade, de clientes de verdade', seconds: 3 },
+    captions: [
+      { at: 'aviso', title: 'Atendimento concluído? O app <em>convida a avaliar</em>', sub: 'Chega um aviso no celular do cliente' },
+      { at: 'form', title: 'Em <em>um minuto</em>', sub: 'Só quem foi atendido pode avaliar' },
+      { at: 'lugar', title: 'Dá a nota do <em>lugar</em>', sub: '' },
+      { at: 'atendente', title: 'E de <em>quem atendeu</em>', sub: 'Cada profissional tem a sua nota' },
+      { at: 'comentario', title: 'Conta como <em>foi</em>', sub: 'Se quiser, deixa um comentário' },
+      { at: 'enviado', title: 'Avaliação <em>enviada</em>', sub: 'Aparece como “Marina S.”, sem expor o nome todo' },
+      { at: 'nota', title: 'A <em>nota</em> aparece no lugar', sub: 'A partir de 3 avaliações, para ser justa' },
+      { at: 'lista', title: 'E os <em>comentários</em> também', sub: 'Quem decide vê o que os outros acharam' },
+      { at: 'dono', title: 'Você vê tudo no <em>painel</em>', sub: 'Nota geral e média por atendente' },
+      { at: 'responder', title: 'E <em>responde</em> em público', sub: 'Agradeça o elogio ou esclareça a crítica' },
+      { at: 'resposta', title: 'Todo mundo <em>vê a resposta</em>', sub: 'Reputação construída com transparência' },
+    ],
+  },
 };
