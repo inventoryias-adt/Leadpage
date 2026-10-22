@@ -54,29 +54,29 @@ export function CampaignCards({ items, loggedIn }: { items: CampaignView[]; logg
   return (
     <section aria-labelledby="campanhas" className="space-y-3">
       <div className="flex items-end justify-between">
-        <h2 id="campanhas" className="font-bold text-slate-800">Campanhas por lugar</h2>
-        <span className="text-sm text-slate-500">{groups.length} {groups.length === 1 ? 'lugar' : 'lugares'}</span>
+        <h2 id="campanhas" className="text-[15px] font-bold text-slate-800">Campanhas por lugar</h2>
+        <span className="text-xs text-slate-500">{groups.length} {groups.length === 1 ? 'lugar' : 'lugares'}</span>
       </div>
 
       <Carousel label="Campanhas por lugar">
         {groups.slice(0, 16).map((g) => (
-          <li key={g.placeId} className="w-[14.5rem] shrink-0 snap-start">
+          <li key={g.placeId} className="w-[11.5rem] shrink-0 snap-start">
             <button
               type="button"
               onClick={() => setOpen(g)}
-              className="card-link flex h-full min-h-[9.5rem] w-full flex-col justify-between gap-4 rounded-[22px] border border-slate-200 bg-white p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600"
+              className="card-link flex h-full w-full flex-col justify-between gap-2.5 rounded-2xl border border-slate-200 bg-white p-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600"
               aria-label={`${g.placeName}: ${g.items.length} ${g.items.length === 1 ? 'campanha' : 'campanhas'} rolando. Toque para ver`}
             >
               <span className="flex items-center gap-2.5">
-                <PlaceAvatar name={g.placeName} src={g.logoUrl} size={40} />
-                <span className="min-w-0 truncate text-sm font-bold text-slate-900">{g.placeName}</span>
+                <PlaceAvatar name={g.placeName} src={g.logoUrl} size={30} />
+                <span className="min-w-0 truncate text-[13px] font-bold text-slate-900">{g.placeName}</span>
               </span>
               {/* Só a contagem: o detalhe de cada campanha (valor, como funciona, participar) fica na janela que abre ao tocar. */}
               <span className="block">
-                <span className="block text-2xl font-bold leading-none text-primary">{g.items.length} {g.items.length === 1 ? 'campanha' : 'campanhas'}</span>
-                <span className="mt-3 flex items-center justify-between gap-2">
-                  <span aria-hidden className="text-sm font-semibold text-electric-600">Ver {g.items.length === 1 ? 'a campanha' : 'as campanhas'}</span>
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#E8EEFB] text-electric-600"><Icon name="chevron" size={16} /></span>
+                <span className="block text-lg font-bold leading-none text-primary">{g.items.length} {g.items.length === 1 ? 'campanha' : 'campanhas'}</span>
+                <span className="mt-1.5 flex items-center justify-between gap-2">
+                  <span aria-hidden className="text-xs font-semibold text-electric-600">Ver {g.items.length === 1 ? 'a campanha' : 'as campanhas'}</span>
+                  <Icon name="chevron" size={14} className="shrink-0 text-electric-600" />
                 </span>
               </span>
             </button>

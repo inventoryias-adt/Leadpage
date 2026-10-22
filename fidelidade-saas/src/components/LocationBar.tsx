@@ -49,17 +49,14 @@ export function LocationBar({ saved, loggedIn, onChange }: { saved: SavedAddress
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
         aria-label={chosen ? `Localização: ${chosen.title}. Trocar` : 'Onde está? Escolher localização'}
-        className="flex w-full min-w-0 items-center gap-3 !rounded-2xl !border !border-[#C3D2F4] !bg-[#EEF3FD] !px-3.5 !py-2.5 text-left !shadow-none"
+        className="flex w-full min-w-0 items-center gap-2 !rounded-full !border !border-[#D5E0F7] !bg-[#F1F5FD] !px-3 !py-1.5 text-left !shadow-none"
       >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-electric-600 shadow-sm">
-          <Icon name="pin" size={20} />
+        <Icon name="pin" size={16} className="shrink-0 text-electric-600" />
+        <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
+          <span className="shrink-0 text-sm font-bold leading-tight text-slate-900" data-testid="loc-title">{chosen ? chosen.title : 'Onde está?'}</span>
+          <span className="truncate text-xs text-slate-500">{chosen ? chosen.sub : 'Veja a distância dos lugares'}</span>
         </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-[11px] font-bold uppercase tracking-wider text-electric-600">Sua localização</span>
-          <span className="block truncate text-base font-extrabold leading-tight text-slate-900" data-testid="loc-title">{chosen ? chosen.title : 'Onde está?'}</span>
-          <span className="block truncate text-xs text-slate-500">{chosen?.sub ?? 'Veja a distância dos lugares'}</span>
-        </span>
-        <span className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-bold text-electric-600 shadow-sm">{chosen ? 'Alterar' : 'Informar'}</span>
+        <span className="shrink-0 text-xs font-bold text-electric-600">{chosen ? 'Alterar' : 'Informar'}</span>
       </button>
       {open && (
         <LocationPicker
