@@ -4,6 +4,7 @@ import { BirthdayBanner } from '@/components/BirthdayBanner';
 import { Brand } from '@/components/Brand';
 import { Carousel } from '@/components/Carousel';
 import { Icon } from '@/components/Icons';
+import { IndicacoesShelf } from '@/components/IndicacoesShelf';
 import { Illustration } from '@/components/Illustrations';
 import { Reveal } from '@/components/Reveal';
 import { IntroSlides } from '@/components/IntroSlides';
@@ -217,6 +218,8 @@ export default async function CarteiraPage() {
           </section>
         </Reveal>
       )}
+
+      <Reveal from="bottom"><IndicacoesShelf customerId={customer.id} hasWallets={wallets.length > 0} /></Reveal>
 
       <Reveal from="zoom">
       <Link href="/lugares" className="glass-panel-sm card-link flex items-center gap-3 !rounded-full px-5 py-3">

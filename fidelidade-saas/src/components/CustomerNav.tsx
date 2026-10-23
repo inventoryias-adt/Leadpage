@@ -6,9 +6,11 @@ import { useEffect, useState } from 'react';
 import { Brand } from './Brand';
 import { Icon, type IconName } from './Icons';
 
-const tabs: { href: string; label: string; icon: IconName; match: (p: string) => boolean }[] = [
+const tabs: { href: string; label: string; icon: IconName; match: (p: string) => boolean; desktopOnly?: boolean }[] = [
   { href: '/carteira', label: 'Início', icon: 'home', match: (p) => p.startsWith('/carteira') },
   { href: '/lugares', label: 'Lugares', icon: 'compass', match: (p) => p.startsWith('/lugares') || p.startsWith('/lugar/') },
+  // No celular o feed fica atrás do botão "+" do meio (nova indicação); no computador é uma aba comum.
+  { href: '/indicacoes', label: 'Indicações', icon: 'camera', match: (p) => p.startsWith('/indicacoes'), desktopOnly: true },
   { href: '/avisos', label: 'Avisos', icon: 'bell', match: (p) => p.startsWith('/avisos') },
   { href: '/perfil', label: 'Perfil', icon: 'user', match: (p) => p.startsWith('/perfil') },
 ];
@@ -21,6 +23,26 @@ function Badge({ n, floating }: { n: number; floating?: boolean }) {
     >
       {n > 9 ? '9+' : n}
     </span>
+  );
+}
+
+const mobileTabs = tabs.filter((t) => !t.desktopOnly);
+
+function MobileTab({ t, current, unread, onPick }: { t: (typeof tabs)[number]; current: string; unread: number; onPick: (href: string) => void }) {
+  const active = t.match(current);
+  return (
+    <Link
+      href={t.href}
+      onClick={() => onPick(t.href)}
+      aria-current={active ? 'page' : undefined}
+      className={`nav-tab flex min-w-0 flex-col items-center gap-0.5 !rounded-2xl !px-1 !py-2 !text-[11px] ${active ? 'nav-tab-active nav-tab-lime' : ''}`}
+    >
+      <span className="relative">
+        <Icon name={t.icon} size={20} />
+        {t.href === '/avisos' && unread > 0 && <Badge n={unread} floating />}
+      </span>
+      {t.label}
+    </Link>
   );
 }
 
@@ -58,27 +80,21 @@ export function CustomerNav({ unread = 0 }: { unread?: number }) {
       </div>
     </header>
 
-    {/* Celular: barra flutuante embaixo */}
+    {/* Celular: barra flutuante embaixo, com o botão "+" (nova indicação) em destaque no meio */}
     <nav aria-label="Navegação principal" className="pointer-events-none md:hidden fixed inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-      <div className="glass-panel pointer-events-auto grid w-full max-w-sm grid-cols-4 gap-1 overflow-hidden !rounded-3xl p-2">
-        {tabs.map((t) => {
-          const active = t.match(current);
-          return (
-            <Link
-              key={t.href}
-              href={t.href}
-              onClick={() => setPending(t.href)}
-              aria-current={active ? 'page' : undefined}
-              className={`nav-tab flex min-w-0 flex-col items-center gap-0.5 !rounded-2xl !px-1 !py-2 !text-[11px] ${active ? 'nav-tab-active nav-tab-lime' : ''}`}
-            >
-              <span className="relative">
-                <Icon name={t.icon} size={20} />
-                {t.href === '/avisos' && unread > 0 && <Badge n={unread} floating />}
-              </span>
-              {t.label}
-            </Link>
-          );
-        })}
+      <div className="glass-panel pointer-events-auto relative grid w-full max-w-sm grid-cols-[1fr_1fr_4.5rem_1fr_1fr] gap-1 !rounded-3xl p-2">
+        {mobileTabs.slice(0, 2).map((t) => <MobileTab key={t.href} t={t} current={current} unread={unread} onPick={setPending} />)}
+        <span aria-hidden />
+        {mobileTabs.slice(2).map((t) => <MobileTab key={t.href} t={t} current={current} unread={unread} onPick={setPending} />)}
+        <Link
+          href="/indicacoes/nova"
+          onClick={() => setPending('/indicacoes/nova')}
+          aria-label="Nova indicação"
+          data-testid="fab-indicar"
+          className="absolute left-1/2 top-0 flex h-16 w-16 -translate-x-1/2 -translate-y-[38%] items-center justify-center rounded-full border-4 border-[#F7F8FA] bg-lima text-primary shadow-[0_10px_24px_rgba(11,27,58,.32)] transition-transform active:scale-95"
+        >
+          <Icon name="plus" size={30} strokeWidth={2.6} />
+        </Link>
       </div>
     </nav>
     </>

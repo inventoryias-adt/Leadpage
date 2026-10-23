@@ -1,0 +1,75 @@
+'use server';
+
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import { BusinessError } from '@/lib/claims';
+import { prisma } from '@/lib/db';
+import { fail, type FormState } from '@/lib/form';
+import { parseInstagram } from '@/lib/posts';
+import { createPost, deletePost, reportPost, toggleLike } from '@/lib/posts-db';
+import { TOO_MANY, allow } from '@/lib/rate-limit';
+import { getCustomer } from '@/lib/session';
+
+/** Publica a indicação (a foto chega reduzida pelo navegador, em `photoData`). Dá certo → feed com o aviso. */
+export async function publishPost(_: FormState, formData: FormData): Promise<FormState> {
+  const customer = await getCustomer();
+  if (!customer) return fail('Entre na sua conta para indicar um lugar.', formData);
+  if (!(await allow(`post:${customer.id}`, 20, 3600))) return fail(TOO_MANY, formData);
+  let id: string;
+  try {
+    const post = await createPost(customer.id, { restaurantId: formData.get('restaurantId'), rating: formData.get('rating'), comment: formData.get('comment') }, String(formData.get('photoData') ?? ''));
+    id = post.id;
+  } catch (e) {
+    if (e instanceof BusinessError) return fail(e.message, formData);
+    throw e;
+  }
+  revalidatePath('/indicacoes');
+  revalidatePath('/carteira');
+  redirect(`/indicacoes?publicada=${id}`);
+}
+
+export type LikeState = { liked: boolean; likes: number } | { error: string };
+
+export async function likePost(postId: string): Promise<LikeState> {
+  const customer = await getCustomer();
+  if (!customer) return { error: 'Entre na sua conta para curtir.' };
+  if (!(await allow(`like:${customer.id}`, 200, 3600))) return { error: TOO_MANY };
+  try {
+    return await toggleLike(customer.id, postId);
+  } catch (e) {
+    if (e instanceof BusinessError) return { error: e.message };
+    throw e;
+  }
+}
+
+export async function reportPostAction(postId: string, reason: string): Promise<{ ok: true } | { error: string }> {
+  const customer = await getCustomer();
+  if (!customer) return { error: 'Entre na sua conta para denunciar.' };
+  if (!(await allow(`report:${customer.id}`, 20, 3600))) return { error: TOO_MANY };
+  try {
+    await reportPost(customer.id, postId, reason);
+    return { ok: true };
+  } catch (e) {
+    if (e instanceof BusinessError) return { error: e.message };
+    throw e;
+  }
+}
+
+export async function removePost(postId: string): Promise<void> {
+  const customer = await getCustomer();
+  if (!customer) return;
+  await deletePost(customer.id, postId);
+  revalidatePath('/indicacoes');
+}
+
+/** Salva (ou apaga, com o campo vazio) o @ do Instagram do cliente. */
+export async function saveInstagram(_: FormState, formData: FormData): Promise<FormState> {
+  const customer = await getCustomer();
+  if (!customer) return { error: 'Entre na sua conta.' };
+  const handle = parseInstagram(formData.get('instagram'));
+  if (handle === null) return fail('Use só o seu @ do Instagram: letras, números, ponto e sublinhado.', formData);
+  await prisma.customer.update({ where: { id: customer.id }, data: { instagram: handle || null } });
+  revalidatePath('/perfil');
+  revalidatePath('/indicacoes');
+  return { ok: handle ? 'Instagram salvo.' : 'Instagram removido.' };
+}
