@@ -90,7 +90,7 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
               <Icon name="chevron" size={16} className="transition-transform group-open:rotate-90" />
             </summary>
             <div className="mt-3 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 [&>div]:min-w-0">
                 <div>
                   <label htmlFor="lde" className="glass-label">De</label>
                   <input id="lde" name="de" type="date" defaultValue={f.de ?? ''} autoComplete="off" className="glass-input" />
@@ -100,7 +100,7 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
                   <input id="late" name="ate" type="date" defaultValue={f.ate ?? ''} autoComplete="off" className="glass-input" />
                 </div>
               </div>
-              <div className={`grid gap-3 ${units.length > 1 ? 'grid-cols-2' : 'grid-cols-1 sm:max-w-xs'}`}>
+              <div className={`grid gap-3 [&>div]:min-w-0 ${units.length > 1 ? 'grid-cols-2' : 'grid-cols-1 sm:max-w-xs'}`}>
                 <div>
                   <label htmlFor="lsit" className="glass-label">Situação</label>
                   <select id="lsit" name="sit" defaultValue={f.sit} className="glass-input">

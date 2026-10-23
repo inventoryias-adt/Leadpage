@@ -114,6 +114,15 @@ body {
   input[type='time'].glass-input {
     cursor: pointer;
   }
+  /* Safari do iPhone dá aos campos de data/hora uma largura mínima própria: sem isto eles estouram a coluna e passam por cima do vizinho. */
+  input[type='date'].glass-input,
+  input[type='time'].glass-input,
+  input[type='datetime-local'].glass-input,
+  input[type='month'].glass-input {
+    min-width: 0;
+    max-width: 100%;
+    display: block;
+  }
 
   /* ---------------------------------------------------------------- */
   /* Botões: retos, sólidos e previsíveis. Hover escurece (sem inverter). */
