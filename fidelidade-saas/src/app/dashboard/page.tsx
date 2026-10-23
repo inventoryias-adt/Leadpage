@@ -167,7 +167,7 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
       <div className="grid gap-6 lg:grid-cols-5">
         <section className="glass-panel p-5 sm:p-6 lg:col-span-3" aria-labelledby="vendas-dia">
           <h2 id="vendas-dia" className="mb-1 font-semibold text-primary">Vendas por dia</h2>
-          <p className="mb-3 text-sm text-slate-500">Soma das compras lançadas no caixa e lidas pelos clientes.</p>
+          <p className="mb-3 text-sm text-slate-500">Soma das compras lançadas no caixa e lidas pelos clientes. Toque num dia para ver o que aconteceu.</p>
           {cur.length === 0 ? (
             <EmptyState compact variant="chart" title="Sem compras neste período" text="Quando houver lançamentos, as vendas de cada dia aparecem aqui." />
           ) : (
