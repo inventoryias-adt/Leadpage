@@ -8,6 +8,7 @@ import { Illustration } from '@/components/Illustrations';
 import { Reveal } from '@/components/Reveal';
 import { IntroSlides } from '@/components/IntroSlides';
 import { NextBookingCard } from '@/components/NextBookingCard';
+import { ShortcutTiles } from '@/components/Shortcuts';
 import { PlaceAvatar, ProgressBar, RewardImage } from '@/components/Visual';
 import { campaignsForCustomers } from '@/lib/app-campaigns-db';
 import { isBirthdayToday } from '@/lib/birthday-perk';
@@ -29,7 +30,7 @@ export default async function CarteiraPage() {
 
   const birthday = isBirthdayToday(customer);
   const perks = birthday ? await perkPlaces() : [];
-  const [wallets, vouchers, affordable, nextBooking, appCampaigns] = await Promise.all([
+  const [wallets, vouchers, affordable, nextBooking, appCampaigns, upcomingBookings, openOrders] = await Promise.all([
     prisma.wallet.findMany({
       where: { customerId: customer.id },
       include: { restaurant: { select: { id: true, name: true, logoImageId: true, subscriptionStatus: true, category: true, categoryOther: true, units: { where: { active: true }, select: { openingSchedule: true } } } } },
@@ -43,6 +44,8 @@ export default async function CarteiraPage() {
       include: { restaurant: { select: { name: true } }, resource: { select: { name: true } } },
     }),
     campaignsForCustomers(),
+    prisma.booking.count({ where: { customerId: customer.id, status: { in: ['PENDING', 'CONFIRMED'] }, endsAt: { gt: new Date() } } }),
+    prisma.order.count({ where: { customerId: customer.id, status: { in: ['RECEIVED', 'PREPARING', 'READY'] } } }),
   ]);
   // Próximo prêmio de cada lugar: o mais barato que ainda não dá para resgatar (para mostrar "faltam N pontos").
   const rewardRows = wallets.length
@@ -126,7 +129,7 @@ export default async function CarteiraPage() {
               const can = canRedeem.has(w.restaurantId);
               const goal = nextGoal(w.restaurantId, w.balance);
               return (
-                <li key={w.id} className="w-[13rem] shrink-0 snap-start">
+                <li key={w.id} className={wallets.length === 1 ? 'w-full' : 'w-[13rem] shrink-0 snap-start'}>
                   <Link href={`/carteira/${w.restaurantId}`} className="glass-panel card-link flex h-full flex-col items-start gap-2 !rounded-[22px] p-4" aria-label={`${w.restaurant.name}: ${formatPoints(w.balance)} pontos${pick ? `, ${pick} para retirar` : ''}${can ? ', já dá para resgatar' : ''}`}>
                     <span className="flex w-full items-center gap-2.5">
                       <PlaceAvatar name={w.restaurant.name} src={imageUrl(w.restaurant.logoImageId)} size={44} />
@@ -221,6 +224,20 @@ export default async function CarteiraPage() {
         <span className="min-w-0 flex-1 text-sm font-bold text-slate-800">Explorar lugares perto de você</span>
         <Icon name="chevron" size={18} className="text-slate-400" />
       </Link>
+      </Reveal>
+
+      <Reveal from="bottom">
+        <section aria-labelledby="atalhos-inicio">
+          <h2 id="atalhos-inicio" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Atalhos</h2>
+          <ShortcutTiles
+            items={[
+              { href: '/perfil/pontos', icon: 'receipt', label: 'Histórico' },
+              { href: '/perfil/premios', icon: 'gift', label: 'Prêmios', count: vouchers.length },
+              { href: '/perfil/pedidos', icon: 'bag', label: 'Pedidos', count: openOrders },
+              { href: '/perfil/agendamentos', icon: 'clock', label: 'Horários', count: upcomingBookings },
+            ]}
+          />
+        </section>
       </Reveal>
     </main>
   );

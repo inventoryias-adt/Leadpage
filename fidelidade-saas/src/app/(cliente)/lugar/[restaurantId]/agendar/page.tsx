@@ -137,6 +137,8 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
   const dayArgs = { restaurantId, policy: restaurant, service, unit, resourceId: prof?.id, customerId: customer?.id, ignoreBookingId: rb?.id };
   // Atalho para quem não quer escolher: o primeiro horário livre dos próximos dias. Se o horário pedido na URL sumiu, já oferece saídas.
   const nextFree = !sp.hora ? (await firstFreeSlots(prisma, { ...dayArgs, from: today, days: 14, limit: 1 }))[0] ?? null : null;
+  // Quem abre a tela sem escolher o dia e encontra hoje sem horário (já passou do expediente, por exemplo) cai direto no primeiro dia com vaga.
+  if (!sp.data && !sp.hora && !rb && slots.length === 0 && nextFree && nextFree.date !== date) redirect(url({ data: nextFree.date, hora: undefined }));
   const lost = sp.hora && !chosen ? await alternativeSlots(prisma, { ...dayArgs, date, time: sp.hora, limit: 3 }) : null;
   const hrefBase = url({ data: undefined, hora: undefined });
   // Lista de espera: dia que o lugar atende mas sem horário livre. Quem já pediu vê a posição na fila.

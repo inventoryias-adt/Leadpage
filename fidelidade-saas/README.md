@@ -600,3 +600,11 @@ O servidor já impedia dois clientes no mesmo horário (cadeado por estabelecime
 - **Vendas por dia**: tocar (ou clicar) num ponto abre uma janela (`DetailSheet`) com vendas, compras, ticket médio e pontos do dia, a comparação com o **mesmo dia da semana anterior**, "O que pode explicar" (campanhas usadas, prêmios resgatados, desafios concluídos, clientes novos, ações aprovadas, presentes de aniversário), as compras do dia e atalhos (Caixa e Resgates filtrados pelo dia, Criar campanha).
 - **Dias e horários de pico**: cada célula do mapa de calor é um botão (no celular o mapa rola para o lado, com células em tamanho de dedo). A janela mostra compras, vendas e ticket do horário nos últimos 90 dias, em quantas semanas houve compra, as últimas datas, quem mais compra e dicas (pico, horário fraco, horário vazio, campanha usada ou não).
 - Código: consultas em `src/lib/dash-detail.ts` (só do estabelecimento logado, via `src/app/actions/dash-detail.ts`), frases em `dayReasons` e `slotTips` (`src/lib/insights.ts`, testadas em `insights.test.ts`). Teste de tela: `e2e65`.
+
+## Início e Perfil do cliente: atalhos compactos
+
+- **Início**: depois de "Explorar lugares perto de você" entra uma fileira de quatro **atalhos** (Histórico, Prêmios, Pedidos, Horários), com ícone e nome; um número no canto aparece só quando há algo esperando (cupons a retirar, pedidos em andamento, horários marcados). Componente `ShortcutTiles` (`src/components/Shortcuts.tsx`).
+- **Perfil**: os cartões grandes viram uma **lista agrupada** ("Minha atividade" e "Pedidos e horários"), uma linha por atalho com ícone, título, frase curta e seta (`ShortcutGroups`). `data-testid="my-orders-link"` segue na linha de Meus pedidos.
+- **Carteira única**: quem tem um lugar só vê o cartão da carteira em largura total (antes ficava pela metade, com um vazio ao lado).
+- **Agendar**: sem dia escolhido na URL e sem horário livre hoje (já passou do expediente, por exemplo), a tela abre direto no primeiro dia com vaga; quem escolhe o dia à mão não é trocado de dia.
+- Teste de tela: `e2e66` (atalhos em fileira e depois de "Explorar lugares", número só onde há algo, carteira única, Perfil agrupado e compacto, redirecionamento do Agendar).
