@@ -4,16 +4,21 @@ import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { likePost, removePost, reportPostAction } from '@/app/actions/posts';
 import { authorName, instagramCaption, instagramUrl, postAge } from '@/lib/posts';
+import { polaroidFileName } from '@/lib/polaroid';
 import type { FeedPost } from '@/lib/posts-db';
 import { Icon } from './Icons';
+import { renderPolaroid } from './polaroid-image';
 import { Stars } from './Stars';
 import { PlaceAvatar } from './Visual';
 
 type Plain = Omit<FeedPost, 'createdAt'> & { createdAt: string };
 export type PostCardData = Plain;
 
-/** Uma indicação no feed: foto, lugar, autor, nota, comentário, curtir, compartilhar no Instagram, denunciar (ou apagar a própria). */
-export function PostCard({ post, highlight = false }: { post: PostCardData; highlight?: boolean }) {
+/**
+ * Uma indicação no feed: foto, lugar, autor, nota, comentário, curtir, publicar no story do Instagram (a foto vira uma Polaroid com a marca,
+ * o lugar, a nota, as curtidas e o comentário), denunciar (ou apagar a própria). `viewerInstagram` é o @ de quem está vendo, se cadastrou.
+ */
+export function PostCard({ post, highlight = false, viewerInstagram = null }: { post: PostCardData; highlight?: boolean; viewerInstagram?: string | null }) {
   const [liked, setLiked] = useState(post.liked);
   const [likes, setLikes] = useState(post.likes);
   const [msg, setMsg] = useState('');
@@ -33,15 +38,25 @@ export function PostCard({ post, highlight = false }: { post: PostCardData; high
 
   async function share() {
     setMsg('');
+    let file: File;
     try {
-      const blob = await (await fetch(post.photoUrl)).blob();
-      const file = new File([blob], 'indicacao.jpg', { type: blob.type || 'image/jpeg' });
+      const blob = await renderPolaroid({ photoUrl: post.photoUrl, placeName: post.place.name, rating: post.rating, likes, comment: post.comment, handle: viewerInstagram, authorName: post.mine ? null : authorName(post.author.name), host: location.host });
+      file = new File([blob], polaroidFileName(post.place.name), { type: 'image/png' });
+    } catch {
+      setMsg('Não deu para montar a imagem agora. Tente de novo.');
+      return;
+    }
+    try {
       if (navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], text: caption }); return; }
     } catch (e) {
       if (e instanceof DOMException && e.name === 'AbortError') return; // a pessoa fechou a janela de compartilhar
     }
+    // sem compartilhamento de arquivos neste aparelho: baixa a imagem e copia a legenda
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a'); a.href = url; a.download = file.name; document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
     try { await navigator.clipboard.writeText(caption); } catch { /* sem permissão */ }
-    setMsg('Legenda copiada. Salve a foto e publique no seu Instagram marcando o lugar.');
+    setMsg('Imagem baixada e legenda copiada. Abra o Instagram, crie um story com a imagem e cole a legenda.');
   }
 
   return (
@@ -72,7 +87,7 @@ export function PostCard({ post, highlight = false }: { post: PostCardData; high
         {post.comment && <p className="whitespace-pre-line text-sm text-slate-700" data-testid="post-comment">{post.comment}</p>}
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-xs font-semibold">
-          <button type="button" onClick={share} className="flex items-center gap-1 text-electric-600" data-testid="share-instagram"><Icon name="share" size={14} /> Publicar no Instagram</button>
+          <button type="button" onClick={share} className="flex items-center gap-1 text-electric-600" data-testid="share-instagram"><Icon name="share" size={14} /> {viewerInstagram ? 'Publicar no meu story' : 'Publicar no Instagram'}</button>
           {post.mine ? (
             <button type="button" onClick={() => { if (confirm('Apagar esta indicação?')) start(async () => { await removePost(post.id); setGone(true); }); }} className="text-slate-500" data-testid="delete-post">Apagar</button>
           ) : (
