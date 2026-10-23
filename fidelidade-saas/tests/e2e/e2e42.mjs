@@ -32,8 +32,12 @@ assert.match(await o.locator('[aria-live=polite]').first().innerText(), /Conta e
 console.log('2. Caixa acha o cliente pelo ID OK');
 
 // 3. lança R$ 40,00 pelo ID: 400 pontos na carteira
-await o.fill('#amount', '40,00');
-await o.click('[data-testid=lancar-direto]');
+// sob carga o formulário pode não ter hidratado: repete o preenchimento e o clique até o aviso aparecer (o lançamento só conta uma vez)
+for (let i = 0; i < 4; i++) {
+  await o.fill('#amount', '40,00');
+  await o.click('[data-testid=lancar-direto]');
+  if (await o.waitForSelector('text=pontos lançados para', { timeout: 15000 }).then(() => true).catch(() => false)) break;
+}
 await o.waitForSelector('text=pontos lançados para');
 assert.equal(sql(`select balance from "Wallet" where "customerId"='${cid}' and "restaurantId"='${rid}'`), '400');
 console.log('3. Lançamento pelo ID: carteira +400 OK');

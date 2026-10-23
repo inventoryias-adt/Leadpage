@@ -2,9 +2,11 @@
 // (o servidor de desenvolvimento compila cada rota na primeira visita). Quando um teste falha, guarda um print de cada aba.
 import { chromium } from 'playwright-core';
 const orig = chromium.launch.bind(chromium);
-// Pronta = rede ociosa (no máximo 8 s de espera).
+// Pronta = rede ociosa (no máximo 8 s de espera) e React hidratado (no máximo 15 s).
 const settle = async (page) => {
   await page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {});
+  // O React marca o documento quando termina de hidratar: antes disso um clique ou um campo preenchido se perde (aconteceu no CI, sob carga).
+  await page.waitForFunction(() => Object.keys(document).some((k) => k.startsWith('__reactContainer')), null, { timeout: 15000 }).catch(() => {});
 };
 const pages = [];
 const patch = (page) => {
