@@ -23,7 +23,7 @@ await noOverflow(l, 'início'); await l.screenshot({ path: 'nov-inicio.png', ful
 console.log('1. início limpo: pontos por lugar e atalho para explorar OK');
 
 // 2. Perfil: atalhos para as duas telas
-await l.goto(BASE + '/perfil'); await l.waitForSelector('text=Atalhos');
+await l.goto(BASE + '/perfil'); await l.waitForSelector('[data-testid=shortcut-groups]');
 assert.ok(await l.locator('a[href="/perfil/pontos"]').count() && await l.locator('a[href="/perfil/premios"]').count());
 assert.equal(await l.locator('section[aria-labelledby=historico]').count(), 0, 'sem a lista de histórico solta no perfil');
 await noOverflow(l, 'perfil'); await l.screenshot({ path: 'nov-perfil.png', fullPage: true });

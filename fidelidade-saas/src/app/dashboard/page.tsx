@@ -165,8 +165,8 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
       </Link>
 
       <div className="grid gap-6 lg:grid-cols-5">
-        <section className="glass-panel p-5 sm:p-6 lg:col-span-3" aria-labelledby="vendas-dia">
-          <h2 id="vendas-dia" className="mb-1 font-semibold text-primary">Vendas por dia</h2>
+        <section className="glass-panel min-w-0 p-5 sm:p-6 lg:col-span-3" aria-labelledby="vendas-dia">
+          <div className="mb-1 flex items-baseline justify-between gap-3"><h2 id="vendas-dia" className="font-semibold text-primary">Vendas por dia</h2><Link href={`/dashboard/vendas?dias=${days}`} className="shrink-0 text-xs font-bold text-electric-600" data-testid="open-vendas">Abrir tela cheia ›</Link></div>
           <p className="mb-3 text-sm text-slate-500">Soma das compras lançadas no caixa e lidas pelos clientes. Toque num dia para ver o que aconteceu.</p>
           {cur.length === 0 ? (
             <EmptyState compact variant="chart" title="Sem compras neste período" text="Quando houver lançamentos, as vendas de cada dia aparecem aqui." />
@@ -174,8 +174,8 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
             <SalesArea days={series} />
           )}
         </section>
-        <section className="glass-panel p-5 sm:p-6 lg:col-span-2" aria-labelledby="picos">
-          <h2 id="picos" className="mb-1 font-semibold text-primary">Dias e horários de pico</h2>
+        <section className="glass-panel min-w-0 p-5 sm:p-6 lg:col-span-2" aria-labelledby="picos">
+          <div className="mb-1 flex items-baseline justify-between gap-3"><h2 id="picos" className="font-semibold text-primary">Dias e horários de pico</h2><Link href="/dashboard/horarios" className="shrink-0 text-xs font-bold text-electric-600" data-testid="open-horarios">Abrir tela cheia ›</Link></div>
           <p className="mb-4 text-sm text-slate-500">
             {peak ? <>Seu movimento é maior na <strong className="text-slate-800">{WEEKDAYS[peak.dow]}, perto das {peak.hour}h</strong>. Últimos 90 dias.</> : 'Mostra quando os clientes mais compram (últimos 90 dias).'}
           </p>

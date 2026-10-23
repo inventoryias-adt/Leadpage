@@ -9,6 +9,7 @@ import { CopyButton } from '@/components/CopyButton';
 import { Icon } from '@/components/Icons';
 import { LegalLinks } from '@/components/LegalLinks';
 import { ShareButtons } from '@/components/ShareButtons';
+import { ShortcutGroups } from '@/components/Shortcuts';
 import { PlaceAvatar } from '@/components/Visual';
 import { formatPhone, maskCpf } from '@/lib/br';
 import { prisma } from '@/lib/db';
@@ -94,43 +95,24 @@ export default async function PerfilPage() {
 
       <div className="space-y-6 lg:order-2 lg:col-span-3">
         <Reveal from="left">
-        <section aria-labelledby="atalhos">
-          <h2 id="atalhos" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Atalhos</h2>
-          <div className="grid grid-cols-2 gap-3">
-            <Link href="/perfil/pontos" className="glass-panel-sm card-link flex flex-col items-start gap-2.5 p-4">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#E8EEFB] text-electric-600"><Icon name="receipt" size={22} /></span>
-              <span className="min-w-0">
-                <span className="block font-bold text-slate-800">Histórico de pontos</span>
-                <span className="block text-xs text-slate-500">Tudo o que você ganhou e usou</span>
-              </span>
-            </Link>
-            {(
-              <Link href="/perfil/pedidos" className="glass-panel-sm card-link flex flex-col items-start gap-2.5 p-4" data-testid="my-orders-link">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#E8EEFB] text-electric-600"><Icon name="bag" size={22} /></span>
-                <span className="min-w-0">
-                  <span className="block font-bold text-slate-800">Meus pedidos</span>
-                  <span className="block text-xs text-slate-500">{openOrders > 0 ? `${openOrders} ${openOrders === 1 ? 'pedido em andamento' : 'pedidos em andamento'}` : ordersTotal > 0 ? 'Veja o que você já pediu' : 'Peça pelo app e retire no balcão'}</span>
-                </span>
-              </Link>
-            )}
-            <Link href="/perfil/agendamentos" className="glass-panel-sm card-link flex flex-col items-start gap-2.5 p-4">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#E8EEFB] text-electric-600"><Icon name="clock" size={22} /></span>
-              <span className="min-w-0">
-                <span className="block font-bold text-slate-800">Meus agendamentos</span>
-                <span className="block text-xs text-slate-500">{upcomingBookings > 0 ? `${upcomingBookings} ${upcomingBookings === 1 ? 'horário marcado' : 'horários marcados'}` : 'Marque um horário nos lugares'}</span>
-              </span>
-            </Link>
-            <Link href="/perfil/premios" className="glass-panel-sm card-link flex flex-col items-start gap-2.5 p-4">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#E8EEFB] text-electric-600"><Icon name="gift" size={22} /></span>
-              <span className="min-w-0">
-                <span className="block font-bold text-slate-800">Meus prêmios</span>
-                <span className="block text-xs text-slate-500">
-                  {pending > 0 ? `${pending} para retirar · ` : ''}{usedCount} já resgatado{usedCount === 1 ? '' : 's'}
-                </span>
-              </span>
-            </Link>
-          </div>
-        </section>
+        <ShortcutGroups
+          groups={[
+            {
+              title: 'Minha atividade',
+              items: [
+                { href: '/perfil/pontos', icon: 'receipt', label: 'Histórico de pontos', hint: 'Tudo o que você ganhou e usou' },
+                { href: '/perfil/premios', icon: 'gift', label: 'Meus prêmios', hint: `${pending > 0 ? `${pending} para retirar · ` : ''}${usedCount} já resgatado${usedCount === 1 ? '' : 's'}`, count: pending },
+              ],
+            },
+            {
+              title: 'Pedidos e horários',
+              items: [
+                { href: '/perfil/pedidos', icon: 'bag', label: 'Meus pedidos', testId: 'my-orders-link', hint: openOrders > 0 ? `${openOrders} ${openOrders === 1 ? 'pedido em andamento' : 'pedidos em andamento'}` : ordersTotal > 0 ? 'Veja o que você já pediu' : 'Peça pelo app e retire no balcão', count: openOrders },
+                { href: '/perfil/agendamentos', icon: 'clock', label: 'Meus agendamentos', hint: upcomingBookings > 0 ? `${upcomingBookings} ${upcomingBookings === 1 ? 'horário marcado' : 'horários marcados'}` : 'Marque um horário nos lugares', count: upcomingBookings },
+              ],
+            },
+          ]}
+        />
         </Reveal>
 
         <Reveal from="bottom">

@@ -53,7 +53,7 @@ export function SalesArea({ days }: { days: DayBucket[] }) {
 }
 
 /** O que aconteceu em um dia: números, comparação com a semana anterior, possíveis motivos e as compras do dia. */
-function DaySheet({ ymd, onClose }: { ymd: string; onClose: () => void }) {
+export function DaySheet({ ymd, onClose }: { ymd: string; onClose: () => void }) {
   const [view, setView] = useState<DayView | null | undefined>(undefined);
   useEffect(() => {
     let on = true;
@@ -122,10 +122,8 @@ export function PeakHeatmap({ grid }: { grid: number[][] }) {
   const [sel, setSel] = useState<{ dow: number; hour: number } | null>(null);
   const close = useCallback(() => setSel(null), []);
   return (
-    <div className="space-y-1">
-      {/* no celular as células ficam em tamanho de dedo e o mapa rola para o lado */}
-      <div className="-mx-1 overflow-x-auto px-1 pb-1">
-      <div role="group" aria-label="Compras por dia da semana e horário. Toque num horário para ver o detalhe" className="min-w-[560px] space-y-1 sm:min-w-0">
+    <div className="min-w-0 space-y-1">
+      <div role="group" aria-label="Compras por dia da semana e horário. Toque num horário para ver o detalhe" className="space-y-1">
         <div className="grid grid-cols-[2.2rem_repeat(24,minmax(0,1fr))] gap-[2px] text-[9px] text-slate-500">
           <span />
           {hours.map((h) => (
@@ -150,15 +148,14 @@ export function PeakHeatmap({ grid }: { grid: number[][] }) {
           </div>
         ))}
       </div>
-      </div>
-      <p className="pt-1 text-xs text-slate-500">Toque num horário para ver quando e quem comprou.</p>
+      <p className="pt-1 text-xs text-slate-500">Toque num horário para ver o detalhe, ou abra a tela cheia para ver o mapa maior.</p>
       {sel && <SlotSheet key={`${sel.dow}-${sel.hour}`} dow={sel.dow} hour={sel.hour} onClose={close} />}
     </div>
   );
 }
 
 /** Um horário do mapa: quantas compras, em que datas, quem mais comprou e o que fazer com ele. */
-function SlotSheet({ dow, hour, onClose }: { dow: number; hour: number; onClose: () => void }) {
+export function SlotSheet({ dow, hour, onClose }: { dow: number; hour: number; onClose: () => void }) {
   const [view, setView] = useState<SlotView | null | undefined>(undefined);
   useEffect(() => {
     let on = true;
