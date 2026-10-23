@@ -8,8 +8,16 @@ const DB = 'postgresql://postgres:postgres@localhost:5432/fidelidade';
 const sql = (q) => execFileSync('psql', [DB, '-At', '-c', q]).toString().trim();
 const wait = (p, t) => p.waitForTimeout(t);
 const nb = (s) => s.replace(/ /g, ' '); // formatBRL usa espaço sem quebra
-// No servidor de desenvolvimento do CI a tela às vezes não troca logo depois de uma ação (o dado já está certo no banco): espera um pouco e recarrega uma vez.
-const shows = async (page, text) => { if (!(await page.locator(`text=${text}`).first().isVisible({ timeout: 10000 }).catch(() => false))) await page.reload(); await page.waitForSelector(`text=${text}`); };
+// No servidor de desenvolvimento do CI a tela às vezes não troca logo depois de uma ação (o dado já está certo no banco) e o servidor chega a recusar
+// a conexão por alguns segundos: espera, recarrega e tenta de novo (até 6 vezes, com pausa), sem esconder falha de verdade (no fim exige o texto).
+const shows = async (page, text) => {
+  for (let i = 0; i < 6; i++) {
+    if (await page.locator(`text=${text}`).first().isVisible({ timeout: 10000 }).catch(() => false)) return;
+    await page.waitForTimeout(3000);
+    await page.reload().catch(() => {});
+  }
+  await page.waitForSelector(`text=${text}`);
+};
 const until = async (page, fn, what, tries = 60) => {
   for (let i = 0; i < tries; i++) { const v = fn(); if (v) return v; await wait(page, 500); }
   throw new Error('Tempo esgotado: ' + what);
