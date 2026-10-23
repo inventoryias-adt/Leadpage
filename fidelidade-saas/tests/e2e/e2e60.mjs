@@ -77,5 +77,18 @@ console.log('7. sem resultado e limpar filtros OK');
 assert.ok((await o.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)), 'sem rolagem lateral');
 console.log('8. celular sem rolagem lateral OK');
 
+// 9. chips de situação (um toque, sem caixa de seleção) e datas lado a lado, sem sobrepor nem sair da tela
+await open(); await o.click('[aria-label="Situação do lançamento"] >> text=Expirados'); await o.waitForURL('**sit=expirados**');
+await o.waitForSelector('[data-testid=lancamentos-resumo]'); assert.equal(await rows().count(), 1);
+assert.equal(await o.locator('[aria-label="Situação do lançamento"] a[aria-current=true]').innerText(), 'Expirados');
+await o.fill('#lq', 'compra'); await o.click('form[aria-label="Buscar lançamentos"] button:has-text("Buscar")'); await o.waitForURL('**q=compra**');
+assert.match(o.url(), /sit=expirados/, 'buscar mantém a situação escolhida');
+await open('?de=' + day(30));
+const box = (sel) => o.locator(sel).evaluate((e) => { const r = e.getBoundingClientRect(); return { l: r.left, r: r.right }; });
+const [de, ate, vw] = [await box('#lde'), await box('#late'), await o.evaluate(() => innerWidth)];
+assert.ok(de.r <= ate.l, `De e Até não se sobrepõem (${de.r} <= ${ate.l})`);
+assert.ok(ate.r <= vw, `Até cabe na tela (${ate.r} <= ${vw})`);
+console.log('9. situação em chips, busca mantém filtros e datas lado a lado OK');
+
 await b.close();
 console.log('ALL OK (caixa: busca nos lançamentos)');
