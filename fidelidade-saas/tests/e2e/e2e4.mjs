@@ -35,10 +35,13 @@ await c.screenshot({path:'av-home.png'});
 await c.click('nav a[href="/avisos"]:visible'); await c.waitForURL('**/avisos'); await wait(c,500);
 await c.screenshot({path:'av-avisos.png', fullPage:true});
 await wait(c,3000);
+assert.notEqual(sql(`select count(*) from "Notification" where "readAt" is null`),'0'); // só abrir a tela não marca nada
+await c.locator('[data-testid=notice-day] button[aria-expanded=false]').evaluateAll((bs) => bs.forEach((b) => b.click()));
+await wait(c,3000);
 assert.equal(sql(`select count(*) from "Notification" where "readAt" is null`),'0');
 await c.reload(); await wait(c,1500);
 assert.equal(await c.locator('[aria-label$="aviso novo"]:visible, [aria-label$="avisos novos"]:visible').count(),0);
-console.log('3. abrir avisos marca como lido e some a bolinha OK');
+console.log('3. abrir as datas dos avisos marca como lido e some a bolinha OK');
 const dctx = await browser.newContext({viewport:{width:1366,height:768}});
 await dctx.addInitScript(()=>localStorage.setItem('fz_intro_v1','1'));
 const d = await dctx.newPage();

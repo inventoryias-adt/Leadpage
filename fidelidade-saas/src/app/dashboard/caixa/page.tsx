@@ -76,66 +76,72 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
       <section id="lancamentos" className="glass-panel scroll-mt-4 space-y-4 p-5" aria-labelledby="lanc-titulo">
         <h2 id="lanc-titulo" className="font-bold text-primary">Últimos lançamentos</h2>
 
-        <form method="get" action="/dashboard/caixa#lancamentos" autoComplete="off" role="search" aria-label="Buscar lançamentos" className="space-y-3">
-          <div>
-            <label htmlFor="lq" className="glass-label">Buscar</label>
-            <div className="flex gap-2">
-              <input id="lq" name="q" defaultValue={f.q} autoComplete="off" className="glass-input" placeholder="Nome, CPF ou valor" />
-              <button className="glass-button-navy !w-auto shrink-0 px-6">Buscar</button>
+        <form method="get" action="/dashboard/caixa#lancamentos" autoComplete="off" role="search" aria-label="Buscar lançamentos" className="space-y-3.5">
+          {/* o que não está em campo na tela (situação e unidade escolhidas pelos chips) continua valendo ao buscar */}
+          {f.sit !== 'todos' && <input type="hidden" name="sit" value={f.sit} />}
+          {f.unid && <input type="hidden" name="unid" value={f.unid} />}
+
+          <div className="relative">
+            <Icon name="search" size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <label htmlFor="lq" className="sr-only">Buscar</label>
+            <input id="lq" name="q" defaultValue={f.q} autoComplete="off" enterKeyHint="search" className="glass-input !rounded-full !py-2.5 !pl-10 !pr-24" placeholder="Nome, CPF ou valor" />
+            <button className="glass-button-navy absolute right-1.5 top-1/2 !w-auto -translate-y-1/2 !rounded-full !px-4 !py-1.5 text-sm">Buscar</button>
+          </div>
+
+          <div className="space-y-1.5">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Período</p>
+            <div className="chip-row" aria-label="Períodos rápidos">
+              {PRESETS.map((p) => {
+                const r = presetRange(p);
+                const on = f.de === r.de && f.ate === r.ate;
+                return <Link key={p} href={link({ de: r.de, ate: r.ate, pg: null })} aria-current={on ? 'true' : undefined} className={`chip-link shrink-0 !py-1 ${on ? 'chip-link-active' : ''}`}>{PRESET_LABEL[p]}</Link>;
+              })}
+            </div>
+            <details open={!!(f.de || f.ate)} className="group" data-testid="lancamentos-mais-filtros">
+              <summary className="inline-flex cursor-pointer list-none items-center gap-1 text-xs font-semibold text-electric-600">
+                Escolher datas
+                <Icon name="chevron" size={13} className="transition-transform group-open:rotate-90" />
+              </summary>
+              <div className="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-2">
+                <div className="min-w-0">
+                  <label htmlFor="lde" className="glass-label">De</label>
+                  <input id="lde" name="de" type="date" defaultValue={f.de ?? ''} autoComplete="off" className="glass-input !py-2" />
+                </div>
+                <div className="min-w-0">
+                  <label htmlFor="late" className="glass-label">Até</label>
+                  <input id="late" name="ate" type="date" defaultValue={f.ate ?? ''} autoComplete="off" className="glass-input !py-2" />
+                </div>
+                <button className="glass-button-ghost btn-sm !rounded-full">Aplicar</button>
+              </div>
+            </details>
+          </div>
+
+          <div className="space-y-1.5">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Situação</p>
+            <div className="chip-row" aria-label="Situação do lançamento">
+              {SITUACOES.map((k) => (
+                <Link key={k} href={link({ sit: k === 'todos' ? null : k, pg: null })} aria-current={f.sit === k ? 'true' : undefined} className={`chip-link shrink-0 !py-1 ${f.sit === k ? 'chip-link-active' : ''}`}>{SITUACAO_LABEL[k]}</Link>
+              ))}
             </div>
           </div>
-          <details open={!!(f.de || f.ate || f.sit !== 'todos' || f.unid)} className="group rounded-2xl bg-slate-50/70 px-4 py-3" data-testid="lancamentos-mais-filtros">
-            <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-primary">
-              Data e situação
-              <Icon name="chevron" size={16} className="transition-transform group-open:rotate-90" />
-            </summary>
-            <div className="mt-3 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label htmlFor="lde" className="glass-label">De</label>
-                  <input id="lde" name="de" type="date" defaultValue={f.de ?? ''} autoComplete="off" className="glass-input" />
-                </div>
-                <div>
-                  <label htmlFor="late" className="glass-label">Até</label>
-                  <input id="late" name="ate" type="date" defaultValue={f.ate ?? ''} autoComplete="off" className="glass-input" />
-                </div>
-              </div>
-              <div className={`grid gap-3 ${units.length > 1 ? 'grid-cols-2' : 'grid-cols-1 sm:max-w-xs'}`}>
-                <div>
-                  <label htmlFor="lsit" className="glass-label">Situação</label>
-                  <select id="lsit" name="sit" defaultValue={f.sit} className="glass-input">
-                    {SITUACOES.map((k) => <option key={k} value={k}>{SITUACAO_LABEL[k]}</option>)}
-                  </select>
-                </div>
-                {units.length > 1 && (
-                  <div>
-                    <label htmlFor="lunid" className="glass-label">Unidade</label>
-                    <select id="lunid" name="unid" defaultValue={f.unid ?? ''} className="glass-input">
-                      <option value="">Todas</option>
-                      {units.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-                    </select>
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-1.5" aria-label="Períodos rápidos">
-                {PRESETS.map((p) => {
-                  const r = presetRange(p);
-                  const on = f.de === r.de && f.ate === r.ate;
-                  return <Link key={p} href={link({ de: r.de, ate: r.ate, pg: null })} aria-current={on ? 'true' : undefined} className={`chip-link ${on ? 'chip-link-active' : ''}`}>{PRESET_LABEL[p]}</Link>;
-                })}
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <button className="glass-button-navy btn-sm">Aplicar filtros</button>
+
+          {units.length > 1 && (
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Unidade</p>
+              <div className="chip-row" aria-label="Unidade">
+                <Link href={link({ unid: null, pg: null })} aria-current={!f.unid ? 'true' : undefined} className={`chip-link shrink-0 !py-1 ${!f.unid ? 'chip-link-active' : ''}`}>Todas</Link>
+                {units.map((u) => (
+                  <Link key={u.id} href={link({ unid: u.id, pg: null })} aria-current={f.unid === u.id ? 'true' : undefined} className={`chip-link shrink-0 !py-1 ${f.unid === u.id ? 'chip-link-active' : ''}`}>{u.name}</Link>
+                ))}
               </div>
             </div>
-          </details>
-          {filtered && <Link href={link({ q: null, de: null, ate: null, sit: null, unid: null, pg: null })} className="glass-button-ghost btn-sm">Limpar filtros</Link>}
+          )}
         </form>
 
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600" data-testid="lancamentos-resumo">
           <span><b className="text-primary">{total}</b> {total === 1 ? 'lançamento' : 'lançamentos'}</span>
           {credited._count > 0 && <span>· {formatPoints(credited._sum.points ?? 0)} pts creditados</span>}
-          {filtered && <span className="glass-chip">filtrado</span>}
+          {filtered && <Link href={link({ q: null, de: null, ate: null, sit: null, unid: null, pg: null })} className="font-semibold text-electric-600 hover:underline">Limpar filtros</Link>}
         </p>
 
         {recent.length === 0 ? (

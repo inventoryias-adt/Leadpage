@@ -1,13 +1,14 @@
 import Link from 'next/link';
 import { Icon } from '@/components/Icons';
 import { Illustration } from '@/components/Illustrations';
-import { MarkRead } from '@/components/MarkRead';
+import { MarkAllRead } from '@/components/MarkAllRead';
+import { NoticeDay } from '@/components/NoticeDay';
 import { NextBookingCard } from '@/components/NextBookingCard';
 import { PlaceAvatar } from '@/components/Visual';
 import { prisma } from '@/lib/db';
 import { imageUrl } from '@/lib/images';
 import { noticeKind } from '@/lib/notice-kind';
-import { groupByDay } from '@/lib/notice-groups';
+import { groupByDay, monthsOf, monthRange, parseMonthKey } from '@/lib/notice-groups';
 import { colorOf } from '@/lib/palette';
 import { hmOf } from '@/lib/booking';
 import { requireCustomer } from '@/lib/session';
@@ -17,7 +18,7 @@ export const dynamic = 'force-dynamic';
 
 const LIMIT = 150;
 
-export default async function AvisosPage({ searchParams }: { searchParams: Promise<{ lugar?: string; presenca?: string; liberado?: string; erro?: string }> }) {
+export default async function AvisosPage({ searchParams }: { searchParams: Promise<{ lugar?: string; mes?: string; presenca?: string; liberado?: string; erro?: string }> }) {
   const customer = await requireCustomer('/avisos');
   const sp = await searchParams;
   const now = new Date();
@@ -40,13 +41,26 @@ export default async function AvisosPage({ searchParams }: { searchParams: Promi
   const unreadOf = (id: string) => unreadPerPlace.find((p) => p.restaurantId === id)?._count._all ?? 0;
 
   const filter = sp.lugar && placeById.has(sp.lugar) ? sp.lugar : null; // só aceita lugar que tem aviso deste cliente
+  const placeWhere = { customerId: customer.id, ...(filter ? { restaurantId: filter } : {}) };
+  const monthRows = await prisma.notification.findMany({ where: placeWhere, select: { createdAt: true }, orderBy: { createdAt: 'desc' }, take: 5000 });
+  const months = monthsOf(monthRows.map((r) => r.createdAt));
+  const mes = parseMonthKey(sp.mes) && months.some((m) => m.key === sp.mes) ? (sp.mes as string) : null; // só aceita mês que tem aviso
+  const range = mes ? monthRange(mes) : null;
   const items = await prisma.notification.findMany({
-    where: { customerId: customer.id, ...(filter ? { restaurantId: filter } : {}) },
+    where: { ...placeWhere, ...(range ? { createdAt: { gte: range.from, lt: range.to } } : {}) },
     orderBy: { createdAt: 'desc' },
     take: LIMIT,
   });
   const groups = groupByDay(items, now);
-  const shown = filter ? (perPlace.find((p) => p.restaurantId === filter)?._count._all ?? 0) : total;
+  const inScope = mes ? (months.find((m) => m.key === mes)?.count ?? 0) : filter ? (perPlace.find((p) => p.restaurantId === filter)?._count._all ?? 0) : total;
+  const shown = inScope;
+  const href = (lugar: string | null, mesKey: string | null) => {
+    const q = new URLSearchParams();
+    if (lugar) q.set('lugar', lugar);
+    if (mesKey) q.set('mes', mesKey);
+    const qs = q.toString();
+    return qs ? `/avisos?${qs}` : '/avisos';
+  };
   const unreadShown = filter ? unreadOf(filter) : unreadTotal;
   const choices = places.map((p) => ({ ...p, count: perPlace.find((x) => x.restaurantId === p.id)?._count._all ?? 0 })).sort((a, b) => unreadOf(b.id) - unreadOf(a.id) || b.count - a.count);
 
@@ -56,8 +70,9 @@ export default async function AvisosPage({ searchParams }: { searchParams: Promi
         <h1 className="text-2xl font-extrabold tracking-tight text-primary md:text-3xl">Avisos</h1>
         <p className="text-sm text-slate-600">
           {unreadTotal > 0 ? <><span className="chip-lima">{unreadTotal} {unreadTotal === 1 ? 'novo' : 'novos'}</span>{' '}</> : null}
-          Pontos recebidos, pedidos, horários e prêmios, do mais recente para o mais antigo.
+          Pontos recebidos, pedidos, horários e prêmios. Toque em uma data para ver.
         </p>
+        {unreadShown > 0 && <div className="mt-1"><MarkAllRead restaurantId={filter ?? undefined} /></div>}
       </header>
 
       {sp.presenca && <p role="status" className="glass-success mx-auto mb-4 max-w-2xl">Presença confirmada. Até já!</p>}
@@ -72,13 +87,26 @@ export default async function AvisosPage({ searchParams }: { searchParams: Promi
 
       {choices.length > 1 && (
         <nav aria-label="Filtrar por estabelecimento" className="chip-row mx-auto mb-4 max-w-2xl">
-          <Link href="/avisos" aria-current={!filter ? 'true' : undefined} className={`chip-link shrink-0 gap-1.5 ${!filter ? 'chip-link-active' : ''}`}>
+          <Link href={href(null, mes)} aria-current={!filter ? 'true' : undefined} className={`chip-link shrink-0 gap-1.5 ${!filter ? 'chip-link-active' : ''}`}>
             Todos <span className="text-xs font-bold opacity-70">{total}</span>
           </Link>
           {choices.map((p) => (
-            <Link key={p.id} href={`/avisos?lugar=${p.id}`} aria-current={filter === p.id ? 'true' : undefined} className={`chip-link shrink-0 gap-2 !py-1 ${filter === p.id ? 'chip-link-active' : ''}`}>
+            <Link key={p.id} href={href(p.id, mes)} aria-current={filter === p.id ? 'true' : undefined} className={`chip-link shrink-0 gap-2 !py-1 ${filter === p.id ? 'chip-link-active' : ''}`}>
               <PlaceAvatar name={p.name} src={imageUrl(p.logoImageId)} size={24} /> {p.name}
               {unreadOf(p.id) > 0 && <span className="rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-4 text-white" aria-label={`${unreadOf(p.id)} novos`}>{unreadOf(p.id)}</span>}
+            </Link>
+          ))}
+        </nav>
+      )}
+
+      {months.length > 1 && (
+        <nav aria-label="Filtrar por mês" className="chip-row mx-auto mb-4 max-w-2xl">
+          <Link href={href(filter, null)} aria-current={!mes ? 'true' : undefined} className={`chip-link shrink-0 gap-1.5 !py-1 ${!mes ? 'chip-link-active' : ''}`}>
+            Todos os meses
+          </Link>
+          {months.map((m) => (
+            <Link key={m.key} href={href(filter, m.key)} aria-current={mes === m.key ? 'true' : undefined} className={`chip-link shrink-0 gap-1.5 !py-1 ${mes === m.key ? 'chip-link-active' : ''}`}>
+              {m.label} <span className="text-xs font-bold opacity-70">{m.count}</span>
             </Link>
           ))}
         </nav>
@@ -93,12 +121,9 @@ export default async function AvisosPage({ searchParams }: { searchParams: Promi
           </div>
         )
       ) : (
-        <div className="mx-auto max-w-2xl space-y-1" data-testid="notice-groups">
+        <div className="mx-auto max-w-2xl space-y-2" data-testid="notice-groups">
           {groups.map((g) => (
-            <section key={g.key} aria-label={g.label}>
-              <h2 className="sticky top-0 z-10 -mx-4 bg-[#F7F8FA]/95 px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-500 backdrop-blur sm:-mx-6 sm:px-6 md:static md:mx-0 md:px-0">
-                {g.label} <span className="font-semibold text-slate-400">· {g.items.length}</span>
-              </h2>
+            <NoticeDay key={g.key} label={g.label} count={g.items.length} unreadIds={g.items.filter((n) => !n.readAt).map((n) => n.id)}>
               <ul className="glass-panel divide-y divide-slate-100 !rounded-[20px] overflow-hidden">
                 {g.items.map((n) => {
                   const kind = noticeKind(n);
@@ -123,12 +148,11 @@ export default async function AvisosPage({ searchParams }: { searchParams: Promi
                   return <li key={n.id}>{n.href ? <Link href={n.href} className="card-link block">{row}</Link> : row}</li>;
                 })}
               </ul>
-            </section>
+            </NoticeDay>
           ))}
           {shown > items.length && <p className="pt-3 text-center text-xs text-slate-500">Mostrando os {items.length} avisos mais recentes de {shown}.</p>}
         </div>
       )}
-      {unreadShown > 0 && <MarkRead restaurantId={filter ?? undefined} />}
     </main>
   );
 }
