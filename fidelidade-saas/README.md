@@ -609,3 +609,10 @@ O servidor já impedia dois clientes no mesmo horário (cadeado por estabelecime
 - **Carteira única**: quem tem um lugar só vê o cartão da carteira em largura total (antes ficava pela metade, com um vazio ao lado).
 - **Agendar**: sem dia escolhido na URL e sem horário livre hoje (já passou do expediente, por exemplo), a tela abre direto no primeiro dia com vaga; quem escolhe o dia à mão não é trocado de dia.
 - Teste de tela: `e2e66` (atalhos em fileira e depois de "Explorar lugares", número só onde há algo, carteira única, Perfil agrupado e compacto, redirecionamento do Agendar).
+
+## Cartão do cliente no Perfil (estilo cartão de banco)
+
+- **Perfil**: o antigo bloco "ID da conta" virou um **cartão** (proporção de cartão de crédito, azul-marinho com brilho e chip lima): marca Fidelize, **ID da conta** em destaque (`FZ-XXXXXX`, o que o caixa digita no lugar do CPF), nome, "Membro desde" e **saldo** em pontos (soma das carteiras). Sem foto, como num cartão de verdade. Ao tocar, o cartão **vira** e mostra o verso com a tarja e o **como usar** em três passos. Componentes em `src/components/MemberCard.tsx`; todas as medidas usam `cqw` (1% da largura do cartão), então o mesmo desenho serve na tela e na impressão.
+- **Painel de saldo** ao lado (embaixo no celular): "Saldo disponível" grande, "Onde usar" (carteiras com saldo, cada uma leva à carteira do lugar) e atalhos **Copiar ID**, **Imprimir cartão** e **Onde ganhar mais**.
+- **Imprimir** (`/perfil/cartao`): prévia de frente e verso e botão que abre a impressão do navegador; no modo de impressão só o cartão aparece, **frente e verso em 85,6 mm de largura** (tamanho de cartão de crédito) com as cores preservadas.
+- Teste de tela: `e2e67` (proporção e conteúdo da frente, saldo igual à soma das carteiras, virar e desvirar, painel de saldo, impressão em 85,6 mm). `e2e42` segue lendo o ID por `data-testid="account-id-code"`.

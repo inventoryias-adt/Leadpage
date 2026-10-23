@@ -4,9 +4,9 @@ import Link from 'next/link';
  * Símbolo do Fidelize: um "F" geométrico seguido de um ponto final liso, o "ponto" do clube de pontos.
  * Fundo lima, F e ponto no mesmo azul-marinho. Mantenha igual a public/logo.svg, src/app/icon.svg e src/app/opengraph-image.tsx.
  */
-export function LogoMark({ size = 36 }: { size?: number }) {
+export function LogoMark({ size = 36, className = '' }: { size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden className="shrink-0">
+    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden className={`shrink-0 ${className}`}>
       <rect width="64" height="64" rx="16" fill="#C6F432" />
       <g transform="translate(-1 0)">
         <rect x="18" y="12" width="10" height="40" rx="5" fill="#0B1B3A" />
