@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { dailySeries, deltaPct, heatmap, peakSlot, segmentsOf, suggestions, type SuggestionCtx } from './insights';
+import { dailySeries, dayReasons, deltaPct, heatmap, peakSlot, segmentsOf, slotTips, suggestions, type DayDetail, type SlotDetail, type SuggestionCtx } from './insights';
 
 const now = new Date('2026-10-07T15:00:00Z'); // quarta, 12h em Brasília
 const ago = (d: number) => new Date(now.getTime() - d * 24 * 60 * 60 * 1000);
@@ -52,4 +52,32 @@ test('sugestões: máximo de 4, as do que os números mostram primeiro', () => {
   const tudo: SuggestionCtx = { ...ctx, promosCount: 1, challengesCount: 1, rewardsWithoutPhoto: 0, unitsWithoutLocation: 0, referralPoints: 30, hasLogo: true, hasCover: true, sumidos: 0, quase: 0 };
   assert.deepEqual(suggestions(tudo), []);
   assert.equal(suggestions({ ...tudo, purchasesInPeriod: 0 })[0].id, 'parado');
+});
+
+const day = (over: Partial<DayDetail> = {}): DayDetail => ({
+  ymd: '2026-10-21', title: 'Quarta, 21/10', count: 3, cents: 17000, points: 170, ticketCents: 5667,
+  prevWeek: { count: 1, cents: 4000 }, purchases: [], redemptions: [], promos: [], challenges: [], newCustomers: 0, interactions: 0, birthdayGifts: 0, ...over,
+});
+
+test('dayReasons: compara com o mesmo dia da semana anterior e cita campanhas, resgates e clientes novos', () => {
+  const up = dayReasons(day({ promos: [{ title: 'Terça em dobro', uses: 2, points: 40 }], redemptions: [{ who: 'Ana', what: 'Sobremesa', status: 'a entregar' }], newCustomers: 2 }));
+  assert.match(up[0], /200% mais compras do que no mesmo dia da semana anterior \(1\)/);
+  assert.ok(up.some((l) => /“Terça em dobro” foi usada em 2 compras e rendeu 40 pontos extras/.test(l)));
+  assert.ok(up.some((l) => /1 prêmio resgatado: Sobremesa/.test(l)));
+  assert.ok(up.some((l) => /2 clientes novos entraram/.test(l)));
+  const down = dayReasons(day({ count: 1, prevWeek: { count: 4, cents: 1 } }));
+  assert.match(down[0], /75% menos compras/);
+  assert.match(dayReasons(day({ count: 0, prevWeek: { count: 2, cents: 1 } }))[0], /Sem compras lançadas\. No mesmo dia da semana anterior foram 2 compras/);
+  assert.match(dayReasons(day({ count: 5, prevWeek: { count: 5, cents: 1 } }))[0], /parecido/);
+  assert.ok(dayReasons(day({ count: 5, prevWeek: { count: 5, cents: 1 } })).some((l) => /Nenhuma campanha, resgate ou desafio/.test(l)));
+});
+
+test('slotTips: pico, horário fraco e horário vazio', () => {
+  const slot = (over: Partial<SlotDetail> = {}): SlotDetail => ({ dow: 3, hour: 12, count: 9, cents: 1, ticketCents: 1, weeks: 8, totalWeeks: 13, recent: [], topClients: [], promos: [], ...over });
+  assert.match(slotTips(slot({ count: 0, weeks: 0 }), 10).join(' '), /Ninguém comprou neste horário/);
+  const peak = slotTips(slot(), 10).join(' ');
+  assert.match(peak, /8 de 13 semanas/);
+  assert.match(peak, /horários de pico/);
+  assert.match(slotTips(slot({ count: 2 }), 10).join(' '), /Movimento baixo/);
+  assert.match(slotTips(slot({ promos: [{ title: 'Pontos em dobro', uses: 3 }] }), 10).join(' '), /“Pontos em dobro” foi usada 3 vezes/);
 });

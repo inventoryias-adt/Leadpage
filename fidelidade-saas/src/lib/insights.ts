@@ -129,3 +129,75 @@ export function suggestions(c: SuggestionCtx): Suggestion[] {
   if (c.customers > 0 && c.purchasesInPeriod === 0) out.push({ id: 'parado', title: 'Sem compras lançadas neste período', text: 'Lembre o caixa de gerar o QR Code depois de cada pagamento: sem lançamento não há pontos.', href: '/dashboard/caixa', cta: 'Abrir o Caixa' });
   return out.slice(0, 4);
 }
+
+/** Detalhe de um dia do gráfico de vendas (tudo em texto/número simples: vai do servidor para o navegador). */
+export type DayDetail = {
+  ymd: string;
+  title: string; // "Quarta, 21/10"
+  count: number;
+  cents: number;
+  points: number;
+  ticketCents: number;
+  prevWeek: { count: number; cents: number };
+  purchases: { time: string; who: string; cents: number; points: number; what: string }[];
+  redemptions: { who: string; what: string; status: string }[];
+  promos: { title: string; uses: number; points: number }[];
+  challenges: { title: string; count: number }[];
+  newCustomers: number;
+  interactions: number;
+  birthdayGifts: number;
+};
+
+/** Frases que ligam o movimento do dia ao que aconteceu nele (comparação com a semana anterior, campanhas, resgates…). */
+export function dayReasons(d: DayDetail): string[] {
+  const out: string[] = [];
+  const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+  const delta = deltaPct(d.count, d.prevWeek.count);
+  if (d.count === 0) {
+    out.push(d.prevWeek.count > 0 ? `Sem compras lançadas. No mesmo dia da semana anterior foram ${plural(d.prevWeek.count, 'compra', 'compras')}.` : 'Sem compras lançadas neste dia.');
+  } else if (d.prevWeek.count === 0) {
+    out.push('No mesmo dia da semana anterior não houve compras: este foi um dia novo para o seu movimento.');
+  } else if (delta != null && Math.abs(delta) >= 15) {
+    out.push(`${Math.abs(delta)}% ${delta > 0 ? 'mais' : 'menos'} compras do que no mesmo dia da semana anterior (${d.prevWeek.count}).`);
+  } else {
+    out.push('Movimento parecido com o do mesmo dia da semana anterior.');
+  }
+  for (const p of d.promos.slice(0, 2)) out.push(`A campanha “${p.title}” foi usada em ${plural(p.uses, 'compra', 'compras')} e rendeu ${p.points} pontos extras.`);
+  if (d.redemptions.length > 0) out.push(`${plural(d.redemptions.length, 'prêmio resgatado', 'prêmios resgatados')}: ${[...new Set(d.redemptions.map((r) => r.what))].slice(0, 2).join(', ')}.`);
+  for (const c of d.challenges.slice(0, 2)) out.push(`${plural(c.count, 'cliente concluiu', 'clientes concluíram')} o desafio “${c.title}”.`);
+  if (d.newCustomers > 0) out.push(`${plural(d.newCustomers, 'cliente novo entrou', 'clientes novos entraram')} na carteira.`);
+  if (d.interactions > 0) out.push(`${plural(d.interactions, 'ação aprovada', 'ações aprovadas')} (check-in, avaliação, indicação…) deu pontos.`);
+  if (d.birthdayGifts > 0) out.push(`${plural(d.birthdayGifts, 'presente de aniversário', 'presentes de aniversário')} em pontos creditado${d.birthdayGifts === 1 ? '' : 's'}.`);
+  if (d.count > 0 && d.promos.length === 0 && d.redemptions.length === 0 && d.challenges.length === 0 && d.newCustomers === 0) out.push('Nenhuma campanha, resgate ou desafio aparece neste dia: o movimento veio dos clientes que já compram.');
+  return out;
+}
+
+/** Detalhe de um horário do mapa de calor (um dia da semana + uma hora, últimos 90 dias). */
+export type SlotDetail = {
+  dow: number;
+  hour: number;
+  count: number;
+  cents: number;
+  ticketCents: number;
+  weeks: number; // semanas com pelo menos uma compra nesse horário
+  totalWeeks: number;
+  recent: { ymd: string; label: string; count: number }[]; // últimas ocorrências, da mais nova para a mais antiga
+  topClients: { who: string; count: number }[];
+  promos: { title: string; uses: number }[];
+};
+
+/** O que o dono pode fazer com este horário: aproveitar o pico ou preencher um horário fraco. */
+export function slotTips(s: SlotDetail, bestCount: number): string[] {
+  const out: string[] = [];
+  if (s.count === 0) {
+    out.push('Ninguém comprou neste horário nos últimos 90 dias.');
+    out.push('Uma campanha só para este dia e hora (por exemplo, pontos em dobro) pode trazer movimento.');
+    return out;
+  }
+  out.push(`Houve compra em ${s.weeks} de ${s.totalWeeks} semanas neste horário.`);
+  if (bestCount > 0 && s.count >= bestCount * 0.8) out.push('É um dos seus horários de pico: confira se a equipe e o estoque dão conta.');
+  else if (bestCount > 0 && s.count <= bestCount * 0.3) out.push('Movimento baixo perto do seu pico: uma campanha neste horário pode puxar clientes.');
+  if (s.promos.length === 0) out.push('Nenhuma campanha foi usada aqui: dá para testar uma promoção neste horário e comparar.');
+  else out.push(`A campanha “${s.promos[0].title}” foi usada ${s.promos[0].uses} ${s.promos[0].uses === 1 ? 'vez' : 'vezes'} neste horário.`);
+  return out;
+}

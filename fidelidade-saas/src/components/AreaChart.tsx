@@ -20,7 +20,7 @@ const money = (c: number) => (c >= 100000 ? `R$ ${Math.round(c / 100000)} mil` :
  * Gráfico de área padrão do Fidelize (perfil do cliente, início do restaurante e visão geral do admin):
  * linha azul com degradê, bolinhas nos pontos com movimento e dica imediata ao passar o mouse ou tocar.
  */
-export function AreaChart({ points, label, yKind = 'number', empty }: { points: AreaPoint[]; label: string; yKind?: 'number' | 'money'; empty?: string }) {
+export function AreaChart({ points, label, yKind = 'number', empty, onSelect }: { points: AreaPoint[]; label: string; yKind?: 'number' | 'money'; empty?: string; onSelect?: (index: number) => void }) {
   const gid = useId().replace(/:/g, '');
   const [hover, setHover] = useState<number | null>(null);
   // Largura real do cartão: assim o texto do gráfico mantém o tamanho no celular.
@@ -89,11 +89,15 @@ export function AreaChart({ points, label, yKind = 'number', empty }: { points: 
                 fill="transparent"
                 tabIndex={0}
                 aria-label={`${p.title}: ${p.strong}`}
+                role={onSelect ? 'button' : undefined}
+                data-testid={onSelect ? `area-point-${i}` : undefined}
                 className="cursor-pointer outline-none"
                 onMouseEnter={() => setHover(i)}
                 onFocus={() => setHover(i)}
                 onBlur={() => setHover(null)}
                 onTouchStart={() => setHover(i)}
+                onClick={onSelect ? () => onSelect(i) : undefined}
+                onKeyDown={onSelect ? (e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onSelect(i)) : undefined}
               />
             </g>
           );
