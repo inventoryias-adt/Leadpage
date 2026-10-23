@@ -27,6 +27,9 @@ export function parseInstagram(raw: unknown): string | '' | null {
   return /^[A-Za-z0-9._]{1,30}$/.test(t) && !/\.\.|^\.|\.$/.test(t) ? t.toLowerCase() : null;
 }
 
+/** Endereço da foto (rota privada; não depende de banco, serve também às telas do navegador). */
+export const postPhotoPath = (postId: string) => `/api/indicacoes/foto/${postId}`;
+
 export const instagramUrl = (handle: string) => `https://www.instagram.com/${handle}/`;
 
 /** Legenda pronta para a pessoa publicar no próprio Instagram marcando o lugar. */

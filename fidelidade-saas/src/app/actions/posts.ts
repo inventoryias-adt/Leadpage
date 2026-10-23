@@ -6,9 +6,10 @@ import { BusinessError } from '@/lib/claims';
 import { prisma } from '@/lib/db';
 import { fail, type FormState } from '@/lib/form';
 import { parseInstagram } from '@/lib/posts';
-import { createPost, deletePost, reportPost, toggleLike } from '@/lib/posts-db';
+import { createPost, deletePost, moderatePost, reportPost, reportPostAsOwner, toggleLike } from '@/lib/posts-db';
 import { TOO_MANY, allow } from '@/lib/rate-limit';
-import { getCustomer } from '@/lib/session';
+import { logAdmin } from '@/lib/admin';
+import { getCustomer, getRestaurant, requireAdmin } from '@/lib/session';
 
 /** Publica a indicação (a foto chega reduzida pelo navegador, em `photoData`). Dá certo → feed com o aviso. */
 export async function publishPost(_: FormState, formData: FormData): Promise<FormState> {
@@ -72,4 +73,38 @@ export async function saveInstagram(_: FormState, formData: FormData): Promise<F
   revalidatePath('/perfil');
   revalidatePath('/indicacoes');
   return { ok: handle ? 'Instagram salvo.' : 'Instagram removido.' };
+}
+
+const ID = /^[0-9a-f-]{36}$/;
+
+/** Dono do lugar: denuncia uma indicação que cita o lugar dele (a administração decide). */
+export async function ownerReportPost(postId: string, reason: string): Promise<{ ok: true } | { error: string }> {
+  const owner = await getRestaurant();
+  if (!owner) return { error: 'Entre na sua conta.' };
+  if (!(await allow(`oreport:${owner.id}`, 30, 3600))) return { error: TOO_MANY };
+  try {
+    await reportPostAsOwner(owner.id, postId, reason);
+    return { ok: true };
+  } catch (e) {
+    if (e instanceof BusinessError) return { error: e.message };
+    throw e;
+  }
+}
+
+/** Administração: esconde ou mantém uma indicação denunciada. */
+export async function adminModeratePost(formData: FormData) {
+  const admin = await requireAdmin();
+  const id = String(formData.get('id') ?? '');
+  const op = formData.get('op') === 'hide' ? 'hide' : 'keep';
+  if (!ID.test(id)) redirect('/admin/indicacoes');
+  const post = await prisma.post.findUnique({ where: { id }, select: { restaurant: { select: { id: true, name: true } }, rating: true } });
+  try {
+    await moderatePost(id, op);
+  } catch (e) {
+    if (!(e instanceof BusinessError)) throw e;
+  }
+  if (post) await logAdmin(admin, op === 'hide' ? 'ocultar indicação' : 'manter indicação', `Indicação de ${post.rating} estrela(s) ${op === 'hide' ? 'ocultada' : 'mantida'} após denúncia.`, post.restaurant);
+  revalidatePath('/admin', 'layout');
+  revalidatePath('/indicacoes');
+  redirect('/admin/indicacoes');
 }

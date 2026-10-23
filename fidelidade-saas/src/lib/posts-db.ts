@@ -2,10 +2,10 @@ import 'server-only';
 import { BusinessError } from './claims';
 import { prisma } from './db';
 import { parseImageDataUrl } from './images';
-import { POSTS_PER_DAY, REPORT_REASON_MAX, parsePost } from './posts';
+import { POSTS_PER_DAY, REPORT_REASON_MAX, parsePost, postPhotoPath } from './posts';
 import { cleanText } from './reviews';
 
-export const postPhotoUrl = (postId: string) => `/api/indicacoes/foto/${postId}`;
+export const postPhotoUrl = postPhotoPath;
 const DAY = 24 * 3600e3;
 
 /** Lugares sobre os quais o cliente pode indicar: os ativos onde ele tem carteira. */
@@ -111,3 +111,27 @@ export async function reportPost(customerId: string, postId: string, reasonRaw: 
 
 /** O autor apaga a própria indicação (a foto vai junto). */
 export const deletePost = (customerId: string, postId: string) => prisma.post.deleteMany({ where: { id: postId, customerId } });
+
+/** O dono do lugar denuncia uma indicação que cita o lugar dele. */
+export async function reportPostAsOwner(restaurantId: string, postId: string, reasonRaw: unknown) {
+  const reason = cleanText(reasonRaw, REPORT_REASON_MAX);
+  if (!reason) throw new BusinessError('Conte o motivo da denúncia.');
+  const post = await prisma.post.findFirst({ where: { id: postId, restaurantId, hiddenAt: null }, select: { id: true } });
+  if (!post) throw new BusinessError('Indicação não encontrada.');
+  const dup = await prisma.postReport.findFirst({ where: { postId, reporterRestaurantId: restaurantId }, select: { id: true } });
+  if (dup) return;
+  await prisma.$transaction([
+    prisma.postReport.create({ data: { postId, reporterRestaurantId: restaurantId, reason } }),
+    prisma.post.update({ where: { id: postId }, data: { reportedAt: new Date() } }),
+  ]);
+}
+
+/** Administração: esconde a indicação denunciada ou a mantém (encerra as denúncias). */
+export async function moderatePost(postId: string, action: 'hide' | 'keep') {
+  const done = await prisma.post.updateMany({
+    where: { id: postId, reportedAt: { not: null } },
+    data: action === 'hide' ? { hiddenAt: new Date() } : { reportedAt: null },
+  });
+  if (done.count !== 1) throw new BusinessError('Indicação não encontrada ou sem denúncia.');
+  if (action === 'keep') await prisma.postReport.deleteMany({ where: { postId } });
+}
