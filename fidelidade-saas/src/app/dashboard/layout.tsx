@@ -13,6 +13,7 @@ import { logout } from '@/app/actions/auth';
 import { AssistantFab } from '@/components/AssistantFab';
 import { ASSISTANT_ON } from '@/lib/features';
 import { DashboardNav } from '@/components/DashboardNav';
+import { OwnerBackBar } from '@/components/OwnerBackBar';
 import { requireRestaurant } from '@/lib/session';
 import { UnitSwitcher } from '@/components/UnitSwitcher';
 import { currentUnit } from '@/lib/units';
@@ -89,6 +90,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </header>
 
       {ready && <div className="mx-auto w-full max-w-5xl px-4 pt-4 empty:hidden md:hidden"><InstallApp variant="gestor" /></div>}
+
+      {ready && <OwnerBackBar />}
 
       {children}
 

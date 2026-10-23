@@ -41,7 +41,7 @@ export function DashboardNav({ variant, agenda = false, pending: pendingBookings
   const count = (href: string) => (href === '/dashboard/agenda' ? pendingBookings : href === '/dashboard/pedidos' ? newOrders : href === '/dashboard/caixa' ? caixa : href === '/dashboard/mensagens' ? chats : href === '/dashboard/clube' ? club : 0);
   const badge = (href: string) => count(href) > 0 && <span className="ml-1 rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-4 text-white" aria-label={`${count(href)} aguardando`}>{count(href)}</span>;
   const bottomItems = visible.filter((i) => !i.desktopOnly);
-  const active = (href: string) => (href === '/dashboard' ? current === href : current.startsWith(href));
+  const active = (href: string) => (href === '/dashboard' ? current === href : current.startsWith(href) || (href === '/dashboard/avaliacoes' && current.startsWith('/dashboard/indicacoes')));
 
   if (variant === 'top') {
     const main = visible.filter((i) => !i.more);

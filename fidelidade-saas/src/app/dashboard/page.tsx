@@ -52,8 +52,15 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
 
   const unreadChats = await unreadConversations('RESTAURANT', rid);
   const clubDue = await pendingSubscribers(rid);
-  const postCount = await prisma.post.count({ where: { restaurantId: rid, hiddenAt: null } });
-  const reviewSummary = summarize((await prisma.review.findMany({ where: { restaurantId: rid, hiddenAt: null }, select: { placeRating: true } })).map((r) => r.placeRating));
+  const week = new Date(now.getTime() - 7 * DAY);
+  const [postStats, newPosts, reviewRows] = await Promise.all([
+    prisma.post.aggregate({ where: { restaurantId: rid, hiddenAt: null }, _count: true, _avg: { rating: true } }),
+    prisma.post.count({ where: { restaurantId: rid, hiddenAt: null, createdAt: { gte: week } } }),
+    prisma.review.findMany({ where: { restaurantId: rid, hiddenAt: null }, select: { placeRating: true, createdAt: true } }),
+  ]);
+  const postCount = postStats._count;
+  const reviewSummary = summarize(reviewRows.map((r) => r.placeRating));
+  const newReviews = reviewRows.filter((r) => r.createdAt >= week).length;
   const inPeriod = (d: Date) => d >= since;
   const cur = sales.filter((s) => s.redeemedAt && inPeriod(s.redeemedAt));
   const prev = sales.filter((s) => s.redeemedAt && !inPeriod(s.redeemedAt));
@@ -139,6 +146,33 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
 
       <Link href="/dashboard/caixa" className="glass-button py-4 text-lg sm:hidden"><Icon name="receipt" size={22} /> Lançar pontos no caixa</Link>
 
+      <section aria-label="O que os clientes disseram" className="grid grid-cols-3 gap-2.5 sm:gap-3" data-testid="inbox-hub">
+        <Link href="/dashboard/mensagens" className="glass-panel-sm card-link flex flex-col gap-1 !rounded-[22px] p-3 sm:p-4" data-testid="chats-shortcut">
+          <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[#E8EEFB] text-electric-600">
+            <Icon name="chat" size={18} />
+            {unreadChats > 0 && <span className="absolute -right-1.5 -top-1.5 rounded-full bg-rose-500 px-1.5 text-[11px] font-bold leading-[18px] text-white" data-testid="chats-badge">{unreadChats}</span>}
+          </span>
+          <b className="text-[13px] text-primary sm:text-sm">Mensagens</b>
+          <span className="text-xs leading-snug text-slate-600">{unreadChats > 0 ? <b className="text-rose-600">{unreadChats} {unreadChats === 1 ? 'nova' : 'novas'} · responder</b> : 'Fale com seus clientes'}</span>
+        </Link>
+        <Link href="/dashboard/avaliacoes" className="glass-panel-sm card-link flex flex-col gap-1 !rounded-[22px] p-3 sm:p-4" data-testid="reviews-shortcut">
+          <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[#E8EEFB] text-electric-600">
+            <Icon name="star" size={18} />
+            {newReviews > 0 && <span className="absolute -right-1.5 -top-1.5 rounded-full bg-rose-500 px-1.5 text-[11px] font-bold leading-[18px] text-white">{newReviews}</span>}
+          </span>
+          <b className="text-[13px] text-primary sm:text-sm">Avaliações</b>
+          <span className="text-xs leading-snug text-slate-600">{reviewSummary.count === 0 ? 'Ainda sem avaliações' : <><b className="text-slate-900">★ {formatAvg(reviewSummary.avg ?? 0)}</b> · {reviewSummary.count}{newReviews > 0 && <> · <b className="text-rose-600">{newReviews} na semana</b></>}</>}</span>
+        </Link>
+        <Link href="/dashboard/indicacoes" className="glass-panel-sm card-link flex flex-col gap-1 !rounded-[22px] p-3 sm:p-4" data-testid="posts-shortcut">
+          <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[#E8EEFB] text-electric-600">
+            <Icon name="camera" size={18} />
+            {newPosts > 0 && <span className="absolute -right-1.5 -top-1.5 rounded-full bg-rose-500 px-1.5 text-[11px] font-bold leading-[18px] text-white">{newPosts}</span>}
+          </span>
+          <b className="text-[13px] text-primary sm:text-sm">Indicações</b>
+          <span className="text-xs leading-snug text-slate-600">{postCount === 0 ? 'Ainda sem fotos' : <><b className="text-slate-900">{postCount}</b> {postCount === 1 ? 'foto' : 'fotos'}{newPosts > 0 && <> · <b className="text-rose-600">{newPosts} na semana</b></>}</>}</span>
+        </Link>
+      </section>
+
       {empty && (
         <EmptyState
           variant="coin"
@@ -162,13 +196,6 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
       </div>
 
 
-      <Link href="/dashboard/avaliacoes" className="glass-panel-sm card-link flex items-center justify-between gap-3 !rounded-[22px] p-4" data-testid="reviews-shortcut">
-        <span className="flex items-center gap-2 font-semibold text-primary"><Icon name="star" size={18} /> Avaliações dos clientes</span>
-        <span className="text-sm text-slate-600">
-          {reviewSummary.count === 0 ? 'Ainda sem avaliações' : <><b className="text-slate-900">★ {formatAvg(reviewSummary.avg ?? 0)}</b> · {reviewSummary.count} {reviewSummary.count === 1 ? 'avaliação' : 'avaliações'} · ver e responder →</>}
-        </span>
-      </Link>
-
       <Link href="/dashboard/clube" className="glass-panel-sm card-link flex items-center justify-between gap-3 !rounded-[22px] p-4" data-testid="club-shortcut">
         <span className="flex items-center gap-2 font-semibold text-primary"><Icon name="gift" size={18} /> Clube de assinatura</span>
         <span className="text-sm text-slate-600">{clubDue > 0 ? <b className="text-amber-700">{clubDue} {clubDue === 1 ? 'pagamento a receber' : 'pagamentos a receber'} →</b> : 'Planos mensais para clientes fiéis →'}</span>
@@ -177,16 +204,6 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
       <Link href="/dashboard/financeiro" className="glass-panel-sm card-link flex items-center justify-between gap-3 !rounded-[22px] p-4" data-testid="finance-shortcut">
         <span className="flex items-center gap-2 font-semibold text-primary"><Icon name="chart" size={18} /> Financeiro</span>
         <span className="text-sm text-slate-600">Entradas, despesas e comissões →</span>
-      </Link>
-
-      <Link href="/dashboard/mensagens" className="glass-panel-sm card-link flex items-center justify-between gap-3 !rounded-[22px] p-4" data-testid="chats-shortcut">
-        <span className="flex items-center gap-2 font-semibold text-primary"><Icon name="chat" size={18} /> Mensagens dos clientes</span>
-        <span className="text-sm text-slate-600">{unreadChats > 0 ? <b className="text-rose-600">{unreadChats} {unreadChats === 1 ? 'conversa nova' : 'conversas novas'} · responder →</b> : 'Fale com seus clientes →'}</span>
-      </Link>
-
-      <Link href="/dashboard/indicacoes" className="glass-panel-sm card-link flex items-center justify-between gap-3 !rounded-[22px] p-4" data-testid="posts-shortcut">
-        <span className="flex items-center gap-2 font-semibold text-primary"><Icon name="camera" size={18} /> Indicações dos clientes</span>
-        <span className="text-sm text-slate-600">{postCount === 0 ? 'Ainda sem fotos' : <><b className="text-slate-900">{postCount}</b> {postCount === 1 ? 'indicação' : 'indicações'} · ver →</>}</span>
       </Link>
 
       <div className="grid gap-6 lg:grid-cols-5">

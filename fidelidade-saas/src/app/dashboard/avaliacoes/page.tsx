@@ -1,6 +1,7 @@
 import { replyReviewAction, reportReviewAction } from '@/app/actions/reviews';
 import { EmptyState } from '@/components/EmptyState';
 import { RatingBadge, Stars } from '@/components/Stars';
+import { ReviewTabs } from '@/components/ReviewTabs';
 import { SubmitButton } from '@/components/ui';
 import { prisma } from '@/lib/db';
 import { COMMENT_MAX, MIN_REVIEWS_FOR_RANK, displayName, formatAvg, summarize } from '@/lib/reviews';
@@ -23,6 +24,7 @@ export default async function AvaliacoesPage({ searchParams }: { searchParams: P
       customer: { select: { name: true } }, resource: { select: { id: true, name: true } },
     },
   });
+  const postCount = await prisma.post.count({ where: { restaurantId: restaurant.id, hiddenAt: null } });
   const place = summarize(reviews.map((r) => r.placeRating));
   const staff = new Map<string, { name: string; ratings: number[] }>();
   for (const r of reviews) {
@@ -38,6 +40,8 @@ export default async function AvaliacoesPage({ searchParams }: { searchParams: P
         <h1 className="text-2xl font-extrabold tracking-tight text-primary">Avaliações</h1>
         <p className="text-sm text-slate-600">O que os clientes acharam dos atendimentos concluídos. Você pode responder e, se algo for ofensivo ou falso, denunciar para a administração analisar.</p>
       </header>
+
+      <ReviewTabs active="servicos" services={reviews.length} posts={postCount} />
 
       {sp.ok && <p role="status" className="rounded-xl bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700" data-testid="reviews-ok">{sp.ok}</p>}
       {sp.erro && <p role="alert" className="rounded-xl bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700" data-testid="reviews-erro">{sp.erro}</p>}

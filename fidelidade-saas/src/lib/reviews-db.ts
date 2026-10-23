@@ -114,3 +114,15 @@ export async function moderateReview(reviewId: string, action: 'hide' | 'keep') 
   });
   if (done.count !== 1) throw new BusinessError('Avaliação não encontrada ou sem denúncia.');
 }
+
+export type ReviewPrompt = { bookingId: string; serviceName: string; placeName: string };
+
+/** O atendimento concluído mais recente (até 3 dias) que o cliente ainda não avaliou: vira um convite na tela do app. */
+export async function reviewPrompt(customerId: string): Promise<ReviewPrompt | null> {
+  const b = await prisma.booking.findFirst({
+    where: { customerId, status: 'COMPLETED', review: null, completedAt: { gte: new Date(Date.now() - 3 * 24 * 3600e3) } },
+    orderBy: { completedAt: 'desc' },
+    select: { id: true, serviceName: true, restaurant: { select: { name: true } } },
+  });
+  return b ? { bookingId: b.id, serviceName: b.serviceName, placeName: b.restaurant.name } : null;
+}

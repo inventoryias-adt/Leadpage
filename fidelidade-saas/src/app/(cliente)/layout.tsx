@@ -2,13 +2,15 @@ import { AssistantFab } from '@/components/AssistantFab';
 import { ASSISTANT_ON } from '@/lib/features';
 import { CustomerNav } from '@/components/CustomerNav';
 import { InstallApp } from '@/components/InstallApp';
+import { ReviewPopup } from '@/components/ReviewPopup';
 import { unreadCount } from '@/lib/notifications';
+import { reviewPrompt } from '@/lib/reviews-db';
 import { getCustomer } from '@/lib/session';
 
 /** Moldura do app do cliente. Celular: coluna única + barra de abas embaixo. Computador: barra no topo e conteúdo em largura de tela. */
 export default async function ClienteLayout({ children }: { children: React.ReactNode }) {
   const customer = await getCustomer();
-  const unread = customer ? await unreadCount(customer.id) : 0;
+  const [unread, prompt] = customer ? await Promise.all([unreadCount(customer.id), reviewPrompt(customer.id)]) : [0, null];
   return (
     <>
       <CustomerNav unread={unread} />
@@ -16,6 +18,7 @@ export default async function ClienteLayout({ children }: { children: React.Reac
         <div className="px-4 pt-4 sm:px-6 empty:hidden"><InstallApp /></div>
         {children}
       </div>
+      <ReviewPopup prompt={prompt} />
       {ASSISTANT_ON && customer && <AssistantFab role="cliente" />}
     </>
   );
