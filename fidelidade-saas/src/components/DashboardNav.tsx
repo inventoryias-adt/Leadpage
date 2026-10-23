@@ -12,6 +12,7 @@ const items: { href: string; label: string; icon: IconName; desktopOnly?: boolea
   { href: '/dashboard/pedidos', label: 'Pedidos', icon: 'bag' },
   { href: '/dashboard/clientes', label: 'Clientes', icon: 'users' },
   { href: '/dashboard/resgates', label: 'Resgates', icon: 'gift' },
+  { href: '/dashboard/financeiro', label: 'Financeiro', icon: 'chart', desktopOnly: true }, // no celular o atalho fica no Início
   { href: '/dashboard/mensagens', label: 'Mensagens', icon: 'chat', desktopOnly: true }, // no celular o atalho fica no Início
   { href: '/dashboard/avaliacoes', label: 'Avaliações', icon: 'star', desktopOnly: true }, // no celular o atalho fica no Início (a barra de baixo já está cheia)
   { href: '/dashboard/configuracoes', label: 'Regras', icon: 'cog' },

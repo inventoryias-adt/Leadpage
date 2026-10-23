@@ -154,6 +154,8 @@ model Restaurant {
   orders            Order[]
   birthdayGifts     BirthdayGift[]
   interactionClaims InteractionClaim[]
+  financeEntries    FinanceEntry[]
+  commissionPayouts CommissionPayout[]
 }
 
 /// Pontuação fixa por interação (foto no Instagram, avaliação 5★ no Google...).
@@ -655,10 +657,12 @@ model Resource {
   /// Dias e horários em que trabalha, no mesmo formato do horário da unidade. Vazio = segue o horário da unidade.
   schedule     Json?
   color        String? // chave da paleta (src/lib/palette.ts); vazio = cor automática pela ordem
+  commissionBp Int      @default(0) // comissão sobre os atendimentos concluídos, em centésimos de % (4000 = 40%)
   createdAt    DateTime @default(now())
 
-  restaurant Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  unit       Unit?             @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  restaurant Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  unit       Unit?              @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  payouts    CommissionPayout[]
   services   Service[]
   bookings   Booking[]
   slotHolds  SlotHold[]
@@ -1048,4 +1052,44 @@ model ChatMessage {
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId, createdAt])
+}
+
+/// Entrada ou despesa lançada pelo dono (gestão financeira). Fixas (`MONTHLY`) valem todo mês a partir de `date`, até `endsOn`.
+/// As entradas de agenda, pedidos e caixa vêm dos próprios atendimentos e lançamentos; aqui ficam só as manuais e as do clube.
+model FinanceEntry {
+  id           String    @id @default(uuid())
+  restaurantId String
+  kind         String // IN (entrada) ou OUT (despesa)
+  description  String
+  category     String
+  amountCents  Int
+  date         DateTime  @db.Date
+  recurrence   String    @default("NONE") // NONE ou MONTHLY
+  endsOn       DateTime? @db.Date
+  source       String    @default("MANUAL") // MANUAL ou CLUBE (pagamento de assinatura registrado pelo dono)
+  refId        String?   @unique // origem automática (ex.: pagamento do clube), evita lançar duas vezes
+  createdAt    DateTime  @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, date])
+}
+
+/// Comissão de um profissional já paga num mês ("AAAA-MM"). Conta como saída no financeiro e trava um segundo pagamento do mesmo mês.
+model CommissionPayout {
+  id           String   @id @default(uuid())
+  restaurantId String
+  resourceId   String?
+  resourceName String
+  month        String
+  baseCents    Int
+  commissionBp Int
+  amountCents  Int
+  paidAt       DateTime @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  resource   Resource?  @relation(fields: [resourceId], references: [id], onDelete: SetNull)
+
+  @@unique([resourceId, month])
+  @@index([restaurantId, month])
 }

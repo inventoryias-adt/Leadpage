@@ -167,6 +167,11 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
         </span>
       </Link>
 
+      <Link href="/dashboard/financeiro" className="glass-panel-sm card-link flex items-center justify-between gap-3 !rounded-[22px] p-4" data-testid="finance-shortcut">
+        <span className="flex items-center gap-2 font-semibold text-primary"><Icon name="chart" size={18} /> Financeiro</span>
+        <span className="text-sm text-slate-600">Entradas, despesas e comissões →</span>
+      </Link>
+
       <Link href="/dashboard/mensagens" className="glass-panel-sm card-link flex items-center justify-between gap-3 !rounded-[22px] p-4" data-testid="chats-shortcut">
         <span className="flex items-center gap-2 font-semibold text-primary"><Icon name="chat" size={18} /> Mensagens dos clientes</span>
         <span className="text-sm text-slate-600">{unreadChats > 0 ? <b className="text-rose-600">{unreadChats} {unreadChats === 1 ? 'conversa nova' : 'conversas novas'} · responder →</b> : 'Fale com seus clientes →'}</span>
