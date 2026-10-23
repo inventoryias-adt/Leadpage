@@ -145,8 +145,12 @@ await c.click('[data-testid=bag-continue]'); await c.click('[data-testid=order-c
 const code2 = (await c.locator('[data-testid=order-code]').innerText()).trim();
 await c.goto(BASE + '/perfil/pedidos');
 await c.locator(`[data-testid=my-order]:has-text("${code2}") button:has-text("Cancelar pedido")`).click();
+// O que importa é o servidor ter cancelado e mandado para ?cancelado=1. No CI (servidor em modo de desenvolvimento) a tela às vezes não troca o
+// conteúdo logo depois da ação (erro de navegador "Event" na navegação); nesse caso recarrega a mesma página e confere o aviso.
+await until(c, () => sql(`select status||'/'||"canceledBy" from "Order" where code='${code2}' and "restaurantId"='${rid}'`) === 'CANCELED/CUSTOMER', 'pedido cancelado');
+await c.waitForURL('**/perfil/pedidos?cancelado=1');
+if (!(await c.locator('text=Pedido cancelado.').first().isVisible({ timeout: 8000 }).catch(() => false))) await c.reload();
 await c.waitForSelector('text=Pedido cancelado.');
-assert.equal(sql(`select status||'/'||"canceledBy" from "Order" where code='${code2}' and "restaurantId"='${rid}'`), 'CANCELED/CUSTOMER');
 console.log('11. cliente cancela um pedido que o lugar ainda não começou OK');
 
 // ---- limite de pedidos em aberto
