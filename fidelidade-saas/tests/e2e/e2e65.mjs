@@ -32,7 +32,13 @@ await O.goto(BASE + '/login'); await O.fill('#email', 'ze@burger.com'); await O.
 await O.goto(BASE + '/dashboard?dias=7'); await O.waitForSelector('[data-testid=area-point-5]');
 
 // o mapa rola para o lado no celular: leva a célula até a vista e espera a rolagem parar antes de tocar
-const tap = async (sel) => { await O.locator(sel).scrollIntoViewIfNeeded(); await O.waitForTimeout(700); await O.click(sel); };
+// No painel as células do mapa são pequenas (cabem sem rolar para o lado) e o gráfico acima ainda muda de altura ao carregar: o clique
+// é disparado direto no botão. O toque de verdade, com células grandes, é testado na tela cheia dos horários (passo 8).
+const tap = async (sel) => { await O.locator(sel).scrollIntoViewIfNeeded(); await O.waitForTimeout(500); await O.locator(sel).dispatchEvent('click'); };
+
+// 0. o painel cabe na tela: nada rola para o lado (o mapa de horários também cabe)
+assert.ok(await O.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'painel sem rolagem lateral');
+console.log('0. painel sem rolagem lateral OK');
 
 // 1. tocar no dia de ontem (penúltimo ponto da série de 7 dias) abre o detalhe do dia
 await O.click('[data-testid=area-point-5]'); await O.waitForSelector('[data-testid=day-detail]');
@@ -79,6 +85,33 @@ const quiet = [...Array(24).keys()].find((h) => !busyHours.includes(String(h)));
 await tap(`[data-testid=heat-${dow}-${quiet}]`); await O.waitForSelector('[data-testid=slot-detail]');
 assert.match(await O.locator('[data-testid=slot-tips]').innerText(), /Ninguém comprou neste horário/);
 console.log('6. horário sem compras sugere campanha OK');
+
+// 7. "Abrir tela cheia" das vendas: só os dados de vendas, com o dia a dia em lista; tocar numa linha abre o detalhe
+await O.goto(BASE + '/dashboard?dias=7'); await O.waitForSelector('[data-testid=open-vendas]');
+await O.click('[data-testid=open-vendas]'); await O.waitForURL('**/dashboard/vendas**');
+await O.waitForSelector('[data-testid=day-list]');
+assert.equal(await O.locator('[data-testid=day-list] li').count(), 7, 'uma linha por dia do período');
+assert.ok(await O.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'vendas sem rolagem lateral');
+const ontem = sql(`select to_char((now() at time zone 'America/Sao_Paulo') - interval '1 day','YYYY-MM-DD')`);
+await O.click(`[data-testid=day-row-${ontem}]`); await O.waitForSelector('[data-testid=day-detail]');
+assert.match(await O.locator('[data-testid=day-reasons]').innerText(), /Terça em dobro/);
+await O.keyboard.press('Escape'); await O.waitForSelector('[data-testid=detail-sheet]', { state: 'detached' });
+await O.click('a:has-text("30 dias")'); await O.waitForURL('**dias=30');
+assert.equal(await O.locator('[data-testid=day-list] li').count(), 30);
+console.log('7. tela cheia das vendas: resumo, gráfico, dia a dia e detalhe ao tocar OK');
+
+// 8. "Abrir tela cheia" dos horários: melhores horários e mapa em células grandes
+await O.goto(BASE + '/dashboard'); await O.waitForSelector('[data-testid=open-horarios]');
+await O.click('[data-testid=open-horarios]'); await O.waitForURL('**/dashboard/horarios');
+await O.waitForSelector('[data-testid=peak-grid]');
+assert.ok(await O.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'horários sem rolagem lateral');
+const cell = await O.locator(`[data-testid=heat-${dow}-12]`).boundingBox();
+assert.ok(cell.width >= 30 && cell.height >= 30, `células grandes (${cell.width}x${cell.height})`);
+assert.ok(await O.locator('[data-testid=top-slots] li').count() >= 1);
+await O.locator('[data-testid=top-slots] li button').first().click(); await O.waitForSelector('[data-testid=slot-detail]');
+await O.keyboard.press('Escape'); await O.waitForSelector('[data-testid=detail-sheet]', { state: 'detached' });
+await O.locator(`[data-testid=heat-${dow}-12]`).scrollIntoViewIfNeeded(); await O.waitForTimeout(500); await O.click(`[data-testid=heat-${dow}-12]`); await O.waitForSelector('[data-testid=slot-detail]');
+console.log('8. tela cheia dos horários: melhores horários, mapa grande e detalhe ao tocar OK');
 
 sql(`delete from "PromotionUse" where "restaurantId"='${rid}'; delete from "Claim" where "restaurantId"='${rid}' and description like 'e65%'`);
 await b.close();
