@@ -100,7 +100,7 @@ export function OrderSettingsForm({ defaults }: { defaults: { ordersEnabled: boo
         <input type="checkbox" name="ordersEnabled" defaultChecked={state.values ? state.values.ordersEnabled === 'on' : defaults.ordersEnabled} className="mt-0.5 h-4 w-4 rounded accent-electric-500" />
         <span>
           <span className="block font-bold text-slate-800">Receber pedidos pelo app</span>
-          <span className="block text-sm text-slate-600">O cliente escolhe do cardápio, monta a sacola e retira no balcão. Você paga e recebe no balcão como sempre; os pontos entram quando você marca o pedido como retirado.</span>
+          <span className="block text-sm text-slate-600">O cliente escolhe do cardápio, monta a sacola e retira no balcão. Você cobra no balcão como sempre; os pontos entram quando você marca o pedido como retirado.</span>
         </span>
       </label>
       <div className="sm:max-w-xs">
