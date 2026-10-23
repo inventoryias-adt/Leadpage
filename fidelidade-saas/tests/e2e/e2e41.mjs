@@ -56,8 +56,10 @@ console.log('3. o cliente já vê a descrição e os pontos novos na página do 
 // descrição vazia não passa (o campo exige)
 await o.goto(BASE + '/dashboard/configuracoes?abrir=tudo');
 const row2 = o.locator('[data-testid=interaction-row]:has-text("story no Instagram marcando o lugar")');
-await row2.locator('button[aria-label^="Editar"]').click();
-await row2.locator('input[name=label]').fill('');
+// a página acabou de carregar: se o clique vier antes de a tela hidratar o formulário não abre, então repete até o campo aparecer
+const labelInput = row2.locator('input[name=label]');
+for (let i = 0; i < 10 && !(await labelInput.isVisible()); i++) { await row2.locator('button[aria-label^="Editar"]').click().catch(() => {}); await wait(o, 600); }
+await labelInput.fill('');
 await row2.locator('button[type=submit]').click(); await wait(o, 700);
 assert.equal(sql(`select label from "InteractionRule" where id='${id}'`), 'Teste editar: story no Instagram marcando o lugar');
 console.log('4. descrição vazia não é aceita OK');
