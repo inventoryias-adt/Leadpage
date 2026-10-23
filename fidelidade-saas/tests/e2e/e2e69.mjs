@@ -27,7 +27,7 @@ const O = await ctx.newPage(); O.on('pageerror', (e) => console.log('PAGEERROR',
 // 1. dono: atalho no Início e tela com as indicações do negócio
 await O.goto(BASE + '/login'); await O.fill('#email', 'ze@burger.com'); await O.fill('#password', 'senha-segura-1'); await O.click('button[type=submit]'); await O.waitForURL('**/dashboard');
 await O.waitForSelector('[data-testid=posts-shortcut]');
-assert.match(await O.locator('[data-testid=posts-shortcut]').innerText(), /2 indicações/);
+assert.match(await O.locator('[data-testid=posts-shortcut]').innerText(), /2 fotos/);
 await O.click('[data-testid=posts-shortcut]'); await O.waitForURL('**/dashboard/indicacoes'); await O.waitForSelector('[data-testid=owner-post]');
 assert.equal(await O.locator('[data-testid=owner-post]').count(), 2);
 assert.equal((await O.request.get(BASE + `/api/indicacoes/foto/${p1}`)).status(), 200, 'o dono do lugar vê a foto');
