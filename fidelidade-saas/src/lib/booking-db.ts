@@ -2,7 +2,7 @@ import 'server-only';
 import type { Prisma } from '@prisma/client';
 import { prisma } from './db';
 import { BusinessError, creditClaimWith } from './claims';
-import { REMINDER_LEAD_MIN, REMINDER_MIN_AHEAD_MIN, availableSlots, bookingPoints, canCustomerCancel, dateKeyOf, dayOccupancy, dayStartUtc, inPeriod, isWaitPeriod, openWaitPeriods, formatBookingWhen, guestOf, hmOf, addDaysKey, timeOffBusy, withBuffer, nearestSlots, parseDateKey, pickResource, reminderDue, todayKey, type BusyRange, type Slot } from './booking';
+import { REMINDER_LEAD_MIN, REMINDER_MIN_AHEAD_MIN, dayGrid, type GridSlot, availableSlots, bookingPoints, canCustomerCancel, dateKeyOf, dayOccupancy, dayStartUtc, inPeriod, isWaitPeriod, openWaitPeriods, formatBookingWhen, guestOf, hmOf, addDaysKey, timeOffBusy, withBuffer, nearestSlots, parseDateKey, pickResource, reminderDue, todayKey, type BusyRange, type Slot } from './booking';
 import { suggestsBooking } from './categories';
 import { parseSchedule } from './hours';
 import { sendEmail } from './mailer';
@@ -24,7 +24,7 @@ export class SlotGoneError extends BusinessError {}
 export const HOLD_MIN = 5;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-type Policy = { bookingMinNoticeMin: number; bookingMaxDaysAhead: number; bookingBufferMin?: number };
+type Policy = { bookingMinNoticeMin: number; bookingMaxDaysAhead: number; bookingBufferMin?: number; bookingSlotStepMin?: number };
 type ServiceLike = { id: string; durationMin: number; resourceId: string | null };
 
 /**
@@ -87,11 +87,11 @@ export async function staffFor(db: Db, args: { restaurantId: string; service: Se
 export async function slotsForDay(
   db: Db,
   args: { restaurantId: string; policy: Policy; service: ServiceLike; unit: { id: string; openingSchedule: unknown }; date: string; now?: Date; resourceId?: string | null; ignoreBookingId?: string; customerId?: string },
-): Promise<{ slots: Slot[]; busy: BusyRange[] }> {
+): Promise<{ slots: Slot[]; busy: BusyRange[]; grid: GridSlot[] }> {
   const { restaurantId, policy, service, unit, date } = args;
-  if (!parseDateKey(date)) return { slots: [], busy: [] };
+  if (!parseDateKey(date)) return { slots: [], busy: [], grid: [] };
   const staff = await staffFor(db, { restaurantId, service, unitId: unit.id, resourceId: args.resourceId });
-  if (staff.length === 0) return { slots: [], busy: [] };
+  if (staff.length === 0) return { slots: [], busy: [], grid: [] };
   const start = dayStartUtc(date);
   const now = args.now ?? new Date();
   const busyBookings = await db.booking.findMany({
@@ -127,7 +127,7 @@ export async function slotsForDay(
     select: { resourceId: true, startsAt: true, endsAt: true },
   });
   const busy: BusyRange[] = [...withBuffer([...busyBookings, ...holds], policy.bookingBufferMin ?? 0), ...timeOffBusy(offs, staffIds)];
-  const slots = availableSlots({
+  const input = {
     date,
     schedule: parseSchedule(unit.openingSchedule),
     durationMin: service.durationMin,
@@ -136,8 +136,11 @@ export async function slotsForDay(
     now,
     minNoticeMin: policy.bookingMinNoticeMin,
     maxDaysAhead: policy.bookingMaxDaysAhead,
-  });
-  return { slots, busy };
+    stepMin: policy.bookingSlotStepMin ?? 0,
+  };
+  const grid = dayGrid(input);
+  const slots = availableSlots(input);
+  return { slots, busy, grid };
 }
 
 export type FreeSlot = { date: string; time: string };

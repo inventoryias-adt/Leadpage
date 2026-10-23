@@ -26,6 +26,7 @@ const policySchema = z.object({
   bookingMaxDaysAhead: z.coerce.number().int().min(1).max(180),
   bookingCancelHours: z.coerce.number().int().min(0).max(14 * 24),
   bookingBufferMin: z.coerce.number().int().min(0).max(120).default(0),
+  bookingSlotStepMin: z.coerce.number().int().refine((v) => [0, 15, 30, 60].includes(v)).default(0),
   pointsPerRealOff: z.coerce.number().int().min(10, 'Use ao menos 10 pontos por R$ 1,00 de desconto.').max(10_000),
   bookingNotifyEmail: z.string().trim().toLowerCase().max(120).default(''),
 });

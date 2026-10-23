@@ -102,6 +102,7 @@ model Restaurant {
   bookingMaxDaysAhead Int     @default(30) // até quantos dias à frente o cliente pode marcar
   bookingCancelHours  Int     @default(2) // o cliente cancela sozinho até X horas antes
   bookingBufferMin    Int     @default(0) // intervalo entre atendimentos (limpeza, troca de cliente), em minutos
+  bookingSlotStepMin  Int     @default(0) // de quanto em quanto tempo os horários aparecem para o cliente: 0 = automático (do tamanho do serviço), ou 15, 30, 60 min
   pointsPerRealOff    Int     @default(100) // quantos pontos valem R$ 1,00 de desconto num serviço (padrão: ganha 10 por real, 100 pontos = R$ 1,00)
   bookingNotifyEmail  String? // e-mail que recebe cada novo agendamento (vazio = o e-mail da conta)
 

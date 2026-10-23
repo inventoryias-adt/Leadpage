@@ -49,8 +49,12 @@ export function hmOf(at: Date): string {
 
 const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
 
-/** De quanto em quanto tempo os horários aparecem: de meia em meia hora (serviços muito curtos: 15 min). */
-export const slotStep = (durationMin: number) => (durationMin < 30 ? 15 : 30);
+/** De quanto em quanto tempo os horários aparecem no modo automático: serviço curto (menos de 30 min), de 15 em 15; durando 30, 60, 90 min…, de meia em meia hora; durando outro tempo (35, 40, 45 min…), do tamanho dele (no máximo 60). */
+export const autoStep = (durationMin: number) => (durationMin < 30 ? 15 : durationMin % 30 === 0 ? 30 : Math.min(60, durationMin));
+/** Passo da grade: o que o lugar escolheu (15, 30 ou 60 min) ou, com 0, o automático. */
+export const slotStep = (durationMin: number, stepMin = 0) => (stepMin > 0 ? stepMin : autoStep(durationMin));
+/** Opções de intervalo entre horários que o lugar pode escolher (0 = automático). */
+export const STEP_OPTIONS: [number, string][] = [[0, 'Automático (do tamanho do serviço)'], [15, '15 minutos'], [30, '30 minutos'], [60, '1 hora']];
 
 export type BusyRange = { resourceId: string | null; startsAt: Date; endsAt: Date };
 export type SlotResource = {
@@ -70,8 +74,12 @@ export type SlotInput = {
   now: Date;
   minNoticeMin: number;
   maxDaysAhead: number;
+  /** Intervalo entre horários escolhido pelo lugar (vazio ou 0 = automático). */
+  stepMin?: number;
 };
 export type Slot = { startsAt: Date; time: string; resourceIds: string[]; durationByResource: Record<string, number> };
+/** Um horário da grade do dia: livre, ocupado (ninguém livre) ou já passado / dentro da antecedência mínima. */
+export type GridSlot = { startsAt: Date; time: string; state: 'free' | 'taken' | 'past'; resourceIds: string[]; durationByResource: Record<string, number> };
 
 const overlaps = (aStart: number, aEnd: number, b: BusyRange) => aStart < b.endsAt.getTime() && aEnd > b.startsAt.getTime();
 
@@ -86,10 +94,11 @@ function windowOf(schedule: Schedule, weekday: number): { open: number; close: n
 }
 
 /**
- * Horários em que dá para marcar: dentro do expediente da unidade E da escala do profissional, com antecedência,
- * respeitando a duração de cada um e sem estourar a capacidade de nenhum recurso.
+ * A grade do dia inteira (do início do expediente ao último horário em que o serviço cabe), com o estado de cada horário:
+ * `free` (alguém livre), `taken` (todos ocupados) ou `past` (já passou ou está dentro da antecedência mínima).
+ * Só entram horários em que alguém atende (dentro da escala e com o serviço cabendo antes de fechar).
  */
-export function availableSlots(input: SlotInput): Slot[] {
+export function dayGrid(input: SlotInput): GridSlot[] {
   const { date, schedule, durationMin, resources, busy, now, minNoticeMin, maxDaysAhead } = input;
   if (!parseDateKey(date) || !schedule || durationMin <= 0 || resources.length === 0) return [];
   const today = todayKey(now);
@@ -113,25 +122,38 @@ export function availableSlots(input: SlotInput): Slot[] {
 
   const base = dayStartUtc(date).getTime();
   const earliest = now.getTime() + minNoticeMin * 60_000;
-  const step = slotStep(Math.min(...staff.map((x) => x.dur)));
+  const step = slotStep(Math.min(...staff.map((x) => x.dur)), input.stepMin ?? 0);
   const first = Math.min(...staff.map((x) => x.win.open));
   const last = Math.max(...staff.map((x) => x.win.close));
-  const out: Slot[] = [];
+  const out: GridSlot[] = [];
   for (let m = first; m < last; m += step) {
     const start = base + m * 60_000;
-    if (start < earliest) continue;
     const free: string[] = [];
     const durs: Record<string, number> = {};
+    let anyone = false; // alguém atende neste horário (escala e duração cabem)
     for (const { r, win, dur } of staff) {
       if (m < win.open || m + dur > win.close) continue;
+      anyone = true;
       const end = start + dur * 60_000;
       if (busy.filter((b) => b.resourceId === r.id && overlaps(start, end, b)).length >= r.capacity) continue;
       free.push(r.id);
       durs[r.id] = dur;
     }
-    if (free.length) out.push({ startsAt: new Date(start), time: hmOf(new Date(start)), resourceIds: free, durationByResource: durs });
+    if (!anyone) continue;
+    const past = start < earliest;
+    out.push({ startsAt: new Date(start), time: hmOf(new Date(start)), state: past ? 'past' : free.length ? 'free' : 'taken', resourceIds: past ? [] : free, durationByResource: past ? {} : durs });
   }
   return out;
+}
+
+/**
+ * Horários em que dá para marcar: dentro do expediente da unidade E da escala do profissional, com antecedência,
+ * respeitando a duração de cada um e sem estourar a capacidade de nenhum recurso.
+ */
+export function availableSlots(input: SlotInput): Slot[] {
+  return dayGrid(input)
+    .filter((g) => g.state === 'free')
+    .map(({ startsAt, time, resourceIds, durationByResource }) => ({ startsAt, time, resourceIds, durationByResource }));
 }
 
 /** Entre os livres, o que tem menos agendamentos no dia (distribui o trabalho); empate: ordem do id. */

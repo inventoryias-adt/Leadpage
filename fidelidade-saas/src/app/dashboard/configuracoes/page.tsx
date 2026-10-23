@@ -557,7 +557,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
 
           <div>
             <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-slate-500">Regras de agendamento</h3>
-            <BookingPolicyForm defaults={{ auto: restaurant.bookingAutoConfirm, minNotice: restaurant.bookingMinNoticeMin, maxAhead: restaurant.bookingMaxDaysAhead, cancelHours: restaurant.bookingCancelHours, bufferMin: restaurant.bookingBufferMin, pointsPerRealOff: restaurant.pointsPerRealOff, earnPerReal: restaurant.pointsPerReal, notifyEmail: restaurant.bookingNotifyEmail ?? '', accountEmail: restaurant.email }} />
+            <BookingPolicyForm defaults={{ auto: restaurant.bookingAutoConfirm, minNotice: restaurant.bookingMinNoticeMin, maxAhead: restaurant.bookingMaxDaysAhead, cancelHours: restaurant.bookingCancelHours, bufferMin: restaurant.bookingBufferMin, slotStep: restaurant.bookingSlotStepMin, pointsPerRealOff: restaurant.pointsPerRealOff, earnPerReal: restaurant.pointsPerReal, notifyEmail: restaurant.bookingNotifyEmail ?? '', accountEmail: restaurant.email }} />
           </div>
         </div>
       </Optional>

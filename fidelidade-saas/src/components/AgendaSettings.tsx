@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from 'react';
 import { addService, saveBookingPolicy, saveResource } from '@/app/actions/agenda';
 import { defaultSchedule, type Schedule } from '@/lib/hours';
+import { STEP_OPTIONS } from '@/lib/booking';
 import { HoursGrid } from './HoursGrid';
 import { ImageUpload } from './ImageUpload';
 import { ColorSwatches } from './ColorSwatches';
@@ -18,7 +19,7 @@ const CANCEL: [number, string][] = [[0, 'Até a hora marcada'], [1, '1 hora ante
 /** Escolhe a opção da lista mais próxima do valor salvo (o valor pode ter vindo de uma versão anterior). */
 const pick = (list: [number, string][], v: number) => list.reduce((best, o) => (Math.abs(o[0] - v) < Math.abs(best[0] - v) ? o : best))[0];
 
-export function BookingPolicyForm({ defaults }: { defaults: { auto: boolean; minNotice: number; maxAhead: number; cancelHours: number; bufferMin: number; pointsPerRealOff: number; earnPerReal: number; notifyEmail: string; accountEmail: string } }) {
+export function BookingPolicyForm({ defaults }: { defaults: { auto: boolean; minNotice: number; maxAhead: number; cancelHours: number; bufferMin: number; slotStep: number; pointsPerRealOff: number; earnPerReal: number; notifyEmail: string; accountEmail: string } }) {
   const [state, action] = useActionState(saveBookingPolicy, {});
   const [rate, setRate] = useState(String(defaults.pointsPerRealOff));
   return (
@@ -48,6 +49,13 @@ export function BookingPolicyForm({ defaults }: { defaults: { auto: boolean; min
           <select id="ag-buffer" name="bookingBufferMin" className="glass-input" defaultValue={pick(BUFFER, defaults.bufferMin)}>
             {BUFFER.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
+        </div>
+        <div>
+          <label className="glass-label" htmlFor="ag-step">Intervalo entre os horários</label>
+          <select id="ag-step" name="bookingSlotStepMin" className="glass-input" defaultValue={defaults.slotStep} data-testid="slot-step">
+            {STEP_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select>
+          <p className="mt-1 text-xs text-slate-500">Automático: de 30 em 30 min e, se o serviço dura outro tempo (35, 45 min…), do tamanho dele.</p>
         </div>
         <div>
           <label className="glass-label" htmlFor="ag-cancel">Cliente cancela</label>

@@ -132,7 +132,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
   const staff = await staffFor(prisma, { restaurantId, service, unitId: unit.id });
   const staffRatings = await staffSummaries(staff.map((p) => p.id));
   const prof = staff.find((p) => p.id === sp.prof) ?? null; // quem o cliente escolheu (vazio = qualquer)
-  const { slots } = await slotsForDay(prisma, { restaurantId, policy: restaurant, service, unit, date, now, resourceId: prof?.id, ignoreBookingId: rb?.id, customerId: customer?.id });
+  const { slots, grid } = await slotsForDay(prisma, { restaurantId, policy: restaurant, service, unit, date, now, resourceId: prof?.id, ignoreBookingId: rb?.id, customerId: customer?.id });
   const days = Array.from({ length: Math.min(14, restaurant.bookingMaxDaysAhead + 1) }, (_, i) => addDaysKey(today, i));
   const chosen = sp.hora ? slots.find((s) => s.time === sp.hora) ?? null : null;
   const dayArgs = { restaurantId, policy: restaurant, service, unit, resourceId: prof?.id, customerId: customer?.id, ignoreBookingId: rb?.id };
@@ -261,18 +261,29 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
             <AlternativeSlots hrefBase={hrefBase} options={lost} />
           </div>
         )}
-        {slots.length === 0 ? (
+        {grid.length === 0 ? (
           <p className="glass-panel-sm p-4 text-sm text-slate-600">Sem horários livres neste dia. Escolha outro dia.</p>
         ) : (
-          <ul className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-            {slots.map((s) => (
-              <li key={s.time}>
-                <Link href={url({ data: date, hora: s.time })} aria-current={chosen?.time === s.time ? 'true' : undefined} className={`block rounded-xl border py-2.5 text-center text-sm font-semibold ${chosen?.time === s.time ? 'border-[#0F1F3D] bg-[#0F1F3D] text-lima' : 'border-slate-200 bg-white text-slate-800 hover:border-electric-500'}`}>
-                  {s.time}
+          <>
+            {slots.length === 0 && <p className="glass-panel-sm mb-3 p-4 text-sm text-slate-600">Sem horários livres neste dia. Escolha outro dia.</p>}
+            <ul className="grid grid-cols-4 gap-2 sm:grid-cols-6" data-testid="slot-grid">
+              {grid.map((g) => (
+                <li key={g.time}>
+                  {g.state === 'free' ? (
+                    <Link href={url({ data: date, hora: g.time })} aria-current={chosen?.time === g.time ? 'true' : undefined} className={`block rounded-xl border py-2.5 text-center text-sm font-semibold ${chosen?.time === g.time ? 'border-[#0F1F3D] bg-[#0F1F3D] text-lima' : 'border-slate-200 bg-white text-slate-800 hover:border-electric-500'}`}>
+                  {g.time}
                 </Link>
-              </li>
-            ))}
-          </ul>
+                  ) : (
+                    <span aria-disabled="true" data-testid={g.state === 'taken' ? 'slot-taken' : 'slot-past'} title={g.state === 'taken' ? 'Horário já ocupado' : 'Horário que já passou'} className={`block rounded-xl border border-dashed py-2.5 text-center text-sm font-semibold ${g.state === 'taken' ? 'border-slate-300 bg-slate-50 text-slate-400 line-through decoration-2' : 'border-slate-200 bg-transparent text-slate-300'}`}>
+                      {g.time}
+                      <span className="sr-only">{g.state === 'taken' ? ' (ocupado)' : ' (já passou)'}</span>
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+            {grid.some((g) => g.state === 'taken') && <p className="mt-2 text-xs text-slate-500">Os horários riscados já estão ocupados.</p>}
+          </>
         )}
       </section>
 
