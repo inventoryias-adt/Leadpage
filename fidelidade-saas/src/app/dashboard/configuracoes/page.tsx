@@ -8,6 +8,7 @@ import {
   AddRewardForm,
   BasicsForm,
   BillingPortalForm,
+  BirthdayPerkForm,
   EngagementForm,
   SharingForm,
   FinishOnboardingForm,
@@ -128,7 +129,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
   const next = !abrirTudo && idx < SECTIONS.length - 1 ? SECTIONS[idx + 1] : null;
   const [interactions, rewards, challenges, units, promotions, resources, services, appCampaigns] = await Promise.all([
     prisma.interactionRule.findMany({ where: { restaurantId: restaurant.id, active: true }, orderBy: { createdAt: 'asc' } }),
-    prisma.reward.findMany({ where: { restaurantId: restaurant.id, active: true }, orderBy: { pointsCost: 'asc' } }),
+    prisma.reward.findMany({ where: { restaurantId: restaurant.id, active: true, birthdayOnly: false }, orderBy: { pointsCost: 'asc' } }),
     prisma.challenge.findMany({ where: { restaurantId: restaurant.id }, orderBy: { createdAt: 'asc' } }),
     prisma.unit.findMany({ where: { restaurantId: restaurant.id }, orderBy: [{ active: 'desc' }, { createdAt: 'asc' }] }),
     prisma.promotion.findMany({ where: { restaurantId: restaurant.id }, orderBy: { createdAt: 'desc' } }),
@@ -297,6 +298,10 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
 
       <Optional id="engajamento" title="Check-in, indicação e aniversário" hint="Jeitos de fazer o cliente voltar e trazer gente nova. Cada um tem a sua chave liga/desliga." status={engagementOn > 0 ? `${engagementOn} ${engagementOn === 1 ? 'ligado' : 'ligados'}` : 'Desligados'} open={openAll || abrir === 'engajamento' || engagementOn > 0}>
         <EngagementForm defaults={{ checkInPoints: restaurant.checkInPoints, checkInRadiusM: restaurant.checkInRadiusM, referralPoints: restaurant.referralPoints, birthdayPoints: restaurant.birthdayPoints }} />
+      </Optional>
+
+      <Optional id="aniversariante" title="Presente do aniversariante" hint="Um item ou benefício para quem faz aniversário: grátis, trocando por pontos ou ao consumir um valor. Aparece para o cliente só no dia dele." status={restaurant.birthdayPerkOn ? 'Ligado' : 'Desligado'} open={openAll || abrir === 'aniversariante' || restaurant.birthdayPerkOn}>
+        <BirthdayPerkForm defaults={{ on: restaurant.birthdayPerkOn, title: restaurant.birthdayPerkTitle ?? '', mode: (['FREE', 'POINTS', 'SPEND'].includes(restaurant.birthdayPerkMode) ? restaurant.birthdayPerkMode : 'FREE') as 'FREE' | 'POINTS' | 'SPEND', points: restaurant.birthdayPerkPoints, minCents: restaurant.birthdayPerkMinCents }} />
       </Optional>
 
       <Optional id="interacoes" title="Interações que dão pontos" hint="Pontuação fixa, marcada pelo caixa no lançamento (avaliação no Google, story no Instagram…)." status={interactions.length > 0 ? `${interactions.length} ${interactions.length === 1 ? 'ativa' : 'ativas'}` : 'Opcional'} open={openAll || abrir === 'interacoes' || interactions.length > 0}>

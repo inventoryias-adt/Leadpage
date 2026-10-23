@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { AppCampaignStrip } from '@/components/AppCampaignStrip';
+import { BirthdayBanner } from '@/components/BirthdayBanner';
 import { Brand } from '@/components/Brand';
 import { Carousel } from '@/components/Carousel';
 import { Icon } from '@/components/Icons';
@@ -9,6 +10,8 @@ import { IntroSlides } from '@/components/IntroSlides';
 import { NextBookingCard } from '@/components/NextBookingCard';
 import { PlaceAvatar, ProgressBar, RewardImage } from '@/components/Visual';
 import { campaignsForCustomers } from '@/lib/app-campaigns-db';
+import { isBirthdayToday } from '@/lib/birthday-perk';
+import { perkPlaces } from '@/lib/birthday-perk-db';
 import { prisma } from '@/lib/db';
 import { affordableRewards, pendingVouchers } from '@/lib/customer-rewards';
 import { imageUrl } from '@/lib/images';
@@ -24,6 +27,8 @@ export const dynamic = 'force-dynamic';
 export default async function CarteiraPage() {
   const customer = await requireCustomer('/carteira');
 
+  const birthday = isBirthdayToday(customer);
+  const perks = birthday ? await perkPlaces() : [];
   const [wallets, vouchers, affordable, nextBooking, appCampaigns] = await Promise.all([
     prisma.wallet.findMany({
       where: { customerId: customer.id },
@@ -41,7 +46,7 @@ export default async function CarteiraPage() {
   ]);
   // Próximo prêmio de cada lugar: o mais barato que ainda não dá para resgatar (para mostrar "faltam N pontos").
   const rewardRows = wallets.length
-    ? await prisma.reward.findMany({ where: { restaurantId: { in: wallets.map((w) => w.restaurantId) }, active: true }, select: { restaurantId: true, name: true, pointsCost: true }, orderBy: { pointsCost: 'asc' } })
+    ? await prisma.reward.findMany({ where: { restaurantId: { in: wallets.map((w) => w.restaurantId) }, active: true, birthdayOnly: false }, select: { restaurantId: true, name: true, pointsCost: true }, orderBy: { pointsCost: 'asc' } })
     : [];
   const nextGoal = (restaurantId: string, balance: number) => rewardRows.find((r) => r.restaurantId === restaurantId && r.pointsCost > balance) ?? null;
   const total = wallets.reduce((n, w) => n + w.balance, 0);
@@ -75,6 +80,8 @@ export default async function CarteiraPage() {
           </p>
         )}
       </Reveal>
+
+      {birthday && <Reveal from="zoom"><BirthdayBanner name={customer.name.split(' ')[0]} places={perks} showList /></Reveal>}
 
       {wallets.length > 0 && (
         <Reveal from="zoom">

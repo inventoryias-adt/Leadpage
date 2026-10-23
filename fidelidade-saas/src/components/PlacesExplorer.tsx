@@ -41,9 +41,10 @@ export type PlaceCard = {
   campaigns: CampaignItem[];
   units: PlaceUnit[];
   rating: RatingSummary | null;
+  birthdayPerk: string | null; // só vem preenchido no aniversário do cliente ("Sobremesa grátis · grátis para o aniversariante")
 };
 
-type Filter = 'all' | 'saldo' | 'aberto' | 'desafios' | 'promo' | 'nota';
+type Filter = 'all' | 'saldo' | 'aberto' | 'desafios' | 'promo' | 'nota' | 'aniversario';
 type Pos = { lat: number; lng: number };
 
 const FILTERS: { id: Filter; label: string }[] = [
@@ -53,14 +54,15 @@ const FILTERS: { id: Filter; label: string }[] = [
   { id: 'desafios', label: 'Com desafios' },
   { id: 'promo', label: 'Em promoção' },
   { id: 'nota', label: 'Mais bem avaliados' },
+  { id: 'aniversario', label: '🎂 Presente de aniversário' },
 ];
 
 const norm = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 /** Vitrine de lugares: busca, filtros e ordenação por distância usando a localização do aparelho. */
-export function PlacesExplorer({ places, categories, loggedIn, savedAddresses }: { places: PlaceCard[]; categories: { value: string; label: string; hint?: string }[]; loggedIn: boolean; savedAddresses: SavedAddress[] }) {
+export function PlacesExplorer({ places, categories, loggedIn, savedAddresses, birthdayToday = false, initialFilter }: { places: PlaceCard[]; categories: { value: string; label: string; hint?: string }[]; loggedIn: boolean; savedAddresses: SavedAddress[]; birthdayToday?: boolean; initialFilter?: Filter }) {
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<Filter>('all');
+  const [filter, setFilter] = useState<Filter>(initialFilter ?? 'all');
   const [category, setCategory] = useState<string | null>(null);
   const [allOpen, setAllOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -109,6 +111,7 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses }:
         if (filter === 'saldo') return (p.balance ?? 0) > 0;
         if (filter === 'aberto') return p.openAny;
         if (filter === 'desafios') return p.challenges > 0;
+        if (filter === 'aniversario') return p.birthdayPerk != null;
         if (filter === 'promo') return p.campaigns.some((c) => c.kind === 'promocao') || p.deals.length > 0;
         return true;
       });
@@ -146,7 +149,7 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses }:
       {/* Filtros */}
       <Reveal from="right">
       <Carousel label="Filtros">
-        {FILTERS.filter((f) => loggedIn || f.id !== 'saldo').map((f) => (
+        {FILTERS.filter((f) => (loggedIn || f.id !== 'saldo') && (birthdayToday || f.id !== 'aniversario')).map((f) => (
           <li key={f.id} className="shrink-0">
             <button
               type="button"
@@ -401,6 +404,9 @@ function PlaceRow({ p }: { p: Row }) {
             <span className={`rounded-full px-2 py-px text-[10.5px] font-semibold ${p.unit.openNow ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
               {p.unit.openNow ? 'Aberto agora' : 'Fechado agora'}
             </span>
+          )}
+          {p.birthdayPerk && (
+            <span className="rounded-full bg-amber-50 px-2 py-px text-[10.5px] font-semibold text-amber-700" data-testid="birthday-chip" title={p.birthdayPerk}>🎂 Presente de aniversário</span>
           )}
           {p.balance != null && p.balance > 0 && (
             <span className="rounded-full bg-emerald-50 px-2 py-px text-[10.5px] font-semibold text-emerald-700">Você tem {formatPoints(p.balance)} pts</span>

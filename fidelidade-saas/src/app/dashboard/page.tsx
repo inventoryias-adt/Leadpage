@@ -37,7 +37,7 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
     prisma.wallet.aggregate({ where: { restaurantId: rid }, _sum: { balance: true }, _count: true }),
     prisma.redemption.count({ where: { restaurantId: rid, status: 'PENDING' } }),
     loadCustomerRows(rid, now),
-    prisma.reward.findMany({ where: { restaurantId: rid, active: true }, select: { imageId: true } }),
+    prisma.reward.findMany({ where: { restaurantId: rid, active: true, birthdayOnly: false }, select: { imageId: true } }),
     prisma.promotion.count({ where: { restaurantId: rid, active: true, OR: [{ endsAt: null }, { endsAt: { gt: now } }] } }),
     prisma.challenge.count({ where: { restaurantId: rid, active: true } }),
     prisma.unit.findMany({ where: { restaurantId: rid, active: true }, select: { latitude: true, longitude: true } }),
@@ -91,7 +91,7 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
   const sumidos = cust.rows.filter((r) => r.segments.includes('sumidos')).sort((a, b) => b.balance - a.balance);
   const cheapest = cust.minReward;
   const cheapestName = cheapest
-    ? (await prisma.reward.findFirst({ where: { restaurantId: rid, active: true, pointsCost: cheapest }, select: { name: true } }))?.name ?? 'o prêmio'
+    ? (await prisma.reward.findFirst({ where: { restaurantId: rid, active: true, birthdayOnly: false, pointsCost: cheapest }, select: { name: true } }))?.name ?? 'o prêmio'
     : null;
 
   const tips = suggestions({

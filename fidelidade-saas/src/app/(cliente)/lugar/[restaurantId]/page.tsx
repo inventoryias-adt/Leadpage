@@ -14,6 +14,9 @@ import { RatingBadge, Stars } from '@/components/Stars';
 import { categoryLabel } from '@/lib/categories';
 import { challengeCount } from '@/lib/claims';
 import { describeChallenge, periodRange } from '@/lib/challenges';
+import { claimBirthdayPerkAction } from '@/app/actions/birthday-perk';
+import { isBirthdayToday, perkCondition } from '@/lib/birthday-perk';
+import { perkRedemptionThisYear } from '@/lib/birthday-perk-db';
 import { prisma } from '@/lib/db';
 import { ensureDefaultService } from '@/lib/booking-db';
 import { isOpenNow, parseSchedule, todayLabel } from '@/lib/hours';
@@ -59,7 +62,7 @@ export default async function LugarPage({
   searchParams,
 }: {
   params: Promise<{ restaurantId: string }>;
-  searchParams: Promise<{ bemvindo?: string; unidade?: string }>;
+  searchParams: Promise<{ bemvindo?: string; unidade?: string; presente?: string }>;
 }) {
   const { restaurantId } = await params;
   const sp = await searchParams;
@@ -71,7 +74,7 @@ export default async function LugarPage({
   if (customer) await settleDueInteractions({ customerId: customer.id, restaurantId }).catch(() => 0);
   const [restaurant, rewards, challenges, rules, wallet, completions, units, promotions, serviceCount, menuCount] = await Promise.all([
     prisma.restaurant.findUnique({ where: { id: restaurantId } }),
-    prisma.reward.findMany({ where: { restaurantId, active: true }, orderBy: { pointsCost: 'asc' } }),
+    prisma.reward.findMany({ where: { restaurantId, active: true, birthdayOnly: false }, orderBy: { pointsCost: 'asc' } }),
     prisma.challenge.findMany({ where: { restaurantId, active: true }, orderBy: { createdAt: 'asc' } }),
     prisma.interactionRule.findMany({ where: { restaurantId, active: true }, orderBy: { createdAt: 'asc' } }),
     customer ? prisma.wallet.findUnique({ where: { customerId_restaurantId: { customerId: customer.id, restaurantId } } }) : null,
@@ -117,6 +120,11 @@ export default async function LugarPage({
   const schedule = parseSchedule(unit?.openingSchedule);
   const open = schedule ? isOpenNow(schedule) : null;
   const balance = wallet?.balance ?? 0;
+  // Presente de aniversário: só no dia do aniversário do cliente e se o lugar oferece.
+  const perkOffered = !!customer && isBirthdayToday(customer) && restaurant.birthdayPerkOn && !!restaurant.birthdayPerkTitle;
+  const perkGot = perkOffered && customer ? await perkRedemptionThisYear(customer.id, restaurantId) : null;
+  const perkCond = perkCondition({ mode: restaurant.birthdayPerkMode, points: restaurant.birthdayPerkPoints, minCents: restaurant.birthdayPerkMinCents });
+  const perkShort = restaurant.birthdayPerkMode === 'POINTS' && balance < restaurant.birthdayPerkPoints;
   const hasCoords = units.some((u) => u.latitude != null && u.longitude != null); // check-in vale em qualquer unidade com localização
   // Resumos que aparecem nas seções fechadas (Ações, Campanhas e Desafios).
   const pts = (n: number) => `${formatPoints(n)} ${n === 1 ? 'pt' : 'pts'}`;
@@ -218,6 +226,26 @@ export default async function LugarPage({
 
         <div className="space-y-6 lg:grid lg:grid-cols-5 lg:items-start lg:gap-6 lg:space-y-0">
         <div className="space-y-6 lg:col-span-3">
+        {perkOffered && (
+          <section aria-label="Presente de aniversário" data-testid="birthday-perk" className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <p className="text-sm font-extrabold text-amber-900">🎂 Feliz aniversário! {restaurant.name} tem um presente para você</p>
+            <p className="mt-1 text-base font-bold text-ink">{restaurant.birthdayPerkTitle}</p>
+            <p className="text-sm text-slate-700">{perkCond[0].toUpperCase() + perkCond.slice(1)}. Vale só hoje, uma vez por ano. Seus pontos de compra continuam sendo somados normalmente.</p>
+            {sp.presente && <p role="alert" className="glass-error mt-2">{sp.presente}</p>}
+            {perkGot ? (
+              <p className="mt-3 text-sm font-semibold text-amber-900" data-testid="birthday-perk-done">
+                {perkGot.status === 'USED' ? 'Presente já aproveitado. Bom apetite!' : <>Presente garantido! Mostre o código <b>{perkGot.code}</b> no caixa, <Link href={`/carteira/${restaurantId}`} className="underline">ver na carteira</Link>.</>}
+              </p>
+            ) : perkShort ? (
+              <p className="mt-3 text-sm text-slate-700" data-testid="birthday-perk-short">Faltam {formatPoints(restaurant.birthdayPerkPoints - balance)} pts para trocar por este presente.</p>
+            ) : (
+              <form action={claimBirthdayPerkAction} className="mt-3">
+                <input type="hidden" name="restaurantId" value={restaurantId} />
+                <button type="submit" className="glass-button-lime btn-sm !w-auto px-5" data-testid="birthday-perk-claim">Quero meu presente</button>
+              </form>
+            )}
+          </section>
+        )}
         {customer && customer.birthDay == null && <BirthdayCard initial={null} giftPoints={restaurant.birthdayPoints} placeName={restaurant.name} />}
 
         {/* Saldo / entrar */}

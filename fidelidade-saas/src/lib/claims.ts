@@ -219,7 +219,7 @@ export type BagItem = { rewardId: string; qty: number };
  * do cliente (lugares com "pontos daqui valem em outros lugares" ligado), convertidos pelo valor de cada ponto
  * quando este lugar aceita pontos de outros. Tudo na mesma transação, com as carteiras travadas em ordem fixa.
  */
-export async function redeemItems(customerId: string, restaurantId: string, rawItems: BagItem[], opts: { useShared?: boolean } = {}) {
+export async function redeemItems(customerId: string, restaurantId: string, rawItems: BagItem[], opts: { useShared?: boolean; birthday?: { since: Date } } = {}) {
   const merged = new Map<string, number>();
   for (const it of rawItems) {
     const qty = Math.floor(Number(it.qty));
@@ -237,11 +237,15 @@ export async function redeemItems(customerId: string, restaurantId: string, rawI
 
     const rewards = await tx.reward.findMany({ where: { id: { in: items.map((i) => i.rewardId) }, restaurantId, active: true } });
     if (rewards.length !== items.length) throw new BusinessError('Algum prêmio da sacola não está mais disponível. Atualize a página.');
+    // O presente do aniversariante só sai pelo caminho próprio (que confere o aniversário) e sozinho, nunca misturado na sacola.
+    const birthdayItems = rewards.filter((r) => r.birthdayOnly);
+    if (birthdayItems.length > 0 && (!opts.birthday || rewards.length !== 1 || totalQty !== 1)) throw new BusinessError('Prêmio indisponível.');
+    const freeBirthday = !!opts.birthday && birthdayItems.length === 1 && birthdayItems[0].pointsCost === 0;
 
     const useShared = Boolean(opts.useShared) && restaurant.pointsAcceptIn;
     let found = await tx.wallet.findUnique({ where: { customerId_restaurantId: { customerId, restaurantId } } });
-    if (!found && !useShared) throw new BusinessError('Saldo insuficiente.');
-    if (!found) found = await tx.wallet.create({ data: { customerId, restaurantId } }); // só vive se o resgate completar
+    if (!found && !useShared && !freeBirthday) throw new BusinessError('Saldo insuficiente.');
+    if (!found) found = await tx.wallet.create({ data: { customerId, restaurantId } }); // só vive se o resgate completar (o presente grátis cria a carteira de quem ainda não tem)
 
     // Trava a carteira: resgates simultâneos do mesmo cliente passam um de cada vez. Com pontos de outros lugares
     // travamos todas as carteiras do cliente, sempre em ordem de id, para dois resgates cruzados não se travarem.
@@ -249,16 +253,22 @@ export async function redeemItems(customerId: string, restaurantId: string, rawI
     else await tx.$queryRaw(Prisma.sql`SELECT id FROM "Wallet" WHERE id = ${found.id} FOR UPDATE`);
     const wallet = await tx.wallet.findUniqueOrThrow({ where: { id: found.id } });
 
-    const usedThisMonth = await tx.redemption.count({
-      where: { customerId, restaurantId, createdAt: { gte: startOfMonthBR() } },
-    });
-    const limit = restaurant.maxRedeemsPerMonth;
-    if (usedThisMonth >= limit) {
-      throw new BusinessError(`Limite de ${limit} resgates por mês atingido neste estabelecimento.`);
-    }
-    if (usedThisMonth + totalQty > limit) {
-      const left = limit - usedThisMonth;
-      throw new BusinessError(`Você ainda pode resgatar ${left} ${left === 1 ? 'item' : 'itens'} neste mês (limite de ${limit} por CPF).`);
+    if (opts.birthday) {
+      // Um presente de aniversário por cliente e lugar a cada ano (conferido depois do travamento da carteira, então dois toques seguidos não passam).
+      const already = await tx.redemption.count({ where: { customerId, restaurantId, reward: { birthdayOnly: true }, createdAt: { gte: opts.birthday.since } } });
+      if (already > 0) throw new BusinessError('Você já pegou o presente de aniversário deste lugar este ano.');
+    } else {
+      const usedThisMonth = await tx.redemption.count({
+        where: { customerId, restaurantId, reward: { birthdayOnly: false }, createdAt: { gte: startOfMonthBR() } },
+      });
+      const limit = restaurant.maxRedeemsPerMonth;
+      if (usedThisMonth >= limit) {
+        throw new BusinessError(`Limite de ${limit} resgates por mês atingido neste estabelecimento.`);
+      }
+      if (usedThisMonth + totalQty > limit) {
+        const left = limit - usedThisMonth;
+        throw new BusinessError(`Você ainda pode resgatar ${left} ${left === 1 ? 'item' : 'itens'} neste mês (limite de ${limit} por CPF).`);
+      }
     }
 
     const byId = new Map(rewards.map((r) => [r.id, r]));
@@ -335,8 +345,8 @@ export async function redeemItems(customerId: string, restaurantId: string, rawI
 
 /** Troca de um único prêmio (botão "Resgatar" da carteira). */
 export async function redeemReward(customerId: string, rewardId: string) {
-  const reward = await prisma.reward.findUnique({ where: { id: rewardId }, select: { restaurantId: true, active: true } });
-  if (!reward || !reward.active) throw new BusinessError('Prêmio indisponível.');
+  const reward = await prisma.reward.findUnique({ where: { id: rewardId }, select: { restaurantId: true, active: true, birthdayOnly: true } });
+  if (!reward || !reward.active || reward.birthdayOnly) throw new BusinessError('Prêmio indisponível.');
   const [redemption] = await redeemItems(customerId, reward.restaurantId, [{ rewardId, qty: 1 }]);
   return redemption;
 }

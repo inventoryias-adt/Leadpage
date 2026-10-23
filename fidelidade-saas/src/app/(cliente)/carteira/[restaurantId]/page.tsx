@@ -37,7 +37,7 @@ export default async function WalletPage({
       },
     }),
     prisma.wallet.findUnique({ where: { customerId_restaurantId: ofWallet } }),
-    prisma.reward.findMany({ where: { restaurantId, active: true }, orderBy: { pointsCost: 'asc' } }),
+    prisma.reward.findMany({ where: { restaurantId, active: true, birthdayOnly: false }, orderBy: { pointsCost: 'asc' } }),
     prisma.transaction.findMany({ where: { wallet: ofWallet }, orderBy: { createdAt: 'desc' }, take: 15 }),
     prisma.redemption.findMany({ where: { ...ofWallet, status: 'PENDING' }, orderBy: { createdAt: 'desc' } }),
     prisma.redemption.count({ where: { ...ofWallet, createdAt: { gte: startOfMonthBR() } } }),

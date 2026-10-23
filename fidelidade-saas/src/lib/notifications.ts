@@ -13,7 +13,7 @@ export async function notify(db: Db, data: { customerId: string; restaurantId?: 
 export async function notifyPoints(db: Db, customerId: string, restaurantId: string, points: number, balanceAfter: number, description: string) {
   const [restaurant, rewards] = await Promise.all([
     db.restaurant.findUnique({ where: { id: restaurantId }, select: { name: true } }),
-    db.reward.findMany({ where: { restaurantId, active: true }, select: { name: true, pointsCost: true } }),
+    db.reward.findMany({ where: { restaurantId, active: true, birthdayOnly: false }, select: { name: true, pointsCost: true } }),
   ]);
   if (!restaurant) return;
   const goal = goalText(balanceAfter - points, balanceAfter, rewards);
