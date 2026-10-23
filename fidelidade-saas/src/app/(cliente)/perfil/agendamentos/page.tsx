@@ -158,7 +158,7 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
         <h2 id="prox" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Próximos</h2>
         {upcoming.length === 0 ? (
           <p className="glass-panel-sm p-4 text-sm text-slate-600">
-            Nada marcado. Abra um <Link href="/lugares" className="link-inline">lugar</Link> e toque em “Agendar”.
+            Nada marcado. Em <Link href="/lugares" className="link-inline">Lugares</Link>, abra um lugar e toque em “Agendar”.
           </p>
         ) : (
           <ul className="space-y-3">{upcoming.map((b) => card(b, true))}</ul>
