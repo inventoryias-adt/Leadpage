@@ -73,7 +73,7 @@ model Restaurant {
   onboardedAt     DateTime?
   guideDoneAt     DateTime? // passo a passo inicial concluído ou dispensado
   internalNote    String? // anotação interna da administração (o dono não vê)
-  isTest          Boolean @default(false) // conta de teste da administração: fora da receita e dos números de assinantes
+  isTest          Boolean   @default(false) // conta de teste da administração: fora da receita e dos números de assinantes
   termsAcceptedAt DateTime? // aceite dos Termos de Uso e da Política de Privacidade (null = conta anterior ao aceite)
   termsVersion    String? // versão aceita (ver src/lib/legal.ts)
 
@@ -83,12 +83,12 @@ model Restaurant {
   paymentSubscriptionId String?
 
   // Regras de pontuação
-  pointsPerReal      Int @default(10) // R$ 1,00 = 10 pontos
-  maxRedeemsPerMonth Int @default(5) // limite de resgates por CPF por mês
-  checkInPoints      Int @default(1) // pontos por check-in no local (0 desliga)
-  checkInRadiusM     Int @default(10) // distância máxima (m) do ponto da unidade para o check-in valer; o cliente nunca vê esse número
-  referralPoints     Int @default(100) // pontos para quem indica um amigo que compra (0 desliga)
-  birthdayPoints     Int @default(0) // presente de pontos no aniversário do cliente (0 desliga)
+  pointsPerReal        Int     @default(10) // R$ 1,00 = 10 pontos
+  maxRedeemsPerMonth   Int     @default(5) // limite de resgates por CPF por mês
+  checkInPoints        Int     @default(1) // pontos por check-in no local (0 desliga)
+  checkInRadiusM       Int     @default(10) // distância máxima (m) do ponto da unidade para o check-in valer; o cliente nunca vê esse número
+  referralPoints       Int     @default(100) // pontos para quem indica um amigo que compra (0 desliga)
+  birthdayPoints       Int     @default(0) // presente de pontos no aniversário do cliente (0 desliga)
   // Presente do aniversariante (um item ou benefício do lugar, resgatado com cupom no dia do aniversário do cliente)
   birthdayPerkOn       Boolean @default(false)
   birthdayPerkTitle    String? // ex.: "Sobremesa grátis"
@@ -126,29 +126,30 @@ model Restaurant {
 
   createdAt DateTime @default(now())
 
-  interactionRules InteractionRule[]
-  rewards          Reward[]
-  claims           Claim[]
-  wallets          Wallet[]
-  redemptions      Redemption[]
-  units            Unit[]
-  promotions Promotion[]
-  promotionUses PromotionUse[]
-  challenges       Challenge[]
-  checkIns         CheckIn[]
-  referrals        Referral[]
-  images           Image[]
-  resources        Resource[]
-  services         Service[]
-  bookings         Booking[]
-  slotHolds SlotHold[]
-  waitlist  WaitlistEntry[]
-  timeOffs  TimeOff[]
-  posts                Post[]
-  reviews   Review[]
-  menuItems        MenuItem[]
-  orders           Order[]
-  birthdayGifts    BirthdayGift[]
+  interactionRules  InteractionRule[]
+  rewards           Reward[]
+  claims            Claim[]
+  wallets           Wallet[]
+  redemptions       Redemption[]
+  units             Unit[]
+  promotions        Promotion[]
+  promotionUses     PromotionUse[]
+  challenges        Challenge[]
+  checkIns          CheckIn[]
+  referrals         Referral[]
+  images            Image[]
+  resources         Resource[]
+  services          Service[]
+  bookings          Booking[]
+  slotHolds         SlotHold[]
+  waitlist          WaitlistEntry[]
+  timeOffs          TimeOff[]
+  posts             Post[]
+  conversations     Conversation[]
+  reviews           Review[]
+  menuItems         MenuItem[]
+  orders            Order[]
+  birthdayGifts     BirthdayGift[]
   interactionClaims InteractionClaim[]
 }
 
@@ -218,20 +219,20 @@ model Reward {
 }
 
 model Customer {
-  id           String   @id @default(uuid())
-  cpf          String   @unique // somente dígitos
-  phone        String // somente dígitos, sem +55
-  name         String
-  email        String?  @unique // minúsculo; null até o cliente criar o acesso com e-mail e senha
-  passwordHash String?
-  referralCode String?  @unique // código do link "Indique amigos"
-  accountCode  String?  @unique // ID da conta (FZ-XXXXXX): o cliente informa no caixa no lugar do CPF
+  id              String    @id @default(uuid())
+  cpf             String    @unique // somente dígitos
+  phone           String // somente dígitos, sem +55
+  name            String
+  email           String?   @unique // minúsculo; null até o cliente criar o acesso com e-mail e senha
+  passwordHash    String?
+  referralCode    String?   @unique // código do link "Indique amigos"
+  accountCode     String?   @unique // ID da conta (FZ-XXXXXX): o cliente informa no caixa no lugar do CPF
   termsAcceptedAt DateTime? // aceite dos Termos de Uso e da Política de Privacidade (null = conta anterior ao aceite)
   termsVersion    String? // versão aceita (ver src/lib/legal.ts)
   birthDay        Int? // aniversário: só dia e mês (sem o ano), opcional; o cliente informa e remove quando quiser
   birthMonth      Int?
   instagram       String? // @ do Instagram (sem o @), opcional: aparece nas indicações e abre o perfil
-  createdAt    DateTime @default(now())
+  createdAt       DateTime  @default(now())
 
   wallets           Wallet[]
   claims            Claim[]
@@ -244,8 +245,8 @@ model Customer {
   addresses         CustomerAddress[]
   promotionUses     PromotionUse[]
   bookings          Booking[]
-  slotHolds SlotHold[]
-  waitlist  WaitlistEntry[]
+  slotHolds         SlotHold[]
+  waitlist          WaitlistEntry[]
   reviews           Review[]
   photo             CustomerPhoto?
   orders            Order[]
@@ -253,6 +254,7 @@ model Customer {
   interactionClaims InteractionClaim[]
   posts             Post[]
   postLikes         PostLike[]
+  conversations     Conversation[]
 }
 
 /// Foto de perfil do cliente. Fica em tabela própria para não pesar a consulta da sessão; só o próprio cliente a vê.
@@ -468,7 +470,8 @@ model Unit {
   bookings   Booking[]
   orders     Order[]
 
-  waitlist  WaitlistEntry[]
+  waitlist WaitlistEntry[]
+
   @@index([restaurantId])
 }
 
@@ -516,13 +519,13 @@ enum PromoKind {
 
 /// Campanha de pontos criada pelo dono: multiplicador ("2x") ou pontos extras, por período, dia da semana e horário.
 model Promotion {
-  id             String    @id @default(uuid())
+  id             String        @id @default(uuid())
   restaurantId   String
   title          String
   kind           PromoKind
   multiplier     Float?
   bonusPoints    Int?
-  minAmountCents Int       @default(0)
+  minAmountCents Int           @default(0)
   startsAt       DateTime?
   endsAt         DateTime? // exclusivo
   weekdays       Int[] // 0 = domingo … 6 = sábado; vazio = todos os dias
@@ -530,10 +533,10 @@ model Promotion {
   endTime        String?
   audience       PromoAudience @default(ALL)
   inactiveDays   Int? // só para audience = INACTIVE
-  active         Boolean   @default(true)
+  active         Boolean       @default(true)
   appCampaignId  String? // preenchido quando o estabelecimento adotou uma campanha do app
   color          String? // chave da paleta (src/lib/palette.ts); vazio = cor padrão pelo público
-  createdAt      DateTime  @default(now())
+  createdAt      DateTime      @default(now())
 
   restaurant  Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   appCampaign AppCampaign?   @relation(fields: [appCampaignId], references: [id], onDelete: SetNull)
@@ -582,9 +585,9 @@ model PromotionUse {
   amountCents  Int // valor da compra
   createdAt    DateTime @default(now())
 
-  promotion  Promotion?  @relation(fields: [promotionId], references: [id], onDelete: SetNull)
-  restaurant Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  customer   Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  promotion  Promotion? @relation(fields: [promotionId], references: [id], onDelete: SetNull)
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  customer   Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@unique([claimId, promotionId])
   @@index([restaurantId, createdAt])
@@ -651,14 +654,14 @@ model Resource {
   color        String? // chave da paleta (src/lib/palette.ts); vazio = cor automática pela ordem
   createdAt    DateTime @default(now())
 
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  unit       Unit?      @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  restaurant Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  unit       Unit?             @relation(fields: [unitId], references: [id], onDelete: SetNull)
   services   Service[]
   bookings   Booking[]
-  slotHolds SlotHold[]
-  waitlist  WaitlistEntry[]
-  timeOffs  TimeOff[]
-  reviews   Review[]
+  slotHolds  SlotHold[]
+  waitlist   WaitlistEntry[]
+  timeOffs   TimeOff[]
+  reviews    Review[]
   offers     ResourceService[]
 
   @@index([restaurantId])
@@ -666,32 +669,33 @@ model Resource {
 
 /// O que o cliente pode marcar: corte, limpeza de pele, reserva de mesa…
 model Service {
-  id           String   @id @default(uuid())
-  restaurantId String
-  resourceId   String? // se preenchido, só esse profissional/vaga atende
-  name         String
-  description  String?
-  durationMin  Int
-  priceCents   Int      @default(0)
-  askPartySize Boolean  @default(false) // reserva de mesa: pergunta quantas pessoas
-  pointsDiscountMaxPct Int @default(0) // até quantos % do preço o cliente pode pagar com pontos (0 = não aceita)
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
+  id                   String   @id @default(uuid())
+  restaurantId         String
+  resourceId           String? // se preenchido, só esse profissional/vaga atende
+  name                 String
+  description          String?
+  durationMin          Int
+  priceCents           Int      @default(0)
+  askPartySize         Boolean  @default(false) // reserva de mesa: pergunta quantas pessoas
+  pointsDiscountMaxPct Int      @default(0) // até quantos % do preço o cliente pode pagar com pontos (0 = não aceita)
+  active               Boolean  @default(true)
+  createdAt            DateTime @default(now())
 
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  resource   Resource?  @relation(fields: [resourceId], references: [id], onDelete: SetNull)
+  restaurant Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  resource   Resource?         @relation(fields: [resourceId], references: [id], onDelete: SetNull)
   bookings   Booking[]
   offers     ResourceService[]
 
-  waitlist  WaitlistEntry[]
+  waitlist WaitlistEntry[]
+
   @@index([restaurantId])
 }
 
 /// Quais serviços cada profissional faz e quanto tempo leva com ele. Serviço sem nenhuma linha aqui é feito por qualquer profissional.
 model ResourceService {
-  id         String @id @default(uuid())
-  resourceId String
-  serviceId  String
+  id          String @id @default(uuid())
+  resourceId  String
+  serviceId   String
   durationMin Int? // vazio = a duração padrão do serviço
 
   resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
@@ -703,22 +707,22 @@ model ResourceService {
 
 /// Item do cardápio vendido em R$ pelo app (retirada). Diferente de Reward, que é o prêmio trocado por pontos.
 model MenuItem {
-  id           String   @id @default(uuid())
-  restaurantId String
-  name         String
-  description  String?
-  priceCents   Int // preço cheio
-  promoCents   Int? // preço promocional (o cheio aparece riscado); null = sem promoção
-  category     String   @default("Cardápio")
-  imageId      String?
-  featured     Boolean  @default(false) // "Destaque da casa"
-  active       Boolean  @default(true)
+  id              String    @id @default(uuid())
+  restaurantId    String
+  name            String
+  description     String?
+  priceCents      Int // preço cheio
+  promoCents      Int? // preço promocional (o cheio aparece riscado); null = sem promoção
+  category        String    @default("Cardápio")
+  imageId         String?
+  featured        Boolean   @default(false) // "Destaque da casa"
+  active          Boolean   @default(true)
   // Oferta: o preço promocional só vale até `offerEndsAt` e enquanto houver `offerStock` (null = sem limite). `spotlight` mostra o cartão na lista de Lugares.
   spotlight       Boolean   @default(false)
   offerEndsAt     DateTime?
   offerStock      Int? // unidades que ainda saem pelo preço promocional
   offerStockTotal Int? // quantas eram no início (para o anel de progresso)
-  createdAt    DateTime @default(now())
+  createdAt       DateTime  @default(now())
 
   restaurant Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   orderItems OrderItem[]
@@ -728,22 +732,22 @@ model MenuItem {
 
 /// Pedido para retirada. O pagamento e a retirada acontecem no balcão; os pontos entram quando o lugar marca como retirado.
 model Order {
-  id           String      @id @default(uuid())
-  restaurantId String
-  unitId       String?
-  customerId   String
-  code         String // o cliente mostra no balcão
-  status       OrderStatus @default(RECEIVED)
-  totalCents   Int
-  prepMin      Int // "pronto em X min" prometido na hora
-  note         String?
-  pointsAwarded Int        @default(0)
-  claimId      String?     @unique // lançamento que creditou os pontos (ao retirar)
-  createdAt    DateTime    @default(now())
-  readyAt      DateTime?
-  pickedUpAt   DateTime?
-  canceledAt   DateTime?
-  canceledBy   String? // CUSTOMER ou OWNER
+  id            String      @id @default(uuid())
+  restaurantId  String
+  unitId        String?
+  customerId    String
+  code          String // o cliente mostra no balcão
+  status        OrderStatus @default(RECEIVED)
+  totalCents    Int
+  prepMin       Int // "pronto em X min" prometido na hora
+  note          String?
+  pointsAwarded Int         @default(0)
+  claimId       String?     @unique // lançamento que creditou os pontos (ao retirar)
+  createdAt     DateTime    @default(now())
+  readyAt       DateTime?
+  pickedUpAt    DateTime?
+  canceledAt    DateTime?
+  canceledBy    String? // CUSTOMER ou OWNER
 
   restaurant Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   unit       Unit?       @relation(fields: [unitId], references: [id], onDelete: SetNull)
@@ -789,33 +793,33 @@ model BirthdayGift {
 }
 
 model Booking {
-  id           String        @id @default(uuid())
-  restaurantId String
-  unitId       String
-  customerId   String? // vazio = encaixe feito pelo dono para quem não tem conta (guestName/guestPhone)
-  guestName    String?
-  guestPhone   String?
-  createdBy    String? // OWNER quando o próprio lugar marcou
-  serviceId    String?
-  resourceId   String?
-  startsAt     DateTime
-  endsAt       DateTime
-  status       BookingStatus @default(PENDING)
+  id                 String        @id @default(uuid())
+  restaurantId       String
+  unitId             String
+  customerId         String? // vazio = encaixe feito pelo dono para quem não tem conta (guestName/guestPhone)
+  guestName          String?
+  guestPhone         String?
+  createdBy          String? // OWNER quando o próprio lugar marcou
+  serviceId          String?
+  resourceId         String?
+  startsAt           DateTime
+  endsAt             DateTime
+  status             BookingStatus @default(PENDING)
   // Cópias do que foi marcado, para o histórico não mudar se o serviço for editado ou removido.
-  serviceName  String
-  durationMin  Int
-  priceCents   Int           @default(0)
-  partySize    Int?
-  note         String?
-  pointsAwarded Int          @default(0)
-  pointsUsed   Int           @default(0) // pontos gastos como desconto neste agendamento (voltam se cancelar)
-  discountCents Int          @default(0) // desconto em R$ correspondente aos pontos usados
-  claimId      String?       @unique // lançamento que creditou os pontos (ao concluir)
-  createdAt    DateTime      @default(now())
-  confirmedAt  DateTime?
-  completedAt  DateTime?
-  canceledAt   DateTime?
-  canceledBy   String? // CUSTOMER ou OWNER
+  serviceName        String
+  durationMin        Int
+  priceCents         Int           @default(0)
+  partySize          Int?
+  note               String?
+  pointsAwarded      Int           @default(0)
+  pointsUsed         Int           @default(0) // pontos gastos como desconto neste agendamento (voltam se cancelar)
+  discountCents      Int           @default(0) // desconto em R$ correspondente aos pontos usados
+  claimId            String?       @unique // lançamento que creditou os pontos (ao concluir)
+  createdAt          DateTime      @default(now())
+  confirmedAt        DateTime?
+  completedAt        DateTime?
+  canceledAt         DateTime?
+  canceledBy         String? // CUSTOMER ou OWNER
   reminderSentAt     DateTime? // quando o "está tudo certo?" foi enviado
   reminderAnswer     String? // OK (confirmou presença) ou NO (liberou o horário); vazio = sem resposta
   reminderAnsweredAt DateTime?
@@ -953,7 +957,6 @@ model Review {
   @@index([reportedAt])
 }
 
-
 /// Indicação: o cliente posta a foto de um lugar onde tem carteira, com nota de 1 a 5 e um comentário.
 model Post {
   id           String    @id @default(uuid())
@@ -1010,4 +1013,36 @@ model PostReport {
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@index([postId])
+}
+
+/// Conversa entre um cliente e um estabelecimento (uma por par). As leituras guardam até quando cada lado já viu.
+model Conversation {
+  id               String    @id @default(uuid())
+  customerId       String
+  restaurantId     String
+  lastMessageAt    DateTime  @default(now())
+  customerReadAt   DateTime?
+  restaurantReadAt DateTime?
+  createdAt        DateTime  @default(now())
+
+  customer   Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  restaurant Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  messages   ChatMessage[]
+
+  @@unique([customerId, restaurantId])
+  @@index([restaurantId, lastMessageAt])
+  @@index([customerId, lastMessageAt])
+}
+
+/// Mensagem de texto. `sender` é CUSTOMER ou RESTAURANT.
+model ChatMessage {
+  id             String   @id @default(uuid())
+  conversationId String
+  sender         String
+  body           String
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
 }

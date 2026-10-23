@@ -65,6 +65,9 @@ export default function TermosEstabelecimentoPage() {
         Logos, fotos, nomes de produtos e textos que você enviar continuam sendo seus. Você declara ter o direito de usá-los e nos autoriza a exibi-los na plataforma para o funcionamento do serviço.
         Ao buscar fotos de produtos na internet, você é responsável por verificar se pode usá-las.
       </p>
+      <p>
+        Os clientes podem postar fotos e comentários marcando o seu negócio e trocar mensagens com você pelo app. Você vê as fotos, pode denunciar as que forem ofensivas ou de outro lugar (a administração decide) e deve tratar as mensagens com respeito e só usá-las para atender o cliente, sem enviar propaganda não pedida.
+      </p>
 
       <h2>10. Disponibilidade e suporte</h2>
       <p>

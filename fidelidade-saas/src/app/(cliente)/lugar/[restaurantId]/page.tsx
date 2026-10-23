@@ -28,6 +28,8 @@ import { promoActiveAt, promoBig, promoStatus, promoWhen } from '@/lib/promos';
 import { getCustomer } from '@/lib/session';
 import { displayName, formatAvg } from '@/lib/reviews';
 import { placeReviews, placeSummaries } from '@/lib/reviews-db';
+import { placePhotos } from '@/lib/posts-db';
+import { postPhotoPath } from '@/lib/posts';
 import { INTERACTION_COOLDOWN_DAYS, releaseText } from '@/lib/interaction-approval';
 import { settleDueInteractions } from '@/lib/interaction-claims';
 import { newReferralCode } from '@/lib/tokens';
@@ -85,7 +87,7 @@ export default async function LugarPage({
     prisma.menuItem.count({ where: { restaurantId, active: true } }),
   ]);
   // Último pedido "Já fiz" do cliente em cada interação deste lugar (para mostrar "em análise", "aprovado"…).
-  const [ratingMap, reviews] = await Promise.all([placeSummaries([restaurantId]), placeReviews(restaurantId, 10)]);
+  const [ratingMap, reviews, photos] = await Promise.all([placeSummaries([restaurantId]), placeReviews(restaurantId, 10), customer ? placePhotos(restaurantId, 6) : null]);
   const rating = ratingMap.get(restaurantId);
   const claimRows = customer ? await prisma.interactionClaim.findMany({ where: { customerId: customer.id, restaurantId }, orderBy: { createdAt: 'desc' }, take: 40 }) : [];
   const lastClaim = new Map<string, (typeof claimRows)[number]>();
@@ -195,6 +197,11 @@ export default async function LugarPage({
               <a href={directions} target="_blank" rel="noopener noreferrer" className="glass-button-ghost">
                 <Icon name="pin" size={17} /> Como chegar
               </a>
+            )}
+            {wallet && (
+              <Link href={`/mensagens/${restaurantId}`} className="glass-button-ghost" data-testid="chat-open">
+                <Icon name="chat" size={17} /> Conversar
+              </Link>
             )}
           </div>
         </section>
@@ -453,6 +460,31 @@ export default async function LugarPage({
                 </li>
               ))}
             </ul>
+          </CollapsibleSection>
+        )}
+
+        {/* Fotos dos clientes: o que os clientes postaram marcando este lugar */}
+        {photos && (photos.total > 0 || wallet) && (
+          <CollapsibleSection id="fotos" icon="camera" title="Fotos dos clientes" summary={photos.total > 0 ? `${photos.total} ${photos.total === 1 ? 'foto' : 'fotos'} de clientes` : 'Seja o primeiro a postar'} defaultOpen>
+            {photos.total > 0 ? (
+              <ul className="grid grid-cols-3 gap-1.5" data-testid="place-photos">
+                {photos.items.map((ph) => (
+                  <li key={ph.id} className="relative aspect-square overflow-hidden rounded-xl bg-slate-100">
+                    <Link href={`/indicacoes?lugar=${restaurantId}`} aria-label={`Foto de cliente, ${ph.rating} estrelas, ${ph.likes} curtidas`}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={postPhotoPath(ph.id)} alt="" loading="lazy" className="h-full w-full object-cover" />
+                      <span className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-slate-900/70 to-transparent px-1.5 pb-1 pt-4 text-[11px] font-bold text-white"><span>★ {ph.rating}</span><span>♥ {ph.likes}</span></span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-slate-600" data-testid="place-photos-empty">Ainda não há fotos de clientes aqui.</p>
+            )}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {photos.total > 0 && <Link href={`/indicacoes?lugar=${restaurantId}`} className="glass-button-ghost btn-sm !w-auto px-4" data-testid="place-photos-all">Ver todas as fotos</Link>}
+              {wallet && <Link href={`/indicacoes/nova?lugar=${restaurantId}`} className="glass-button-lime btn-sm !w-auto px-4" data-testid="place-photos-new"><Icon name="camera" size={15} /> Postar uma foto daqui</Link>}
+            </div>
           </CollapsibleSection>
         )}
 

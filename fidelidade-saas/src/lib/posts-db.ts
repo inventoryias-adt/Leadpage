@@ -135,3 +135,13 @@ export async function moderatePost(postId: string, action: 'hide' | 'keep') {
   if (done.count !== 1) throw new BusinessError('Indicação não encontrada ou sem denúncia.');
   if (action === 'keep') await prisma.postReport.deleteMany({ where: { postId } });
 }
+
+/** Fotos que os clientes postaram marcando o lugar (as mais novas primeiro) e quantas existem no total. */
+export async function placePhotos(restaurantId: string, take = 6) {
+  const where = { restaurantId, hiddenAt: null };
+  const [total, rows] = await Promise.all([
+    prisma.post.count({ where }),
+    prisma.post.findMany({ where, orderBy: { createdAt: 'desc' }, take, select: { id: true, rating: true, _count: { select: { likes: true } } } }),
+  ]);
+  return { total, items: rows.map((r) => ({ id: r.id, rating: r.rating, likes: r._count.likes })) };
+}
