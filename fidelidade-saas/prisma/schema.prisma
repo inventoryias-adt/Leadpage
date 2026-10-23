@@ -123,6 +123,9 @@ model Restaurant {
   longitude       Float?
   logoImageId     String?
   coverImageId    String?
+  brandColor      String? // chave de BRAND_COLORS (src/lib/palette.ts); vazio = marinho padrão
+  tagline         String? // slogan curto, mostrado sob o nome na página do lugar
+  about           String? // "Sobre nós", texto livre mostrado na página do lugar
 
   createdAt DateTime @default(now())
 

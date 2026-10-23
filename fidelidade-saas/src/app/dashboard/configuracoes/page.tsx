@@ -225,6 +225,9 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
             listed: restaurant.listed,
             logoUrl: imageUrl(restaurant.logoImageId),
             coverUrl: imageUrl(restaurant.coverImageId),
+            brandColor: restaurant.brandColor ?? '',
+            tagline: restaurant.tagline ?? '',
+            about: restaurant.about ?? '',
           }}
         />
       </Block>

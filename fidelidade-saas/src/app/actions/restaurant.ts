@@ -27,7 +27,7 @@ import { imageField, photoFromForm } from '@/lib/form-photo';
 import { describeChallenge } from '@/lib/challenges';
 import { applyPromos, endOfDayBR, promoBadge, startOfDayBR, parseTime } from '@/lib/promos';
 import { fail, type FormState } from '@/lib/form';
-import { isColorKey } from '@/lib/palette';
+import { BRAND_ABOUT_MAX, BRAND_TAGLINE_MAX, isBrandKey, isColorKey } from '@/lib/palette';
 import { cookies } from 'next/headers';
 import { UNIT_COOKIE, currentUnit } from '@/lib/units';
 
@@ -335,6 +335,9 @@ const identitySchema = z.object({
   category: z.string().trim().default(''),
   categoryOther: z.string().trim().max(60, 'Descreva o tipo de negócio em até 60 caracteres.').default(''),
   instagram: z.string().trim().default(''),
+  brandColor: z.string().trim().default(''),
+  tagline: z.string().trim().max(BRAND_TAGLINE_MAX, `O slogan pode ter até ${BRAND_TAGLINE_MAX} letras.`).default(''),
+  about: z.string().trim().max(BRAND_ABOUT_MAX, `O "Sobre nós" pode ter até ${BRAND_ABOUT_MAX} letras.`).default(''),
 });
 
 /** Aceita o link de avaliação do Google ou só o Place ID (ChIJ…), e devolve o link final. */
@@ -353,9 +356,12 @@ function normalizeGoogleReview(input: string): string | null | 'invalid' {
 
 export async function saveIdentity(_: FormState, formData: FormData): Promise<FormState> {
   const restaurant = await requirePaidRestaurant();
-  const parsed = identitySchema.parse(Object.fromEntries(formData));
+  const parsedId = identitySchema.safeParse(Object.fromEntries(formData));
+  if (!parsedId.success) return fail(firstIssue(parsedId.error), formData);
+  const parsed = parsedId.data;
 
   if (parsed.category && !isCategory(parsed.category)) return fail('Categoria inválida.', formData);
+  if (parsed.brandColor && !isBrandKey(parsed.brandColor)) return fail('Escolha uma das cores da lista.', formData);
 
   const instagram = parsed.instagram.replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/$/, '');
   if (instagram && !/^[A-Za-z0-9._]{1,30}$/.test(instagram)) return fail('Instagram inválido. Use só o @ do perfil (ex.: burgerdoze).', formData);
@@ -372,6 +378,9 @@ export async function saveIdentity(_: FormState, formData: FormData): Promise<Fo
         category: parsed.category || null,
         categoryOther: parsed.category === 'outros' && parsed.categoryOther ? parsed.categoryOther : null,
         instagram: instagram || null,
+        brandColor: parsed.brandColor && parsed.brandColor !== 'marinho' ? parsed.brandColor : null,
+        tagline: parsed.tagline.replace(/\s+/g, ' ') || null,
+        about: parsed.about.replace(/\r\n?/g, '\n').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n') || null, // o navegador manda quebra de linha como \r\n
         listed: formData.get('listed') === 'on',
         logoImageId,
         coverImageId,

@@ -30,6 +30,7 @@ import { displayName, formatAvg } from '@/lib/reviews';
 import { placeReviews, placeSummaries } from '@/lib/reviews-db';
 import { placePhotos } from '@/lib/posts-db';
 import { postPhotoPath } from '@/lib/posts';
+import { brandOf } from '@/lib/palette';
 import { INTERACTION_COOLDOWN_DAYS, releaseText } from '@/lib/interaction-approval';
 import { settleDueInteractions } from '@/lib/interaction-claims';
 import { newReferralCode } from '@/lib/tokens';
@@ -145,17 +146,18 @@ export default async function LugarPage({
       ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(unit.address)}`
       : null;
   const cover = imageUrl(restaurant.coverImageId);
+  const brand = brandOf(restaurant.brandColor);
   const here = `/lugar/${restaurantId}`;
 
   return (
-    <main>
+    <main className="brand-scope" style={{ ['--brand' as string]: brand.hex }}>
       {/* Capa */}
       <div className="relative h-44 w-full overflow-hidden bg-slate-200 sm:rounded-b-3xl md:mt-4 md:h-60 md:rounded-3xl">
         {cover ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={cover} alt="" className="h-full w-full object-cover" />
         ) : (
-          <div className="h-full w-full" style={{ background: 'linear-gradient(135deg, #0F1F3D 0%, #1A3FA3 100%)' }} />
+          <div className="h-full w-full" style={{ background: `linear-gradient(135deg, ${brand.hex} 0%, ${brand.deep} 100%)` }} />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/35 to-transparent" />
         <Link href="/lugares" aria-label="Voltar para Lugares" className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-lg bg-white/95 text-slate-800 shadow-sm transition-colors hover:bg-slate-100">
@@ -171,6 +173,7 @@ export default async function LugarPage({
             <div className="min-w-0">
               <h1 className="truncate text-xl font-extrabold tracking-tight text-slate-900">{restaurant.name}</h1>
               <p className="truncate text-sm text-slate-500">{[categoryLabel(restaurant.category, restaurant.categoryOther), multi ? unit?.name : null, unit?.address].filter(Boolean).join(' · ')}</p>
+              {restaurant.tagline && <p className="mt-0.5 text-sm font-semibold" style={{ color: brand.hex }} data-testid="place-tagline">{restaurant.tagline}</p>}
             </div>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
@@ -461,6 +464,13 @@ export default async function LugarPage({
               ))}
             </ul>
           </CollapsibleSection>
+        )}
+
+        {restaurant.about && (
+          <section aria-labelledby="sobre" data-testid="place-about">
+            <h2 id="sobre" className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Sobre nós</h2>
+            <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">{restaurant.about}</p>
+          </section>
         )}
 
         {/* Fotos dos clientes: o que os clientes postaram marcando este lugar */}

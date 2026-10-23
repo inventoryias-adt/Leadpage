@@ -181,6 +181,18 @@ body {
       background-color: #0b1b3a;
     }
   }
+  /* Página do lugar: o botão principal usa a cor da marca do estabelecimento (--brand definida no <main class="brand-scope">). */
+  .brand-scope .glass-button-navy {
+    border-color: var(--brand);
+    background-color: var(--brand);
+  }
+  @media (hover: hover) {
+    .brand-scope .glass-button-navy:not(:disabled):hover {
+      border-color: var(--brand);
+      background-color: var(--brand);
+      filter: brightness(0.9);
+    }
+  }
 
   /* Botão principal em destaque: lima da marca com texto marinho. */
   .glass-button-lime {

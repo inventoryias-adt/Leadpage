@@ -635,3 +635,10 @@ O servidor já impedia dois clientes no mesmo horário (cadeado por estabelecime
   - Regras puras (texto, não lidas, hora) em `src/lib/chat.ts`; banco em `chat-db.ts`; ações em `actions/chat.ts`. Termos do cliente (cláusula 10) e do estabelecimento (seção 9) citam as mensagens.
 - **Fotos dos clientes na página do lugar**: seção aberta por padrão com as 6 fotos mais novas (nota e curtidas em cada uma), "Ver todas as fotos" (o feed filtrado pelo lugar) e "Postar uma foto daqui" (a nova indicação já com o lugar marcado). As fotos escondidas pela moderação não aparecem. Marcar o lugar continua sendo escolher, na nova indicação, um dos lugares onde a pessoa tem carteira.
 - Testes: `chat.test.ts` (regras) e `e2e70` (galeria, chat nos dois sentidos, avisos e bolinhas, regras de acesso).
+
+## Perfil personalizado do estabelecimento (migration `0041_marca_do_lugar`)
+
+- Em **Regras → Seu negócio → Identidade da marca** o dono já escolhia logo e capa; agora também escolhe a **cor da marca** (9 cores fechadas em `BRAND_COLORS`, `src/lib/palette.ts`; o banco guarda só a chave, nunca um valor livre, e toda cor tem contraste bom com texto branco), um **slogan** (até 80 letras) e o **"Sobre nós"** (até 500). Uma prévia mostra como fica.
+- Na página do lugar (app do cliente) a cor pinta os botões principais (`.brand-scope` + `--brand`, em `globals.css`) e a capa quando não há foto; o slogan aparece sob o nome e o "Sobre nós" numa seção própria. Sem escolha vale o marinho padrão do Fidelize.
+- `BRAND_COLORS` é separada de `COLORS` de propósito: mexer em `COLORS` mudaria as cores automáticas de campanhas e profissionais. O servidor recusa chave fora da lista; o texto do "Sobre nós" é normalizado (o navegador manda `\r\n`).
+- Teste: `e2e71`.
