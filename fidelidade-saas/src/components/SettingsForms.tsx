@@ -10,6 +10,7 @@ import {
   finishOnboarding,
   saveBasics,
   saveCategory,
+  saveBirthdayPerkAction,
   saveEngagement,
   saveSharing,
   saveIdentity,
@@ -34,6 +35,7 @@ import { WebImageSearch } from './WebImageSearch';
 import { PreviewFrame } from './PreviewFrame';
 import { RewardImage, ProgressBar } from './Visual';
 import { formatPoints, formatPrice } from '@/lib/points';
+import { PERK_MODES, PERK_MODE_LABEL, PERK_TITLE_MAX, perkCondition, type PerkMode } from '@/lib/birthday-perk';
 import { FormMessage, SubmitButton } from './ui';
 
 type Basics = { name: string };
@@ -579,6 +581,77 @@ export function EngagementForm({ defaults }: { defaults: { checkInPoints: number
       <p className="text-xs text-slate-500">Cada item tem a sua chave: desligado, o cliente não vê nem ganha esses pontos. Quem informou o aniversário e tem carteira aqui ganha o presente.</p>
       {ci.on ? <RadiusSlider initial={radius} /> : <input type="hidden" name="checkInRadiusM" value={radius} />}
       <FormMessage state={state} />
+    </form>
+  );
+}
+
+/** Presente do aniversariante: o que o lugar dá a quem faz aniversário e como (grátis, trocando por pontos ou ao consumir um valor). */
+export function BirthdayPerkForm({ defaults }: { defaults: { on: boolean; title: string; mode: PerkMode; points: number; minCents: number } }) {
+  const [state, action] = useActionState(saveBirthdayPerkAction, {});
+  const v = state.values;
+  const [on, setOn] = useState(v ? v.on === 'on' : defaults.on);
+  const [title, setTitle] = useState(v?.title ?? defaults.title);
+  const [mode, setMode] = useState<PerkMode>(((PERK_MODES as readonly string[]).includes(v?.mode ?? '') ? v?.mode : defaults.mode) as PerkMode);
+  const [points, setPoints] = useState(v?.points ?? (defaults.points > 0 ? String(defaults.points) : ''));
+  const [min, setMin] = useState(v?.min ?? (defaults.minCents > 0 ? (defaults.minCents / 100).toFixed(2).replace('.', ',') : ''));
+  const option = 'flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-3.5 transition-colors hover:border-slate-300 has-[:checked]:border-electric-500 has-[:checked]:bg-[#F3F6FD]';
+  const minCents = Math.round(Number(min.replace(/\./g, '').replace(',', '.')) * 100) || 0;
+  const preview = title.trim() ? `${title.trim()} · ${perkCondition({ mode, points: Number(points) || 0, minCents })}` : null;
+  return (
+    <form action={action} className="space-y-4">
+      {on && <input type="hidden" name="on" value="on" />}
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-semibold text-slate-800">Dar um presente a quem faz aniversário</p>
+          <p className="text-xs text-slate-500">No dia, o cliente vê o seu presente em Lugares e na página do seu lugar, e pega o cupom. Um por cliente a cada ano.</p>
+        </div>
+        <Switch id="bp-on" on={on} label={`${on ? 'Desligar' : 'Ligar'} o presente do aniversariante`} onChange={setOn} />
+      </div>
+
+      {on && (
+        <>
+          <div>
+            <label className="glass-label" htmlFor="bp-title">O que o aniversariante ganha</label>
+            <input id="bp-title" name="title" className="glass-input" maxLength={PERK_TITLE_MAX} placeholder="Ex.: Sobremesa grátis, Chopp em dobro, 10% no corte" value={title} onChange={(e) => setTitle(e.target.value)} autoComplete="off" required />
+          </div>
+          <fieldset className="space-y-2">
+            <legend className="glass-label">Como o cliente ganha</legend>
+            {PERK_MODES.map((m) => (
+              <label key={m} className={option}>
+                <input type="radio" name="mode" value={m} checked={mode === m} onChange={() => setMode(m)} className="mt-1 h-4 w-4 shrink-0 accent-electric-500" />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold text-slate-800">{PERK_MODE_LABEL[m]}</span>
+                  <span className="block text-sm text-slate-500">
+                    {m === 'FREE' && 'É só mostrar o cupom no balcão.'}
+                    {m === 'POINTS' && 'O cliente usa os pontos que já tem aqui para pegar o presente.'}
+                    {m === 'SPEND' && 'O presente vale quando a conta chega a esse valor (e os pontos da compra entram normalmente).'}
+                  </span>
+                  {m === 'POINTS' && mode === 'POINTS' && (
+                    <span className="mt-2 flex items-center gap-2">
+                      <input id="bp-points" name="points" inputMode="numeric" className="glass-input !w-32" placeholder="300" value={points} onChange={(e) => setPoints(e.target.value.replace(/\D/g, '').slice(0, 6))} aria-label="Pontos para pegar o presente" required />
+                      <span className="text-sm text-slate-500">pontos</span>
+                    </span>
+                  )}
+                  {m === 'SPEND' && mode === 'SPEND' && (
+                    <span className="mt-2 flex items-center gap-2">
+                      <span className="text-sm text-slate-500">R$</span>
+                      <input id="bp-min" name="min" inputMode="decimal" className="glass-input !w-32" placeholder="50,00" value={min} onChange={(e) => setMin(e.target.value.replace(/[^\d.,]/g, '').slice(0, 9))} aria-label="Consumo mínimo em reais" required />
+                      <span className="text-sm text-slate-500">ou mais</span>
+                    </span>
+                  )}
+                </span>
+              </label>
+            ))}
+          </fieldset>
+          {preview && (
+            <p className="rounded-xl bg-[#F3F6FD] px-3.5 py-2.5 text-sm text-slate-700" data-testid="perk-preview">
+              <span className="font-semibold text-primary">Como o cliente vê:</span> 🎂 {preview}
+            </p>
+          )}
+        </>
+      )}
+      <FormMessage state={state} />
+      <SubmitButton pendingText="Salvando…" className="btn-sm">Salvar</SubmitButton>
     </form>
   );
 }

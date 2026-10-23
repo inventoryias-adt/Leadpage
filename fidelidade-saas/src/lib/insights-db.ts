@@ -17,7 +17,7 @@ export type CustomerRow = {
 /** Carteiras do estabelecimento com compras, última compra e segmentos (novos, fiéis, quase lá, sumidos). */
 export async function loadCustomerRows(restaurantId: string, now: Date = new Date()) {
   const [cheapest, wallets, stats] = await Promise.all([
-    prisma.reward.findFirst({ where: { restaurantId, active: true }, orderBy: { pointsCost: 'asc' }, select: { pointsCost: true } }),
+    prisma.reward.findFirst({ where: { restaurantId, active: true, birthdayOnly: false }, orderBy: { pointsCost: 'asc' }, select: { pointsCost: true } }),
     prisma.wallet.findMany({
       where: { restaurantId },
       select: { id: true, customerId: true, balance: true, createdAt: true, customer: { select: { name: true, phone: true } } },

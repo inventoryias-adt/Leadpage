@@ -14,6 +14,8 @@ import { isCategory } from '@/lib/categories';
 import { validCoords } from '@/lib/geo';
 import { UFS, cepDigits, composeAddress } from '@/lib/address';
 import { BusinessError, creditClaimWith } from '@/lib/claims';
+import { parsePerkConfig } from '@/lib/birthday-perk';
+import { saveBirthdayPerk } from '@/lib/birthday-perk-db';
 import { looksLikeAccountCode, normalizeAccountCode } from '@/lib/account-code';
 import { APPROVALS } from '@/lib/interaction-approval';
 import { decideInteraction } from '@/lib/interaction-claims';
@@ -320,7 +322,7 @@ export async function finishOnboarding(_: FormState, __: FormData): Promise<Form
   if (!units.some((u) => u.address && parseSchedule(u.openingSchedule))) {
     return { error: 'Preencha e salve o endereço e os horários de funcionamento da unidade.' };
   }
-  if (!(await prisma.reward.count({ where: { restaurantId: restaurant.id, active: true } }))) {
+  if (!(await prisma.reward.count({ where: { restaurantId: restaurant.id, active: true, birthdayOnly: false } }))) {
     return { error: 'Cadastre pelo menos um produto resgatável para seus clientes.' };
   }
   await prisma.restaurant.update({ where: { id: restaurant.id }, data: { onboardedAt: new Date() } });
@@ -416,6 +418,18 @@ export async function saveEngagement(_: FormState, formData: FormData): Promise<
   await prisma.restaurant.update({ where: { id: restaurant.id }, data: parsed.data });
   revalidatePath('/dashboard', 'layout');
   return { ok: 'Salvo.' };
+}
+
+/** Presente do aniversariante (item ou benefício do lugar): liga/desliga, o que é e como o cliente ganha. */
+export async function saveBirthdayPerkAction(_: FormState, formData: FormData): Promise<FormState> {
+  const restaurant = await requirePaidRestaurant();
+  const parsed = parsePerkConfig({ on: formData.get('on'), title: formData.get('title'), mode: formData.get('mode'), points: formData.get('points'), min: formData.get('min') });
+  if (!parsed.ok) return fail(parsed.error, formData);
+  await saveBirthdayPerk(restaurant.id, parsed.value);
+  revalidatePath('/dashboard', 'layout');
+  revalidatePath('/lugares');
+  revalidatePath(`/lugar/${restaurant.id}`);
+  return { ok: parsed.value.on ? 'Presente de aniversário salvo.' : 'Presente de aniversário desligado.' };
 }
 
 // ---------------------------------------------------------------- Pontos compartilhados

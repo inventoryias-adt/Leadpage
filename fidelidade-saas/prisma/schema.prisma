@@ -89,6 +89,12 @@ model Restaurant {
   checkInRadiusM     Int @default(10) // distância máxima (m) do ponto da unidade para o check-in valer; o cliente nunca vê esse número
   referralPoints     Int @default(100) // pontos para quem indica um amigo que compra (0 desliga)
   birthdayPoints     Int @default(0) // presente de pontos no aniversário do cliente (0 desliga)
+  // Presente do aniversariante (um item ou benefício do lugar, resgatado com cupom no dia do aniversário do cliente)
+  birthdayPerkOn       Boolean @default(false)
+  birthdayPerkTitle    String? // ex.: "Sobremesa grátis"
+  birthdayPerkMode     String  @default("FREE") // FREE (grátis), POINTS (troca por pontos) ou SPEND (ao consumir um valor mínimo)
+  birthdayPerkPoints   Int     @default(0) // custo em pontos (modo POINTS)
+  birthdayPerkMinCents Int     @default(0) // consumo mínimo em centavos (modo SPEND)
 
   // Agenda e reservas
   bookingAutoConfirm  Boolean @default(true) // false: o estabelecimento confirma cada pedido
@@ -199,6 +205,7 @@ model Reward {
   description  String?
   pointsCost   Int
   cashCents    Int      @default(0) // valor em R$ cobrado no balcão junto com os pontos (0 = só pontos)
+  birthdayOnly Boolean  @default(false) // prêmio criado pelo "presente do aniversariante": fora das listas de prêmios, só resgatável no aniversário
   imageId      String?
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())

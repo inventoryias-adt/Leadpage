@@ -1,4 +1,5 @@
 import type { SavedAddress } from '@/app/actions/location';
+import { BirthdayBanner } from '@/components/BirthdayBanner';
 import { Brand } from '@/components/Brand';
 import { Reveal } from '@/components/Reveal';
 import { PlacesExplorer, type PlaceCard, type PlaceOffer } from '@/components/PlacesExplorer';
@@ -7,6 +8,8 @@ import { cashbackPct } from '@/lib/points-discount';
 import { offerEndText, promoActive } from '@/lib/orders';
 import { CATEGORIES, CATEGORY_HINT, categoryLabel } from '@/lib/categories';
 import { savedText } from '@/lib/customer-location';
+import { isBirthdayToday, perkCondition } from '@/lib/birthday-perk';
+import { perkPlaces } from '@/lib/birthday-perk-db';
 import { prisma } from '@/lib/db';
 import { isOpenNow, parseSchedule } from '@/lib/hours';
 import { imageUrl } from '@/lib/images';
@@ -16,8 +19,12 @@ import { getCustomer } from '@/lib/session';
 export const metadata = { title: 'Lugares' };
 export const dynamic = 'force-dynamic';
 
-export default async function LugaresPage() {
+export default async function LugaresPage({ searchParams }: { searchParams: Promise<{ filtro?: string }> }) {
   const customer = await getCustomer();
+  const sp = await searchParams;
+  const birthday = !!customer && isBirthdayToday(customer);
+  const perks = birthday ? await perkPlaces() : [];
+  const perkOf = new Map(perks.map((p) => [p.id, `${p.birthdayPerkTitle} · ${perkCondition({ mode: p.birthdayPerkMode, points: p.birthdayPerkPoints, minCents: p.birthdayPerkMinCents })}`]));
 
   const [restaurants, wallets, addresses] = await Promise.all([
     prisma.restaurant.findMany({
@@ -37,7 +44,7 @@ export default async function LugaresPage() {
           orderBy: { createdAt: 'asc' },
           select: { id: true, name: true, address: true, latitude: true, longitude: true, openingSchedule: true, googleReviewUrl: true },
         },
-        rewards: { where: { active: true }, select: { pointsCost: true }, orderBy: { pointsCost: 'asc' }, take: 1 },
+        rewards: { where: { active: true, birthdayOnly: false }, select: { pointsCost: true }, orderBy: { pointsCost: 'asc' }, take: 1 },
         checkInPoints: true,
         referralPoints: true,
         promotions: { where: { active: true, OR: [{ endsAt: null }, { endsAt: { gt: new Date() } }] } },
@@ -86,6 +93,7 @@ export default async function LugaresPage() {
       minReward: r.rewards[0]?.pointsCost ?? null,
       challenges: r.challenges.length,
       rating: ratings.get(r.id) ?? null,
+      birthdayPerk: perkOf.get(r.id) ?? null,
       campaigns: buildCampaigns(r.id, {
         challenges: r.challenges,
         checkInPoints: r.checkInPoints,
@@ -105,7 +113,8 @@ export default async function LugaresPage() {
         <div className="md:hidden"><Brand href="/carteira" /></div>
         <h1 className="mt-5 text-2xl font-extrabold md:mt-0 md:text-3xl tracking-tight text-primary">Lugares</h1>
       </Reveal>
-      <PlacesExplorer places={places} categories={CATEGORIES.map((c) => ({ value: c.value, label: c.label, hint: CATEGORY_HINT[c.value] }))} loggedIn={!!customer} savedAddresses={savedAddresses} />
+      {birthday && <div className="mb-4"><BirthdayBanner name={customer!.name.split(' ')[0]} places={perks} /></div>}
+      <PlacesExplorer birthdayToday={birthday} initialFilter={birthday && sp.filtro === 'aniversario' ? 'aniversario' : undefined} places={places} categories={CATEGORIES.map((c) => ({ value: c.value, label: c.label, hint: CATEGORY_HINT[c.value] }))} loggedIn={!!customer} savedAddresses={savedAddresses} />
     </main>
   );
 }

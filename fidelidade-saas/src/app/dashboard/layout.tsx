@@ -40,7 +40,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const guide = paid
     ? await Promise.all([
         prisma.unit.findMany({ where: { restaurantId: restaurant.id, active: true }, select: { address: true, openingSchedule: true } }),
-        prisma.reward.count({ where: { restaurantId: restaurant.id, active: true } }),
+        prisma.reward.count({ where: { restaurantId: restaurant.id, active: true, birthdayOnly: false } }),
         prisma.promotion.count({ where: { restaurantId: restaurant.id } }),
       ])
     : null;

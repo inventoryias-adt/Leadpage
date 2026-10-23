@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { BookingForm } from '@/components/BookingForm';
+import { DatePick } from '@/components/DatePick';
 import { LiveRefresh } from '@/components/LiveRefresh';
 import { RescheduleForm } from '@/components/RescheduleForm';
 import { joinWaitingList, leaveWaitingList } from '@/app/actions/booking';
@@ -10,7 +11,7 @@ import { PlaceAvatar } from '@/components/Visual';
 import { formatAvg } from '@/lib/reviews';
 import { staffSummaries } from '@/lib/reviews-db';
 import { imageUrl } from '@/lib/images';
-import { WAIT_PERIODS, addDaysKey, bookingPoints, canCustomerCancel, dayOccupancy, formatBookingWhen, parseDateKey, slotHref, todayKey, weekdayOf } from '@/lib/booking';
+import { WAIT_PERIODS, addDaysKey, bookingPoints, canCustomerCancel, dayOccupancy, openWaitPeriods, formatBookingWhen, parseDateKey, slotHref, todayKey, weekdayOf } from '@/lib/booking';
 import { alternativeSlots, ensureDefaultService, firstFreeSlots, slotsForDay, staffFor, waitPosition } from '@/lib/booking-db';
 import { prisma } from '@/lib/db';
 import { DAY_SHORT, parseSchedule } from '@/lib/hours';
@@ -140,6 +141,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
   const hrefBase = url({ data: undefined, hora: undefined });
   // Lista de espera: dia que o lugar atende mas sem horário livre. Quem já pediu vê a posição na fila.
   const dayOpen = dayOccupancy({ date, schedule, resources: prof ? [prof] : staff, bookings: [], timeOffs: [] }).capacityMin > 0;
+  const waitPeriods = openWaitPeriods({ date, schedule, durationMin: service.durationMin, now, minNoticeMin: restaurant.bookingMinNoticeMin });
   const waitEntry = customer && !rb ? await prisma.waitlistEntry.findFirst({ where: { customerId: customer.id, restaurantId, serviceId: service.id, date, status: 'WAITING' } }) : null;
   const waitAt = waitEntry ? await waitPosition(waitEntry) : 0;
   const waitFields = { restaurantId, serviceId: service.id, unitId: unit.id, resourceId: prof?.id ?? '', date };
@@ -229,15 +231,9 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
           })}
         </ul>
         {restaurant.bookingMaxDaysAhead > 13 && (
-          <form method="get" action={base} className="mt-3 flex flex-wrap items-end gap-2">
-            {service && <input type="hidden" name="servico" value={service.id} />}
-            {units.length > 1 && <input type="hidden" name="unidade" value={unit.id} />}
-            <div>
-              <label className="glass-label" htmlFor="bk-date">Outra data</label>
-              <input id="bk-date" name="data" type="date" min={today} max={maxKey} defaultValue={date} className="glass-input !w-auto" />
-            </div>
-            <button className="glass-button-ghost btn-sm">Ver horários</button>
-          </form>
+          <div className="mt-3" data-testid="other-date">
+            <DatePick id="bk-date" label="Outra data" value={date} min={today} max={maxKey} hrefBase={hrefBase} />
+          </div>
         )}
       </section>
 
@@ -287,7 +283,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
           </form>
         </section>
       )}
-      {!waitEntry && !rb && slots.length === 0 && dayOpen && (
+      {!waitEntry && !rb && slots.length === 0 && dayOpen && waitPeriods.length > 0 && (
         <section aria-labelledby="espera" data-testid="waitlist-offer" className="space-y-3 rounded-[22px] border border-dashed border-electric-500/50 bg-white p-4">
           <div>
             <h2 id="espera" className="flex items-center gap-2 text-base font-bold text-primary"><Icon name="bell" size={18} className="text-electric-600" /> Dia lotado? Entre na lista de espera</h2>
@@ -298,8 +294,8 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
               {Object.entries(waitFields).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
               <div>
                 <label className="glass-label" htmlFor="wait-period">Qual faixa de horário?</label>
-                <select id="wait-period" name="period" className="glass-input !w-auto" defaultValue="ANY">
-                  {Object.entries(WAIT_PERIODS).map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+                <select id="wait-period" name="period" className="glass-input !w-auto" defaultValue={waitPeriods[0]}>
+                  {Object.entries(WAIT_PERIODS).filter(([k]) => (waitPeriods as string[]).includes(k)).map(([k, label]) => <option key={k} value={k}>{label}</option>)}
                 </select>
               </div>
               <button className="glass-button-navy btn-sm" data-testid="waitlist-join">Avisar-me se abrir</button>

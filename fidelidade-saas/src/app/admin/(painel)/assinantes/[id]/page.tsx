@@ -35,7 +35,7 @@ export default async function Ficha({ params }: { params: Promise<{ id: string }
 
   const [customers, rewards, promos, challenges, month, recent, logs] = await Promise.all([
     prisma.wallet.count({ where: { restaurantId: id } }),
-    prisma.reward.count({ where: { restaurantId: id, active: true } }),
+    prisma.reward.count({ where: { restaurantId: id, active: true, birthdayOnly: false } }),
     prisma.promotion.count({ where: { restaurantId: id, active: true } }),
     prisma.challenge.count({ where: { restaurantId: id, active: true } }),
     prisma.claim.aggregate({ where: { restaurantId: id, redeemedAt: { gte: since } }, _sum: { points: true, amountCents: true }, _count: true }),

@@ -587,3 +587,10 @@ O servidor já impedia dois clientes no mesmo horário (cadeado por estabelecime
 - **Administração:** `/admin/avaliacoes` lista as denúncias; **Ocultar** tira do app e da média, **Manter** encerra a denúncia. Tudo fica no Registro.
 - Regras puras em `src/lib/reviews.ts` (testadas em `reviews.test.ts`), banco em `src/lib/reviews-db.ts`, teste de tela `e2e63`.
 - **Produção:** aplicar a migration `0037` (tabela `Review`, com RLS ligado e sem acesso para `anon`/`authenticated`) antes do deploy.
+
+## Presente do aniversariante (migration `0038_presente_aniversariante`)
+
+- **Dono** (Regras → "Presente do aniversariante"): liga a chave, escreve o que o aniversariante ganha e escolhe como: **grátis**, **trocando por N pontos** ou **ao consumir R$ X ou mais** (a condição entra no nome do cupom). Campos em `Restaurant.birthdayPerk*`; salvar cria/atualiza um `Reward` oculto (`birthdayOnly = true`) que fica fora de todas as listas de prêmios, contagens e do resgate comum.
+- **Cliente**: no dia do aniversário (relógio de Brasília; 29/02 vale em 28/02 nos anos não bissextos) aparece **"Feliz aniversário"** no Início e em Lugares, com os lugares que têm presente (selo "Presente de aniversário" e filtro `?filtro=aniversario`). Na página do lugar, o botão **Quero meu presente** gera o cupom (`Redemption`) e leva para a carteira; o dono dá baixa em Resgates como qualquer prêmio.
+- **Regras**: um por cliente, lugar e ano; só vale no dia; no modo pontos usa o saldo do cliente naquele lugar; não existe multiplicador — os pontos da compra continuam sendo somados normalmente. Lógica em `redeemItems` (`src/lib/claims.ts`, opção `birthday`), regras puras em `src/lib/birthday-perk.ts`, banco em `src/lib/birthday-perk-db.ts`.
+- Testes: `src/lib/birthday-perk.test.ts` e `e2e64` (config pelo dono, banner, selo/filtro, cupom, baixa, segundo resgate bloqueado, "faltam N pontos", nada aparece fora do dia).

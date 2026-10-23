@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { addDaysKey, availableSlots, bookingPoints, canCustomerCancel, dateKeyOf, dayStartUtc, formatBookingWhen, formatTimeOff, guestOf, hmOf, inPeriod, dayOccupancy, occupancyPct, parseDateKey, pickResource, timeOffBusy, timeOffRange, weekdayOf, withBuffer, type SlotInput } from './booking';
+import { addDaysKey, availableSlots, bookingPoints, canCustomerCancel, dateKeyOf, dayStartUtc, formatBookingWhen, formatTimeOff, guestOf, hmOf, inPeriod, openWaitPeriods, dayOccupancy, occupancyPct, parseDateKey, pickResource, timeOffBusy, timeOffRange, weekdayOf, withBuffer, type SlotInput } from './booking';
 import type { Schedule } from './hours';
 
 const week = (open: string, close: string, closedDays: number[] = []): Schedule => Array.from({ length: 7 }, (_, day) => ({ day, closed: closedDays.includes(day), open, close }));
@@ -247,4 +247,19 @@ test('ocupação do dia: escala do profissional, dia fechado e vagas simultânea
   // Reservas além da capacidade não passam de 100%.
   const crowded = dayOccupancy({ date: '2026-10-12', schedule: week('09:00', '10:00'), resources: [{ id: 'r', capacity: 1 }], bookings: [{ resourceId: 'r', startsAt: at('08:00'), endsAt: at('12:00') }], timeOffs: [] });
   assert.equal(occupancyPct(crowded), 100);
+});
+
+test('openWaitPeriods: hoje só valem as faixas que ainda não terminaram', () => {
+  const schedule = Array.from({ length: 7 }, (_, day) => ({ day, closed: false, open: '10:00', close: '22:00' }));
+  const at = (iso: string) => new Date(iso);
+  // 21:22 em Brasília, serviço de 35 min, antecedência 60 min: já não cabe mais nada hoje
+  assert.deepEqual(openWaitPeriods({ date: '2026-10-22', schedule, durationMin: 35, now: at('2026-10-23T00:22:00Z'), minNoticeMin: 60 }), []);
+  // 13:00: a manhã passou; tarde, noite e "qualquer" continuam
+  assert.deepEqual(openWaitPeriods({ date: '2026-10-22', schedule, durationMin: 30, now: at('2026-10-22T16:00:00Z'), minNoticeMin: 60 }), ['ANY', 'AFTERNOON', 'EVENING']);
+  // 17:30: com 60 min de antecedência a tarde (até 18h) acabou; sobra a noite
+  assert.deepEqual(openWaitPeriods({ date: '2026-10-22', schedule, durationMin: 30, now: at('2026-10-22T20:30:00Z'), minNoticeMin: 60 }), ['ANY', 'EVENING']);
+  // dia futuro: todas as faixas; lugar que fecha ao meio-dia não tem tarde nem noite
+  assert.deepEqual(openWaitPeriods({ date: '2026-10-24', schedule, durationMin: 30, now: at('2026-10-22T16:00:00Z'), minNoticeMin: 60 }), ['ANY', 'MORNING', 'AFTERNOON', 'EVENING']);
+  const manha = schedule.map((d) => ({ ...d, close: '12:00' }));
+  assert.deepEqual(openWaitPeriods({ date: '2026-10-24', schedule: manha, durationMin: 30, now: at('2026-10-22T16:00:00Z'), minNoticeMin: 60 }), ['ANY', 'MORNING']);
 });

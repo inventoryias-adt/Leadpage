@@ -11,7 +11,7 @@ export async function affordableRewards(customerId: string, opts: { perPlace?: n
   const lists = await Promise.all(
     wallets.map(async (w) => {
       const rewards = await prisma.reward.findMany({
-        where: { restaurantId: w.restaurant.id, active: true, pointsCost: { lte: w.balance } },
+        where: { restaurantId: w.restaurant.id, active: true, birthdayOnly: false, pointsCost: { lte: w.balance } },
         orderBy: { pointsCost: 'desc' },
         take: opts.perPlace ?? 4,
       });
@@ -49,7 +49,7 @@ export async function nextReward(customerId: string) {
   const found = await Promise.all(
     wallets.map(async (w) => {
       const reward = await prisma.reward.findFirst({
-        where: { restaurantId: w.restaurant.id, active: true, pointsCost: { gt: w.balance } },
+        where: { restaurantId: w.restaurant.id, active: true, birthdayOnly: false, pointsCost: { gt: w.balance } },
         orderBy: { pointsCost: 'asc' },
         select: { name: true, pointsCost: true },
       });

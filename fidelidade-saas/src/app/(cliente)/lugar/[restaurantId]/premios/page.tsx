@@ -33,7 +33,7 @@ export default async function PremiosPage({ params }: { params: Promise<{ restau
         units: { where: { active: true }, orderBy: { createdAt: 'asc' }, select: { name: true, openingSchedule: true } },
       },
     }),
-    prisma.reward.findMany({ where: { restaurantId, active: true }, orderBy: { pointsCost: 'asc' } }),
+    prisma.reward.findMany({ where: { restaurantId, active: true, birthdayOnly: false }, orderBy: { pointsCost: 'asc' } }),
     ofWallet ? prisma.wallet.findUnique({ where: { customerId_restaurantId: ofWallet } }) : null,
     ofWallet ? prisma.redemption.count({ where: { ...ofWallet, createdAt: { gte: startOfMonthBR() } } }) : 0,
     customer
