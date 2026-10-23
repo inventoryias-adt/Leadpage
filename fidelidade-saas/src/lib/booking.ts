@@ -249,6 +249,29 @@ export function inPeriod(time: string, period: string): boolean {
   return true;
 }
 
+/** Minutos (desde a meia-noite) de cada faixa da lista de espera; a última não tem fim. */
+const PERIOD_RANGE: Record<WaitPeriod, [number, number]> = { ANY: [0, Infinity], MORNING: [0, 12 * 60], AFTERNOON: [12 * 60, 18 * 60], EVENING: [18 * 60, Infinity] };
+
+/**
+ * Faixas da lista de espera que ainda fazem sentido: hoje, quem já passou do meio-dia não pede "manhã"; passado o expediente
+ * (ou o último horário que ainda cabe o serviço, já com a antecedência mínima) nenhuma faixa vale. Dias futuros: todas as faixas
+ * em que o lugar atende.
+ */
+export function openWaitPeriods(input: { date: string; schedule: Schedule | null; durationMin: number; now: Date; minNoticeMin: number }): WaitPeriod[] {
+  const { date, schedule, durationMin, now, minNoticeMin } = input;
+  if (!parseDateKey(date) || !schedule) return [];
+  const win = windowOf(schedule, weekdayOf(date));
+  if (!win) return [];
+  const base = dayStartUtc(date).getTime();
+  const earliest = Math.max(win.open, Math.ceil((now.getTime() + minNoticeMin * 60_000 - base) / 60_000));
+  const latest = win.close - durationMin; // último começo possível
+  if (earliest > latest) return [];
+  return (Object.keys(PERIOD_RANGE) as WaitPeriod[]).filter((k) => {
+    const [from, to] = PERIOD_RANGE[k];
+    return Math.max(earliest, from) <= Math.min(latest, to - 1);
+  });
+}
+
 export type OccupancyInput = {
   date: string;
   schedule: Schedule | null; // horário da unidade

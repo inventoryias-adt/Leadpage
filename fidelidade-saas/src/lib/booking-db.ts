@@ -2,7 +2,7 @@ import 'server-only';
 import type { Prisma } from '@prisma/client';
 import { prisma } from './db';
 import { BusinessError, creditClaimWith } from './claims';
-import { REMINDER_LEAD_MIN, REMINDER_MIN_AHEAD_MIN, availableSlots, bookingPoints, canCustomerCancel, dateKeyOf, dayOccupancy, dayStartUtc, inPeriod, isWaitPeriod, formatBookingWhen, guestOf, hmOf, addDaysKey, timeOffBusy, withBuffer, nearestSlots, parseDateKey, pickResource, reminderDue, todayKey, type BusyRange, type Slot } from './booking';
+import { REMINDER_LEAD_MIN, REMINDER_MIN_AHEAD_MIN, availableSlots, bookingPoints, canCustomerCancel, dateKeyOf, dayOccupancy, dayStartUtc, inPeriod, isWaitPeriod, openWaitPeriods, formatBookingWhen, guestOf, hmOf, addDaysKey, timeOffBusy, withBuffer, nearestSlots, parseDateKey, pickResource, reminderDue, todayKey, type BusyRange, type Slot } from './booking';
 import { suggestsBooking } from './categories';
 import { parseSchedule } from './hours';
 import { sendEmail } from './mailer';
@@ -778,6 +778,9 @@ export async function joinWaitlist(customerId: string, input: WaitInput) {
       if (staff.length === 0) throw new BusinessError('Esse profissional não atende este serviço.');
       const open = dayOccupancy({ date: input.date, schedule: parseSchedule(unit.openingSchedule), resources: staff, bookings: [], timeOffs: [] });
       if (open.capacityMin <= 0) throw new BusinessError('O lugar não atende nesse dia.');
+      const usable = openWaitPeriods({ date: input.date, schedule: parseSchedule(unit.openingSchedule), durationMin: service.durationMin, now: new Date(), minNoticeMin: restaurant.bookingMinNoticeMin });
+      if (usable.length === 0) throw new BusinessError('Já não há mais horário possível neste dia. Escolha outro dia.');
+      if (!usable.includes(input.period as (typeof usable)[number])) throw new BusinessError('Essa faixa de horário já passou. Escolha uma faixa que ainda não terminou.');
       const { slots } = await slotsForDay(tx, { restaurantId: restaurant.id, policy: restaurant, service, unit, date: input.date, resourceId, customerId });
       if (slots.some((s) => inPeriod(s.time, input.period))) throw new BusinessError('Ainda há horário livre nessa faixa. Escolha direto na lista de horários.');
 
