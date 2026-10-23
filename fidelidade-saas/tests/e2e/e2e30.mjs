@@ -71,6 +71,8 @@ for (const path of ['/carteira', '/lugares', '/perfil']) {
   const total = await a.locator('main .rv').count();
   assert.ok(total >= 3, path + ' tem blocos animados');
   for (let y = 0; y < (await a.evaluate(() => document.documentElement.scrollHeight)); y += 400) { await a.evaluate((y) => scrollTo(0, y), y); await a.waitForTimeout(80); }
+  // segunda passada, de baixo para cima: a altura da página pode crescer enquanto o conteúdo carrega
+  for (let y = await a.evaluate(() => document.documentElement.scrollHeight); y >= 0; y -= 400) { await a.evaluate((y) => scrollTo(0, y), y); await a.waitForTimeout(80); }
   await a.waitForTimeout(1000);
   assert.equal(await a.locator('main .rv:not([data-in])').count(), 0, path + ': tudo entra ao rolar');
   assert.equal(await a.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, path + ' sem rolagem lateral');

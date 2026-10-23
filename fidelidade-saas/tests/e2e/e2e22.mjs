@@ -100,7 +100,12 @@ console.log('4. cliente escolhe o Lucas: folgas fechadas, horários só na escal
 await l.goto(`${BASE}/lugar/${rid}/agendar?servico=${corte}`); await l.waitForSelector('text=Com quem?');
 // O Lucas trabalha de terça a sexta: escolhe um desses dias (o primeiro depois de hoje pode ser sábado ou domingo, quando só a Ana está livre e a tela já a escolhe sozinha).
 const links5 = l.locator('section[aria-labelledby=dia] ul.chip-row li a');
-for (let i = 0, n = await links5.count(); i < n; i++) { if (/^(Ter|Qua|Qui|Sex)\b/.test(await links5.nth(i).innerText())) { await links5.nth(i).click(); break; } }
+for (let i = 0, n = await links5.count(); i < n; i++) {
+  if (/^(Ter|Qua|Qui|Sex)\b/.test(await links5.nth(i).innerText())) {
+    const data = new URL(await links5.nth(i).getAttribute('href'), BASE).searchParams.get('data');
+    await links5.nth(i).click(); await l.waitForURL((u) => u.searchParams.get('data') === data); break; // depois do expediente a tela já abre no dia seguinte: espera o dia escolhido de fato
+  }
+}
 await l.waitForSelector('section[aria-labelledby=dia] a[aria-current=date]:not(:has-text("Hoje"))');
 await l.click('ul.grid a:has-text("11:00")'); await l.waitForSelector('text=Livres neste horário');
 const free = await l.locator('section[aria-labelledby=confirmar] ul a').allInnerTexts();
