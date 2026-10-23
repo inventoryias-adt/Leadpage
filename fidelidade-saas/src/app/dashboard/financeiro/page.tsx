@@ -43,7 +43,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
 
       <nav className="glass-panel-sm flex items-center justify-between !rounded-2xl px-3 py-2" aria-label="Mês">
         <Link href={`/dashboard/financeiro?mes=${prev}`} className="px-3 py-1 text-xl font-bold text-electric-600" aria-label="Mês anterior" data-testid="month-prev">‹</Link>
-        <p className="font-bold capitalize text-slate-800" data-testid="month-label">{monthLabel(month)}</p>
+        <p className="font-bold text-slate-800 first-letter:uppercase" data-testid="month-label">{monthLabel(month)}</p>
         {month < now ? <Link href={`/dashboard/financeiro?mes=${next}`} className="px-3 py-1 text-xl font-bold text-electric-600" aria-label="Próximo mês" data-testid="month-next">›</Link> : <span className="px-3 py-1 text-xl text-slate-300" aria-hidden>›</span>}
       </nav>
 
