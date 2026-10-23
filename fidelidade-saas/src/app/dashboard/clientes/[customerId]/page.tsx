@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Icon } from '@/components/Icons';
 import { notFound } from 'next/navigation';
 import { formatPhone, maskCpf } from '@/lib/br';
 import { prisma } from '@/lib/db';
@@ -53,6 +54,9 @@ export default async function ClienteDetalhe({ params }: { params: Promise<{ cus
         >
           Chamar no WhatsApp
         </a>
+        <Link href={`/dashboard/mensagens/${customer.id}`} className="glass-button-navy mt-3 !w-auto text-sm sm:ml-2" data-testid="chat-open">
+          <Icon name="chat" size={16} /> Conversar no app
+        </Link>
         <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {summary.map((s) => (
             <div key={s.label} className="glass-inset p-3">

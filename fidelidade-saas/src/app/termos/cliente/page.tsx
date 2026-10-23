@@ -65,9 +65,9 @@ export default function TermosClientePage() {
         Você escolhe se quer usar a localização do aparelho, marcar um ponto no mapa ou salvar endereços (Casa, Trabalho, Outro) para ver os lugares por perto e as distâncias. Endereços salvos ficam na sua conta e você pode apagá-los quando quiser.
       </p>
 
-      <h2>10. Indicações: fotos e comentários</h2>
+      <h2>10. Indicações, fotos e mensagens</h2>
       <p>
-        Na aba Indicações você pode postar fotos de lugares onde tem carteira, com nota e comentário. Poste só fotos suas, do lugar ou do que você consumiu, sem expor outras pessoas sem permissão. Fotos e comentários ficam visíveis para os demais clientes do Fidelize e para o dono do lugar citado, junto com o seu primeiro nome e o seu @ do Instagram, se você o informar. É proibido postar conteúdo ofensivo, ilegal, enganoso ou que não seja do lugar citado. Qualquer cliente ou dono de lugar pode denunciar uma indicação; a administração pode escondê-la ou apagá-la, e você pode apagar as suas quando quiser. O Fidelize não importa nem lê o seu Instagram: o botão de compartilhar apenas abre o compartilhamento do seu aparelho.
+        Na aba Indicações você pode postar fotos de lugares onde tem carteira, com nota e comentário. Poste só fotos suas, do lugar ou do que você consumiu, sem expor outras pessoas sem permissão. Fotos e comentários ficam visíveis para os demais clientes do Fidelize e para o dono do lugar citado, junto com o seu primeiro nome e o seu @ do Instagram, se você o informar. É proibido postar conteúdo ofensivo, ilegal, enganoso ou que não seja do lugar citado. Qualquer cliente ou dono de lugar pode denunciar uma indicação; a administração pode escondê-la ou apagá-la, e você pode apagar as suas quando quiser. O Fidelize não importa nem lê o seu Instagram: o botão de compartilhar apenas abre o compartilhamento do seu aparelho. Nos lugares onde você tem carteira também dá para trocar mensagens com o estabelecimento pelo app; elas ficam visíveis só para você e para o lugar, devem ser respeitosas, e o lugar responde pelo que disser.
       </p>
 
       <h2>11. Uso adequado</h2>
