@@ -144,6 +144,7 @@ model Restaurant {
   slotHolds SlotHold[]
   waitlist  WaitlistEntry[]
   timeOffs  TimeOff[]
+  posts                Post[]
   reviews   Review[]
   menuItems        MenuItem[]
   orders           Order[]
@@ -229,6 +230,7 @@ model Customer {
   termsVersion    String? // versão aceita (ver src/lib/legal.ts)
   birthDay        Int? // aniversário: só dia e mês (sem o ano), opcional; o cliente informa e remove quando quiser
   birthMonth      Int?
+  instagram       String? // @ do Instagram (sem o @), opcional: aparece nas indicações e abre o perfil
   createdAt    DateTime @default(now())
 
   wallets           Wallet[]
@@ -249,6 +251,8 @@ model Customer {
   orders            Order[]
   birthdayGifts     BirthdayGift[]
   interactionClaims InteractionClaim[]
+  posts             Post[]
+  postLikes         PostLike[]
 }
 
 /// Foto de perfil do cliente. Fica em tabela própria para não pesar a consulta da sessão; só o próprio cliente a vê.
@@ -947,4 +951,63 @@ model Review {
   @@index([restaurantId, createdAt])
   @@index([resourceId])
   @@index([reportedAt])
+}
+
+
+/// Indicação: o cliente posta a foto de um lugar onde tem carteira, com nota de 1 a 5 e um comentário.
+model Post {
+  id           String    @id @default(uuid())
+  customerId   String
+  restaurantId String
+  rating       Int
+  comment      String?
+  hiddenAt     DateTime? // escondida pela administração (denúncia procedente)
+  reportedAt   DateTime? // última denúncia recebida
+  createdAt    DateTime  @default(now())
+
+  customer   Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  restaurant Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  photo      PostPhoto?
+  likes      PostLike[]
+  reports    PostReport[]
+
+  @@index([createdAt])
+  @@index([restaurantId, createdAt])
+  @@index([customerId, createdAt])
+  @@index([reportedAt])
+}
+
+/// A foto da indicação, em tabela própria (já reduzida no celular) para não pesar a lista.
+model PostPhoto {
+  postId String @id
+  mime   String
+  data   Bytes
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model PostLike {
+  postId     String
+  customerId String
+  createdAt  DateTime @default(now())
+
+  post     Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@id([postId, customerId])
+  @@index([customerId])
+}
+
+/// Denúncia de uma indicação, feita por um cliente ou pelo dono do lugar citado.
+model PostReport {
+  id                   String   @id @default(uuid())
+  postId               String
+  reporterCustomerId   String?
+  reporterRestaurantId String?
+  reason               String
+  createdAt            DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
 }

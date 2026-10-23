@@ -65,25 +65,30 @@ export default function TermosClientePage() {
         Você escolhe se quer usar a localização do aparelho, marcar um ponto no mapa ou salvar endereços (Casa, Trabalho, Outro) para ver os lugares por perto e as distâncias. Endereços salvos ficam na sua conta e você pode apagá-los quando quiser.
       </p>
 
-      <h2>10. Uso adequado</h2>
+      <h2>10. Indicações: fotos e comentários</h2>
+      <p>
+        Na aba Indicações você pode postar fotos de lugares onde tem carteira, com nota e comentário. Poste só fotos suas, do lugar ou do que você consumiu, sem expor outras pessoas sem permissão. Fotos e comentários ficam visíveis para os demais clientes do Fidelize e para o dono do lugar citado, junto com o seu primeiro nome e o seu @ do Instagram, se você o informar. É proibido postar conteúdo ofensivo, ilegal, enganoso ou que não seja do lugar citado. Qualquer cliente ou dono de lugar pode denunciar uma indicação; a administração pode escondê-la ou apagá-la, e você pode apagar as suas quando quiser. O Fidelize não importa nem lê o seu Instagram: o botão de compartilhar apenas abre o compartilhamento do seu aparelho.
+      </p>
+
+      <h2>11. Uso adequado</h2>
       <p>É proibido: usar QR Codes ou códigos de terceiros; criar contas falsas ou duplicadas para ganhar vantagens; burlar limites; automatizar o acesso; ou tentar comprometer a segurança do serviço. O descumprimento pode levar à suspensão da conta e ao estorno de pontos.</p>
 
-      <h2>11. Disponibilidade</h2>
+      <h2>12. Disponibilidade</h2>
       <p>Podem ocorrer interrupções por manutenção, falhas de terceiros ou causas fora do nosso controle. O suporte funciona por e-mail e WhatsApp, em horário comercial.</p>
 
-      <h2>12. Limitação de responsabilidade</h2>
+      <h2>13. Limitação de responsabilidade</h2>
       <p>
         Na medida permitida pela lei, o Fidelize não responde por atos e omissões dos estabelecimentos (como não entregar um prêmio ou alterar suas regras), nem por prejuízos indiretos decorrentes do uso ou da indisponibilidade do app.
         Isso não afasta direitos que a lei do consumidor garante a você.
       </p>
 
-      <h2>13. Alterações</h2>
+      <h2>14. Alterações</h2>
       <p>Podemos atualizar estes Termos. Mudanças relevantes serão avisadas pelo app ou por e-mail. Continuar usando o app depois do aviso significa concordar com a nova versão.</p>
 
-      <h2>14. Lei aplicável e foro</h2>
+      <h2>15. Lei aplicável e foro</h2>
       <p>Estes Termos seguem a lei brasileira. Como você é consumidor, fica eleito o foro do seu domicílio.</p>
 
-      <h2>15. Contato</h2>
+      <h2>16. Contato</h2>
       <SupportContactLine />
     </LegalPage>
   );

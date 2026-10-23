@@ -9,6 +9,8 @@ import { CopyButton } from '@/components/CopyButton';
 import { Icon } from '@/components/Icons';
 import { LegalLinks } from '@/components/LegalLinks';
 import { ShareButtons } from '@/components/ShareButtons';
+import { InstagramCard } from '@/components/InstagramCard';
+import { MemberCard } from '@/components/MemberCard';
 import { ShortcutGroups } from '@/components/Shortcuts';
 import { PlaceAvatar } from '@/components/Visual';
 import { formatPhone, maskCpf } from '@/lib/br';
@@ -27,7 +29,7 @@ export const dynamic = 'force-dynamic';
 export default async function PerfilPage() {
   const customer = await requireCustomer('/perfil');
 
-  const [wallets, pending, usedCount, acceptors, movements, upcomingBookings, photo, ordersTotal, openOrders] = await Promise.all([
+  const [wallets, pending, usedCount, acceptors, movements, upcomingBookings, photo, ordersTotal, openOrders, myPosts] = await Promise.all([
     prisma.wallet.findMany({
       where: { customerId: customer.id },
       include: { restaurant: { select: { id: true, name: true, logoImageId: true, referralPoints: true, subscriptionStatus: true, pointsShareOut: true } } },
@@ -51,6 +53,7 @@ export default async function PerfilPage() {
     prisma.customerPhoto.findUnique({ where: { customerId: customer.id }, select: { updatedAt: true } }),
     prisma.order.count({ where: { customerId: customer.id } }),
     prisma.order.count({ where: { customerId: customer.id, status: { in: ['RECEIVED', 'PREPARING', 'READY'] } } }),
+    prisma.post.count({ where: { customerId: customer.id } }),
   ]);
   const rows = movements.map((m) => ({ at: m.createdAt, type: m.type as 'EARN' | 'REDEEM', points: m.points }));
   const activity = Object.fromEntries(PERIODS.map((p) => [p, activitySeries(rows, p)])) as Record<Period, Activity>;
@@ -75,15 +78,36 @@ export default async function PerfilPage() {
       </Reveal>
 
       <Reveal from="zoom" className="lg:col-span-5">
-      <section aria-labelledby="id-conta" className="flex items-center gap-3 rounded-[22px] bg-[#0F1F3D] p-4 text-white" data-testid="account-id">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-lima text-primary"><Icon name="user" size={22} /></span>
-        <div className="min-w-0 flex-1">
-          <h2 id="id-conta" className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">ID da sua conta</h2>
-          <p className="whitespace-nowrap font-mono text-xl font-bold tracking-[0.12em] text-lima" data-testid="account-id-code">{accountCode}</p>
-          <p className="text-xs text-white/70">Informe no caixa no lugar do CPF para receber seus pontos.</p>
+        <div className="mx-auto grid w-full max-w-3xl items-center gap-5 md:grid-cols-2">
+          <MemberCard data={{ name: customer.name, code: accountCode, since: `${String(customer.createdAt.getMonth() + 1).padStart(2, '0')}/${String(customer.createdAt.getFullYear()).slice(2)}`, balance }} />
+          <section aria-labelledby="saldo-conta" className="glass-panel space-y-4 !rounded-[22px] p-4" data-testid="account-balance">
+            <div>
+              <h2 id="saldo-conta" className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Saldo disponível</h2>
+              <p className="text-4xl font-extrabold leading-tight tracking-tight text-primary">{formatPoints(balance)} <span className="text-base font-semibold text-electric-600">pontos</span></p>
+              <p className="text-xs text-slate-500">{wallets.length === 0 ? 'Sua primeira compra abre a primeira carteira.' : `em ${wallets.length} ${wallets.length === 1 ? 'lugar' : 'lugares'} do clube`}</p>
+            </div>
+            {wallets.some((w) => w.balance > 0) && (
+              <div>
+                <p className="mb-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">Onde usar</p>
+                <ul className="flex flex-wrap gap-2">
+                  {wallets.filter((w) => w.balance > 0).slice(0, 4).map((w) => (
+                    <li key={w.id}>
+                      <Link href={`/carteira/${w.restaurantId}`} className="chip-link gap-2 !py-1">
+                        <PlaceAvatar name={w.restaurant.name} src={imageUrl(w.restaurant.logoImageId)} size={20} />
+                        {w.restaurant.name} <b className="text-electric-600">{formatPoints(w.balance)}</b>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <CopyButton text={accountCode} label="Copiar ID" />
+              <Link href="/perfil/cartao" className="glass-button-ghost btn-sm" data-testid="print-card-link"><Icon name="receipt" size={16} /> Imprimir cartão</Link>
+              <Link href="/lugares" className="glass-button-ghost btn-sm"><Icon name="compass" size={16} /> Onde ganhar mais</Link>
+            </div>
+          </section>
         </div>
-        <CopyButton text={accountCode} label="Copiar" />
-      </section>
       </Reveal>
 
       <Reveal from="zoom" className="lg:col-span-5">
@@ -101,6 +125,7 @@ export default async function PerfilPage() {
               title: 'Minha atividade',
               items: [
                 { href: '/perfil/pontos', icon: 'receipt', label: 'Histórico de pontos', hint: 'Tudo o que você ganhou e usou' },
+                { href: '/indicacoes?minhas=1', icon: 'camera', label: 'Minhas indicações', hint: myPosts > 0 ? `${myPosts} ${myPosts === 1 ? 'publicada' : 'publicadas'}` : 'Poste a foto de um lugar que você gostou', testId: 'my-posts-link' },
                 { href: '/perfil/premios', icon: 'gift', label: 'Meus prêmios', hint: `${pending > 0 ? `${pending} para retirar · ` : ''}${usedCount} já resgatado${usedCount === 1 ? '' : 's'}`, count: pending },
               ],
             },
@@ -113,6 +138,10 @@ export default async function PerfilPage() {
             },
           ]}
         />
+        </Reveal>
+
+        <Reveal from="bottom">
+        <InstagramCard handle={customer.instagram} />
         </Reveal>
 
         <Reveal from="bottom">

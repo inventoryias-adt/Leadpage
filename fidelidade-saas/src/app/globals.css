@@ -655,6 +655,27 @@ label:has(input[type='radio']) {
     border-top: 1px dashed #000;
     font-size: 8pt;
   }
+  /* Cartão do cliente: frente e verso em 85,6 mm de largura (tamanho de cartão de crédito), com as cores do cartão. */
+  .print-cards .pc-sheet {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8mm;
+  }
+  .print-cards .pc-card {
+    width: 85.6mm;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .print-cards .pc-card * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .print-cards .pc-note {
+    max-width: 85.6mm;
+    font-size: 8pt;
+    color: #444;
+  }
 }
 
 /* Chama a atenção para o cadastro depois de clicar em "Começar agora" (pisca três vezes). */

@@ -48,6 +48,7 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
     }),
   ]);
 
+  const postCount = await prisma.post.count({ where: { restaurantId: rid, hiddenAt: null } });
   const reviewSummary = summarize((await prisma.review.findMany({ where: { restaurantId: rid, hiddenAt: null }, select: { placeRating: true } })).map((r) => r.placeRating));
   const inPeriod = (d: Date) => d >= since;
   const cur = sales.filter((s) => s.redeemedAt && inPeriod(s.redeemedAt));
@@ -162,6 +163,11 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
         <span className="text-sm text-slate-600">
           {reviewSummary.count === 0 ? 'Ainda sem avaliações' : <><b className="text-slate-900">★ {formatAvg(reviewSummary.avg ?? 0)}</b> · {reviewSummary.count} {reviewSummary.count === 1 ? 'avaliação' : 'avaliações'} · ver e responder →</>}
         </span>
+      </Link>
+
+      <Link href="/dashboard/indicacoes" className="glass-panel-sm card-link flex items-center justify-between gap-3 !rounded-[22px] p-4" data-testid="posts-shortcut">
+        <span className="flex items-center gap-2 font-semibold text-primary"><Icon name="camera" size={18} /> Indicações dos clientes</span>
+        <span className="text-sm text-slate-600">{postCount === 0 ? 'Ainda sem fotos' : <><b className="text-slate-900">{postCount}</b> {postCount === 1 ? 'indicação' : 'indicações'} · ver →</>}</span>
       </Link>
 
       <div className="grid gap-6 lg:grid-cols-5">
