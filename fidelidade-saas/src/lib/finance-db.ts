@@ -29,7 +29,7 @@ async function entriesFor(restaurantId: string, months: string[]) {
 async function incomeByMonth(restaurantId: string, from: Date, to: Date) {
   const [agenda, pedidos, caixa, payouts] = await Promise.all([
     prisma.$queryRaw<Row[]>`
-      SELECT to_char(("completedAt" AT TIME ZONE 'UTC') AT TIME ZONE ${'America/Sao_Paulo'}, 'YYYY-MM') AS month, SUM(GREATEST(0, "priceCents" - "discountCents"))::bigint AS cents, COUNT(*)::bigint AS n
+      SELECT to_char(("completedAt" AT TIME ZONE 'UTC') AT TIME ZONE ${'America/Sao_Paulo'}, 'YYYY-MM') AS month, SUM(CASE WHEN "clubSubscriptionId" IS NULL THEN GREATEST(0, "priceCents" - "discountCents") ELSE 0 END)::bigint AS cents, COUNT(*)::bigint AS n
       FROM "Booking" WHERE "restaurantId" = ${restaurantId} AND status = 'COMPLETED' AND "completedAt" >= ${from} AND "completedAt" < ${to} GROUP BY 1`,
     prisma.$queryRaw<Row[]>`
       SELECT to_char(("pickedUpAt" AT TIME ZONE 'UTC') AT TIME ZONE ${'America/Sao_Paulo'}, 'YYYY-MM') AS month, SUM("totalCents")::bigint AS cents, COUNT(*)::bigint AS n

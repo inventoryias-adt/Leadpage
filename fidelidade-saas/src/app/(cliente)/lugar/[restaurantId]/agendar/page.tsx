@@ -14,6 +14,7 @@ import { imageUrl } from '@/lib/images';
 import { WAIT_PERIODS, addDaysKey, bookingPoints, canCustomerCancel, dayOccupancy, openWaitPeriods, formatBookingWhen, parseDateKey, slotHref, todayKey, weekdayOf } from '@/lib/booking';
 import { alternativeSlots, ensureDefaultService, firstFreeSlots, slotsForDay, staffFor, waitPosition } from '@/lib/booking-db';
 import { prisma } from '@/lib/db';
+import { clubCoverage } from '@/lib/club-db';
 import { DAY_SHORT, parseSchedule } from '@/lib/hours';
 import { formatBRL, formatPoints } from '@/lib/points';
 import { resourceColor } from '@/lib/palette';
@@ -152,6 +153,8 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
   const wallet = customer && service.pointsDiscountMaxPct > 0 && service.priceCents > 0 ? await prisma.wallet.findUnique({ where: { customerId_restaurantId: { customerId: customer.id, restaurantId } } }) : null;
   const balance = wallet?.balance ?? 0;
   const discount = maxDiscount({ priceCents: service.priceCents, maxPct: service.pointsDiscountMaxPct, rate: restaurant.pointsPerRealOff, balance });
+  // Clube de assinatura: o horário escolhido é coberto por um plano pago do cliente (sem cobrança, sem pontos e sem desconto em pontos)?
+  const club = customer && !rb && chosen ? await clubCoverage(prisma, { restaurantId, customerId: customer.id, serviceId: service.id, at: chosen.startsAt }) : null;
 
   return (
     <main className="space-y-5 p-4 sm:p-6 md:pt-8">
@@ -168,8 +171,9 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
             <span>Horário atual: <b>{formatBookingWhen(rb.startsAt)}</b>{rb.resource ? <> com <b>{rb.resource.name}</b></> : null}. Escolha o novo dia, horário e profissional.</span>
           </p>
         )}
-        {!rb && points > 0 && <p className="mt-1.5"><span className="chip-lima">Ao concluir você ganha {formatPoints(points)} pontos aqui</span></p>}
-        {!rb && service.pointsDiscountMaxPct > 0 && service.priceCents > 0 && <p className="mt-1.5"><span className="glass-chip">Aceita pontos como desconto, até {service.pointsDiscountMaxPct}% do preço.</span></p>}
+        {club && <p className="mt-1.5"><span className="chip-lima" data-testid="club-covered">Incluso no seu plano {club.planName}: sobram {club.left} {club.left === 1 ? 'uso' : 'usos'} neste ciclo depois deste</span></p>}
+        {!rb && !club && points > 0 && <p className="mt-1.5"><span className="chip-lima">Ao concluir você ganha {formatPoints(points)} pontos aqui</span></p>}
+        {!rb && !club && service.pointsDiscountMaxPct > 0 && service.priceCents > 0 && <p className="mt-1.5"><span className="glass-chip">Aceita pontos como desconto, até {service.pointsDiscountMaxPct}% do preço.</span></p>}
       </header>
 
       {units.length > 1 && !rb && (
@@ -348,7 +352,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
           ) : customer ? (
             <>
               <SlotHoldBanner params={{ restaurantId, serviceId: service.id, unitId: unit.id, date, time: chosen.time, resourceId: prof?.id ?? '' }} hrefBase={hrefBase} />
-              <BookingForm hrefBase={hrefBase} hidden={{ restaurantId, serviceId: service.id, unitId: unit.id, date, time: chosen.time, resourceId: prof?.id ?? '' }} askPartySize={service.askPartySize} discount={{ priceCents: service.priceCents, balance, rate: restaurant.pointsPerRealOff, maxPoints: discount.maxPoints, maxPct: service.pointsDiscountMaxPct }} />
+              <BookingForm hrefBase={hrefBase} hidden={{ restaurantId, serviceId: service.id, unitId: unit.id, date, time: chosen.time, resourceId: prof?.id ?? '' }} askPartySize={service.askPartySize} discount={club ? null : { priceCents: service.priceCents, balance, rate: restaurant.pointsPerRealOff, maxPoints: discount.maxPoints, maxPct: service.pointsDiscountMaxPct }} />
             </>
           ) : (
             <Link href={`/entrar?next=${encodeURIComponent(url({ data: date, hora: chosen.time }))}`} className="glass-button-navy w-full">Entrar para confirmar</Link>

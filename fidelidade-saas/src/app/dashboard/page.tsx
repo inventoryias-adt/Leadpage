@@ -3,6 +3,7 @@ import { BarList, KpiCard, PeakHeatmap, SalesArea } from '@/components/Dashboard
 import { EmptyState } from '@/components/EmptyState';
 import { Icon } from '@/components/Icons';
 import { unreadConversations } from '@/lib/chat-db';
+import { pendingSubscribers } from '@/lib/club-db';
 import { prisma } from '@/lib/db';
 import { dailySeries, deltaPct, heatmap, peakSlot, suggestions, WEEKDAYS } from '@/lib/insights';
 import { loadCustomerRows } from '@/lib/insights-db';
@@ -50,6 +51,7 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
   ]);
 
   const unreadChats = await unreadConversations('RESTAURANT', rid);
+  const clubDue = await pendingSubscribers(rid);
   const postCount = await prisma.post.count({ where: { restaurantId: rid, hiddenAt: null } });
   const reviewSummary = summarize((await prisma.review.findMany({ where: { restaurantId: rid, hiddenAt: null }, select: { placeRating: true } })).map((r) => r.placeRating));
   const inPeriod = (d: Date) => d >= since;
@@ -165,6 +167,11 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
         <span className="text-sm text-slate-600">
           {reviewSummary.count === 0 ? 'Ainda sem avaliações' : <><b className="text-slate-900">★ {formatAvg(reviewSummary.avg ?? 0)}</b> · {reviewSummary.count} {reviewSummary.count === 1 ? 'avaliação' : 'avaliações'} · ver e responder →</>}
         </span>
+      </Link>
+
+      <Link href="/dashboard/clube" className="glass-panel-sm card-link flex items-center justify-between gap-3 !rounded-[22px] p-4" data-testid="club-shortcut">
+        <span className="flex items-center gap-2 font-semibold text-primary"><Icon name="gift" size={18} /> Clube de assinatura</span>
+        <span className="text-sm text-slate-600">{clubDue > 0 ? <b className="text-amber-700">{clubDue} {clubDue === 1 ? 'pagamento a receber' : 'pagamentos a receber'} →</b> : 'Planos mensais para clientes fiéis →'}</span>
       </Link>
 
       <Link href="/dashboard/financeiro" className="glass-panel-sm card-link flex items-center justify-between gap-3 !rounded-[22px] p-4" data-testid="finance-shortcut">

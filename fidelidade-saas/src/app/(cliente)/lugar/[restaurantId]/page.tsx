@@ -29,6 +29,9 @@ import { getCustomer } from '@/lib/session';
 import { displayName, formatAvg } from '@/lib/reviews';
 import { placeReviews, placeSummaries } from '@/lib/reviews-db';
 import { placePhotos } from '@/lib/posts-db';
+import { activePlans } from '@/lib/club-db';
+import { subscribeToPlan } from '@/app/actions/club';
+import { itemsText } from '@/lib/club';
 import { postPhotoPath } from '@/lib/posts';
 import { brandOf } from '@/lib/palette';
 import { INTERACTION_COOLDOWN_DAYS, releaseText } from '@/lib/interaction-approval';
@@ -88,7 +91,13 @@ export default async function LugarPage({
     prisma.menuItem.count({ where: { restaurantId, active: true } }),
   ]);
   // Último pedido "Já fiz" do cliente em cada interação deste lugar (para mostrar "em análise", "aprovado"…).
-  const [ratingMap, reviews, photos] = await Promise.all([placeSummaries([restaurantId]), placeReviews(restaurantId, 10), customer ? placePhotos(restaurantId, 6) : null]);
+  const [ratingMap, reviews, photos, clubPlans, mySubs] = await Promise.all([
+    placeSummaries([restaurantId]),
+    placeReviews(restaurantId, 10),
+    customer ? placePhotos(restaurantId, 6) : null,
+    activePlans(restaurantId),
+    customer ? prisma.clubSubscription.findMany({ where: { customerId: customer.id, restaurantId, status: 'ACTIVE' }, select: { planId: true } }) : [],
+  ]);
   const rating = ratingMap.get(restaurantId);
   const claimRows = customer ? await prisma.interactionClaim.findMany({ where: { customerId: customer.id, restaurantId }, orderBy: { createdAt: 'desc' }, take: 40 }) : [];
   const lastClaim = new Map<string, (typeof claimRows)[number]>();
@@ -471,6 +480,34 @@ export default async function LugarPage({
             <h2 id="sobre" className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Sobre nós</h2>
             <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">{restaurant.about}</p>
           </section>
+        )}
+
+        {clubPlans.length > 0 && (
+          <CollapsibleSection id="clube" icon="gift" title="Clube de assinatura" summary={`${clubPlans.length} ${clubPlans.length === 1 ? 'plano' : 'planos'} · a partir de ${formatBRL(Math.min(...clubPlans.map((p) => p.priceCents)))}/mês`}>
+            <ul className="space-y-3" data-testid="club-plans">
+              {clubPlans.map((p) => (
+                <li key={p.id} className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4" data-testid="club-plan">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-extrabold text-slate-900">{p.name}</p>
+                      {p.description && <p className="text-sm text-slate-600">{p.description}</p>}
+                    </div>
+                    <p className="shrink-0 text-right"><span className="text-xl font-extrabold" style={{ color: brand.hex }}>{formatBRL(p.priceCents)}</span><span className="block text-xs text-slate-500">por mês</span></p>
+                  </div>
+                  <p className="text-sm font-semibold text-slate-700">{itemsText(p.items)} <span className="font-normal text-slate-500">por mês</span></p>
+                  {mySubs.some((m) => m.planId === p.id) ? (
+                    <Link href="/perfil/clube" className="glass-button-ghost btn-sm !w-auto px-4" data-testid="club-mine">Você assina este plano · ver saldo</Link>
+                  ) : (
+                    <form action={subscribeToPlan}>
+                      <input type="hidden" name="planId" value={p.id} /><input type="hidden" name="next" value={`/lugar/${restaurantId}#clube`} />
+                      <button className="glass-button-navy btn-sm !w-auto px-5" data-testid="club-subscribe">Quero assinar</button>
+                    </form>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-xs text-slate-500">Você paga a mensalidade direto no balcão. O saldo do mês abate sozinho quando você agenda um serviço do plano.</p>
+          </CollapsibleSection>
         )}
 
         {/* Fotos dos clientes: o que os clientes postaram marcando este lugar */}

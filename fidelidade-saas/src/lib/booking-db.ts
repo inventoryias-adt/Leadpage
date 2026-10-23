@@ -6,6 +6,7 @@ import { REMINDER_LEAD_MIN, REMINDER_MIN_AHEAD_MIN, availableSlots, bookingPoint
 import { suggestsBooking } from './categories';
 import { parseSchedule } from './hours';
 import { sendEmail } from './mailer';
+import { clubCoverage, periodOf } from './club-db';
 import { notify } from './notifications';
 import { askForReview } from './reviews-db';
 import { applyPoints } from './points-discount';
@@ -251,10 +252,14 @@ async function bookSlotTx(customerId: string, input: BookInput) {
       const active = await tx.booking.count({ where: { customerId, restaurantId: restaurant.id, status: { in: ['PENDING', 'CONFIRMED'] }, startsAt: { gt: new Date() } } });
       if (active >= MAX_ACTIVE_PER_PLACE) throw new BusinessError(`Você já tem ${MAX_ACTIVE_PER_PLACE} agendamentos em aberto neste lugar. Conclua ou cancele algum para marcar outro.`);
 
+      // Clube de assinatura: se o plano pago do cliente inclui este serviço e ainda há saldo no ciclo, o atendimento já está pago
+      // (sem cobrança, sem pontos e sem desconto em pontos). Roda sob o cadeado do estabelecimento, então o saldo não é gasto duas vezes.
+      const club = await clubCoverage(tx, { restaurantId: restaurant.id, customerId, serviceId: service.id, at: slot.startsAt });
+
       // Pontos como desconto: tudo é conferido aqui, com o saldo travado (nada vem pronto do navegador).
       let pointsUsed = 0;
       let discountCents = 0;
-      const wanted = Math.floor(Number(input.usePoints ?? 0));
+      const wanted = club ? 0 : Math.floor(Number(input.usePoints ?? 0));
       if (wanted > 0) {
         const found = await tx.wallet.findUnique({ where: { customerId_restaurantId: { customerId, restaurantId: restaurant.id } } });
         if (!found) throw new BusinessError('Você ainda não tem pontos neste lugar.');
@@ -287,6 +292,7 @@ async function bookSlotTx(customerId: string, input: BookInput) {
           note: input.note?.trim().slice(0, 300) || null,
           pointsUsed,
           discountCents,
+          clubSubscriptionId: club?.subscriptionId ?? null,
         },
       });
       await tx.slotHold.deleteMany({ where: { customerId, restaurantId: restaurant.id } });
@@ -296,7 +302,7 @@ async function bookSlotTx(customerId: string, input: BookInput) {
         customerId,
         restaurantId: restaurant.id,
         title: auto ? 'Agendamento confirmado' : 'Pedido de agendamento enviado',
-        body: `${service.name} · ${formatBookingWhen(slot.startsAt)} · ${restaurant.name}${discountCents > 0 ? ` · desconto de ${formatBRL(discountCents)} com ${pointsUsed.toLocaleString('pt-BR')} pontos` : ''}${auto ? '' : '. O lugar vai confirmar em breve.'}`,
+        body: `${service.name} · ${formatBookingWhen(slot.startsAt)} · ${restaurant.name}${discountCents > 0 ? ` · desconto de ${formatBRL(discountCents)} com ${pointsUsed.toLocaleString('pt-BR')} pontos` : ''}${club ? ` · incluso no plano ${club.planName} (restam ${club.left} neste ciclo)` : ''}${auto ? '' : '. O lugar vai confirmar em breve.'}`,
         href: '/perfil/agendamentos',
       });
       return booking;
@@ -375,8 +381,10 @@ export async function ownerBookSlot(restaurantId: string, input: OwnerBookInput)
       const durationMin = slot.durationByResource[resourceId] ?? service.durationMin;
       const endsAt = new Date(slot.startsAt.getTime() + durationMin * 60_000);
 
+      const club = customerId ? await clubCoverage(tx, { restaurantId, customerId, serviceId: service.id, at: slot.startsAt }) : null;
       const created = await tx.booking.create({
         data: {
+          clubSubscriptionId: club?.subscriptionId ?? null,
           restaurantId,
           unitId: unit.id,
           customerId,
@@ -401,7 +409,7 @@ export async function ownerBookSlot(restaurantId: string, input: OwnerBookInput)
           customerId,
           restaurantId,
           title: 'O lugar marcou um horário para você',
-          body: `${service.name} · ${formatBookingWhen(slot.startsAt)} · ${restaurant.name}`,
+          body: `${service.name} · ${formatBookingWhen(slot.startsAt)} · ${restaurant.name}${club ? ` · incluso no plano ${club.planName}` : ''}`,
           href: '/perfil/agendamentos',
         });
       }
@@ -453,6 +461,12 @@ export async function rescheduleBooking(customerId: string, bookingId: string, i
         where: { id: { not: booking.id }, customerId, restaurantId: restaurant.id, status: { in: ['PENDING', 'CONFIRMED'] }, startsAt: { lt: endsAt }, endsAt: { gt: slot.startsAt } },
       });
       if (clash) throw new BusinessError('Você já tem um agendamento neste horário.');
+
+      // Atendimento do plano só muda de dia dentro do mesmo ciclo (o saldo é do ciclo); para outro, cancele e marque de novo.
+      if (booking.clubSubscriptionId) {
+        const [before, after] = await Promise.all([periodOf(tx, booking.clubSubscriptionId, booking.startsAt), periodOf(tx, booking.clubSubscriptionId, slot.startsAt)]);
+        if (after == null || before !== after) throw new BusinessError('Este atendimento é do seu plano e só pode ser remarcado dentro do mesmo ciclo mensal. Para outro ciclo, cancele e agende de novo.');
+      }
 
       const auto = restaurant.bookingAutoConfirm;
       const updated = await tx.booking.update({
@@ -590,7 +604,7 @@ export async function completeBooking(id: string, restaurantId: string) {
     if (marked.count !== 1) throw new BusinessError('Agendamento já encerrado.');
 
     // Os pontos ganhos contam sobre o que o cliente realmente pagou (preço menos o desconto em pontos).
-    const paidCents = Math.max(0, booking.priceCents - booking.discountCents);
+    const paidCents = booking.clubSubscriptionId ? 0 : Math.max(0, booking.priceCents - booking.discountCents); // atendimento do plano já foi pago na mensalidade
     const points = bookingPoints(paidCents, restaurant.pointsPerReal);
     if (paidCents <= 0 || points <= 0 || !booking.customerId) return { points: 0, booking };
 

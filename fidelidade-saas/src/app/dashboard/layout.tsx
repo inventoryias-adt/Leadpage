@@ -1,5 +1,6 @@
 import { Brand } from '@/components/Brand';
 import { unreadConversations } from '@/lib/chat-db';
+import { pendingSubscribers } from '@/lib/club-db';
 import { InstallApp } from '@/components/InstallApp';
 import { GESTOR_METADATA } from '@/lib/gestor-app';
 import { OwnerGuide } from '@/components/OwnerGuide';
@@ -25,7 +26,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const admin = await getAdmin();
   const { unit, units } = ready ? await currentUnit(restaurant.id) : { unit: null, units: [] };
   // A aba Agenda aparece para quem cadastrou serviços ou tem uma categoria que atende com hora marcada (barbearia, estética…); a bolinha conta os pedidos aguardando.
-  const [serviceCount, pendingBookings, newOrders, anyOrders, pendingInteractions, unreadChats] = ready
+  const [serviceCount, pendingBookings, newOrders, anyOrders, pendingInteractions, unreadChats, clubDue] = ready
     ? await Promise.all([
         prisma.service.count({ where: { restaurantId: restaurant.id } }),
         prisma.booking.count({ where: { restaurantId: restaurant.id, status: 'PENDING', endsAt: { gt: new Date() } } }),
@@ -33,8 +34,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
         restaurant.ordersEnabled ? 1 : prisma.order.count({ where: { restaurantId: restaurant.id } }),
         prisma.interactionClaim.count({ where: { restaurantId: restaurant.id, status: 'PENDING' } }),
         unreadConversations('RESTAURANT', restaurant.id),
+        pendingSubscribers(restaurant.id),
       ])
-    : [0, 0, 0, 0, 0, 0];
+    : [0, 0, 0, 0, 0, 0, 0];
   const showOrders = restaurant.ordersEnabled || anyOrders > 0; // a aba Pedidos aparece para quem liga os pedidos ou já recebeu algum
 
   // Passo a passo inicial: só para quem já pagou. O progresso mostra o que já está feito.
@@ -64,7 +66,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <span className="hidden h-6 w-px bg-slate-300 sm:block" />
           <p className="hidden truncate text-sm font-semibold text-slate-600 sm:block">{restaurant.name}</p>
         </div>
-        {ready && <DashboardNav variant="top" agenda={serviceCount > 0 || suggestsBooking(restaurant.category)} pending={pendingBookings} orders={showOrders} newOrders={newOrders} caixa={pendingInteractions} chats={unreadChats} />}
+        {ready && <DashboardNav variant="top" agenda={serviceCount > 0 || suggestsBooking(restaurant.category)} pending={pendingBookings} orders={showOrders} newOrders={newOrders} caixa={pendingInteractions} chats={unreadChats} club={clubDue} />}
         <div className="flex items-center gap-2">
           {unit && units.length > 1 && <UnitSwitcher units={units.map((u) => ({ id: u.id, name: u.name }))} currentId={unit.id} />}
         {guide && (
