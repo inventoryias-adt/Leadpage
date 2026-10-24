@@ -53,8 +53,11 @@ console.log('3. cliente abre a conversa pelo lugar e envia a primeira mensagem O
 
 // 4. dono: bolinha no menu e na lista; abre, responde (Enter envia)
 await O.goto(BASE + '/dashboard'); await O.waitForSelector('[data-testid=chats-shortcut]');
-assert.match(await O.locator('[data-testid=chats-shortcut]').innerText(), /1 conversa nova/);
-assert.match(await O.locator('nav a[href="/dashboard/mensagens"]').innerText(), /1/);
+assert.match(await O.locator('[data-testid=chats-shortcut]').innerText(), /1 nova/);
+assert.match(await O.locator('[data-testid=nav-more]').innerText(), /1/, 'a bolinha das mensagens aparece no menu Mais');
+await O.click('[data-testid=nav-more]'); await O.waitForSelector('[data-testid=nav-more-menu]');
+assert.match(await O.locator('[data-testid=nav-more-menu] a[href="/dashboard/mensagens"]').innerText(), /1/);
+await O.keyboard.press('Escape'); await O.waitForSelector('[data-testid=nav-more-menu]', { state: 'detached' });
 await O.goto(BASE + '/dashboard/mensagens'); await O.waitForSelector('[data-testid=chat-row]');
 assert.equal(await O.locator('[data-testid=chat-unread]').count(), 1);
 assert.match(await O.locator('[data-testid=chat-row]').innerText(), /sem glúten/);

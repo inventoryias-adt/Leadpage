@@ -5,14 +5,15 @@ import { ReviewForm } from '@/components/ReviewForm';
 import { Stars } from '@/components/Stars';
 import { formatBookingWhen } from '@/lib/booking';
 import { prisma } from '@/lib/db';
-import { REVIEW_WINDOW_DAYS, reviewWindowOpen } from '@/lib/reviews';
+import { REVIEW_WINDOW_DAYS, parseRating, reviewWindowOpen } from '@/lib/reviews';
 import { requireCustomer } from '@/lib/session';
 
 export const metadata = { title: 'Avaliar atendimento' };
 export const dynamic = 'force-dynamic';
 
-export default async function AvaliarPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function AvaliarPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ nota?: string }> }) {
   const { id } = await params;
+  const initial = parseRating((await searchParams).nota) ?? 0;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
   const customer = await requireCustomer(`/perfil/agendamentos/${id}/avaliar`);
   const booking = await prisma.booking.findFirst({
@@ -40,7 +41,7 @@ export default async function AvaliarPage({ params }: { params: Promise<{ id: st
   } else if (!reviewWindowOpen(booking.completedAt)) {
     body = <p role="status" className="glass-panel-sm p-4 text-sm text-slate-600">O prazo para avaliar ({REVIEW_WINDOW_DAYS} dias depois do atendimento) já passou.</p>;
   } else {
-    body = <ReviewForm bookingId={booking.id} placeName={booking.restaurant.name} staffName={booking.resource?.name ?? null} />;
+    body = <ReviewForm bookingId={booking.id} placeName={booking.restaurant.name} staffName={booking.resource?.name ?? null} initialRating={initial} />;
   }
 
   return (

@@ -29,6 +29,7 @@ import { defaultSchedule, parseSchedule, type Schedule } from '@/lib/hours';
 import { HoursGrid } from './HoursGrid';
 import { UnitLocationField } from './UnitLocationField';
 import { Icon } from './Icons';
+import { BRAND_ABOUT_MAX, BRAND_COLORS, BRAND_TAGLINE_MAX, brandOf } from '@/lib/palette';
 import { CHECKIN_RADIUS_OPTIONS, radiusIndex } from '@/lib/geo';
 import { ImageUpload, shrinkImage } from './ImageUpload';
 import { WebImageSearch } from './WebImageSearch';
@@ -370,15 +371,22 @@ type Identity = {
   listed: boolean;
   logoUrl: string | null;
   coverUrl: string | null;
+  brandColor: string;
+  tagline: string;
+  about: string;
 };
 
-/** Logo, capa, categoria e Instagram da marca. Endereço, horário, localização e link do Google ficam em cada unidade. */
+/** Logo, capa, cor da marca, slogan, "sobre nós", categoria e Instagram da marca. Endereço, horário, localização e link do Google ficam em cada unidade. */
 export function IdentityForm({ defaults, placeName, supportEnv }: { defaults: Identity; placeName: string; supportEnv: { email?: string | null; whatsapp?: string | null } }) {
   const [state, action] = useActionState(saveIdentity, {});
   // Controlado: um <select> não-controlado ficaria em branco depois que o formulário é reiniciado ao salvar.
   const [category, setCategory] = useState(state.values?.category ?? defaults.category);
   const [other, setOther] = useState(state.values?.categoryOther ?? defaults.categoryOther);
   const [listed, setListed] = useState(state.values ? state.values.listed === 'on' : defaults.listed);
+  const [brand, setBrand] = useState(state.values?.brandColor || defaults.brandColor || 'marinho');
+  const [tagline, setTagline] = useState(state.values?.tagline ?? defaults.tagline);
+  const [about, setAbout] = useState(state.values?.about ?? defaults.about);
+  const brandInfo = brandOf(brand);
   const help = buildSupport(supportEnv, 'Categoria no Fidelize', categoryRequestMessage(placeName, category === 'outros' ? other : ''));
   const catRef = useRef<HTMLSelectElement>(null);
   const otherRef = useRef<HTMLInputElement>(null);
@@ -416,6 +424,42 @@ export function IdentityForm({ defaults, placeName, supportEnv }: { defaults: Id
       <div className="grid gap-5 sm:grid-cols-2">
         <ImageUpload name="logoData" label="Logo do estabelecimento" currentUrl={defaults.logoUrl} maxSide={320} hint="Quadrada, fundo claro funciona melhor." />
         <ImageUpload name="coverData" label="Foto de capa" currentUrl={defaults.coverUrl} maxSide={1100} shape="wide" hint="A foto que o cliente vê no topo da sua página." />
+      </div>
+
+      <fieldset className="space-y-3" data-testid="brand-fields">
+        <legend className="glass-label">Cor da sua marca</legend>
+        <p className="-mt-1 text-xs text-slate-500">Pinta os botões principais e a capa (quando não há foto) da sua página no app do cliente.</p>
+        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Cor da marca">
+          {BRAND_COLORS.map((c) => (
+            <label key={c.key} className="cursor-pointer" title={c.label}>
+              <input type="radio" name="brandColor" value={c.key} checked={brand === c.key} onChange={() => setBrand(c.key)} className="peer sr-only" data-testid={`brand-${c.key}`} />
+              <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white text-white shadow ring-1 ring-slate-300 transition peer-checked:ring-2 peer-checked:ring-offset-2 peer-focus-visible:ring-2" style={{ background: c.hex, ['--tw-ring-color' as string]: brand === c.key ? c.hex : undefined }}>
+                {brand === c.key && <Icon name="check" size={18} />}
+              </span>
+              <span className="sr-only">{c.label}</span>
+            </label>
+          ))}
+        </div>
+        <div className="overflow-hidden rounded-2xl border border-slate-200" aria-label="Prévia da sua página" data-testid="brand-preview">
+          <div className="h-16" style={{ background: defaults.coverUrl ? `center/cover url(${defaults.coverUrl})` : `linear-gradient(135deg, ${brandInfo.hex} 0%, ${brandInfo.deep} 100%)` }} />
+          <div className="space-y-2 bg-white p-3">
+            <p className="font-extrabold text-slate-900">{placeName}</p>
+            {tagline.trim() && <p className="text-xs text-slate-500">{tagline.trim()}</p>}
+            <span className="inline-flex rounded-lg px-4 py-2 text-sm font-semibold text-white" style={{ background: brandInfo.hex }}>Agendar</span>
+          </div>
+        </div>
+      </fieldset>
+
+      <div className="grid gap-4">
+        <div>
+          <label className="glass-label" htmlFor="i-tag">Slogan <span className="font-normal text-slate-400">(opcional)</span></label>
+          <input id="i-tag" name="tagline" value={tagline} onChange={(e) => setTagline(e.target.value)} maxLength={BRAND_TAGLINE_MAX} className="glass-input" placeholder="Ex.: O melhor corte da Vila, sem fila" data-testid="brand-tagline" />
+        </div>
+        <div>
+          <label className="glass-label" htmlFor="i-about">Sobre nós <span className="font-normal text-slate-400">(opcional)</span></label>
+          <textarea id="i-about" name="about" value={about} onChange={(e) => setAbout(e.target.value)} maxLength={BRAND_ABOUT_MAX} rows={4} className="glass-input" placeholder="Conte a história, o que vocês fazem de melhor, o que o cliente pode esperar." data-testid="brand-about" />
+          <p className="mt-1 text-right text-xs text-slate-400">{about.length}/{BRAND_ABOUT_MAX}</p>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

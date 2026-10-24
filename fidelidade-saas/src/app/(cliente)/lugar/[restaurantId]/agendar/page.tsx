@@ -14,6 +14,7 @@ import { imageUrl } from '@/lib/images';
 import { WAIT_PERIODS, addDaysKey, bookingPoints, canCustomerCancel, dayOccupancy, openWaitPeriods, formatBookingWhen, parseDateKey, slotHref, todayKey, weekdayOf } from '@/lib/booking';
 import { alternativeSlots, ensureDefaultService, firstFreeSlots, slotsForDay, staffFor, waitPosition } from '@/lib/booking-db';
 import { prisma } from '@/lib/db';
+import { clubCoverage } from '@/lib/club-db';
 import { DAY_SHORT, parseSchedule } from '@/lib/hours';
 import { formatBRL, formatPoints } from '@/lib/points';
 import { resourceColor } from '@/lib/palette';
@@ -131,7 +132,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
   const staff = await staffFor(prisma, { restaurantId, service, unitId: unit.id });
   const staffRatings = await staffSummaries(staff.map((p) => p.id));
   const prof = staff.find((p) => p.id === sp.prof) ?? null; // quem o cliente escolheu (vazio = qualquer)
-  const { slots } = await slotsForDay(prisma, { restaurantId, policy: restaurant, service, unit, date, now, resourceId: prof?.id, ignoreBookingId: rb?.id, customerId: customer?.id });
+  const { slots, grid } = await slotsForDay(prisma, { restaurantId, policy: restaurant, service, unit, date, now, resourceId: prof?.id, ignoreBookingId: rb?.id, customerId: customer?.id });
   const days = Array.from({ length: Math.min(14, restaurant.bookingMaxDaysAhead + 1) }, (_, i) => addDaysKey(today, i));
   const chosen = sp.hora ? slots.find((s) => s.time === sp.hora) ?? null : null;
   const dayArgs = { restaurantId, policy: restaurant, service, unit, resourceId: prof?.id, customerId: customer?.id, ignoreBookingId: rb?.id };
@@ -152,6 +153,8 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
   const wallet = customer && service.pointsDiscountMaxPct > 0 && service.priceCents > 0 ? await prisma.wallet.findUnique({ where: { customerId_restaurantId: { customerId: customer.id, restaurantId } } }) : null;
   const balance = wallet?.balance ?? 0;
   const discount = maxDiscount({ priceCents: service.priceCents, maxPct: service.pointsDiscountMaxPct, rate: restaurant.pointsPerRealOff, balance });
+  // Clube de assinatura: o horário escolhido é coberto por um plano pago do cliente (sem cobrança, sem pontos e sem desconto em pontos)?
+  const club = customer && !rb && chosen ? await clubCoverage(prisma, { restaurantId, customerId: customer.id, serviceId: service.id, at: chosen.startsAt }) : null;
 
   return (
     <main className="space-y-5 p-4 sm:p-6 md:pt-8">
@@ -168,8 +171,9 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
             <span>Horário atual: <b>{formatBookingWhen(rb.startsAt)}</b>{rb.resource ? <> com <b>{rb.resource.name}</b></> : null}. Escolha o novo dia, horário e profissional.</span>
           </p>
         )}
-        {!rb && points > 0 && <p className="mt-1.5"><span className="chip-lima">Ao concluir você ganha {formatPoints(points)} pontos aqui</span></p>}
-        {!rb && service.pointsDiscountMaxPct > 0 && service.priceCents > 0 && <p className="mt-1.5"><span className="glass-chip">Aceita pontos como desconto, até {service.pointsDiscountMaxPct}% do preço.</span></p>}
+        {club && <p className="mt-1.5"><span className="chip-lima" data-testid="club-covered">Incluso no seu plano {club.planName}: sobram {club.left} {club.left === 1 ? 'uso' : 'usos'} neste ciclo depois deste</span></p>}
+        {!rb && !club && points > 0 && <p className="mt-1.5"><span className="chip-lima">Ao concluir você ganha {formatPoints(points)} pontos aqui</span></p>}
+        {!rb && !club && service.pointsDiscountMaxPct > 0 && service.priceCents > 0 && <p className="mt-1.5"><span className="glass-chip">Aceita pontos como desconto, até {service.pointsDiscountMaxPct}% do preço.</span></p>}
       </header>
 
       {units.length > 1 && !rb && (
@@ -257,18 +261,29 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
             <AlternativeSlots hrefBase={hrefBase} options={lost} />
           </div>
         )}
-        {slots.length === 0 ? (
+        {grid.length === 0 ? (
           <p className="glass-panel-sm p-4 text-sm text-slate-600">Sem horários livres neste dia. Escolha outro dia.</p>
         ) : (
-          <ul className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-            {slots.map((s) => (
-              <li key={s.time}>
-                <Link href={url({ data: date, hora: s.time })} aria-current={chosen?.time === s.time ? 'true' : undefined} className={`block rounded-xl border py-2.5 text-center text-sm font-semibold ${chosen?.time === s.time ? 'border-[#0F1F3D] bg-[#0F1F3D] text-lima' : 'border-slate-200 bg-white text-slate-800 hover:border-electric-500'}`}>
-                  {s.time}
+          <>
+            {slots.length === 0 && <p className="glass-panel-sm mb-3 p-4 text-sm text-slate-600">Sem horários livres neste dia. Escolha outro dia.</p>}
+            <ul className="grid grid-cols-4 gap-2 sm:grid-cols-6" data-testid="slot-grid">
+              {grid.map((g) => (
+                <li key={g.time}>
+                  {g.state === 'free' ? (
+                    <Link href={url({ data: date, hora: g.time })} aria-current={chosen?.time === g.time ? 'true' : undefined} className={`block rounded-xl border py-2.5 text-center text-sm font-semibold ${chosen?.time === g.time ? 'border-[#0F1F3D] bg-[#0F1F3D] text-lima' : 'border-slate-200 bg-white text-slate-800 hover:border-electric-500'}`}>
+                  {g.time}
                 </Link>
-              </li>
-            ))}
-          </ul>
+                  ) : (
+                    <span aria-disabled="true" data-testid={g.state === 'taken' ? 'slot-taken' : 'slot-past'} title={g.state === 'taken' ? 'Horário já ocupado' : 'Horário que já passou'} className={`block rounded-xl border border-dashed py-2.5 text-center text-sm font-semibold ${g.state === 'taken' ? 'border-slate-300 bg-slate-50 text-slate-400 line-through decoration-2' : 'border-slate-200 bg-transparent text-slate-300'}`}>
+                      {g.time}
+                      <span className="sr-only">{g.state === 'taken' ? ' (ocupado)' : ' (já passou)'}</span>
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+            {grid.some((g) => g.state === 'taken') && <p className="mt-2 text-xs text-slate-500">Os horários riscados já estão ocupados.</p>}
+          </>
         )}
       </section>
 
@@ -348,7 +363,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
           ) : customer ? (
             <>
               <SlotHoldBanner params={{ restaurantId, serviceId: service.id, unitId: unit.id, date, time: chosen.time, resourceId: prof?.id ?? '' }} hrefBase={hrefBase} />
-              <BookingForm hrefBase={hrefBase} hidden={{ restaurantId, serviceId: service.id, unitId: unit.id, date, time: chosen.time, resourceId: prof?.id ?? '' }} askPartySize={service.askPartySize} discount={{ priceCents: service.priceCents, balance, rate: restaurant.pointsPerRealOff, maxPoints: discount.maxPoints, maxPct: service.pointsDiscountMaxPct }} />
+              <BookingForm hrefBase={hrefBase} hidden={{ restaurantId, serviceId: service.id, unitId: unit.id, date, time: chosen.time, resourceId: prof?.id ?? '' }} askPartySize={service.askPartySize} discount={club ? null : { priceCents: service.priceCents, balance, rate: restaurant.pointsPerRealOff, maxPoints: discount.maxPoints, maxPct: service.pointsDiscountMaxPct }} />
             </>
           ) : (
             <Link href={`/entrar?next=${encodeURIComponent(url({ data: date, hora: chosen.time }))}`} className="glass-button-navy w-full">Entrar para confirmar</Link>

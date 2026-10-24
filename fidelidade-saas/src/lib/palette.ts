@@ -33,3 +33,27 @@ export function resourceColor(r: { id: string; color?: string | null }): ColorIn
   for (const ch of r.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   return colorOf(r.color, h);
 }
+
+/**
+ * Cor da marca do estabelecimento (página dele no app do cliente). Lista fechada, como a de cima, para o banco guardar só a chave
+ * e para todo botão ter contraste bom com texto branco. "marinho" é o padrão do Fidelize. `deep` fecha o degradê da capa sem foto.
+ * Fica separada de COLORS de propósito: mexer em COLORS mudaria as cores automáticas de campanhas e profissionais.
+ */
+export const BRAND_COLORS = [
+  { key: 'marinho', label: 'Marinho', hex: '#0F1F3D', deep: '#1A3FA3' },
+  { key: 'azul', label: 'Azul', hex: '#2150C9', deep: '#0F1F3D' },
+  { key: 'verde', label: 'Verde', hex: '#15803D', deep: '#0B4A24' },
+  { key: 'turquesa', label: 'Turquesa', hex: '#0F766E', deep: '#0A3F3B' },
+  { key: 'laranja', label: 'Laranja', hex: '#C2410C', deep: '#7A2A08' },
+  { key: 'vinho', label: 'Vinho', hex: '#9F1239', deep: '#5B0A21' },
+  { key: 'rosa', label: 'Rosa', hex: '#BE185D', deep: '#6E0E37' },
+  { key: 'roxo', label: 'Roxo', hex: '#7C3AED', deep: '#3F1D8A' },
+  { key: 'grafite', label: 'Grafite', hex: '#1F2937', deep: '#0B1018' },
+] as const;
+
+export type BrandKey = (typeof BRAND_COLORS)[number]['key'];
+export const isBrandKey = (v: unknown): v is BrandKey => typeof v === 'string' && BRAND_COLORS.some((c) => c.key === v);
+/** A cor da marca escolhida; sem escolha (ou chave desconhecida), o marinho padrão. */
+export const brandOf = (key: string | null | undefined) => BRAND_COLORS.find((c) => c.key === key) ?? BRAND_COLORS[0];
+export const BRAND_TAGLINE_MAX = 80;
+export const BRAND_ABOUT_MAX = 500;

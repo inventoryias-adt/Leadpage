@@ -51,7 +51,7 @@ export default async function IndicacoesPage({ searchParams }: { searchParams: P
         </div>
       ) : (
         <div className="mx-auto w-full max-w-md space-y-5" data-testid="feed">
-          {data.map((p) => <PostCard key={p.id} post={p} highlight={p.id === sp.publicada} />)}
+          {data.map((p) => <PostCard key={p.id} post={p} highlight={p.id === sp.publicada} viewerInstagram={customer.instagram} />)}
           {nextBefore && <Link href={href({ antes: nextBefore.toISOString() })} className="glass-button-ghost" data-testid="feed-more">Ver mais</Link>}
         </div>
       )}

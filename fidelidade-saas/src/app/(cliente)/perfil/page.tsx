@@ -30,7 +30,7 @@ export const dynamic = 'force-dynamic';
 export default async function PerfilPage() {
   const customer = await requireCustomer('/perfil');
 
-  const [wallets, pending, usedCount, acceptors, movements, upcomingBookings, photo, ordersTotal, openOrders, myPosts, unreadChats] = await Promise.all([
+  const [wallets, pending, usedCount, acceptors, movements, upcomingBookings, photo, ordersTotal, openOrders, myPosts, unreadChats, mySubs] = await Promise.all([
     prisma.wallet.findMany({
       where: { customerId: customer.id },
       include: { restaurant: { select: { id: true, name: true, logoImageId: true, referralPoints: true, subscriptionStatus: true, pointsShareOut: true } } },
@@ -56,6 +56,7 @@ export default async function PerfilPage() {
     prisma.order.count({ where: { customerId: customer.id, status: { in: ['RECEIVED', 'PREPARING', 'READY'] } } }),
     prisma.post.count({ where: { customerId: customer.id } }),
     unreadConversations('CUSTOMER', customer.id),
+    prisma.clubSubscription.count({ where: { customerId: customer.id, status: 'ACTIVE' } }),
   ]);
   const rows = movements.map((m) => ({ at: m.createdAt, type: m.type as 'EARN' | 'REDEEM', points: m.points }));
   const activity = Object.fromEntries(PERIODS.map((p) => [p, activitySeries(rows, p)])) as Record<Period, Activity>;
@@ -127,6 +128,7 @@ export default async function PerfilPage() {
               title: 'Minha atividade',
               items: [
                 { href: '/perfil/pontos', icon: 'receipt', label: 'Histórico de pontos', hint: 'Tudo o que você ganhou e usou' },
+                ...(mySubs > 0 ? [{ href: '/perfil/clube', icon: 'gift' as const, label: 'Meus planos', hint: `${mySubs} ${mySubs === 1 ? 'assinatura' : 'assinaturas'} · veja seu saldo do mês`, testId: 'my-plans-link' }] : []),
                 { href: '/mensagens', icon: 'chat', label: 'Mensagens', hint: unreadChats > 0 ? `${unreadChats} ${unreadChats === 1 ? 'conversa com novidade' : 'conversas com novidade'}` : 'Fale com os lugares', testId: 'my-chats-link', count: unreadChats },
                 { href: '/indicacoes?minhas=1', icon: 'camera', label: 'Minhas indicações', hint: myPosts > 0 ? `${myPosts} ${myPosts === 1 ? 'publicada' : 'publicadas'}` : 'Poste a foto de um lugar que você gostou', testId: 'my-posts-link' },
                 { href: '/perfil/premios', icon: 'gift', label: 'Meus prêmios', hint: `${pending > 0 ? `${pending} para retirar · ` : ''}${usedCount} já resgatado${usedCount === 1 ? '' : 's'}`, count: pending },

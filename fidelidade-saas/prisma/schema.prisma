@@ -102,6 +102,7 @@ model Restaurant {
   bookingMaxDaysAhead Int     @default(30) // até quantos dias à frente o cliente pode marcar
   bookingCancelHours  Int     @default(2) // o cliente cancela sozinho até X horas antes
   bookingBufferMin    Int     @default(0) // intervalo entre atendimentos (limpeza, troca de cliente), em minutos
+  bookingSlotStepMin  Int     @default(0) // de quanto em quanto tempo os horários aparecem para o cliente: 0 = automático (do tamanho do serviço), ou 15, 30, 60 min
   pointsPerRealOff    Int     @default(100) // quantos pontos valem R$ 1,00 de desconto num serviço (padrão: ganha 10 por real, 100 pontos = R$ 1,00)
   bookingNotifyEmail  String? // e-mail que recebe cada novo agendamento (vazio = o e-mail da conta)
 
@@ -123,6 +124,9 @@ model Restaurant {
   longitude       Float?
   logoImageId     String?
   coverImageId    String?
+  brandColor      String? // chave de BRAND_COLORS (src/lib/palette.ts); vazio = marinho padrão
+  tagline         String? // slogan curto, mostrado sob o nome na página do lugar
+  about           String? // "Sobre nós", texto livre mostrado na página do lugar
 
   createdAt DateTime @default(now())
 
@@ -146,11 +150,15 @@ model Restaurant {
   timeOffs          TimeOff[]
   posts             Post[]
   conversations     Conversation[]
+  clubSubscriptions ClubSubscription[]
   reviews           Review[]
   menuItems         MenuItem[]
   orders            Order[]
   birthdayGifts     BirthdayGift[]
   interactionClaims InteractionClaim[]
+  financeEntries    FinanceEntry[]
+  commissionPayouts CommissionPayout[]
+  clubPlans         ClubPlan[]
 }
 
 /// Pontuação fixa por interação (foto no Instagram, avaliação 5★ no Google...).
@@ -255,6 +263,7 @@ model Customer {
   posts             Post[]
   postLikes         PostLike[]
   conversations     Conversation[]
+  clubSubscriptions ClubSubscription[]
 }
 
 /// Foto de perfil do cliente. Fica em tabela própria para não pesar a consulta da sessão; só o próprio cliente a vê.
@@ -652,10 +661,12 @@ model Resource {
   /// Dias e horários em que trabalha, no mesmo formato do horário da unidade. Vazio = segue o horário da unidade.
   schedule     Json?
   color        String? // chave da paleta (src/lib/palette.ts); vazio = cor automática pela ordem
+  commissionBp Int      @default(0) // comissão sobre os atendimentos concluídos, em centésimos de % (4000 = 40%)
   createdAt    DateTime @default(now())
 
-  restaurant Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  unit       Unit?             @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  restaurant Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  unit       Unit?              @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  payouts    CommissionPayout[]
   services   Service[]
   bookings   Booking[]
   slotHolds  SlotHold[]
@@ -685,6 +696,7 @@ model Service {
   resource   Resource?         @relation(fields: [resourceId], references: [id], onDelete: SetNull)
   bookings   Booking[]
   offers     ResourceService[]
+  planItems  ClubPlanItem[]
 
   waitlist WaitlistEntry[]
 
@@ -815,6 +827,7 @@ model Booking {
   pointsUsed         Int           @default(0) // pontos gastos como desconto neste agendamento (voltam se cancelar)
   discountCents      Int           @default(0) // desconto em R$ correspondente aos pontos usados
   claimId            String?       @unique // lançamento que creditou os pontos (ao concluir)
+  clubSubscriptionId String? // atendimento coberto pelo plano do clube: não cobra, não dá pontos e abate do saldo do ciclo
   createdAt          DateTime      @default(now())
   confirmedAt        DateTime?
   completedAt        DateTime?
@@ -824,13 +837,14 @@ model Booking {
   reminderAnswer     String? // OK (confirmou presença) ou NO (liberou o horário); vazio = sem resposta
   reminderAnsweredAt DateTime?
 
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  unit       Unit       @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  customer   Customer?  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  service    Service?   @relation(fields: [serviceId], references: [id], onDelete: SetNull)
-  resource   Resource?  @relation(fields: [resourceId], references: [id], onDelete: SetNull)
-  claim      Claim?     @relation(fields: [claimId], references: [id], onDelete: SetNull)
-  review     Review?
+  restaurant       Restaurant        @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  unit             Unit              @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  customer         Customer?         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  service          Service?          @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  resource         Resource?         @relation(fields: [resourceId], references: [id], onDelete: SetNull)
+  claim            Claim?            @relation(fields: [claimId], references: [id], onDelete: SetNull)
+  review           Review?
+  clubSubscription ClubSubscription? @relation(fields: [clubSubscriptionId], references: [id], onDelete: SetNull)
 
   @@index([restaurantId, startsAt])
   @@index([customerId, startsAt])
@@ -1045,4 +1059,99 @@ model ChatMessage {
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId, createdAt])
+}
+
+/// Entrada ou despesa lançada pelo dono (gestão financeira). Fixas (`MONTHLY`) valem todo mês a partir de `date`, até `endsOn`.
+/// As entradas de agenda, pedidos e caixa vêm dos próprios atendimentos e lançamentos; aqui ficam só as manuais e as do clube.
+model FinanceEntry {
+  id           String    @id @default(uuid())
+  restaurantId String
+  kind         String // IN (entrada) ou OUT (despesa)
+  description  String
+  category     String
+  amountCents  Int
+  date         DateTime  @db.Date
+  recurrence   String    @default("NONE") // NONE ou MONTHLY
+  endsOn       DateTime? @db.Date
+  source       String    @default("MANUAL") // MANUAL ou CLUBE (pagamento de assinatura registrado pelo dono)
+  refId        String?   @unique // origem automática (ex.: pagamento do clube), evita lançar duas vezes
+  createdAt    DateTime  @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, date])
+}
+
+/// Comissão de um profissional já paga num mês ("AAAA-MM"). Conta como saída no financeiro e trava um segundo pagamento do mesmo mês.
+model CommissionPayout {
+  id           String   @id @default(uuid())
+  restaurantId String
+  resourceId   String?
+  resourceName String
+  month        String
+  baseCents    Int
+  commissionBp Int
+  amountCents  Int
+  paidAt       DateTime @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  resource   Resource?  @relation(fields: [resourceId], references: [id], onDelete: SetNull)
+
+  @@unique([resourceId, month])
+  @@index([restaurantId, month])
+}
+
+/// Plano do clube de assinatura do estabelecimento (ex.: "3 cortes e 2 barbas por mês"), cobrado todo mês no balcão.
+model ClubPlan {
+  id           String   @id @default(uuid())
+  restaurantId String
+  name         String
+  description  String?
+  priceCents   Int // por mês
+  active       Boolean  @default(true) // inativo = não aceita novos assinantes (quem já assina continua)
+  createdAt    DateTime @default(now())
+
+  restaurant    Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  items         ClubPlanItem[]
+  subscriptions ClubSubscription[]
+
+  @@index([restaurantId, active])
+}
+
+/// O que o plano inclui por ciclo: quantas vezes de um serviço.
+model ClubPlanItem {
+  id        String @id @default(uuid())
+  planId    String
+  serviceId String
+  quantity  Int // por ciclo mensal
+
+  plan    ClubPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  service Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, serviceId])
+}
+
+/// Assinatura de um cliente. O ciclo é mensal a partir de `anchorDate` (o dia do 1º pagamento) e cada pagamento registrado pelo
+/// dono cobre mais um ciclo (`paidPeriods`). Cancelar só impede novas renovações: o que já foi pago vale até o fim do ciclo.
+model ClubSubscription {
+  id           String    @id @default(uuid())
+  restaurantId String
+  planId       String
+  customerId   String
+  status       String    @default("ACTIVE") // ACTIVE ou CANCELED
+  anchorDate   DateTime? @db.Date // vazio até o primeiro pagamento
+  paidPeriods  Int       @default(0)
+  planName     String // cópia do nome e do preço no momento da assinatura
+  priceCents   Int
+  requestedBy  String // CUSTOMER (pediu pelo app) ou OWNER (o lugar cadastrou)
+  canceledAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  plan       ClubPlan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+  customer   Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  bookings   Booking[]
+
+  @@index([restaurantId, status])
+  @@index([customerId])
 }

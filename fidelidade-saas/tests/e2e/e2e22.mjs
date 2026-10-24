@@ -88,7 +88,7 @@ const pickDay = async () => {
 };
 await pickDay(); await l.waitForSelector('section[aria-labelledby=dia] a[aria-current=date]:not(:has-text("Hoje"))');
 const times = await l.locator('ul.grid a').allInnerTexts();
-assert.equal(times[0], '10:00'); assert.equal(times[times.length - 1], '15:00', '45 min dentro da escala até 16h: o último começa às 15h');
+assert.equal(times[0], '10:00'); assert.equal(times[1], '10:45', 'o serviço de 45 min anda de 45 em 45 min'); assert.equal(times[times.length - 1], '15:15', '45 min dentro da escala até 16h: o último começa às 15h15 e termina às 16h em ponto');
 await l.click('ul.grid a:has-text("10:00")'); await l.waitForSelector('text=com Lucas Barbeiro'); await l.waitForSelector('text=· 45 min');
 assert.ok(await l.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'sem rolagem lateral');
 await l.screenshot({ path: 'eq-cliente.png', fullPage: true });
@@ -107,7 +107,9 @@ for (let i = 0, n = await links5.count(); i < n; i++) {
   }
 }
 await l.waitForSelector('section[aria-labelledby=dia] a[aria-current=date]:not(:has-text("Hoje"))');
-await l.click('ul.grid a:has-text("11:00")'); await l.waitForSelector('text=Livres neste horário');
+// a grade anda do tamanho do serviço mais curto (45 min do Lucas): 10:30, 11:15…; escolhe o primeiro horário a partir das 11h
+const after11 = (await l.locator('ul.grid a').allInnerTexts()).map((t) => t.trim()).find((t) => t >= '11:00');
+await l.click(`ul.grid a:has-text("${after11}")`); await l.waitForSelector('text=Livres neste horário');
 const free = await l.locator('section[aria-labelledby=confirmar] ul a').allInnerTexts();
 assert.ok(free.some((t) => /Ana/.test(t) && /60 min/.test(t)), `Ana livre com 60 min: ${free}`);
 console.log('5. "qualquer um": mostra quem está livre e o tempo de cada profissional OK');

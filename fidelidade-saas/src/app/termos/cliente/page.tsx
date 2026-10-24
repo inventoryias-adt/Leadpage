@@ -59,6 +59,9 @@ export default function TermosClientePage() {
         Em lugares com agenda, você escolhe serviço, profissional e horário. Cancele pelo app dentro do prazo do lugar; pontos usados como desconto voltam ao cancelar. Você receberá um aviso pouco antes do horário perguntando se está tudo certo:
         se responder que não, o horário é liberado. Faltas sem aviso podem seguir as regras do estabelecimento.
       </p>
+      <p>
+        Alguns lugares têm <strong>clube de assinatura</strong>: você paga a mensalidade diretamente ao estabelecimento (no balcão) e, enquanto o mês estiver pago, os atendimentos incluídos no plano abatem do seu saldo do ciclo ao agendar. O plano é um acordo entre você e o lugar, que responde por ele e define o que está incluso; o Fidelize apenas registra a assinatura e o saldo. Você pode cancelar a renovação quando quiser; o que já foi pago vale até o fim do ciclo.
+      </p>
 
       <h2>9. Localização e endereços</h2>
       <p>

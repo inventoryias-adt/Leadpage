@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { addDaysKey, availableSlots, bookingPoints, canCustomerCancel, dateKeyOf, dayStartUtc, formatBookingWhen, formatTimeOff, guestOf, hmOf, inPeriod, openWaitPeriods, dayOccupancy, occupancyPct, parseDateKey, pickResource, timeOffBusy, timeOffRange, weekdayOf, withBuffer, type SlotInput } from './booking';
+import { addDaysKey, autoStep, availableSlots, dayGrid, slotStep, bookingPoints, canCustomerCancel, dateKeyOf, dayStartUtc, formatBookingWhen, formatTimeOff, guestOf, hmOf, inPeriod, openWaitPeriods, dayOccupancy, occupancyPct, parseDateKey, pickResource, timeOffBusy, timeOffRange, weekdayOf, withBuffer, type SlotInput } from './booking';
 import type { Schedule } from './hours';
 
 const week = (open: string, close: string, closedDays: number[] = []): Schedule => Array.from({ length: 7 }, (_, day) => ({ day, closed: closedDays.includes(day), open, close }));
@@ -262,4 +262,46 @@ test('openWaitPeriods: hoje só valem as faixas que ainda não terminaram', () =
   assert.deepEqual(openWaitPeriods({ date: '2026-10-24', schedule, durationMin: 30, now: at('2026-10-22T16:00:00Z'), minNoticeMin: 60 }), ['ANY', 'MORNING', 'AFTERNOON', 'EVENING']);
   const manha = schedule.map((d) => ({ ...d, close: '12:00' }));
   assert.deepEqual(openWaitPeriods({ date: '2026-10-24', schedule: manha, durationMin: 30, now: at('2026-10-22T16:00:00Z'), minNoticeMin: 60 }), ['ANY', 'MORNING']);
+});
+
+test('passo da grade: automático acompanha serviços de 35, 40, 45 min; o lugar pode fixar 15, 30 ou 60', () => {
+  assert.deepEqual([10, 15, 20, 25].map(autoStep), [15, 15, 15, 15]);
+  assert.deepEqual([30, 60, 90, 120].map(autoStep), [30, 30, 30, 30]);
+  assert.deepEqual([35, 40, 45, 50, 55].map(autoStep), [35, 40, 45, 50, 55]);
+  assert.deepEqual([75, 100, 150].map(autoStep), [60, 60, 30]); // 150 é múltiplo de 30
+  assert.equal(slotStep(35, 0), 35);
+  assert.equal(slotStep(35, 30), 30);
+  assert.equal(slotStep(90, 15), 15);
+  // serviço de 35 min: os horários andam de 35 em 35 a partir da abertura
+  assert.deepEqual(times({ durationMin: 35 }).slice(0, 4), ['09:00', '09:35', '10:10', '10:45']);
+  assert.deepEqual(times({ durationMin: 45 }), ['09:00', '09:45', '10:30', '11:15'], 'o último termina às 12h em ponto (11:15 + 45 min)');
+  // o lugar fixa 30 min mesmo com serviço de 35
+  assert.deepEqual(times({ durationMin: 35, stepMin: 30 }).slice(0, 4), ['09:00', '09:30', '10:00', '10:30']);
+  // e o serviço de 35 min ocupa 35 min de verdade: um agendamento 09:35-10:10 tira 09:30 e 10:00 da grade de 30
+  const busy = [{ resourceId: 'r1', startsAt: at('09:35'), endsAt: at('10:10') }];
+  assert.deepEqual(times({ durationMin: 35, stepMin: 30, busy }).slice(0, 3), ['09:00', '10:30', '11:00']);
+});
+
+test('grade do dia inteira: livres, ocupados (riscados) e passados, com antecedência 0 ou 60', () => {
+  const busy = [{ resourceId: 'r1', startsAt: at('09:00'), endsAt: at('09:35') }];
+  const g = dayGrid(base({ durationMin: 35, busy }));
+  assert.deepEqual(g.slice(0, 3).map((x) => `${x.time}:${x.state}`), ['09:00:taken', '09:35:free', '10:10:free']);
+  assert.deepEqual(g.map((x) => x.time), ['09:00', '09:35', '10:10', '10:45', '11:20'], 'todos os horários do expediente aparecem (11:20 + 35 min ainda cabe antes das 12h)');
+  // os ocupados não somem da grade, mas não viram horário livre
+  assert.deepEqual(availableSlots(base({ durationMin: 35, busy })).map((s) => s.time), ['09:35', '10:10', '10:45', '11:20']);
+
+  // hoje às 10:40, antecedência 60: o que começa antes das 11:40 é "passou"; com antecedência 0 libera já a partir das 10:40
+  const today = { date: '2026-10-12', now: at('10:40'), schedule: week('09:00', '14:00'), durationMin: 60 };
+  const states = (o: Partial<SlotInput>) => dayGrid(base({ ...today, ...o })).map((x) => `${x.time}:${x.state}`).join(' ');
+  assert.equal(states({ minNoticeMin: 60 }), '09:00:past 09:30:past 10:00:past 10:30:past 11:00:past 11:30:past 12:00:free 12:30:free 13:00:free');
+  assert.equal(states({ minNoticeMin: 0 }), '09:00:past 09:30:past 10:00:past 10:30:past 11:00:free 11:30:free 12:00:free 12:30:free 13:00:free');
+  // e com o profissional ocupado às 11:00 (60 min), o 11:00 e o 11:30 aparecem riscados, não somem
+  const b2 = [{ resourceId: 'r1', startsAt: at('11:00'), endsAt: at('12:00') }];
+  assert.equal(states({ minNoticeMin: 0, busy: b2 }), '09:00:past 09:30:past 10:00:past 10:30:past 11:00:taken 11:30:taken 12:00:free 12:30:free 13:00:free');
+  // dia fechado ou sem ninguém atendendo: grade vazia
+  assert.deepEqual(dayGrid(base({ schedule: week('09:00', '12:00', [1]) })), []);
+  // com dois profissionais, só fica "ocupado" quando todos estão
+  const two = dayGrid(base({ durationMin: 30, resources: [{ id: 'r1', capacity: 1 }, { id: 'r2', capacity: 1 }], busy: [{ resourceId: 'r1', startsAt: at('09:00'), endsAt: at('09:30') }] }));
+  assert.equal(two[0].state, 'free');
+  assert.deepEqual(two[0].resourceIds, ['r2']);
 });

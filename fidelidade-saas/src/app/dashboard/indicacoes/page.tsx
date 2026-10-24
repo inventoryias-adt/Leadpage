@@ -1,8 +1,10 @@
 import { EmptyState } from '@/components/EmptyState';
 import { OwnerPostReport } from '@/components/OwnerPostReport';
+import { ReviewTabs } from '@/components/ReviewTabs';
 import { Stars } from '@/components/Stars';
 import { prisma } from '@/lib/db';
 import { authorName, postPhotoPath } from '@/lib/posts';
+import { formatAvg, summarize } from '@/lib/reviews';
 import { requireActiveRestaurant } from '@/lib/session';
 
 export const metadata = { title: 'Indicações dos clientes' };
@@ -18,12 +20,27 @@ export default async function IndicacoesDono() {
     take: 60,
     select: { id: true, rating: true, comment: true, reportedAt: true, createdAt: true, customer: { select: { name: true, instagram: true } }, _count: { select: { likes: true } } },
   });
+  const [reviewCount, all] = await Promise.all([
+    prisma.review.count({ where: { restaurantId: restaurant.id, hiddenAt: null } }),
+    prisma.post.findMany({ where: { restaurantId: restaurant.id, hiddenAt: null }, select: { rating: true, _count: { select: { likes: true } } } }),
+  ]);
+  const summary = summarize(all.map((p) => p.rating));
+  const likes = all.reduce((n, p) => n + p._count.likes, 0);
   return (
     <div className="mx-auto max-w-4xl space-y-5">
       <header>
-        <h1 className="text-2xl font-extrabold tracking-tight text-primary">Indicações dos clientes</h1>
-        <p className="text-sm text-slate-600">Fotos e comentários que seus clientes postaram sobre o seu lugar. Se algo for ofensivo ou não for do seu negócio, denuncie para a administração analisar.</p>
+        <h1 className="text-2xl font-extrabold tracking-tight text-primary">Avaliações</h1>
+        <p className="text-sm text-slate-600">Fotos e notas que seus clientes postaram marcando o seu lugar. Se algo for ofensivo ou não for do seu negócio, denuncie para a administração analisar.</p>
       </header>
+      <ReviewTabs active="indicacoes" services={reviewCount} posts={all.length} />
+      {summary.count > 0 && (
+        <section className="glass-panel flex flex-wrap items-center gap-3 !rounded-[22px] p-4 sm:p-5" data-testid="posts-summary">
+          <span className="text-3xl font-extrabold text-primary">{formatAvg(summary.avg ?? 0)}</span>
+          <Stars value={summary.avg ?? 0} size={22} />
+          <span className="text-sm text-slate-600">{summary.count} {summary.count === 1 ? 'indicação' : 'indicações'} · ♥ {likes}</span>
+          <span className="text-xs text-slate-500">Esta nota é só das fotos postadas pelos clientes. Ela não entra na nota dos atendimentos.</span>
+        </section>
+      )}
       {posts.length === 0 ? (
         <EmptyState variant="users" title="Nenhuma indicação ainda" text="Quando um cliente seu postar uma foto na aba Indicações do aplicativo, ela aparece aqui." />
       ) : (

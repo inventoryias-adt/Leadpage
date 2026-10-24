@@ -68,6 +68,9 @@ export default function TermosEstabelecimentoPage() {
       <p>
         Os clientes podem postar fotos e comentários marcando o seu negócio e trocar mensagens com você pelo app. Você vê as fotos, pode denunciar as que forem ofensivas ou de outro lugar (a administração decide) e deve tratar as mensagens com respeito e só usá-las para atender o cliente, sem enviar propaganda não pedida.
       </p>
+      <p>
+        Se você oferecer um <strong>clube de assinatura</strong>, os planos, os valores e as regras (o que está incluso, validade do ciclo, cancelamento) são seus, e a relação de consumo com o assinante é entre vocês: o Fidelize registra a assinatura, o saldo do ciclo e os pagamentos que você informar, mas <strong>não cobra nem repassa</strong> a mensalidade. Você responde por entregar o que prometeu no plano.
+      </p>
 
       <h2>10. Disponibilidade e suporte</h2>
       <p>

@@ -1,3 +1,4 @@
+import { Icon } from '@/components/Icons';
 import Link from 'next/link';
 import { ChatThread } from '@/components/ChatThread';
 import { displayName } from '@/lib/reviews';
@@ -29,7 +30,7 @@ export default async function ConversaDono({ params }: { params: Promise<{ custo
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       <header className="flex items-center gap-3">
-        <Link href="/dashboard/mensagens" aria-label="Voltar para Mensagens" className="text-2xl font-bold text-electric-600">‹</Link>
+        <Link href="/dashboard/mensagens" aria-label="Voltar para Mensagens" className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/80 py-1.5 pl-2 pr-3.5 text-sm font-bold text-electric-600 shadow-sm ring-1 ring-slate-200" data-testid="owner-back"><Icon name="back" size={16} /> Mensagens</Link>
         <h1 className="truncate text-lg font-extrabold text-primary" data-testid="chat-title">{name}</h1>
       </header>
       {conversationId ? (

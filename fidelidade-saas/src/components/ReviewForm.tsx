@@ -7,12 +7,12 @@ import { SubmitButton } from './ui';
 import { COMMENT_MAX } from '@/lib/reviews';
 
 /** Formulário de avaliação: lugar, quem atendeu (se houve) e comentário. */
-export function ReviewForm({ bookingId, placeName, staffName }: { bookingId: string; placeName: string; staffName: string | null }) {
+export function ReviewForm({ bookingId, placeName, staffName, initialRating = 0 }: { bookingId: string; placeName: string; staffName: string | null; initialRating?: number }) {
   const [state, action] = useActionState(submitReviewAction, {});
   return (
     <form action={action} className="glass-panel space-y-5 p-5" data-testid="review-form">
       <input type="hidden" name="bookingId" value={bookingId} />
-      <StarPicker name="placeRating" label={`Como foi em ${placeName}?`} defaultValue={Number(state.values?.placeRating) || 0} />
+      <StarPicker name="placeRating" label={`Como foi em ${placeName}?`} defaultValue={Number(state.values?.placeRating) || initialRating} />
       {staffName && <StarPicker name="staffRating" label={`E o atendimento de ${staffName}?`} optional defaultValue={Number(state.values?.staffRating) || 0} />}
       <div>
         <label htmlFor="rv-comment" className="glass-label">Quer contar mais? <span className="font-normal text-slate-500">(opcional)</span></label>
