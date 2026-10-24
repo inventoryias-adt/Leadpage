@@ -6,17 +6,20 @@ import { Icon } from './Icons';
 
 /**
  * Um dia da lista de avisos, fechado por padrão: mostra a data, quantos avisos tem e quantos são novos; ao tocar, abre a lista do dia.
- * Os avisos novos só viram "lidos" quando o dia é aberto (depois de um instante), para ninguém perder um aviso sem ver.
+ * Os avisos novos viram "lidos" assim que o dia é aberto, para ninguém perder um aviso sem ver.
  */
 export function NoticeDay({ label, count, unreadIds, children }: { label: string; count: number; unreadIds: string[]; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [seen, setSeen] = useState(false);
   const key = unreadIds.join(',');
 
+  // Abriu o dia, viu: os novos viram "lidos" na hora (a bolinha some já; o servidor confirma em seguida e, se falhar, a bolinha volta).
   useEffect(() => {
     if (!open || !key) return;
-    const t = setTimeout(() => void markNoticesRead(key.split(',')).then(() => setSeen(true)), 1500);
-    return () => clearTimeout(t);
+    setSeen(true);
+    let cancelled = false;
+    void markNoticesRead(key.split(',')).catch(() => { if (!cancelled) setSeen(false); });
+    return () => { cancelled = true; };
   }, [open, key]);
 
   const fresh = seen ? 0 : unreadIds.length;

@@ -20,20 +20,20 @@ export function CampaignTile({ big, title, when, color, live, compact, children 
     );
   }
   return (
-    <div className="glass-panel-sm flex items-center gap-3.5 p-3.5">
+    <div className="glass-panel-sm flex items-start gap-3.5 p-3.5">
       <span
         aria-hidden
-        className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-center font-extrabold leading-none text-white"
+        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-center font-extrabold leading-none text-white sm:h-16 sm:w-16"
         style={{ background: color.hex, fontSize: big.length > 4 ? 18 : big.length > 3 ? 22 : 26 }}
       >
         {big}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="font-bold leading-tight text-slate-800">{title}</p>
-        {when && <p className="mt-0.5 text-xs leading-snug text-slate-500">{when}</p>}
+        <p className="font-bold leading-tight text-slate-800 [overflow-wrap:anywhere]">{title}</p>
+        {live && <span className="chip-verde mt-1 inline-block">Valendo agora</span>}
+        {when && <p className="mt-1 text-xs leading-snug text-slate-500">{when}</p>}
         {children}
       </div>
-      {live && <span className="chip-verde shrink-0 self-start">Valendo agora</span>}
     </div>
   );
 }

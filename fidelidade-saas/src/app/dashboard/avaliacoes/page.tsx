@@ -5,7 +5,7 @@ import { ReviewTabs } from '@/components/ReviewTabs';
 import { SubmitButton } from '@/components/ui';
 import { prisma } from '@/lib/db';
 import { COMMENT_MAX, MIN_REVIEWS_FOR_RANK, displayName, formatAvg, summarize } from '@/lib/reviews';
-import { requireActiveRestaurant } from '@/lib/session';
+import { getAdmin, requireActiveRestaurant } from '@/lib/session';
 
 export const metadata = { title: 'Avaliações' };
 export const dynamic = 'force-dynamic';
@@ -25,6 +25,9 @@ export default async function AvaliacoesPage({ searchParams }: { searchParams: P
     },
   });
   const postCount = await prisma.post.count({ where: { restaurantId: restaurant.id, hiddenAt: null } });
+  // O que chegou depois da última visita aparece com a marca "Nova"; abrir a tela zera a novidade do Início (o suporte, em modo administrador, não zera).
+  const seenAt = restaurant.reviewsSeenAt;
+  if (!(await getAdmin())) await prisma.restaurant.update({ where: { id: restaurant.id }, data: { reviewsSeenAt: new Date() } });
   const place = summarize(reviews.map((r) => r.placeRating));
   const staff = new Map<string, { name: string; ratings: number[] }>();
   for (const r of reviews) {
@@ -87,6 +90,7 @@ export default async function AvaliacoesPage({ searchParams }: { searchParams: P
                 <div className="flex items-center gap-2">
                   <Stars value={r.placeRating} />
                   <span className="text-sm font-semibold text-slate-800">{displayName(r.customer.name)}</span>
+                  {r.createdAt > seenAt && <span className="rounded-md bg-rose-100 px-1.5 py-0.5 text-[11px] font-bold text-rose-700" data-testid="review-new">Nova</span>}
                 </div>
                 <span className="text-xs text-slate-500">{when(r.createdAt)}</span>
               </div>

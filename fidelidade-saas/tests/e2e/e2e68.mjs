@@ -37,10 +37,12 @@ assert.ok(fab.width >= 56 && Math.abs(fab.width - fab.height) < 2, 'redondo e gr
 assert.deepEqual((await c.locator('nav[aria-label="Navegação principal"].md\\:hidden a:not([data-testid=fab-indicar])').allInnerTexts()).map((t) => t.replace(/^\d+\n/, '')), ['Início', 'Lugares', 'Avisos', 'Perfil']);
 console.log('1. botão "+" em destaque no meio da barra (center FAB) OK');
 
-// 2. o "+" abre a nova indicação; sem foto e sem nota não publica
-await c.click('[data-testid=fab-indicar]'); await c.waitForURL('**/indicacoes/nova'); await c.waitForSelector('[data-testid=new-post-form]');
+// 2. o "+" abre a lista de indicações; o botão "Indicar" abre a nova indicação; sem foto e sem nota não publica
+await c.click('[data-testid=fab-indicar]'); await c.waitForURL('**/indicacoes'); await c.waitForSelector('[data-testid=nova-indicacao]');
+assert.equal(await c.locator('[data-testid=new-post-form]').count(), 0, 'o "+" abre a lista de indicações, não o formulário');
+await c.click('[data-testid=nova-indicacao]'); await c.waitForURL('**/indicacoes/nova'); await c.waitForSelector('[data-testid=new-post-form]');
 await c.click('[data-testid=publish-post]'); await c.waitForSelector('text=Escolha a foto da indicação');
-console.log('2. "+" abre a nova indicação; sem foto não publica OK');
+console.log('2. "+" abre a lista; "Indicar" abre a nova indicação; sem foto não publica OK');
 
 // 3. publica: foto, nota 5 e comentário; cai no feed com o aviso
 await c.setInputFiles('[data-testid=post-photo-input]', PHOTO); await c.waitForSelector('[data-testid=photo-preview]');

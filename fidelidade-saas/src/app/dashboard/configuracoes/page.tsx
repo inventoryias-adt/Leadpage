@@ -179,6 +179,13 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
         ))}
       </nav>
 
+      {(prev || next) && (
+        <nav aria-label="Etapa anterior e seguinte" data-testid="etapa-nav-top" className="flex items-center justify-between gap-2">
+          {prev ? <Link href={hrefOf(prev[0])} className="glass-button-ghost btn-sm !w-auto">← {prev[1]}</Link> : <span />}
+          {next && <Link href={hrefOf(next[0])} className="glass-button-lime btn-sm !w-auto">Próximo: {next[1]} →</Link>}
+        </nav>
+      )}
+
       {(() => {
         const steps = [
           { done: !!restaurant.logoImageId && !!restaurant.category, label: 'Logo e categoria do seu negócio', href: hrefOf('negocio', 'identidade') },
