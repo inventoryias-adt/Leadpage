@@ -18,8 +18,8 @@ const face = { containerType: 'inline-size', aspectRatio: '1.586 / 1', backgroun
 export function CardFront({ data }: { data: CardData }) {
   return (
     <div className="card-face relative h-full w-full overflow-hidden text-white" style={{ ...face, borderRadius: RADIUS }}>
-      <div aria-hidden className="absolute -right-[14cqw] -top-[22cqw] h-[70cqw] w-[70cqw] rounded-full" style={{ background: 'radial-gradient(circle,rgba(198,244,50,.34),rgba(198,244,50,0) 68%)' }} />
-      <div aria-hidden className="absolute inset-0" style={{ background: 'linear-gradient(115deg,rgba(255,255,255,.13) 0%,rgba(255,255,255,0) 38%,rgba(255,255,255,0) 72%,rgba(255,255,255,.06) 100%)' }} />
+      <div aria-hidden className="card-deco absolute -right-[14cqw] -top-[22cqw] h-[70cqw] w-[70cqw] rounded-full" style={{ background: 'radial-gradient(circle,rgba(198,244,50,.34),rgba(198,244,50,0) 68%)' }} />
+      <div aria-hidden className="card-deco absolute inset-0" style={{ background: 'linear-gradient(115deg,rgba(255,255,255,.13) 0%,rgba(255,255,255,0) 38%,rgba(255,255,255,0) 72%,rgba(255,255,255,.06) 100%)' }} />
       <div className="relative flex h-full flex-col justify-between" style={{ padding: '6cqw' }}>
         <div className="flex items-center justify-between">
           <span className="flex items-center" style={{ gap: '2.4cqw' }}>

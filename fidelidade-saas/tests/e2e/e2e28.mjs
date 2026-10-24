@@ -21,6 +21,7 @@ const p = await ctx.newPage(); p.on('pageerror', (e) => console.log('PAGEERROR',
 await p.goto(BASE + '/entrar'); await p.fill('#c-email', 'lucas@teste.com'); await p.fill('#c-password', 'senha-cliente-1'); await p.click('button[type=submit]'); await p.waitForURL('**/carteira**');
 
 // 1. Início limpo: sem lista de códigos nem "resgatar agora"; os avisos ficam no cartão do lugar
+await p.waitForSelector('a[href^="/carteira/"]:has-text("Burger do Zé")'); // espera o Início carregar (antes aparece só "Carregando…")
 assert.equal(await p.locator('text=Prêmios para retirar').count(), 0);
 assert.equal(await p.locator('text=Você pode resgatar agora').count(), 0);
 assert.equal(await p.locator('text=ABC123').count(), 0, 'o código não fica solto no Início');

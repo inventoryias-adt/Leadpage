@@ -671,6 +671,17 @@ label:has(input[type='radio']) {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+  /* Na impressão (principalmente no PDF do iPhone) degradês com transparência apagam o fundo da frente e viram uma faixa preta:
+     o cartão sai com fundo azul sólido e sem os enfeites (brilho e halo), que só existem na tela. */
+  .print-cards .card-face {
+    background: #0f2447 !important;
+  }
+  .print-cards .card-deco {
+    display: none !important;
+  }
+  .print-cards .pc-card * {
+    text-shadow: none !important;
+  }
   .print-cards .pc-note {
     max-width: 85.6mm;
     font-size: 8pt;
