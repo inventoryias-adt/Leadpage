@@ -285,3 +285,96 @@ export async function removeBirthday(): Promise<FormState> {
   revalidatePath('/lugar', 'layout');
   return { ok: 'Aniversário removido.' };
 }
+
+// ---------------------------------------------------------------- Meus dados (perfil do cliente)
+
+const nameSchema = z.string().trim().min(2, 'Informe seu nome.').max(80, 'O nome pode ter no máximo 80 letras.');
+
+/** Quem tem senha confirma com ela antes de mudar telefone, e-mail ou CPF; conta antiga sem senha segue só pela sessão. */
+async function confirmedByPassword(customer: { passwordHash: string | null }, formData: FormData): Promise<string | null> {
+  if (!customer.passwordHash) return null;
+  const typed = String(formData.get('password') ?? '');
+  if (!typed) return 'Digite a sua senha atual para confirmar a mudança.';
+  return (await verifyPassword(typed, customer.passwordHash)) ? null : 'A senha atual está incorreta.';
+}
+
+/** Troca o nome do cliente logado. */
+export async function saveCustomerName(_: FormState, formData: FormData): Promise<FormState> {
+  const customer = await getCustomer();
+  if (!customer) return { error: 'Sua sessão expirou. Entre novamente.' };
+  const parsed = nameSchema.safeParse(formData.get('name') ?? '');
+  if (!parsed.success) return fail(parsed.error.issues[0].message, formData);
+  if (!(await allow(`cust:name:${customer.id}`, 20, 3600))) return fail(TOO_MANY, formData);
+  await prisma.customer.update({ where: { id: customer.id }, data: { name: parsed.data.replace(/\s+/g, ' ') } });
+  revalidatePath('/', 'layout');
+  return { ok: 'Nome atualizado.' };
+}
+
+/** Troca telefone e e-mail de acesso (com a senha atual). */
+export async function saveCustomerContact(_: FormState, formData: FormData): Promise<FormState> {
+  const customer = await getCustomer();
+  if (!customer) return { error: 'Sua sessão expirou. Entre novamente.' };
+  const phone = normalizePhone(String(formData.get('phone') ?? ''));
+  if (!phone) return fail('Telefone inválido. Use DDD + número.', formData);
+  let email: string | null = customer.email;
+  if (customer.email) {
+    const parsed = emailField.safeParse(formData.get('email') ?? '');
+    if (!parsed.success) return fail(parsed.error.issues[0].message, formData);
+    email = parsed.data;
+  }
+  if (phone === customer.phone && email === customer.email) return fail('Nada mudou: altere o telefone ou o e-mail para salvar.', formData);
+  if (!(await allow(`cust:contact:${customer.id}`, 10, 3600))) return fail(TOO_MANY, formData);
+  const bad = await confirmedByPassword(customer, formData);
+  if (bad) return fail(bad, formData);
+  if (email && email !== customer.email) {
+    const taken = await prisma.customer.findUnique({ where: { email }, select: { id: true } });
+    if (taken) return fail('Este e-mail já está em uso por outra conta.', formData);
+  }
+  try {
+    await prisma.customer.update({ where: { id: customer.id }, data: { phone, ...(email ? { email } : {}) } });
+  } catch (e) {
+    if ((e as { code?: string }).code === 'P2002') return fail('Este e-mail já está em uso por outra conta.', formData);
+    throw e;
+  }
+  revalidatePath('/', 'layout');
+  return { ok: 'Dados de contato atualizados.' };
+}
+
+/** Corrige o CPF da conta (com a senha atual). O CPF é único e é o que o caixa usa no lugar do ID da conta. */
+export async function saveCustomerCpf(_: FormState, formData: FormData): Promise<FormState> {
+  const customer = await getCustomer();
+  if (!customer) return { error: 'Sua sessão expirou. Entre novamente.' };
+  const raw = String(formData.get('cpf') ?? '');
+  if (!isValidCpf(raw)) return fail('CPF inválido.', formData);
+  const cpf = onlyDigits(raw);
+  if (cpf === customer.cpf) return fail('Esse já é o CPF da sua conta.', formData);
+  if (!(await allow(`cust:cpfchange:${customer.id}`, 3, 30 * 24 * 3600))) return fail('Você já corrigiu o CPF algumas vezes neste mês. Fale com o suporte se precisar de ajuda.', formData);
+  const bad = await confirmedByPassword(customer, formData);
+  if (bad) return fail(bad, formData);
+  const taken = await prisma.customer.findUnique({ where: { cpf }, select: { id: true } });
+  if (taken) return fail('Este CPF já tem cadastro em outra conta.', formData);
+  try {
+    await prisma.customer.update({ where: { id: customer.id }, data: { cpf } });
+  } catch (e) {
+    if ((e as { code?: string }).code === 'P2002') return fail('Este CPF já tem cadastro em outra conta.', formData);
+    throw e;
+  }
+  revalidatePath('/', 'layout');
+  return { ok: 'CPF atualizado.' };
+}
+
+/** Troca a senha de acesso do cliente. */
+export async function changeCustomerPassword(_: FormState, formData: FormData): Promise<FormState> {
+  const customer = await getCustomer();
+  if (!customer) return { error: 'Sua sessão expirou. Entre novamente.' };
+  if (!customer.passwordHash) return fail('Sua conta ainda não tem senha. Saia e use “Já tenho cadastro” para criar seu acesso.', formData);
+  const next = passwordField.safeParse(formData.get('next') ?? '');
+  if (!next.success) return fail(next.error.issues[0].message, formData);
+  if (next.data !== String(formData.get('confirm') ?? '')) return fail('As senhas novas não são iguais.', formData);
+  if (!(await allow(`cust:pwchange:${customer.id}`, 6, 900))) return fail(TOO_MANY, formData);
+  const bad = await confirmedByPassword(customer, formData);
+  if (bad) return fail(bad, formData);
+  if (await verifyPassword(next.data, customer.passwordHash)) return fail('A nova senha precisa ser diferente da atual.', formData);
+  await prisma.customer.update({ where: { id: customer.id }, data: { passwordHash: await hashPassword(next.data) } });
+  return { ok: 'Senha alterada.' };
+}

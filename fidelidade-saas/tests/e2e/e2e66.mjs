@@ -51,8 +51,8 @@ console.log('3. número no atalho de prêmios (1 cupom a retirar) e nada nos dem
 // 4. Perfil: lista agrupada com título, frase e seta; um clique leva à tela
 await c.goto(BASE + '/perfil'); await c.waitForSelector('[data-testid=shortcut-groups]');
 const groups = await c.locator('[data-testid=shortcut-groups] h2').allInnerTexts();
-assert.deepEqual(groups.map((g) => g.toLowerCase()), ['minha atividade', 'pedidos e horários']);
-assert.equal(await c.locator('[data-testid=shortcut-groups] a').count(), 6); // 4 de atividade/pedidos + "Minhas indicações" e "Mensagens"
+assert.deepEqual(groups.map((g) => g.toLowerCase()), ['minha atividade', 'minha conta', 'pedidos e horários']);
+assert.equal(await c.locator('[data-testid=shortcut-groups] a').count(), 7); // 4 de atividade/pedidos + "Minhas indicações", "Mensagens" e "Meus dados"
 assert.ok(await c.locator('[data-testid=my-posts-link]').count(), 'atalho Minhas indicações');
 assert.match(await c.locator('[data-testid=my-orders-link]').innerText(), /Meus pedidos/);
 const rows = await c.locator('[data-testid=shortcut-groups] a').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().height)));
