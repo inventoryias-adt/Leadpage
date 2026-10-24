@@ -77,6 +77,7 @@ export default async function PerfilPage() {
         <ProfilePhoto name={customer.name} photoUrl={profilePhotoUrl(photo?.updatedAt)}>
           <h1 className="truncate text-2xl font-extrabold tracking-tight text-primary">{customer.name}</h1>
           <p className="text-sm text-slate-500">CPF {maskCpf(customer.cpf)} · {formatPhone(customer.phone)}</p>
+          <Link href="/perfil/dados" className="mt-0.5 inline-flex items-center gap-1 text-xs font-bold text-electric-600" data-testid="edit-profile-link"><Icon name="pencil" size={13} /> Editar meus dados</Link>
         </ProfilePhoto>
       </Reveal>
 
@@ -132,6 +133,12 @@ export default async function PerfilPage() {
                 { href: '/mensagens', icon: 'chat', label: 'Mensagens', hint: unreadChats > 0 ? `${unreadChats} ${unreadChats === 1 ? 'conversa com novidade' : 'conversas com novidade'}` : 'Fale com os lugares', testId: 'my-chats-link', count: unreadChats },
                 { href: '/indicacoes?minhas=1', icon: 'camera', label: 'Minhas indicações', hint: myPosts > 0 ? `${myPosts} ${myPosts === 1 ? 'publicada' : 'publicadas'}` : 'Poste a foto de um lugar que você gostou', testId: 'my-posts-link' },
                 { href: '/perfil/premios', icon: 'gift', label: 'Meus prêmios', hint: `${pending > 0 ? `${pending} para retirar · ` : ''}${usedCount} já resgatado${usedCount === 1 ? '' : 's'}`, count: pending },
+              ],
+            },
+            {
+              title: 'Minha conta',
+              items: [
+                { href: '/perfil/dados', icon: 'cog', label: 'Meus dados', hint: 'Nome, telefone, e-mail, CPF, senha e foto', testId: 'my-data-link' },
               ],
             },
             {

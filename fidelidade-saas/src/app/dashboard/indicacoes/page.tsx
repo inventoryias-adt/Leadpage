@@ -5,7 +5,7 @@ import { Stars } from '@/components/Stars';
 import { prisma } from '@/lib/db';
 import { authorName, postPhotoPath } from '@/lib/posts';
 import { formatAvg, summarize } from '@/lib/reviews';
-import { requireActiveRestaurant } from '@/lib/session';
+import { getAdmin, requireActiveRestaurant } from '@/lib/session';
 
 export const metadata = { title: 'Indicações dos clientes' };
 export const dynamic = 'force-dynamic';
@@ -24,6 +24,8 @@ export default async function IndicacoesDono() {
     prisma.review.count({ where: { restaurantId: restaurant.id, hiddenAt: null } }),
     prisma.post.findMany({ where: { restaurantId: restaurant.id, hiddenAt: null }, select: { rating: true, _count: { select: { likes: true } } } }),
   ]);
+  const seenAt = restaurant.postsSeenAt;
+  if (!(await getAdmin())) await prisma.restaurant.update({ where: { id: restaurant.id }, data: { postsSeenAt: new Date() } });
   const summary = summarize(all.map((p) => p.rating));
   const likes = all.reduce((n, p) => n + p._count.likes, 0);
   return (
@@ -51,7 +53,7 @@ export default async function IndicacoesDono() {
               <img src={postPhotoPath(p.id)} alt="Foto da indicação" loading="lazy" className="aspect-[4/3] w-full bg-slate-100 object-cover" />
               <div className="space-y-2 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="flex items-center gap-2 text-sm font-semibold text-slate-800"><Stars value={p.rating} size={16} /> {authorName(p.customer.name)}</span>
+                  <span className="flex items-center gap-2 text-sm font-semibold text-slate-800"><Stars value={p.rating} size={16} /> {authorName(p.customer.name)}{p.createdAt > seenAt && <span className="rounded-md bg-rose-100 px-1.5 py-0.5 text-[11px] font-bold text-rose-700" data-testid="post-new">Nova</span>}</span>
                   <span className="text-xs text-slate-500">{when(p.createdAt)} · ♥ {p._count.likes}</span>
                 </div>
                 {p.comment && <p className="text-sm text-slate-700">“{p.comment}”</p>}

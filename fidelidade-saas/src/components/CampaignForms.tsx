@@ -118,21 +118,23 @@ export function ChallengeRow({ init, text, points, active, toggle, remove }: { i
   const [open, setOpen] = useState(false);
   return (
     <li className="py-3" data-testid="challenge-row">
-      <div className="flex items-center gap-3">
+      <div className="flex items-start gap-3">
         <span className="flex h-10 min-w-[3.5rem] shrink-0 items-center justify-center rounded-lg bg-[#E8EEFB] px-2 text-sm font-bold tabular-nums text-electric-600">+{formatPoints(points)}</span>
-        <span className="min-w-0 flex-1 text-sm leading-snug text-slate-800">
-          {text}
-          <span className={`ml-2 rounded-md px-2 py-0.5 align-middle text-xs font-semibold ${active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>{active ? 'Ativo' : 'Pausado'}</span>
-        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm leading-snug text-slate-800">{text}</p>
+          <span className={`mt-1 inline-block rounded-md px-2 py-0.5 text-xs font-semibold ${active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>{active ? 'Ativo' : 'Pausado'}</span>
+        </div>
+      </div>
+      <div className="mt-2 flex items-center justify-end gap-2">
         <button
           type="button"
           onClick={() => setOpen((x) => !x)}
           aria-expanded={open}
           aria-label={`Editar desafio: ${text}`}
           title="Editar"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-transparent text-slate-400 transition-colors hover:border-slate-200 hover:bg-slate-50 hover:text-slate-700"
+          className="flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-800"
         >
-          <Icon name="pencil" size={18} />
+          <Icon name="pencil" size={16} /> Editar
         </button>
         {toggle}
         {remove}

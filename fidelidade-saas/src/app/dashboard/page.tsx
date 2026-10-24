@@ -52,15 +52,14 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
 
   const unreadChats = await unreadConversations('RESTAURANT', rid);
   const clubDue = await pendingSubscribers(rid);
-  const week = new Date(now.getTime() - 7 * DAY);
   const [postStats, newPosts, reviewRows] = await Promise.all([
     prisma.post.aggregate({ where: { restaurantId: rid, hiddenAt: null }, _count: true, _avg: { rating: true } }),
-    prisma.post.count({ where: { restaurantId: rid, hiddenAt: null, createdAt: { gte: week } } }),
+    prisma.post.count({ where: { restaurantId: rid, hiddenAt: null, createdAt: { gt: restaurant.postsSeenAt } } }),
     prisma.review.findMany({ where: { restaurantId: rid, hiddenAt: null }, select: { placeRating: true, createdAt: true } }),
   ]);
   const postCount = postStats._count;
   const reviewSummary = summarize(reviewRows.map((r) => r.placeRating));
-  const newReviews = reviewRows.filter((r) => r.createdAt >= week).length;
+  const newReviews = reviewRows.filter((r) => r.createdAt > restaurant.reviewsSeenAt).length;
   const inPeriod = (d: Date) => d >= since;
   const cur = sales.filter((s) => s.redeemedAt && inPeriod(s.redeemedAt));
   const prev = sales.filter((s) => s.redeemedAt && !inPeriod(s.redeemedAt));
@@ -161,7 +160,7 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
             {newReviews > 0 && <span className="absolute -right-1.5 -top-1.5 rounded-full bg-rose-500 px-1.5 text-[11px] font-bold leading-[18px] text-white">{newReviews}</span>}
           </span>
           <b className="text-[13px] text-primary sm:text-sm">Avaliações</b>
-          <span className="text-xs leading-snug text-slate-600">{reviewSummary.count === 0 ? 'Ainda sem avaliações' : <><b className="text-slate-900">★ {formatAvg(reviewSummary.avg ?? 0)}</b> · {reviewSummary.count}{newReviews > 0 && <> · <b className="text-rose-600">{newReviews} na semana</b></>}</>}</span>
+          <span className="text-xs leading-snug text-slate-600">{reviewSummary.count === 0 ? 'Ainda sem avaliações' : <><b className="text-slate-900">★ {formatAvg(reviewSummary.avg ?? 0)}</b> · {reviewSummary.count}{newReviews > 0 && <> · <b className="text-rose-600">{newReviews} {newReviews === 1 ? 'nova' : 'novas'}</b></>}</>}</span>
         </Link>
         <Link href="/dashboard/indicacoes" className="glass-panel-sm card-link flex flex-col gap-1 !rounded-[22px] p-3 sm:p-4" data-testid="posts-shortcut">
           <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[#E8EEFB] text-electric-600">
@@ -169,7 +168,7 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
             {newPosts > 0 && <span className="absolute -right-1.5 -top-1.5 rounded-full bg-rose-500 px-1.5 text-[11px] font-bold leading-[18px] text-white">{newPosts}</span>}
           </span>
           <b className="text-[13px] text-primary sm:text-sm">Indicações</b>
-          <span className="text-xs leading-snug text-slate-600">{postCount === 0 ? 'Ainda sem fotos' : <><b className="text-slate-900">{postCount}</b> {postCount === 1 ? 'foto' : 'fotos'}{newPosts > 0 && <> · <b className="text-rose-600">{newPosts} na semana</b></>}</>}</span>
+          <span className="text-xs leading-snug text-slate-600">{postCount === 0 ? 'Ainda sem fotos' : <><b className="text-slate-900">{postCount}</b> {postCount === 1 ? 'foto' : 'fotos'}{newPosts > 0 && <> · <b className="text-rose-600">{newPosts} {newPosts === 1 ? 'nova' : 'novas'}</b></>}</>}</span>
         </Link>
       </section>
 

@@ -37,7 +37,8 @@ console.log('1. sem personalização: marinho padrão, sem slogan nem sobre nós
 
 // 2. o dono escolhe cor, slogan e sobre nós e salva; a prévia acompanha a cor
 await O.goto(BASE + '/dashboard/configuracoes?abrir=tudo'); await O.waitForSelector('[data-testid=brand-fields]');
-await O.locator('[data-testid=brand-vinho]').check({ force: true });
+// a escolha é um campo controlado pelo React: antes de a tela "acordar" (hidratar) o clique não pega; tenta de novo até marcar
+for (let i = 0; i < 12 && !(await O.locator('[data-testid=brand-vinho]').isChecked()); i++) { await O.locator('[data-testid=brand-vinho]').check({ force: true, timeout: 3000 }).catch(() => {}); await O.waitForTimeout(400); }
 assert.equal(await O.locator('[data-testid=brand-preview] span.inline-flex').evaluate((e) => getComputedStyle(e).backgroundColor), rgb('#9F1239'));
 await O.fill('[data-testid=brand-tagline]', '  O melhor   burger da Vila  ');
 await O.fill('[data-testid=brand-about]', 'Desde 2015 na esquina.\n\n\n\nCarne moída na hora.');

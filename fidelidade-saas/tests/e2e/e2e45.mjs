@@ -36,9 +36,14 @@ assert.match(labels[0], /^hoje/i); assert.match(labels[1], /^ontem|^\w{3}, \d{2}
 assert.equal(await c.locator('[data-testid=notice-day] button[aria-expanded=true]').count(), 0, 'todas as datas fechadas');
 assert.equal(await c.locator('[data-testid=notice-groups] li').count(), 0, 'sem avisos à mostra com as datas fechadas');
 assert.ok(await c.locator('[data-testid=notice-day]:has-text("novo")').count(), 'a data mostra quantos avisos são novos');
+const unreadBefore = sql(`select id from "Notification" where "customerId"='${cid}' and "readAt" is null`).split('\n').filter(Boolean);
 await openAll();
 await c.waitForSelector('[data-testid=notice-groups] li');
 assert.equal(await c.locator('[data-testid=notice-groups] li:has-text("Você ganhou 940 pontos")').count(), 1);
+// abrir as datas marca como lido na hora; devolve os avisos a "novos" para os próximos passos
+for (let i = 0; i < 20 && sql(`select count(*) from "Notification" where "customerId"='${cid}' and "readAt" is null`) !== '0'; i++) await c.waitForTimeout(150);
+assert.equal(sql(`select count(*) from "Notification" where "customerId"='${cid}' and "readAt" is null`), '0', 'abrir as datas marca como lido logo em seguida');
+sql(`update "Notification" set "readAt"=null where id in (${unreadBefore.map((i) => `'${i}'`).join(',')})`);
 console.log('1. avisos agrupados por dia, datas fechadas e com selo de novos OK', labels.map((l) => l.split('·')[0].trim()).join(' | '));
 
 // 2. filtro por estabelecimento: chips com contagem; o lugar escolhido mostra só os dele
