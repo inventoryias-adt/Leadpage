@@ -8,6 +8,7 @@ const settle = async (page) => {
   // O React marca o documento quando termina de hidratar: antes disso um clique ou um campo preenchido se perde (aconteceu no CI, sob carga).
   await page.waitForFunction(() => Object.keys(document).some((k) => k.startsWith('__reactContainer')), null, { timeout: 15000 }).catch(() => {});
 };
+const TRANSIENT = /ERR_CONNECTION_(REFUSED|RESET|CLOSED|TIMED_OUT)|ERR_EMPTY_RESPONSE|ERR_NETWORK_CHANGED/;
 const pages = [];
 const patch = (page) => {
   if (page.__hydratePatched) return page;
@@ -17,13 +18,26 @@ const patch = (page) => {
     const f = page[name].bind(page);
     page[name] = async (...a) => {
       let r;
-      try {
-        r = await f(...a);
-      } catch (e) {
-        // O servidor de desenvolvimento do CI às vezes demora mais de 60 s para compilar uma rota: a segunda tentativa já a encontra compilada.
-        if (name !== 'goto' || e?.name !== 'TimeoutError') throw e;
-        console.error(`(navegação lenta: tentando de novo ${a[0]})`);
-        r = await f(...a);
+      let slowTried = false;
+      for (let i = 0; ; i++) {
+        try {
+          r = await f(...a);
+          break;
+        } catch (e) {
+          // O servidor de desenvolvimento do CI às vezes demora mais de 60 s para compilar uma rota: a segunda tentativa já a encontra compilada.
+          if (name === 'goto' && e?.name === 'TimeoutError' && !slowTried) {
+            slowTried = true;
+            console.error(`(navegação lenta: tentando de novo ${a[0]})`);
+            continue;
+          }
+          // O servidor de desenvolvimento do CI se reinicia sozinho de vez em quando (memória) e recusa conexões por alguns segundos.
+          if ((name === 'goto' || name === 'reload') && TRANSIENT.test(String(e?.message)) && i < 8) {
+            console.error(`(servidor indisponível: nova tentativa ${i + 1} de ${name === 'goto' ? a[0] : 'recarregar'})`);
+            await new Promise((ok) => setTimeout(ok, 4000));
+            continue;
+          }
+          throw e;
+        }
       }
       await settle(page);
       return r;

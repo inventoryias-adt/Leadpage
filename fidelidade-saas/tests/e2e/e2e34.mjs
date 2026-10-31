@@ -36,7 +36,7 @@ console.log('2. pizza sem serviços: não oferece agendamento OK');
 reset(null);
 const o = await b.newContext({ viewport: { width: 1200, height: 900 } }).then((c) => c.newPage());
 await o.goto(BASE + '/login'); await o.fill('#email', 'ze@burger.com'); await o.fill('#password', 'senha-segura-1'); await o.click('button[type=submit]'); await o.waitForURL('**/dashboard**');
-await o.goto(BASE + '/dashboard/configuracoes'); await o.waitForSelector('#i-cat'); await o.waitForTimeout(1500);
+await o.goto(BASE + '/dashboard/configuracoes?etapa=negocio'); await o.waitForSelector('#i-cat'); await o.waitForTimeout(1500);
 await o.selectOption('#i-cat', 'estetica'); await o.waitForSelector('text=✓ Categoria salva');
 assert.equal(sql(`select name from "Service"`), 'Atendimento');
 await l.goto(`${BASE}/lugar/${rid}`); await l.waitForSelector('a:has-text("Agendar")');

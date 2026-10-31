@@ -29,7 +29,9 @@ import { getSupport } from '@/lib/support-env';
 import { parseSchedule } from '@/lib/hours';
 import { removeResource, removeService } from '@/app/actions/agenda';
 import { AddServiceForm, BookingPolicyForm, StaffForm } from '@/components/AgendaSettings';
+import { RegrasHub } from '@/components/RegrasHub';
 import { ScrollActiveIntoView } from '@/components/ScrollActiveIntoView';
+import { buildHub, topicById, topicHref, TOPICS } from '@/lib/regras-hub';
 import { imageUrl } from '@/lib/images';
 import { formatBRL, formatPoints, formatPrice } from '@/lib/points';
 import { ColorDots } from '@/components/ColorSwatches';
@@ -42,7 +44,8 @@ export const metadata = { title: 'Regras e configurações' };
 export const dynamic = 'force-dynamic';
 
 /** Etapa grande da configuração (numerada, aparece no menu). */
-function Section({ id, n, title, hint, where, children }: { id: string; n: number; title: string; hint?: string; where: string; children: React.ReactNode }) {
+function Section({ id, n, title, hint, where, flat, children }: { id: string; n: number; title: string; hint?: string; where: string; flat?: boolean; children: React.ReactNode }) {
+  if (flat) return <div id={id} data-testid={`etapa-${id}`} className="space-y-6">{children}</div>;
   return (
     <section id={id} data-testid={`etapa-${id}`} className="glass-panel scroll-mt-4 p-5 sm:p-7">
       <div className="mb-5 flex items-start gap-3">
@@ -62,7 +65,9 @@ function Section({ id, n, title, hint, where, children }: { id: string; n: numbe
 }
 
 /** Bloco essencial dentro de uma etapa: sempre aberto. */
-function Block({ id, title, hint, children }: { id: string; title: string; hint?: string; children: React.ReactNode }) {
+function Block({ id, title, hint, hide, bare, children }: { id: string; title: string; hint?: string; hide?: boolean; bare?: boolean; children: React.ReactNode }) {
+  if (hide) return null;
+  if (bare) return <div id={id} className="scroll-mt-4">{children}</div>;
   return (
     <div id={id} className="scroll-mt-4 border-t border-slate-200/70 pt-5 first:border-0 first:pt-0">
       <h3 className="text-base font-bold text-slate-800">{title}</h3>
@@ -74,7 +79,9 @@ function Block({ id, title, hint, children }: { id: string; title: string; hint?
 }
 
 /** Bloco opcional: abre sozinho quando já tem algo configurado (ou com ?abrir=tudo) e mostra o estado no título. */
-function Optional({ id, title, hint, status, open, children }: { id: string; title: string; hint?: string; status: string; open: boolean; children: React.ReactNode }) {
+function Optional({ id, title, hint, status, open, hide, flat, children }: { id: string; title: string; hint?: string; status: string; open: boolean; hide?: boolean; flat?: boolean; children: React.ReactNode }) {
+  if (hide) return null;
+  if (flat) return <div id={id} className="scroll-mt-4">{children}</div>;
   return (
     <details id={id} open={open} className="group scroll-mt-4 rounded-2xl border border-slate-200 bg-white/60 p-4 open:bg-white">
       <summary className="cursor-pointer list-none">
@@ -115,7 +122,7 @@ type Etapa = (typeof SECTIONS)[number][0];
 /** Etapa que contém cada bloco: os atalhos de outras telas usam `/dashboard/configuracoes?etapa=…#bloco`. */
 const hrefOf = (etapa: Etapa, hash?: string, extra = '') => `/dashboard/configuracoes?etapa=${etapa}${extra}${hash ? `#${hash}` : ''}`;
 
-export default async function ConfiguracoesPage({ searchParams }: { searchParams: Promise<{ abrir?: string; etapa?: string }> }) {
+export default async function ConfiguracoesPage({ searchParams }: { searchParams: Promise<{ abrir?: string; etapa?: string; topico?: string }> }) {
   const restaurant = await requirePaidRestaurant();
   const sp = await searchParams;
   const abrir = sp.abrir;
@@ -123,10 +130,16 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
   // uma etapa por vez; "?abrir=tudo" mostra todas (útil para imprimir ou procurar algo); "?abrir=agenda" é o atalho antigo
   const pedida = (abrir === 'agenda' ? 'agenda' : sp.etapa) as Etapa | undefined;
   const etapa: Etapa = SECTIONS.some(([id]) => id === pedida) ? (pedida as Etapa) : 'negocio';
-  const show = (id: Etapa) => abrirTudo || etapa === id;
+  const topic = topicById(sp.topico);
+  const inTopic = !abrirTudo && !!topic;
+  const hubMode = !abrirTudo && !topic && !pedida && !!restaurant.onboardedAt; // sem etapa nem assunto: a tela inicial de Regras
+  const show = (id: Etapa) => abrirTudo || (inTopic ? topic!.etapa === id : etapa === id);
+  const soloTopic = inTopic && topic!.blocks.length === 1;
+  const nextTopic = topic ? TOPICS[TOPICS.findIndex((t) => t.id === topic.id) + 1] ?? null : null;
+  const vis = (blockId: string) => !inTopic || topic!.blocks.includes(blockId);
   const idx = SECTIONS.findIndex(([id]) => id === etapa);
-  const prev = !abrirTudo && idx > 0 ? SECTIONS[idx - 1] : null;
-  const next = !abrirTudo && idx < SECTIONS.length - 1 ? SECTIONS[idx + 1] : null;
+  const prev = !abrirTudo && !inTopic && idx > 0 ? SECTIONS[idx - 1] : null;
+  const next = !abrirTudo && !inTopic && idx < SECTIONS.length - 1 ? SECTIONS[idx + 1] : null;
   const [interactions, rewards, challenges, units, promotions, resources, services, appCampaigns] = await Promise.all([
     prisma.interactionRule.findMany({ where: { restaurantId: restaurant.id, active: true }, orderBy: { createdAt: 'asc' } }),
     prisma.reward.findMany({ where: { restaurantId: restaurant.id, active: true, birthdayOnly: false }, orderBy: { pointsCost: 'asc' } }),
@@ -145,9 +158,39 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
   const engagementOn = [restaurant.checkInPoints, restaurant.referralPoints, restaurant.birthdayPoints].filter((n) => n > 0).length;
   const openAll = abrirTudo || onboarding; // no primeiro acesso mostramos tudo aberto
 
+  if (hubMode) {
+    const hub = buildHub({
+      category: restaurant.category,
+      hasLogo: !!restaurant.logoImageId,
+      brandColor: restaurant.brandColor,
+      tagline: restaurant.tagline,
+      listed: restaurant.listed,
+      units: units.map((u) => ({ active: u.active, address: u.address, located: u.latitude != null && u.longitude != null, schedule: parseSchedule(u.openingSchedule) })),
+      pointsPerReal: restaurant.pointsPerReal,
+      maxRedeemsPerMonth: restaurant.maxRedeemsPerMonth,
+      rewards: rewards.length,
+      rewardsWithoutPhoto: rewards.filter((r) => !r.imageId).length,
+      promotions: { live: promotions.filter((p) => promoStatus(p, nowDate) === 'now').length, total: promotions.length },
+      challenges: { active: challenges.filter((c) => c.active).length, total: challenges.length },
+      checkInPoints: restaurant.checkInPoints,
+      referralPoints: restaurant.referralPoints,
+      birthdayPoints: restaurant.birthdayPoints,
+      birthdayPerkOn: restaurant.birthdayPerkOn,
+      interactions: interactions.length,
+      services: services.length,
+      resources: resources.length,
+      bookingSuggested,
+      ordersEnabled: restaurant.ordersEnabled,
+      shareOut: restaurant.pointsShareOut,
+      shareIn: restaurant.pointsAcceptIn,
+    });
+    return <RegrasHub hub={hub} placeName={restaurant.name} placeHref={`/lugar/${restaurant.id}`} />;
+  }
+
   return (
-    <div className="mx-auto max-w-5xl lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:items-start lg:gap-8">
+    <div className={inTopic ? 'mx-auto max-w-3xl' : 'mx-auto max-w-5xl lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:items-start lg:gap-8'}>
       {/* Computador: menu lateral fixo ao rolar */}
+      {!inTopic && (
       <aside className="sticky top-6 hidden lg:block">
         <nav aria-label="Seções" className="glass-panel-sm flex flex-col gap-0.5 p-2">
           {SECTIONS.map(([id, label], i) => {
@@ -161,6 +204,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
           })}
         </nav>
       </aside>
+      )}
 
       <div className="min-w-0 max-w-3xl space-y-6">
       {onboarding && (
@@ -170,6 +214,30 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
         </div>
       )}
 
+      {inTopic && (
+        <header data-testid="topico-header" className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <Link href="/dashboard/configuracoes" className="inline-flex items-center gap-1 rounded-full bg-white/80 py-1.5 pl-2 pr-3.5 text-sm font-bold text-electric-600 shadow-sm ring-1 ring-slate-200 transition-colors hover:bg-white" data-testid="topico-voltar" aria-label="Voltar para as Regras">
+              <Icon name="back" size={16} /> Regras
+            </Link>
+            {nextTopic && <Link href={topicHref(nextTopic.id)} className="glass-button-lime btn-sm !w-auto" data-testid="topico-proximo">Próximo: {nextTopic.title} →</Link>}
+          </div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-primary">{topic!.title}</h1>
+          <p className="text-sm text-slate-600">{topic!.hint}</p>
+          <p className="inline-flex max-w-full items-start gap-1.5 rounded-full bg-[#f3f6fd] px-3 py-1 text-xs font-semibold text-slate-600">
+            <Icon name="phone" size={14} className="mt-px shrink-0 text-[#0f1f3d]" />
+            <span>Aparece em: {topic!.where}</span>
+          </p>
+        </header>
+      )}
+
+      {!inTopic && (
+        <Link href="/dashboard/configuracoes" className="inline-flex w-fit items-center gap-1 rounded-full bg-white/80 py-1.5 pl-2 pr-3.5 text-sm font-bold text-electric-600 shadow-sm ring-1 ring-slate-200 transition-colors hover:bg-white" data-testid="regras-todas" aria-label="Voltar para as Regras" hidden={onboarding}>
+          <Icon name="back" size={16} /> Todas as regras
+        </Link>
+      )}
+
+      {!inTopic && (
       <nav aria-label="Seções" className="chip-row lg:hidden">
         <ScrollActiveIntoView />
         {SECTIONS.map(([id, label], i) => (
@@ -178,15 +246,16 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
           </Link>
         ))}
       </nav>
+      )}
 
-      {(prev || next) && (
+      {!inTopic && (prev || next) && (
         <nav aria-label="Etapa anterior e seguinte" data-testid="etapa-nav-top" className="flex items-center justify-between gap-2">
           {prev ? <Link href={hrefOf(prev[0])} className="glass-button-ghost btn-sm !w-auto">← {prev[1]}</Link> : <span />}
           {next && <Link href={hrefOf(next[0])} className="glass-button-lime btn-sm !w-auto">Próximo: {next[1]} →</Link>}
         </nav>
       )}
 
-      {(() => {
+      {!inTopic && (() => {
         const steps = [
           { done: !!restaurant.logoImageId && !!restaurant.category, label: 'Logo e categoria do seu negócio', href: hrefOf('negocio', 'identidade') },
           { done: units.some((u) => u.active && !!u.address && u.latitude != null), label: 'Endereço, horário e localização no mapa', href: hrefOf('negocio', 'unidades') },
@@ -216,12 +285,12 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
       })()}
 
 {show('negocio') && (
-      <Section id="negocio" where="Início do app, página do seu lugar, Lugares perto de você e o mapa" n={1} title="Seu negócio" hint="Nome, marca, onde fica e quando abre. É o que o cliente vê no app.">
-      <Block id="dados" title="Dados do estabelecimento">
+      <Section flat={inTopic} id="negocio" where="Início do app, página do seu lugar, Lugares perto de você e o mapa" n={1} title="Seu negócio" hint="Nome, marca, onde fica e quando abre. É o que o cliente vê no app.">
+      <Block hide={!vis('dados')} bare={soloTopic} id="dados" title="Dados do estabelecimento">
         <BasicsForm defaults={{ name: restaurant.name }} />
       </Block>
 
-      <Block id="identidade" title="Identidade da marca" hint="Como seu negócio aparece para os clientes no app.">
+      <Block hide={!vis('identidade')} bare={soloTopic} id="identidade" title="Identidade da marca" hint="Como seu negócio aparece para os clientes no app.">
         <IdentityForm
           placeName={restaurant.name}
           supportEnv={{ email: process.env.SUPPORT_EMAIL, whatsapp: process.env.SUPPORT_WHATSAPP }}
@@ -239,7 +308,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
         />
       </Block>
 
-      <Block id="unidades" title="Unidades" hint="Cada unidade tem endereço, horário, localização e link do Google próprios. Pontos, prêmios e desafios valem em todas.">
+      <Block hide={!vis('unidades')} bare={soloTopic} id="unidades" title="Unidades" hint="Cada unidade tem endereço, horário, localização e link do Google próprios. Pontos, prêmios e desafios valem em todas.">
         <ul className="mb-5 space-y-3">
           {units.map((u) => (
             <li key={u.id} className="glass-inset p-3">
@@ -301,20 +370,20 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
 )}
 
 {show('regras') && (
-      <Section id="regras" where="Cartão da carteira, página do seu lugar (ganhar pontos), vitrine Lugares e Avisos" n={2} title="Como o cliente ganha pontos" hint="O essencial é o primeiro bloco. Os outros são opcionais e abrem sozinhos quando você já configurou algo.">
-      <Block id="pontos" title="Pontos por compra" hint="Quanto cada real vale em pontos e quantos resgates cada CPF pode fazer por mês.">
-        <RulesForm defaults={{ pointsPerReal: restaurant.pointsPerReal, maxRedeemsPerMonth: restaurant.maxRedeemsPerMonth }} />
+      <Section flat={inTopic} id="regras" where="Cartão da carteira, página do seu lugar (ganhar pontos), vitrine Lugares e Avisos" n={2} title="Como o cliente ganha pontos" hint="O essencial é o primeiro bloco. Os outros são opcionais e abrem sozinhos quando você já configurou algo.">
+      <Block hide={!vis('pontos')} bare={soloTopic} id="pontos" title="Pontos por compra" hint="Quanto cada real vale em pontos e quantos resgates cada CPF pode fazer por mês.">
+        <RulesForm defaults={{ pointsPerReal: restaurant.pointsPerReal, maxRedeemsPerMonth: restaurant.maxRedeemsPerMonth }} cheapest={rewards[0] ? { name: rewards[0].name, pointsCost: rewards[0].pointsCost } : null} />
       </Block>
 
-      <Optional id="engajamento" title="Check-in, indicação e aniversário" hint="Jeitos de fazer o cliente voltar e trazer gente nova. Cada um tem a sua chave liga/desliga." status={engagementOn > 0 ? `${engagementOn} ${engagementOn === 1 ? 'ligado' : 'ligados'}` : 'Desligados'} open={openAll || abrir === 'engajamento' || engagementOn > 0}>
+      <Optional hide={!vis('engajamento')} flat={inTopic} id="engajamento" title="Check-in, indicação e aniversário" hint="Jeitos de fazer o cliente voltar e trazer gente nova. Cada um tem a sua chave liga/desliga." status={engagementOn > 0 ? `${engagementOn} ${engagementOn === 1 ? 'ligado' : 'ligados'}` : 'Desligados'} open={openAll || abrir === 'engajamento' || engagementOn > 0}>
         <EngagementForm defaults={{ checkInPoints: restaurant.checkInPoints, checkInRadiusM: restaurant.checkInRadiusM, referralPoints: restaurant.referralPoints, birthdayPoints: restaurant.birthdayPoints }} />
       </Optional>
 
-      <Optional id="aniversariante" title="Presente do aniversariante" hint="Um item ou benefício para quem faz aniversário: grátis, trocando por pontos ou ao consumir um valor. Aparece para o cliente só no dia dele." status={restaurant.birthdayPerkOn ? 'Ligado' : 'Desligado'} open={openAll || abrir === 'aniversariante' || restaurant.birthdayPerkOn}>
+      <Optional hide={!vis('aniversariante')} flat={inTopic} id="aniversariante" title="Presente do aniversariante" hint="Um item ou benefício para quem faz aniversário: grátis, trocando por pontos ou ao consumir um valor. Aparece para o cliente só no dia dele." status={restaurant.birthdayPerkOn ? 'Ligado' : 'Desligado'} open={openAll || abrir === 'aniversariante' || restaurant.birthdayPerkOn}>
         <BirthdayPerkForm defaults={{ on: restaurant.birthdayPerkOn, title: restaurant.birthdayPerkTitle ?? '', mode: (['FREE', 'POINTS', 'SPEND'].includes(restaurant.birthdayPerkMode) ? restaurant.birthdayPerkMode : 'FREE') as 'FREE' | 'POINTS' | 'SPEND', points: restaurant.birthdayPerkPoints, minCents: restaurant.birthdayPerkMinCents }} />
       </Optional>
 
-      <Optional id="interacoes" title="Interações que dão pontos" hint="Pontuação fixa, marcada pelo caixa no lançamento (avaliação no Google, story no Instagram…)." status={interactions.length > 0 ? `${interactions.length} ${interactions.length === 1 ? 'ativa' : 'ativas'}` : 'Opcional'} open={openAll || abrir === 'interacoes' || interactions.length > 0}>
+      <Optional hide={!vis('interacoes')} flat={inTopic} id="interacoes" title="Interações que dão pontos" hint="Pontuação fixa, marcada pelo caixa no lançamento (avaliação no Google, story no Instagram…)." status={interactions.length > 0 ? `${interactions.length} ${interactions.length === 1 ? 'ativa' : 'ativas'}` : 'Opcional'} open={openAll || abrir === 'interacoes' || interactions.length > 0}>
         <ul className="mb-4 divide-y divide-slate-200/70">
           {interactions.length === 0 && <li className="py-2 text-sm text-slate-500">Nenhuma interação cadastrada.</li>}
           {interactions.map((i) => (
@@ -325,7 +394,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
         <AddInteractionForm />
       </Optional>
 
-      <Optional id="desafios" title="Desafios da casa" hint="Metas que dão pontos de bônus automaticamente, como “2 compras acima de R$ 42 na semana”." status={challenges.length > 0 ? `${challenges.length} ${challenges.length === 1 ? 'ativo' : 'ativos'}` : 'Opcional'} open={openAll || abrir === 'desafios' || challenges.length > 0}>
+      <Optional hide={!vis('desafios')} flat={inTopic} id="desafios" title="Desafios da casa" hint="Metas que dão pontos de bônus automaticamente, como “2 compras acima de R$ 42 na semana”." status={challenges.length > 0 ? `${challenges.length} ${challenges.length === 1 ? 'ativo' : 'ativos'}` : 'Opcional'} open={openAll || abrir === 'desafios' || challenges.length > 0}>
         <ul className="mb-4 divide-y divide-slate-200/70">
           {challenges.length === 0 && <li className="py-2 text-sm text-slate-500">Nenhum desafio criado.</li>}
           {challenges.map((c) => (
@@ -349,7 +418,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
         <AddChallengeForm />
       </Optional>
 
-      <Optional id="campanhas" title="Campanhas de pontos" hint="Pontos em dobro na terça, +50 pontos acima de R$ 40… Valem no caixa e aparecem como card na vitrine dos clientes." status={promotions.length + appCampaigns.length > 0 ? `${promotions.length} ${promotions.length === 1 ? 'campanha' : 'campanhas'}` : 'Opcional'} open={openAll || abrir === 'campanhas' || promotions.length > 0}>
+      <Optional hide={!vis('campanhas')} flat={inTopic} id="campanhas" title="Campanhas de pontos" hint="Pontos em dobro na terça, +50 pontos acima de R$ 40… Valem no caixa e aparecem como card na vitrine dos clientes." status={promotions.length + appCampaigns.length > 0 ? `${promotions.length} ${promotions.length === 1 ? 'campanha' : 'campanhas'}` : 'Opcional'} open={openAll || abrir === 'campanhas' || promotions.length > 0}>
         {appCampaigns.length > 0 && (
           <div className="mb-5">
             <h3 className="mb-2 text-sm font-bold text-slate-800">Campanhas do app</h3>
@@ -447,8 +516,8 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
 )}
 
 {show('premios') && (
-      <Section id="premios" where="Página do seu lugar → Prêmios e a tela de resgate (cupom)" n={3} title="Prêmios do clube" hint="O que o cliente pode trocar por pontos. Com foto, o resgate vende mais.">
-      <Block id="produtos" title="Produtos resgatáveis">
+      <Section flat={inTopic} id="premios" where="Página do seu lugar → Prêmios e a tela de resgate (cupom)" n={3} title="Prêmios do clube" hint="O que o cliente pode trocar por pontos. Com foto, o resgate vende mais.">
+      <Block hide={!vis('produtos')} bare={soloTopic} id="produtos" title="Produtos resgatáveis">
         <ul className="mb-4 space-y-3">
           {rewards.length === 0 && <li className="py-2 text-sm text-slate-500">Cadastre ao menos um produto.</li>}
           {rewards.map((r) => (
@@ -471,7 +540,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
           <AddRewardForm />
         </div>
       </Block>
-      <Block id="pedidos" title="Pedidos pelo app (cardápio)" hint="Venda em reais: o cliente escolhe do cardápio, monta a sacola e retira no balcão. Você cobra no balcão e os pontos entram sozinhos ao marcar como retirado.">
+      <Block hide={!vis('pedidos')} bare={soloTopic} id="pedidos" title="Pedidos pelo app (cardápio)" hint="Venda em reais: o cliente escolhe do cardápio, monta a sacola e retira no balcão. Você cobra no balcão e os pontos entram sozinhos ao marcar como retirado.">
         <Link href="/dashboard/cardapio" className="glass-button-ghost !w-auto">
           {restaurant.ordersEnabled ? 'Abrir cardápio e pedidos' : 'Montar cardápio e ligar pedidos'}
         </Link>
@@ -480,8 +549,8 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
 )}
 
 {show('agenda') && (
-      <Section id="agenda" where="Botão Agendar na página do seu lugar e Meus agendamentos" n={4} title="Agenda e serviços" hint="Barbearia, clínica, salão, restaurante… O cliente marca pelo app e, quando o atendimento é concluído, os pontos entram sozinhos.">
-      <Optional id="agenda-conteudo" title="Configurar a agenda" hint={bookingSuggested ? 'Seu tipo de negócio costuma atender com hora marcada: cadastre os serviços para o cliente agendar pelo app.' : 'Só se o seu negócio atende com hora marcada ou reserva.'} status={services.length > 0 ? `${services.length} ${services.length === 1 ? 'serviço' : 'serviços'}` : bookingSuggested ? 'Recomendado' : 'Opcional'} open={openAll || abrir === 'agenda' || abrir === 'agenda-conteudo' || bookingSuggested || services.length > 0}>
+      <Section flat={inTopic} id="agenda" where="Botão Agendar na página do seu lugar e Meus agendamentos" n={4} title="Agenda e serviços" hint="Barbearia, clínica, salão, restaurante… O cliente marca pelo app e, quando o atendimento é concluído, os pontos entram sozinhos.">
+      <Optional hide={!vis('agenda-conteudo')} flat={inTopic} id="agenda-conteudo" title="Configurar a agenda" hint={bookingSuggested ? 'Seu tipo de negócio costuma atender com hora marcada: cadastre os serviços para o cliente agendar pelo app.' : 'Só se o seu negócio atende com hora marcada ou reserva.'} status={services.length > 0 ? `${services.length} ${services.length === 1 ? 'serviço' : 'serviços'}` : bookingSuggested ? 'Recomendado' : 'Opcional'} open={openAll || abrir === 'agenda' || abrir === 'agenda-conteudo' || bookingSuggested || services.length > 0}>
         <div className="space-y-7">
           <div>
             <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-slate-500">Serviços</h3>
@@ -572,13 +641,13 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
 )}
 
 {show('compartilhar') && (
-      <Section id="compartilhar" where="Carteira do cliente (pontos de outros lugares) e tela de resgate" n={5} title="Pontos compartilhados" hint="Uma rede entre lugares: o cliente junta pontos em um e pode usar em outros que participam.">
+      <Section flat={inTopic} id="compartilhar" where="Carteira do cliente (pontos de outros lugares) e tela de resgate" n={5} title="Pontos compartilhados" hint="Uma rede entre lugares: o cliente junta pontos em um e pode usar em outros que participam.">
         <SharingForm defaults={{ pointsShareOut: restaurant.pointsShareOut, pointsAcceptIn: restaurant.pointsAcceptIn }} />
       </Section>
 )}
 
 {show('conta') && (
-      <Section id="conta" where="Só você vê: não aparece para o cliente" n={6} title="Minha conta" hint="Troque a senha de acesso ao painel. Use uma senha que só você conheça.">
+      <Section flat={inTopic} id="conta" where="Só você vê: não aparece para o cliente" n={6} title="Minha conta" hint="Troque a senha de acesso ao painel. Use uma senha que só você conheça.">
         <PasswordForm />
         {restaurant.paymentCustomerId && <BillingPortalForm support={getSupport('Assinatura no Fidelize', `Olá! Sou do estabelecimento "${restaurant.name}" e não consegui abrir o gerenciamento da assinatura no Fidelize.`)} />}
       </Section>
@@ -588,6 +657,13 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
         <nav aria-label="Navegação entre etapas" data-testid="etapa-nav" className="flex items-center justify-between gap-3">
           {prev ? <Link href={hrefOf(prev[0])} className="glass-button-ghost !w-auto">← {prev[1]}</Link> : <span />}
           {next && <Link href={hrefOf(next[0])} className="glass-button-lime !w-auto">Próximo: {next[1]} →</Link>}
+        </nav>
+      )}
+
+      {inTopic && (
+        <nav aria-label="Navegação do assunto" data-testid="topico-nav" className="flex items-center justify-between gap-3">
+          <Link href="/dashboard/configuracoes" className="glass-button-ghost !w-auto">← Todas as regras</Link>
+          {nextTopic && <Link href={topicHref(nextTopic.id)} className="glass-button-lime !w-auto">Próximo: {nextTopic.title} →</Link>}
         </nav>
       )}
 

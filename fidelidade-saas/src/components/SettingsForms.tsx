@@ -78,14 +78,17 @@ export function BasicsForm({ defaults }: { defaults: Basics }) {
   );
 }
 
-export function RulesForm({ defaults }: { defaults: { pointsPerReal: number; maxRedeemsPerMonth: number } }) {
+export function RulesForm({ defaults, cheapest }: { defaults: { pointsPerReal: number; maxRedeemsPerMonth: number }; cheapest?: { name: string; pointsCost: number } | null }) {
   const [state, action] = useActionState(saveRules, {});
+  const [ppr, setPpr] = useState(String(state.values?.pointsPerReal ?? defaults.pointsPerReal));
+  const n = Math.max(0, Math.floor(Number(ppr) || 0));
+  const brl = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   return (
     <form action={action} className="space-y-3">
       <div className="grid items-end gap-3 sm:grid-cols-[minmax(0,12rem)_minmax(0,12rem)_auto]">
         <div>
           <label className="glass-label" htmlFor="r-ppr">Pontos a cada R$ 1,00 gasto</label>
-          <input id="r-ppr" name="pointsPerReal" type="number" min={1} max={1000} step={1} inputMode="numeric" className="glass-input" defaultValue={state.values?.pointsPerReal ?? defaults.pointsPerReal} required />
+          <input id="r-ppr" name="pointsPerReal" type="number" min={1} max={1000} step={1} inputMode="numeric" className="glass-input" value={ppr} onChange={(e) => setPpr(e.target.value)} required />
         </div>
         <div>
           <label className="glass-label" htmlFor="r-max">Máx. de resgates por CPF/mês</label>
@@ -95,7 +98,19 @@ export function RulesForm({ defaults }: { defaults: { pointsPerReal: number; max
           <SubmitButton pendingText="Salvando…" className="btn-sm">Salvar regras</SubmitButton>
         </div>
       </div>
-      <p className="text-xs text-slate-500">Ex.: com 10 pontos por real, R$ 150,00 viram 1.500 pontos. O limite de resgates por mês é uma trava de segurança contra abuso.</p>
+      <div className="rounded-xl border border-[#d9e1f2] bg-[#f3f6fd] p-3 text-sm text-slate-700" data-testid="points-sim" aria-live="polite">
+        {n > 0 ? (
+          <>
+            <p>Uma compra de <b>{brl(50)}</b> rende <b>{(50 * n).toLocaleString('pt-BR')} pontos</b>.</p>
+            {cheapest && cheapest.pointsCost > 0 && (
+              <p className="mt-1">Seu prêmio mais barato, <b>{cheapest.name}</b> ({cheapest.pointsCost.toLocaleString('pt-BR')} pontos), o cliente ganha depois de gastar cerca de <b>{brl(cheapest.pointsCost / n)}</b>.</p>
+            )}
+          </>
+        ) : (
+          <p>Digite quantos pontos cada real vale para ver um exemplo.</p>
+        )}
+      </div>
+      <p className="text-xs text-slate-500">O limite de resgates por mês é uma trava de segurança contra abuso.</p>
       <FormMessage state={state} />
     </form>
   );

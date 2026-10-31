@@ -11,7 +11,7 @@ const b = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || u
 const c = await b.newContext({ viewport: { width: 1200, height: 900 } });
 const p = await c.newPage(); p.on('pageerror', (e) => console.log('PAGEERROR', e.message));
 await p.goto(BASE + '/login'); await p.fill('#email', 'ze@burger.com'); await p.fill('#password', 'senha-segura-1'); await p.click('button[type=submit]'); await p.waitForURL('**/dashboard**');
-await p.goto(BASE + '/dashboard/configuracoes'); await p.waitForSelector('#i-cat'); await p.waitForTimeout(1500);
+await p.goto(BASE + '/dashboard/configuracoes?etapa=negocio'); await p.waitForSelector('#i-cat'); await p.waitForTimeout(1500);
 const agendaTab = () => p.locator('nav a[href="/dashboard/agenda"]:visible').count();
 assert.equal(await agendaTab(), 0, 'sem serviços e sem categoria de atendimento, a aba não aparece');
 assert.equal(await p.locator('text=Esse tipo de negócio costuma atender com hora marcada').count(), 0);

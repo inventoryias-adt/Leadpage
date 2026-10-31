@@ -87,7 +87,7 @@ jobs:
         run: |
           # O servidor de desenvolvimento se reinicia sozinho ao chegar perto do limite de memória ("approaching the used memory threshold"),
           # e a conexão cai por alguns segundos no meio dos testes. Com mais memória permitida isso não acontece durante a bateria.
-          NODE_OPTIONS=--max-old-space-size=6144 nohup npx next dev -p 3000 > /tmp/app.log 2>&1 &
+          NODE_OPTIONS=--max-old-space-size=3072 nohup npx next dev -p 3000 > /tmp/app.log 2>&1 &
           for i in $(seq 1 60); do curl -fsS -o /dev/null http://localhost:3000/entrar && break; sleep 2; done
           # aquece as rotas principais para a primeira visita de cada teste não estourar o tempo (o modo dev compila na hora)
           for p in / /login /entrar /lugares /termos /privacidade /admin/entrar /dashboard /carteira /perfil; do curl -sS -o /dev/null --max-time 120 "http://localhost:3000$p" || true; done
