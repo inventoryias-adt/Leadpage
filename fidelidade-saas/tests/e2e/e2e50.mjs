@@ -12,8 +12,9 @@ await ctx.addInitScript(() => { localStorage.setItem('fz_intro_v1', '1'); localS
 const o = await ctx.newPage(); o.on('pageerror', (e) => console.log('PAGEERROR', e.message));
 await o.goto(BASE + '/login'); await o.fill('#email', 'ze@burger.com'); await o.fill('#password', 'senha-segura-1'); await o.click('button[type=submit]'); await o.waitForURL('**/dashboard');
 
-// 1. abre na etapa 1 e só ela aparece
-await o.goto(BASE + '/dashboard/configuracoes'); await o.waitForSelector('[data-testid=etapa-negocio]');
+// 1. sem etapa abre a central de Regras; ?etapa=negocio mostra só a etapa 1
+await o.goto(BASE + '/dashboard/configuracoes'); await o.waitForSelector('[data-testid=hub-progress]');
+await o.goto(BASE + '/dashboard/configuracoes?etapa=negocio'); await o.waitForSelector('[data-testid=etapa-negocio]');
 for (const e of ['regras', 'premios', 'agenda', 'compartilhar', 'conta']) assert.equal(await o.locator(`[data-testid=etapa-${e}]`).count(), 0, `etapa ${e} escondida`);
 assert.ok(await o.locator('nav[aria-label="Seções"] a[aria-current=step]:has-text("Seu negócio")').count());
 assert.match(await o.locator('[data-testid=etapa-negocio]').innerText(), /Aparece para o cliente|Início do app/i);
