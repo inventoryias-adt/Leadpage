@@ -42,7 +42,7 @@ await ctx.route('**/dashboard/agenda/whatsapp**', async (r) => {
   await r.fulfill({ status: 200, contentType: 'text/html', body: 'ok' });
 });
 const sendWa = async ({ per, prof, para } = {}) => {
-  await p.click('[data-testid=whatsapp-abrir]'); await p.waitForSelector('[data-testid=whatsapp-janela]');
+  await p.waitForSelector('[data-testid=whatsapp-janela]', { state: 'detached' }); if (!(await p.locator('[data-testid=agenda-mais-menu][open]').count())) await p.click('[data-testid=agenda-mais]'); await p.click('[data-testid=whatsapp-abrir]'); await p.waitForSelector('[data-testid=whatsapp-janela]');
   if (per) await p.selectOption('#wa-per', per);
   if (prof !== undefined) await p.selectOption('#wa-prof', prof);
   if (para) await p.check(`input[name=para][value=${para}]`);
@@ -61,7 +61,7 @@ console.log('2. filtro por profissional + WhatsApp com o número e o texto dele 
 
 // 3. Ana sem WhatsApp: a janela avisa e abre o contato livre
 await p.selectOption('select[aria-label=Profissional]', { label: 'Ana' }); await p.waitForURL(`**prof=${ana}**`); // espera a agenda trocar de atendente (a janela do WhatsApp lê o atendente da página)
-await p.click('[data-testid=whatsapp-abrir]'); await p.waitForSelector('[data-testid=whatsapp-janela]');
+await p.waitForSelector('[data-testid=whatsapp-janela]', { state: 'detached' }); if (!(await p.locator('[data-testid=agenda-mais-menu][open]').count())) await p.click('[data-testid=agenda-mais]'); await p.click('[data-testid=whatsapp-abrir]'); await p.waitForSelector('[data-testid=whatsapp-janela]');
 await p.waitForSelector('text=não tem WhatsApp cadastrado');
 assert.ok(await p.locator('input[name=para][value=atendente]').isDisabled());
 await p.click('button:has-text("Cancelar")');

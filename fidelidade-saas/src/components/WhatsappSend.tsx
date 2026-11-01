@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Icon } from './Icons';
 
 type Choice = { value: string; label: string };
@@ -10,8 +10,9 @@ type Person = { id: string; name: string; hasPhone: boolean };
  * "Enviar pelo WhatsApp": abre uma janela para escolher o período (dia, semana, mês), o atendente (ou todos) e para quem mandar.
  * O envio é um formulário que abre o WhatsApp em outra aba (o servidor monta o texto com o que foi escolhido).
  */
-export function WhatsappSend({ date, period, personId, periods, people }: { date: string; period: string; personId: string; periods: Choice[]; people: Person[] }) {
+export function WhatsappSend({ date, period, personId, periods, people, menu = false }: { date: string; period: string; personId: string; periods: Choice[]; people: Person[]; menu?: boolean }) {
   const [open, setOpen] = useState(false);
+  const btn = useRef<HTMLButtonElement>(null);
   const [per, setPer] = useState(period);
   const [prof, setProf] = useState(personId);
   const [para, setPara] = useState<'atendente' | 'escolher'>('atendente');
@@ -26,22 +27,28 @@ export function WhatsappSend({ date, period, personId, periods, people }: { date
     setOpen(true);
   };
 
+  // Fecha a janela e, quando o botão mora no menu "Mais", recolhe o menu também (aberto, ele cobriria a tela).
+  const close = () => {
+    setOpen(false);
+    if (menu) btn.current?.closest('details')?.removeAttribute('open');
+  };
+
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close();
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
   return (
     <>
-      <button type="button" onClick={openDialog} className="glass-button btn-sm" data-testid="whatsapp-abrir" aria-haspopup="dialog">
-        <Icon name="whatsapp" size={15} /> <span className="sm:hidden">WhatsApp</span><span className="hidden sm:inline">Enviar pelo WhatsApp</span>
+      <button ref={btn} type="button" onClick={openDialog} className={menu ? 'nav-tab flex w-full items-center gap-2 !rounded-xl text-left' : 'glass-button btn-sm'} data-testid="whatsapp-abrir" aria-haspopup="dialog">
+        <Icon name="whatsapp" size={menu ? 16 : 15} /> {menu ? 'Enviar agenda pelo WhatsApp' : <><span className="sm:hidden">WhatsApp</span><span className="hidden sm:inline">Enviar pelo WhatsApp</span></>}
       </button>
       {open && (
         <div role="dialog" aria-modal="true" aria-label="Enviar agenda pelo WhatsApp" data-testid="whatsapp-janela" className="fixed inset-0 z-50 flex items-end justify-center p-3 sm:items-center">
-          <button type="button" aria-label="Fechar" onClick={() => setOpen(false)} className="absolute inset-0 bg-slate-900/45" />
-          <form method="get" action="/dashboard/agenda/whatsapp" target="_blank" onSubmit={() => { setTimeout(() => setOpen(false), 400); }} className="relative w-full max-w-md space-y-4 rounded-[26px] bg-white p-5 shadow-2xl">
+          <button type="button" aria-label="Fechar" onClick={close} className="absolute inset-0 bg-slate-900/45" />
+          <form method="get" action="/dashboard/agenda/whatsapp" target="_blank" onSubmit={() => { setTimeout(close, 400); }} className="relative w-full max-w-md space-y-4 rounded-[26px] bg-white p-5 shadow-2xl">
             <div>
               <h2 className="text-lg font-bold text-primary">Enviar agenda pelo WhatsApp</h2>
               <p className="text-sm text-slate-600">Escolha o que entra na mensagem. Cancelados ficam de fora.</p>
@@ -75,7 +82,7 @@ export function WhatsappSend({ date, period, personId, periods, people }: { date
             )}
             {!person && <p className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">A agenda de todos vai numa mensagem só. No WhatsApp você escolhe quem recebe (pode ser você mesmo).</p>}
             <div className="flex gap-2">
-              <button type="button" onClick={() => setOpen(false)} className="glass-button-ghost flex-1">Cancelar</button>
+              <button type="button" onClick={close} className="glass-button-ghost flex-1">Cancelar</button>
               <button className="glass-button-navy flex-1" data-testid="whatsapp-enviar"><Icon name="whatsapp" size={16} /> Abrir no WhatsApp</button>
             </div>
           </form>

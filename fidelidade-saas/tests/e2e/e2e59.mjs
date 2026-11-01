@@ -59,7 +59,7 @@ console.log('3. a fila aparece em Meus agendamentos e dá para sair e voltar OK'
 // 4. dono vê o dia 100% ocupado e uma pessoa esperando
 const O = await mk('lucas@teste.com', { width: 1100, height: 1000 }).then(async (p) => { await p.context().clearCookies(); return p; });
 await O.goto(BASE + '/login'); await O.fill('#email', 'ze@burger.com'); await O.fill('#password', 'senha-segura-1'); await O.click('button[type=submit]'); await O.waitForURL('**/dashboard');
-await O.goto(BASE + '/dashboard/agenda'); await O.click('[data-testid=ocupacao]'); await O.waitForURL('**/agenda/ocupacao');
+await O.goto(BASE + '/dashboard/agenda'); await O.click('[data-testid=agenda-mais]'); await O.click('[data-testid=ocupacao]'); await O.waitForURL('**/agenda/ocupacao');
 await O.waitForSelector('[data-testid=occupancy-kpis]');
 const row = O.locator(`[data-testid=occupancy-days] li[data-date="${day}"]`);
 assert.match(await row.innerText(), /100%/); assert.match(await row.innerText(), /1 na espera/);

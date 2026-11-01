@@ -96,6 +96,23 @@ function Item({ b, back, showDay }: { b: Row; back: string; showDay?: boolean })
   );
 }
 
+/** Pedido aguardando confirmação, em versão enxuta: quando, quem, e os botões. Os detalhes abrem na janela do agendamento. */
+function PendingRow({ b, back }: { b: Row; back: string }) {
+  const detail = `${back}${back.includes('?') ? '&' : '?'}ag=${b.id}`;
+  return (
+    <li id={`ag-${b.id}`} className="space-y-2 rounded-xl bg-white p-3" data-testid="pendente">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-bold text-slate-800">{formatBookingWhen(b.startsAt)} · {b.serviceName}</p>
+          <p className="truncate text-xs text-slate-600">{guestOf(b).name}{b.resource ? ` · com ${b.resource.name}` : ''}</p>
+        </div>
+        <Link href={detail} className="shrink-0 text-xs font-semibold text-electric-600" aria-label={`Detalhes de ${guestOf(b).name}`}>Detalhes</Link>
+      </div>
+      <Actions b={b} back={back} />
+    </li>
+  );
+}
+
 export default async function AgendaPage({ searchParams }: { searchParams: Promise<{ data?: string; per?: string; prof?: string; vista?: string; ag?: string; ok?: string; erro?: string }> }) {
   const restaurant = await requireActiveRestaurant();
   const sp = await searchParams;
@@ -157,31 +174,37 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
+      <header className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-2xl font-extrabold tracking-tight text-primary">Agenda</h1>
           <p className="hidden text-sm text-slate-600 sm:block">Confirme pedidos, conclua os atendimentos (os pontos entram sozinhos) e marque quem faltou.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div role="group" aria-label="Visão da agenda" className="inline-flex rounded-full border border-[#cbd2dc] bg-white p-0.5">
-            {([['grade', 'Calendário', 'calendar'], ['lista', `Lista${live.length ? ` (${live.length})` : ''}`, 'list']] as const).map(([v, label, icon]) => (
-              <Link
-                key={v}
-                href={href({ vista: v })}
-                aria-current={vista === v ? 'true' : undefined}
-                data-testid={`vista-${v}`}
-                className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${vista === v ? 'bg-primary text-white' : 'text-slate-600 hover:text-primary'}`}
-              >
-                <Icon name={icon} size={16} /> {label}
-              </Link>
-            ))}
-          </div>
+        <div className="flex shrink-0 items-center gap-2">
           <Link href="/dashboard/agenda/novo" className="glass-button-navy btn-sm" data-testid="novo-agendamento"><Icon name="plus" size={16} /> <span>Novo</span><span className="sr-only"> agendamento</span></Link>
-          <div className="grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto">
-            <Link href="/dashboard/agenda/folgas" className="glass-button-ghost btn-sm" aria-label="Folgas e bloqueios" data-testid="folgas"><Icon name="clock" size={16} /> Folgas</Link>
-            <Link href="/dashboard/agenda/ocupacao" className="glass-button-ghost btn-sm" aria-label="Ocupação da agenda" data-testid="ocupacao"><Icon name="chart" size={16} /> Ocupação</Link>
-            <Link href="/dashboard/configuracoes?etapa=agenda&abrir=agenda-conteudo#agenda" className="glass-button-ghost btn-sm" aria-label="Serviços e regras"><Icon name="cog" size={16} /> <span className="sm:hidden">Regras</span><span className="hidden sm:inline">Serviços e regras</span></Link>
-          </div>
+          <details className="relative" data-testid="agenda-mais-menu">
+            <summary className="glass-button-ghost btn-sm flex cursor-pointer list-none items-center gap-1.5" data-testid="agenda-mais" aria-label="Mais ações da agenda">
+              Mais <Icon name="down" size={14} />
+            </summary>
+            <div className="glass-panel absolute right-0 top-full z-30 mt-2 w-64 space-y-1 !rounded-2xl p-2 shadow-lg" role="menu">
+              <Link href="/dashboard/agenda/folgas" role="menuitem" className="nav-tab flex items-center gap-2 !rounded-xl" data-testid="folgas"><Icon name="clock" size={16} /> Folgas e bloqueios</Link>
+              <Link href="/dashboard/agenda/ocupacao" role="menuitem" className="nav-tab flex items-center gap-2 !rounded-xl" data-testid="ocupacao"><Icon name="chart" size={16} /> Ocupação da agenda</Link>
+              <Link href="/dashboard/configuracoes?etapa=agenda&topico=agenda" role="menuitem" className="nav-tab flex items-center gap-2 !rounded-xl"><Icon name="cog" size={16} /> Serviços, equipe e regras</Link>
+              <div className="border-t border-slate-200/70 pt-1.5">
+                <WhatsappSend
+                  menu
+                  date={date}
+                  period={per}
+                  personId={who?.id ?? ''}
+                  periods={PERIODS.map((p) => {
+                    const r = periodRange(p, date);
+                    return { value: p, label: p === 'dia' ? `Dia ${r.label}` : p === 'semana' ? `Semana de ${fmtDay(r.from)} a ${fmtDay(r.to)}` : `${PERIOD_LABEL[p]}: ${r.label}` };
+                  })}
+                  people={staff.map((r) => ({ id: r.id, name: r.name, hasPhone: !!r.phone }))}
+                />
+                <a href={csvHref} className="nav-tab mt-1 flex items-center gap-2 !rounded-xl" role="menuitem" download data-testid="agenda-csv">Baixar planilha (CSV)</a>
+              </div>
+            </div>
+          </details>
         </div>
       </header>
 
@@ -190,20 +213,17 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
       {setup === 0 && <p className="glass-panel-sm p-4 text-sm text-slate-600">Cadastre ao menos um serviço em <Link href="/dashboard/configuracoes?etapa=agenda&abrir=agenda-conteudo#agenda" className="link-inline">Regras → Agenda e serviços</Link> para o cliente poder agendar.</p>}
 
       {pendingOtherDays.length > 0 && (
-        <section aria-labelledby="pend">
-          <h2 id="pend" className="mb-3 text-xs font-bold uppercase tracking-wider text-amber-700">Aguardando a sua confirmação ({pendingOtherDays.length})</h2>
-          <ul className="space-y-3">{pendingOtherDays.map((b) => <Item key={b.id} b={b} back={back} showDay />)}</ul>
+        <section aria-labelledby="pend" className="rounded-2xl border border-amber-200 bg-amber-50/70 p-3" data-testid="pendentes">
+          <h2 id="pend" className="mb-2 text-xs font-bold uppercase tracking-wider text-amber-800">Aguardando a sua confirmação ({pendingOtherDays.length})</h2>
+          <ul className="space-y-2">{pendingOtherDays.slice(0, 3).map((b) => <PendingRow key={b.id} b={b} back={back} />)}</ul>
+          {pendingOtherDays.length > 3 && (
+            <details className="mt-2">
+              <summary className="link-inline cursor-pointer text-sm">Ver mais {pendingOtherDays.length - 3}</summary>
+              <ul className="mt-2 space-y-2">{pendingOtherDays.slice(3).map((b) => <PendingRow key={b.id} b={b} back={back} />)}</ul>
+            </details>
+          )}
         </section>
       )}
-
-      <section aria-label="Filtros">
-        <AgendaFilters
-          period={per}
-          periods={PERIODS.map((p) => ({ value: p, label: PERIOD_LABEL[p], href: href({ per: p }) }))}
-          staffId={who?.id ?? ''}
-          staff={staff.length > 0 ? [{ value: '', label: 'Todos', href: href({ prof: null }) }, ...staff.map((r) => ({ value: r.id, label: r.name, href: href({ prof: r.id }) }))] : []}
-        />
-      </section>
 
       <nav aria-label="Período" className="glass-panel-sm flex items-center justify-between gap-2 p-2">
         <Link href={href({ data: prevDate, per: navPer })} className="glass-button-ghost btn-sm" aria-label="Anterior"><Icon name="back" size={16} /></Link>
@@ -217,6 +237,30 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
         </div>
       </nav>
 
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <section aria-label="Filtros" className="min-w-0 flex-1">
+          <AgendaFilters
+            period={per}
+            periods={PERIODS.map((p) => ({ value: p, label: PERIOD_LABEL[p], href: href({ per: p }) }))}
+            staffId={who?.id ?? ''}
+            staff={staff.length > 0 ? [{ value: '', label: 'Todos', href: href({ prof: null }) }, ...staff.map((r) => ({ value: r.id, label: r.name, href: href({ prof: r.id }) }))] : []}
+          />
+        </section>
+        <div role="group" aria-label="Visão da agenda" className="inline-flex shrink-0 rounded-full border border-[#cbd2dc] bg-white p-0.5">
+          {([['grade', 'Calendário', 'calendar'], ['lista', `Lista${live.length ? ` (${live.length})` : ''}`, 'list']] as const).map(([v, label, icon]) => (
+            <Link
+              key={v}
+              href={href({ vista: v })}
+              aria-current={vista === v ? 'true' : undefined}
+              data-testid={`vista-${v}`}
+              className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${vista === v ? 'bg-primary text-white' : 'text-slate-600 hover:text-primary'}`}
+            >
+              <Icon name={icon} size={16} /> {label}
+            </Link>
+          ))}
+        </div>
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
       <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600" data-testid="agenda-resumo">
         <strong className="text-primary">{live.length} {live.length === 1 ? 'agendamento' : 'agendamentos'}</strong>
@@ -226,20 +270,26 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
         {count('NO_SHOW') > 0 && <span className="rounded-md bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">{count('NO_SHOW')} {count('NO_SHOW') === 1 ? 'faltou' : 'faltaram'}</span>}
       </p>
 
-      <div className="flex gap-2">
-        <WhatsappSend
-          date={date}
-          period={per}
-          personId={who?.id ?? ''}
-          periods={PERIODS.map((p) => {
-            const r = periodRange(p, date);
-            return { value: p, label: p === 'dia' ? `Dia ${r.label}` : p === 'semana' ? `Semana de ${fmtDay(r.from)} a ${fmtDay(r.to)}` : `${PERIOD_LABEL[p]}: ${r.label}` };
-          })}
-          people={staff.map((r) => ({ id: r.id, name: r.name, hasPhone: !!r.phone }))}
-        />
-        <a href={csvHref} className="glass-button-ghost btn-sm" download><span className="sm:hidden">CSV</span><span className="hidden sm:inline">Baixar planilha (CSV)</span></a>
       </div>
-      </div>
+
+      {(() => {
+        if (per !== 'dia' || date !== today) return null;
+        const nowD = new Date();
+        const next = list.find((b) => (b.status === 'PENDING' || b.status === 'CONFIRMED') && b.endsAt > nowD);
+        if (!next) return null;
+        const inProgress = next.startsAt <= nowD;
+        return (
+          <Link href={`${back}${back.includes('?') ? '&' : '?'}ag=${next.id}`} className="glass-panel-sm card-link flex items-center gap-3 !rounded-2xl p-3" data-testid="proximo-atendimento">
+            <span aria-hidden className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#E8EEFB] text-electric-600"><Icon name="clock" size={20} /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">{inProgress ? 'Em atendimento agora' : 'Próximo atendimento'}</span>
+              <span className="block truncate font-bold text-slate-800">{hmOf(next.startsAt)} · {guestOf(next).name} · {next.serviceName}</span>
+              {next.resource && <span className="block truncate text-xs text-slate-500">com {next.resource.name}</span>}
+            </span>
+            <Icon name="chevron" size={16} className="shrink-0 text-slate-300" />
+          </Link>
+        );
+      })()}
 
       {vista === 'grade' && per === 'semana' && (
         <AgendaWeek
@@ -279,7 +329,15 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
       })()}
 
       {list.length === 0 ? (
-        <p className="glass-panel-sm p-4 text-sm text-slate-600">Nenhum agendamento {per === 'dia' ? 'neste dia' : 'neste período'}{who ? ` para ${who.name}` : ''}.</p>
+        <div className="glass-panel flex flex-col items-center gap-2 !rounded-[22px] p-6 text-center" data-testid="agenda-vazia">
+          <span aria-hidden className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E8EEFB] text-electric-600"><Icon name="calendar" size={24} /></span>
+          <p className="font-bold text-primary">Nenhum agendamento {per === 'dia' ? 'neste dia' : 'neste período'}{who ? ` para ${who.name}` : ''}</p>
+          <p className="max-w-sm text-sm text-slate-600">Quando um cliente marcar pelo app, ele aparece aqui. Você também pode encaixar alguém agora.</p>
+          <div className="flex flex-wrap justify-center gap-2 pt-1">
+            <Link href="/dashboard/agenda/novo" className="glass-button-navy btn-sm"><Icon name="plus" size={16} /> Novo agendamento</Link>
+            {per === 'dia' && <Link href={href({ data: nextDate, per: navPer })} className="glass-button-ghost btn-sm">Ver o próximo dia</Link>}
+          </div>
+        </div>
       ) : vista === 'lista' ? (
         per === 'dia' ? (
           <ul className="space-y-3" aria-label="Agendamentos do dia">{list.map((b) => <Item key={b.id} b={b} back={back} />)}</ul>
