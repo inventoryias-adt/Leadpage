@@ -155,7 +155,7 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses, b
               type="button"
               aria-pressed={filter === f.id}
               onClick={() => setFilter(f.id)}
-              className={`btn-sm ${filter === f.id ? 'glass-button' : 'glass-button-ghost'}`}
+              className={`btn-sm !rounded-full ${filter === f.id ? 'glass-button' : 'glass-button-ghost'}`}
             >
               {f.label}
             </button>
