@@ -237,8 +237,8 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
         </div>
       </nav>
 
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <section aria-label="Filtros" className="min-w-0 flex-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <section aria-label="Filtros" className="min-w-0 sm:flex-1">
           <AgendaFilters
             period={per}
             periods={PERIODS.map((p) => ({ value: p, label: PERIOD_LABEL[p], href: href({ per: p }) }))}
@@ -246,14 +246,14 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
             staff={staff.length > 0 ? [{ value: '', label: 'Todos', href: href({ prof: null }) }, ...staff.map((r) => ({ value: r.id, label: r.name, href: href({ prof: r.id }) }))] : []}
           />
         </section>
-        <div role="group" aria-label="Visão da agenda" className="inline-flex shrink-0 rounded-full border border-[#cbd2dc] bg-white p-0.5">
+        <div role="group" aria-label="Visão da agenda" className="flex w-full rounded-full border border-[#cbd2dc] bg-white p-0.5 sm:inline-flex sm:w-auto sm:shrink-0">
           {([['grade', 'Calendário', 'calendar'], ['lista', `Lista${live.length ? ` (${live.length})` : ''}`, 'list']] as const).map(([v, label, icon]) => (
             <Link
               key={v}
               href={href({ vista: v })}
               aria-current={vista === v ? 'true' : undefined}
               data-testid={`vista-${v}`}
-              className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${vista === v ? 'bg-primary text-white' : 'text-slate-600 hover:text-primary'}`}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors sm:flex-none ${vista === v ? 'bg-primary text-white' : 'text-slate-600 hover:text-primary'}`}
             >
               <Icon name={icon} size={16} /> {label}
             </Link>
