@@ -93,7 +93,7 @@ export default async function NovoAgendamentoPage({ searchParams }: { searchPara
           <ul className="grid grid-cols-4 gap-2 sm:grid-cols-6" data-testid="owner-slots">
             {slots.map((s) => (
               <li key={s.time}>
-                <Link href={link({ hora: s.time })} aria-current={chosen?.time === s.time ? 'true' : undefined} className={`block rounded-xl border py-2.5 text-center text-sm font-semibold ${chosen?.time === s.time ? 'border-[#0F1F3D] bg-[#0F1F3D] text-[#C6F432]' : 'border-slate-200 bg-white text-slate-800 hover:border-[#0F1F3D]'}`}>{s.time}</Link>
+                <Link href={link({ hora: s.time })} aria-current={chosen?.time === s.time ? 'true' : undefined} className={`block rounded-lg border py-2.5 text-center text-sm font-semibold ${chosen?.time === s.time ? 'border-[#0F1F3D] bg-[#0F1F3D] text-[#C6F432]' : 'border-slate-200 bg-white text-slate-800 hover:border-[#0F1F3D]'}`}>{s.time}</Link>
               </li>
             ))}
           </ul>

@@ -23,7 +23,7 @@ export function OwnerBackBar() {
   if (!to) return null;
   return (
     <div className="mb-3">
-      <Link href={to[0]} className="inline-flex items-center gap-1 rounded-full bg-white/80 py-1.5 pl-2 pr-3.5 text-sm font-bold text-electric-600 shadow-sm ring-1 ring-slate-200 transition-colors hover:bg-white" data-testid="owner-back" aria-label={`Voltar para ${to[1]}`}>
+      <Link href={to[0]} className="glass-button-ghost btn-sm shrink-0 !gap-1" data-testid="owner-back" aria-label={`Voltar para ${to[1]}`}>
         <Icon name="back" size={16} /> {to[1]}
       </Link>
     </div>

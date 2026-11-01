@@ -95,7 +95,7 @@ function Hatch() {
 /** Botão principal de chamada para ação. */
 function Cta({ children }: { children: React.ReactNode }) {
   return (
-    <SignupCta className="glass-button !w-auto !px-6 !py-3 !text-base">
+    <SignupCta className="glass-button !w-auto">
       {children}
       <Icon name="chevron" size={16} />
     </SignupCta>
@@ -256,7 +256,7 @@ export default function LandingPage() {
             ))}
           </ul>
         </div>
-        <SignupCta className="glass-button-lime !w-auto !px-6 !py-3">Quero fidelizar meus clientes</SignupCta>
+        <SignupCta className="glass-button-lime !w-auto">Quero fidelizar meus clientes</SignupCta>
       </section>
 
       {/* FAQ */}

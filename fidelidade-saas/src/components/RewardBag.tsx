@@ -138,9 +138,9 @@ export function RewardBag({
                       </button>
                     ) : (
                       <div className="flex items-center gap-1.5" role="group" aria-label={`Quantidade de ${r.name}`}>
-                        <button type="button" onClick={() => remove(r)} className="glass-button-ghost btn-sm !px-3" aria-label={`Remover um ${r.name}`}>−</button>
+                        <button type="button" onClick={() => remove(r)} className="glass-button-ghost btn-sm" aria-label={`Remover um ${r.name}`}>−</button>
                         <span className="w-6 text-center font-bold text-slate-800" aria-live="polite">{q}</span>
-                        <button type="button" disabled={!canAdd} onClick={() => add(r)} className="glass-button btn-sm !px-3" aria-label={`Adicionar mais um ${r.name}`}>+</button>
+                        <button type="button" disabled={!canAdd} onClick={() => add(r)} className="glass-button btn-sm" aria-label={`Adicionar mais um ${r.name}`}>+</button>
                       </div>
                     )}
                   </div>

@@ -142,7 +142,7 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses, b
           <span className={`min-w-0 flex-1 truncate ${query ? 'font-semibold text-slate-800' : 'text-slate-400'}`}>{query || 'Buscar lugar ou categoria'}</span>
         </button>
         {query && (
-          <button type="button" aria-label="Limpar busca" onClick={() => setQuery('')} className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center !rounded-full !bg-slate-100 text-xs font-bold text-slate-600 !shadow-none hover:!bg-slate-200">✕</button>
+          <button type="button" aria-label="Limpar busca" onClick={() => setQuery('')} className="absolute right-3 top-1/2 btn-icon !h-8 !w-8 -translate-y-1/2 text-xs font-bold !shadow-none">✕</button>
         )}
       </Reveal>
 
@@ -155,7 +155,7 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses, b
               type="button"
               aria-pressed={filter === f.id}
               onClick={() => setFilter(f.id)}
-              className={`!w-auto !rounded-full !px-3 !py-1 !text-[13px] ${filter === f.id ? 'glass-button' : 'glass-button-ghost'}`}
+              className={`btn-sm !rounded-full ${filter === f.id ? 'glass-button' : 'glass-button-ghost'}`}
             >
               {f.label}
             </button>
@@ -197,7 +197,7 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses, b
       </Reveal>
 
       {category && (
-        <button type="button" onClick={() => setCategory(null)} className="glass-button-ghost btn-sm !rounded-full" aria-label="Limpar categoria">
+        <button type="button" onClick={() => setCategory(null)} className="glass-button-ghost btn-sm" aria-label="Limpar categoria">
           Categoria: {categories.find((c) => c.value === category)?.label} ✕
         </button>
       )}
@@ -239,7 +239,7 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses, b
           >
             <div className="mb-4 flex items-center justify-between gap-3">
               <h2 id="todas-categorias" className="text-lg font-extrabold text-primary">Todas as categorias</h2>
-              <button type="button" onClick={() => setAllOpen(false)} className="glass-button-ghost btn-sm !px-3" aria-label="Fechar">✕</button>
+              <button type="button" onClick={() => setAllOpen(false)} className="glass-button-ghost btn-sm" aria-label="Fechar">✕</button>
             </div>
             <ul className="grid grid-cols-4 gap-x-2 gap-y-4 sm:grid-cols-5 md:grid-cols-6">
               {categories.map((c) => {
@@ -310,7 +310,7 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses, b
         <div role="dialog" aria-modal="true" aria-label="Buscar lugares" className="fixed inset-0 z-50 flex justify-center overflow-hidden bg-white md:items-center md:bg-slate-900/50 md:p-6">
           <div className="flex h-full w-full min-w-0 max-w-lg flex-col overflow-hidden bg-white md:h-[min(46rem,92vh)] md:rounded-[28px] md:shadow-2xl">
             <div className="flex items-center gap-3 border-b border-slate-100 p-4" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
-              <button type="button" onClick={() => setSearchOpen(false)} aria-label="Voltar" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200">
+              <button type="button" onClick={() => setSearchOpen(false)} aria-label="Voltar" className="btn-icon">
                 <Icon name="back" size={20} />
               </button>
               <div className="relative min-w-0 flex-1">
@@ -366,7 +366,7 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses, b
               )}
             </div>
             <div className="border-t border-slate-100 p-4" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
-              <button type="button" onClick={() => setSearchOpen(false)} className="glass-button !rounded-full">{query.trim() ? 'Ver na lista' : 'Fechar'}</button>
+              <button type="button" onClick={() => setSearchOpen(false)} className="glass-button">{query.trim() ? 'Ver na lista' : 'Fechar'}</button>
             </div>
           </div>
         </div>
@@ -441,7 +441,7 @@ function OfferCard({ p, offer }: { p: Row; offer: PlaceOffer }) {
             <span className="ml-2 text-sm font-medium text-white/60 line-through">{formatBRL(offer.priceCents)}</span>
           </p>
           {offer.endsText && <p className="mt-1 flex items-center gap-1.5 text-sm text-white/80"><Icon name="clock" size={15} /> {offer.endsText}</p>}
-          <Link href={href} className="glass-button-lime btn-sm mt-3 !w-auto px-8" data-testid="offer-order">Pedir</Link>
+          <Link href={href} className="glass-button-lime btn-sm mt-3 !w-auto" data-testid="offer-order">Pedir</Link>
         </div>
         <div className="relative shrink-0">
           <div className="relative h-28 w-28">

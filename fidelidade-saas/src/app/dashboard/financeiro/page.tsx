@@ -38,7 +38,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
           <h1 className="text-2xl font-extrabold tracking-tight text-primary">Financeiro</h1>
           <p className="text-sm text-slate-600">Quanto entrou, quanto saiu e o que sobrou, mês a mês.</p>
         </div>
-        <a href={`/dashboard/exportar/financeiro?mes=${month}`} download className="glass-button-ghost btn-sm !w-auto px-4" data-testid="finance-csv">Baixar planilha (CSV)</a>
+        <a href={`/dashboard/exportar/financeiro?mes=${month}`} download className="glass-button-ghost btn-sm !w-auto" data-testid="finance-csv">Baixar planilha (CSV)</a>
       </header>
 
       <nav className="glass-panel-sm flex items-center justify-between !rounded-2xl px-3 py-2" aria-label="Mês">

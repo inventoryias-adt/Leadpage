@@ -143,7 +143,7 @@ export default async function DashboardHome({ searchParams }: { searchParams: Pr
         </div>
       </div>
 
-      <Link href="/dashboard/caixa" className="glass-button py-4 text-lg sm:hidden"><Icon name="receipt" size={22} /> Lançar pontos no caixa</Link>
+      <Link href="/dashboard/caixa" className="glass-button sm:hidden"><Icon name="receipt" size={22} /> Lançar pontos no caixa</Link>
 
       <section aria-label="O que os clientes disseram" className="grid grid-cols-3 gap-2.5 sm:gap-3" data-testid="inbox-hub">
         <Link href="/dashboard/mensagens" className="glass-panel-sm card-link flex flex-col gap-1 !rounded-[22px] p-3 sm:p-4" data-testid="chats-shortcut">

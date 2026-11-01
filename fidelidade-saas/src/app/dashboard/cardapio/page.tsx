@@ -65,7 +65,7 @@ export default async function CardapioPage() {
                   </div>
                   <form action={removeMenuItem} className="shrink-0">
                     <input type="hidden" name="id" value={i.id} />
-                    <button className="flex h-9 w-9 items-center justify-center rounded-lg border border-transparent text-slate-400 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600" aria-label={`Remover ${i.name}`} title="Remover">
+                    <button className="flex h-10 w-10 items-center justify-center rounded-lg border border-transparent text-slate-400 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600" aria-label={`Remover ${i.name}`} title="Remover">
                       <Icon name="trash" size={18} />
                     </button>
                   </form>

@@ -233,7 +233,7 @@ export function OwnerGuide({ autoOpen, progress, clientUrl }: { autoOpen: boolea
             >
               <div className="mb-5 flex items-center justify-between gap-3">
                 <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Passo {step + 1} de {STEPS.length}</p>
-                <button type="button" onClick={close} className="glass-button-ghost btn-sm !px-3" aria-label="Fechar o guia (você pode voltar depois)">✕</button>
+                <button type="button" onClick={close} className="glass-button-ghost btn-sm" aria-label="Fechar o guia (você pode voltar depois)">✕</button>
               </div>
 
               <div className="mb-5 flex gap-1.5" aria-hidden>

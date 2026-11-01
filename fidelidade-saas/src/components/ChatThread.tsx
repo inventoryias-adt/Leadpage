@@ -80,7 +80,7 @@ export function ChatThread({ as, conversationId, initial, otherName }: { as: Cha
           className="glass-input max-h-32 min-h-[44px] flex-1 resize-none"
           data-testid="chat-input"
         />
-        <button type="submit" disabled={pending || !text.trim()} className="glass-button-lime btn-sm !w-auto px-5" data-testid="chat-send">Enviar</button>
+        <button type="submit" disabled={pending || !text.trim()} className="glass-button-lime btn-sm !w-auto" data-testid="chat-send">Enviar</button>
       </form>
       {error && <p role="alert" className="text-xs font-semibold text-rose-600" data-testid="chat-error">{error}</p>}
     </div>

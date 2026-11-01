@@ -58,7 +58,7 @@ export default async function MeusPlanosPage({ searchParams }: { searchParams: P
                 </div>
               )}
               <div className="flex flex-wrap items-center gap-3">
-                <Link href={`/lugar/${s.restaurant.id}/agendar`} className="glass-button-navy btn-sm !w-auto px-4">Agendar</Link>
+                <Link href={`/lugar/${s.restaurant.id}/agendar`} className="glass-button-navy btn-sm !w-auto">Agendar</Link>
                 {s.status === 'ACTIVE' && (
                   <form action={cancelClubByCustomer} data-testid="cancel-form"><input type="hidden" name="id" value={s.id} /><button className="text-xs font-semibold text-rose-600 underline" data-testid="my-sub-cancel">Cancelar assinatura</button></form>
                 )}

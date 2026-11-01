@@ -43,7 +43,7 @@ export default async function Assinantes({ searchParams }: { searchParams: Promi
   const countOf = (s: string) => counts.find((c) => c.subscriptionStatus === s)?._count ?? 0;
 
   const tab = (href: string, on: boolean, label: string, n: number) => (
-    <Link href={href} aria-current={on ? 'true' : undefined} className={`${on ? 'glass-button' : 'glass-button-ghost'} shrink-0 !w-auto !px-4 !py-1.5 !text-sm`}>
+    <Link href={href} aria-current={on ? 'true' : undefined} className={`${on ? 'glass-button' : 'glass-button-ghost'} btn-sm shrink-0`}>
       {label} <span className="opacity-70">{n}</span>
     </Link>
   );

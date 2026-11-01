@@ -270,7 +270,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
               {grid.map((g) => (
                 <li key={g.time}>
                   {g.state === 'free' ? (
-                    <Link href={url({ data: date, hora: g.time })} aria-current={chosen?.time === g.time ? 'true' : undefined} className={`block rounded-xl border py-2.5 text-center text-sm font-semibold ${chosen?.time === g.time ? 'border-[#0F1F3D] bg-[#0F1F3D] text-lima' : 'border-slate-200 bg-white text-slate-800 hover:border-electric-500'}`}>
+                    <Link href={url({ data: date, hora: g.time })} aria-current={chosen?.time === g.time ? 'true' : undefined} className={`block rounded-lg border py-2.5 text-center text-sm font-semibold ${chosen?.time === g.time ? 'border-[#0F1F3D] bg-[#0F1F3D] text-lima' : 'border-slate-200 bg-white text-slate-800 hover:border-electric-500'}`}>
                   {g.time}
                 </Link>
                   ) : (

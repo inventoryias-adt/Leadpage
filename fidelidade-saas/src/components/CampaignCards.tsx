@@ -99,7 +99,7 @@ export function CampaignCards({ items, loggedIn }: { items: CampaignView[]; logg
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{open.items.length} {open.items.length === 1 ? 'campanha' : 'campanhas'} em</p>
                 <p id="campanha-titulo" className="truncate text-lg font-extrabold text-primary">{open.placeName}</p>
               </div>
-              <button type="button" onClick={() => setOpen(null)} className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200" aria-label="Fechar">✕</button>
+              <button type="button" onClick={() => setOpen(null)} className="btn-icon" aria-label="Fechar">✕</button>
             </div>
 
             <ul className="-mx-1 mb-4 min-h-0 flex-1 space-y-3 overflow-y-auto px-1">
@@ -128,8 +128,8 @@ export function CampaignCards({ items, loggedIn }: { items: CampaignView[]; logg
             </ul>
 
             <div className="grid grid-cols-2 gap-2">
-              <Link ref={primary} href={`/lugar/${open.placeId}`} className="glass-button !rounded-full" onClick={() => setOpen(null)}>Ver o lugar</Link>
-              <button type="button" onClick={() => setOpen(null)} className="glass-button-ghost !rounded-full">Fechar</button>
+              <Link ref={primary} href={`/lugar/${open.placeId}`} className="glass-button" onClick={() => setOpen(null)}>Ver o lugar</Link>
+              <button type="button" onClick={() => setOpen(null)} className="glass-button-ghost">Fechar</button>
             </div>
           </div>
         </div>

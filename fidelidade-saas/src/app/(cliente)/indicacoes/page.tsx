@@ -47,7 +47,7 @@ export default async function IndicacoesPage({ searchParams }: { searchParams: P
           <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#E8EEFB] text-electric-600"><Icon name="camera" size={26} /></span>
           <p className="text-lg font-extrabold text-primary">{mine ? 'Você ainda não indicou nenhum lugar' : 'Ainda não há indicações'}</p>
           <p className="max-w-xs text-sm text-slate-600">Poste a foto de um prato, de um corte ou do que você gostou, com a sua nota. Vale para os lugares onde você já tem carteira.</p>
-          <Link href="/indicacoes/nova" className="glass-button-lime !w-auto px-6">Fazer a primeira indicação</Link>
+          <Link href="/indicacoes/nova" className="glass-button-lime !w-auto">Fazer a primeira indicação</Link>
         </div>
       ) : (
         <div className="mx-auto w-full max-w-md space-y-5" data-testid="feed">

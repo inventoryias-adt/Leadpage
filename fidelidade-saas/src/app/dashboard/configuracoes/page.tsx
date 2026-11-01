@@ -101,7 +101,7 @@ function RemoveButton({ action, id, label }: { action: (fd: FormData) => Promise
   return (
     <form action={action} className="shrink-0">
       <input type="hidden" name="id" value={id} />
-      <button className="flex h-9 w-9 items-center justify-center rounded-lg border border-transparent text-slate-400 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600" aria-label={`Remover ${label}`} title="Remover">
+      <button className="flex h-10 w-10 items-center justify-center rounded-lg border border-transparent text-slate-400 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600" aria-label={`Remover ${label}`} title="Remover">
         <Icon name="trash" size={18} />
       </button>
     </form>
@@ -217,7 +217,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
       {inTopic && (
         <header data-testid="topico-header" className="space-y-2">
           <div className="flex items-center justify-between gap-2">
-            <Link href="/dashboard/configuracoes" className="inline-flex items-center gap-1 rounded-full bg-white/80 py-1.5 pl-2 pr-3.5 text-sm font-bold text-electric-600 shadow-sm ring-1 ring-slate-200 transition-colors hover:bg-white" data-testid="topico-voltar" aria-label="Voltar para as Regras">
+            <Link href="/dashboard/configuracoes" className="glass-button-ghost btn-sm shrink-0 !gap-1" data-testid="topico-voltar" aria-label="Voltar para as Regras">
               <Icon name="back" size={16} /> Regras
             </Link>
             {nextTopic && <Link href={topicHref(nextTopic.id)} className="glass-button-lime btn-sm !w-auto" data-testid="topico-proximo">Próximo: {nextTopic.title} →</Link>}
@@ -232,7 +232,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
       )}
 
       {!inTopic && (
-        <Link href="/dashboard/configuracoes" className="inline-flex w-fit items-center gap-1 rounded-full bg-white/80 py-1.5 pl-2 pr-3.5 text-sm font-bold text-electric-600 shadow-sm ring-1 ring-slate-200 transition-colors hover:bg-white" data-testid="regras-todas" aria-label="Voltar para as Regras" hidden={onboarding}>
+        <Link href="/dashboard/configuracoes" className="glass-button-ghost btn-sm shrink-0 !gap-1" data-testid="regras-todas" aria-label="Voltar para as Regras" hidden={onboarding}>
           <Icon name="back" size={16} /> Todas as regras
         </Link>
       )}

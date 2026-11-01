@@ -98,7 +98,7 @@ export function TodayDeals({ deals }: { deals: Deal[] }) {
             <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-slate-100">
               <RewardImage src={open.imageUrl} name={open.name} className="h-full w-full" />
               <span className="absolute left-3 top-3 rounded-full bg-[#C6F432] px-3 py-1 text-sm font-extrabold text-[#0F1F3D]">-{off(open)}%</span>
-              <button type="button" onClick={() => setOpen(null)} className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow hover:bg-white" aria-label="Fechar">✕</button>
+              <button type="button" onClick={() => setOpen(null)} className="absolute right-3 top-3 btn-icon !bg-white/90 shadow hover:!bg-white" aria-label="Fechar">✕</button>
             </div>
 
             <div className="space-y-4 p-5">
@@ -138,8 +138,8 @@ export function TodayDeals({ deals }: { deals: Deal[] }) {
               </Link>
 
               <div className="grid grid-cols-2 gap-2">
-                <Link ref={primary} href={orderHref(open)} data-testid="deal-order" className="glass-button !rounded-full" onClick={() => setOpen(null)}>Pedir</Link>
-                <button type="button" onClick={() => setOpen(null)} className="glass-button-ghost !rounded-full">Fechar</button>
+                <Link ref={primary} href={orderHref(open)} data-testid="deal-order" className="glass-button" onClick={() => setOpen(null)}>Pedir</Link>
+                <button type="button" onClick={() => setOpen(null)} className="glass-button-ghost">Fechar</button>
               </div>
             </div>
           </div>
