@@ -180,7 +180,7 @@ export function LocationPicker({
   }
 
   const back = (to: Step | 'close') => (
-    <button type="button" onClick={() => (to === 'close' ? onClose() : setStep(to))} aria-label="Voltar" className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200">
+    <button type="button" onClick={() => (to === 'close' ? onClose() : setStep(to))} aria-label="Voltar" className="btn-icon">
       <Icon name="back" size={20} />
     </button>
   );
@@ -279,7 +279,7 @@ export function LocationPicker({
               </label>
               <div role="radiogroup" aria-label="Tipo de endereço" className="flex flex-wrap gap-2">
                 {ADDRESS_LABELS.map((l) => (
-                  <button key={l} type="button" role="radio" aria-checked={form.label === l} onClick={() => setForm((f) => ({ ...f, label: l }))} className={`!w-auto !rounded-full !px-5 !py-2 !text-sm !font-bold uppercase tracking-wide ${form.label === l ? 'glass-button' : 'glass-button-ghost'}`}>
+                  <button key={l} type="button" role="radio" aria-checked={form.label === l} onClick={() => setForm((f) => ({ ...f, label: l }))} className={`btn-sm uppercase tracking-wide ${form.label === l ? 'glass-button' : 'glass-button-ghost'}`}>
                     {ADDRESS_LABEL_TEXT[l]}
                   </button>
                 ))}

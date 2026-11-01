@@ -80,7 +80,7 @@ export function PostCard({ post, highlight = false, viewerInstagram = null }: { 
         {post.hidden && <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">Escondida pela moderação: só você vê esta indicação.</p>}
         <div className="flex items-center justify-between gap-3">
           <Stars value={post.rating} size={20} label={`Nota ${post.rating} de 5`} />
-          <button type="button" onClick={like} disabled={pending || post.hidden} aria-pressed={liked} aria-label={liked ? 'Descurtir' : 'Curtir'} data-testid="like" className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold transition-colors ${liked ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600'}`}>
+          <button type="button" onClick={like} disabled={pending || post.hidden} aria-pressed={liked} aria-label={liked ? 'Descurtir' : 'Curtir'} data-testid="like" className={`flex min-h-9 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold transition-colors ${liked ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600'}`}>
             <span aria-hidden>{liked ? '♥' : '♡'}</span><span data-testid="like-count">{likes}</span>
           </button>
         </div>

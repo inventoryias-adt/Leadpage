@@ -33,12 +33,12 @@ function StockTag({ item }: { item: MenuView }) {
 function Stepper({ qty, name, onMinus, onPlus, canPlus, dark = false }: { qty: number; name: string; onMinus: () => void; onPlus: () => void; canPlus: boolean; dark?: boolean }) {
   const hov = dark ? 'hover:bg-white/15' : 'hover:bg-slate-200';
   return (
-    <div className={`flex items-center rounded-full ${dark ? 'bg-white/10 text-white' : 'bg-[#EAF0FF] text-primary'}`} role="group" aria-label={`Quantidade de ${name}`}>
-      <button type="button" onClick={onMinus} className={`flex h-9 w-9 items-center justify-center rounded-full ${hov}`} aria-label={qty === 1 ? `Remover ${name} da sacola` : `Tirar um ${name}`}>
+    <div className={`flex items-center rounded-lg ${dark ? 'bg-white/10 text-white' : 'bg-[#EAF0FF] text-primary'}`} role="group" aria-label={`Quantidade de ${name}`}>
+      <button type="button" onClick={onMinus} className={`flex h-9 w-9 items-center justify-center rounded-lg ${hov}`} aria-label={qty === 1 ? `Remover ${name} da sacola` : `Tirar um ${name}`}>
         {qty === 1 ? <Icon name="trash" size={17} /> : <span className="text-xl leading-none">−</span>}
       </button>
       <span className="w-7 text-center font-bold" aria-live="polite">{qty}</span>
-      <button type="button" onClick={onPlus} disabled={!canPlus} className={`flex h-9 w-9 items-center justify-center rounded-full text-xl leading-none ${hov} disabled:opacity-40`} aria-label={`Adicionar mais um ${name}`}>+</button>
+      <button type="button" onClick={onPlus} disabled={!canPlus} className={`flex h-9 w-9 items-center justify-center rounded-lg text-xl leading-none ${hov} disabled:opacity-40`} aria-label={`Adicionar mais um ${name}`}>+</button>
     </div>
   );
 }
@@ -257,7 +257,7 @@ export function OrderMenu({
               <p className="text-xs text-white/70">Total com retirada</p>
               <p className="font-extrabold text-lima" data-testid="bag-total">{formatBRL(total)} <span className="text-sm font-medium text-white/70">/ {count} {count === 1 ? 'item' : 'itens'}</span></p>
             </div>
-            <button type="button" onClick={() => setStep('bag')} className="glass-button-lime !w-auto px-5" data-testid="open-bag">Ver pedido</button>
+            <button type="button" onClick={() => setStep('bag')} className="glass-button-lime !w-auto" data-testid="open-bag">Ver pedido</button>
           </div>
         </div>
       )}
@@ -283,7 +283,7 @@ export function OrderMenu({
                   <h2 id="sheet-title" className="text-2xl font-extrabold tracking-tight text-primary">Como você quer receber<span className="text-electric-500">?</span></h2>
                 )}
               </div>
-              <button type="button" onClick={() => setStep('menu')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200" aria-label="Fechar">✕</button>
+              <button type="button" onClick={() => setStep('menu')} className="btn-icon" aria-label="Fechar">✕</button>
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
@@ -360,15 +360,15 @@ export function OrderMenu({
               </div>
               {step === 'bag' ? (
                 // key próprio: sem ele o React reaproveita este mesmo botão como o "Confirmar" (type=submit) no meio do toque e o pedido sairia sem passar pela retirada
-                <button key="continue" type="button" onClick={() => setStep('receive')} disabled={count === 0} className="glass-button-navy !w-auto px-6" data-testid="bag-continue">
+                <button key="continue" type="button" onClick={() => setStep('receive')} disabled={count === 0} className="glass-button-navy !w-auto" data-testid="bag-continue">
                   Continuar <Icon name="chevron" size={16} />
                 </button>
               ) : loggedIn ? (
-                <button key="confirm" type="submit" disabled={pending || count === 0 || !chosen} className="glass-button-navy !w-auto px-6" data-testid="order-confirm">
+                <button key="confirm" type="submit" disabled={pending || count === 0 || !chosen} className="glass-button-navy !w-auto" data-testid="order-confirm">
                   {pending ? 'Enviando…' : 'Confirmar pedido'}
                 </button>
               ) : (
-                <Link href={`/entrar?next=${encodeURIComponent(here)}`} className="glass-button !w-auto px-6">Entrar para pedir</Link>
+                <Link href={`/entrar?next=${encodeURIComponent(here)}`} className="glass-button !w-auto">Entrar para pedir</Link>
               )}
             </form>
           </div>

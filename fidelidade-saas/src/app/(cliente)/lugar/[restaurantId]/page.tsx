@@ -169,7 +169,7 @@ export default async function LugarPage({
           <div className="h-full w-full" style={{ background: `linear-gradient(135deg, ${brand.hex} 0%, ${brand.deep} 100%)` }} />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/35 to-transparent" />
-        <Link href="/lugares" aria-label="Voltar para Lugares" className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-lg bg-white/95 text-slate-800 shadow-sm transition-colors hover:bg-slate-100">
+        <Link href="/lugares" aria-label="Voltar para Lugares" className="absolute left-4 top-4 btn-icon !bg-white/95 shadow-sm hover:!bg-slate-100">
           <Icon name="back" size={20} />
         </Link>
       </div>
@@ -228,7 +228,7 @@ export default async function LugarPage({
                   href={`${here}?unidade=${u.id}`}
                   scroll={false}
                   aria-current={on ? 'true' : undefined}
-                  className={`${on ? 'glass-button' : 'glass-button-ghost'} shrink-0 !w-auto !rounded-md !px-4 !py-1.5 !text-sm`}
+                  className={`${on ? 'glass-button' : 'glass-button-ghost'} btn-sm shrink-0`}
                 >
                   <Icon name="pin" size={14} /> {u.name}
                 </Link>
@@ -260,7 +260,7 @@ export default async function LugarPage({
             ) : (
               <form action={claimBirthdayPerkAction} className="mt-3">
                 <input type="hidden" name="restaurantId" value={restaurantId} />
-                <button type="submit" className="glass-button-lime btn-sm !w-auto px-5" data-testid="birthday-perk-claim">Quero meu presente</button>
+                <button type="submit" className="glass-button-lime btn-sm !w-auto" data-testid="birthday-perk-claim">Quero meu presente</button>
               </form>
             )}
           </section>
@@ -496,11 +496,11 @@ export default async function LugarPage({
                   </div>
                   <p className="text-sm font-semibold text-slate-700">{itemsText(p.items)} <span className="font-normal text-slate-500">por mês</span></p>
                   {mySubs.some((m) => m.planId === p.id) ? (
-                    <Link href="/perfil/clube" className="glass-button-ghost btn-sm !w-auto px-4" data-testid="club-mine">Você assina este plano · ver saldo</Link>
+                    <Link href="/perfil/clube" className="glass-button-ghost btn-sm !w-auto" data-testid="club-mine">Você assina este plano · ver saldo</Link>
                   ) : (
                     <form action={subscribeToPlan}>
                       <input type="hidden" name="planId" value={p.id} /><input type="hidden" name="next" value={`/lugar/${restaurantId}#clube`} />
-                      <button className="glass-button-navy btn-sm !w-auto px-5" data-testid="club-subscribe">Quero assinar</button>
+                      <button className="glass-button-navy btn-sm !w-auto" data-testid="club-subscribe">Quero assinar</button>
                     </form>
                   )}
                 </li>
@@ -529,8 +529,8 @@ export default async function LugarPage({
               <p className="text-sm text-slate-600" data-testid="place-photos-empty">Ainda não há fotos de clientes aqui.</p>
             )}
             <div className="mt-3 flex flex-wrap gap-2">
-              {photos.total > 0 && <Link href={`/indicacoes?lugar=${restaurantId}`} className="glass-button-ghost btn-sm !w-auto px-4" data-testid="place-photos-all">Ver todas as fotos</Link>}
-              {wallet && <Link href={`/indicacoes/nova?lugar=${restaurantId}`} className="glass-button-lime btn-sm !w-auto px-4" data-testid="place-photos-new"><Icon name="camera" size={15} /> Postar uma foto daqui</Link>}
+              {photos.total > 0 && <Link href={`/indicacoes?lugar=${restaurantId}`} className="glass-button-ghost btn-sm !w-auto" data-testid="place-photos-all">Ver todas as fotos</Link>}
+              {wallet && <Link href={`/indicacoes/nova?lugar=${restaurantId}`} className="glass-button-lime btn-sm !w-auto" data-testid="place-photos-new"><Icon name="camera" size={15} /> Postar uma foto daqui</Link>}
             </div>
           </CollapsibleSection>
         )}

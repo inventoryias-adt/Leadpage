@@ -42,7 +42,7 @@ export function WhatsappSend({ date, period, personId, periods, people, menu = f
 
   return (
     <>
-      <button ref={btn} type="button" onClick={openDialog} className={menu ? 'nav-tab flex w-full items-center gap-2 !rounded-xl text-left' : 'glass-button btn-sm'} data-testid="whatsapp-abrir" aria-haspopup="dialog">
+      <button ref={btn} type="button"onClick={openDialog} className={menu ? 'nav-tab flex w-full items-center gap-2 !rounded-xl text-left' : 'glass-button btn-sm'} data-testid="whatsapp-abrir" aria-haspopup="dialog">
         <Icon name="whatsapp" size={menu ? 16 : 15} /> {menu ? 'Enviar agenda pelo WhatsApp' : <><span className="sm:hidden">WhatsApp</span><span className="hidden sm:inline">Enviar pelo WhatsApp</span></>}
       </button>
       {open && (

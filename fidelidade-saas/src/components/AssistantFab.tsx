@@ -45,7 +45,7 @@ export function AssistantFab({ role }: { role: keyof typeof EXAMPLES }) {
           <div role="dialog" aria-modal="true" aria-labelledby="assistant-title" onClick={(e) => e.stopPropagation()} className="max-h-[90vh] w-full max-w-md animate-fade-in overflow-y-auto rounded-t-[28px] bg-white p-5 shadow-2xl md:rounded-[28px]">
             <div className="flex items-start justify-between gap-3">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#0F1F3D] text-lima"><Icon name="spark" size={24} /></span>
-              <button ref={closeRef} type="button" onClick={() => setOpen(false)} className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200" aria-label="Fechar">✕</button>
+              <button ref={closeRef} type="button" onClick={() => setOpen(false)} className="btn-icon" aria-label="Fechar">✕</button>
             </div>
             <p className="mt-3"><span className="chip-lima">Em breve</span></p>
             <h2 id="assistant-title" className="mt-2 text-2xl font-extrabold tracking-tight text-primary">Assistente Fidelize<span className="text-electric-500">.</span></h2>

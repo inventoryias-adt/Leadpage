@@ -114,6 +114,13 @@ body {
   input[type='time'].glass-input {
     cursor: pointer;
   }
+  /* Campo de uma linha com a mesma altura do botão (44 px): lado a lado, nada fica maior que o vizinho. */
+  input.glass-input:not([type='file']):not([type='range']):not([type='checkbox']):not([type='radio']),
+  select.glass-input {
+    height: 2.75rem;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
   /* Safari do iPhone dá aos campos de data/hora uma largura mínima própria: sem isto eles estouram a coluna e passam por cima do vizinho. */
   input[type='date'].glass-input,
   input[type='time'].glass-input,
@@ -132,7 +139,8 @@ body {
   .glass-button-navy,
   .glass-button-ghost,
   .btn-danger {
-    @apply inline-flex w-full select-none items-center justify-center gap-2 rounded-lg border px-5 py-2.5 text-sm font-semibold leading-tight;
+    @apply inline-flex w-full select-none items-center justify-center gap-2 rounded-lg border px-5 py-2 text-sm font-semibold leading-tight;
+    min-height: 2.75rem; /* 44 px: mesma altura em todo botão, bom para o toque */
     cursor: pointer;
     text-decoration: none;
     transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
@@ -254,7 +262,26 @@ body {
 
   /* Tamanho compacto (botões dentro de listas, buscas, linhas). */
   .btn-sm {
-    @apply !w-auto !gap-1.5 !rounded-xl !px-3.5 !py-2 !text-[13px];
+    @apply !w-auto !gap-1.5 !px-3.5 !py-1.5 !text-[13px];
+    min-height: 2.25rem !important; /* 36 px: o compacto também tem altura única; o raio é o mesmo do botão normal */
+  }
+
+  /* Botão só de ícone (fechar, voltar, apagar): quadrado, mesmo raio dos demais botões. */
+  .btn-icon {
+    @apply inline-flex h-10 w-10 shrink-0 cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-slate-100 text-slate-700 transition-colors;
+  }
+  @media (hover: hover) {
+    .btn-icon:hover {
+      background-color: #e2e8f0;
+    }
+  }
+  .btn-icon:focus-visible {
+    outline: 2px solid rgba(33, 80, 201, 0.55);
+    outline-offset: 2px;
+  }
+  .btn-icon:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
   }
 
   /* Abas de navegação do painel. */

@@ -85,7 +85,7 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
             <Icon name="search" size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <label htmlFor="lq" className="sr-only">Buscar</label>
             <input id="lq" name="q" defaultValue={f.q} autoComplete="off" enterKeyHint="search" className="glass-input !rounded-full !py-2.5 !pl-10 !pr-24" placeholder="Nome, CPF ou valor" />
-            <button className="glass-button-navy absolute right-1.5 top-1/2 !w-auto -translate-y-1/2 !rounded-full !px-4 !py-1.5 text-sm">Buscar</button>
+            <button className="glass-button-navy absolute right-1.5 top-1/2 !w-auto -translate-y-1/2 text-sm">Buscar</button>
           </div>
 
           <div className="space-y-1.5">
@@ -111,7 +111,7 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
                   <label htmlFor="late" className="glass-label">Até</label>
                   <input id="late" name="ate" type="date" defaultValue={f.ate ?? ''} autoComplete="off" className="glass-input !py-2" />
                 </div>
-                <button className="glass-button-ghost btn-sm !rounded-full">Aplicar</button>
+                <button className="glass-button-ghost btn-sm">Aplicar</button>
               </div>
             </details>
           </div>

@@ -147,10 +147,10 @@ export function UnitLocationField({ coords, setCoords, addr }: { coords: Coords;
       )}
 
       <div className="grid gap-2 sm:grid-cols-2">
-        <button type="button" onClick={useGps} disabled={busy} className="glass-button-ghost !py-2.5">
+        <button type="button" onClick={useGps} disabled={busy} className="glass-button-ghost">
           <Icon name="pin" size={16} /> {status.kind === 'gps' ? 'Obtendo localização…' : 'Estou na unidade (GPS)'}
         </button>
-        <button type="button" onClick={byAddress} disabled={busy || !canAddr} className="glass-button-ghost !py-2.5">
+        <button type="button" onClick={byAddress} disabled={busy || !canAddr} className="glass-button-ghost">
           <Icon name="search" size={16} /> {status.kind === 'addr' ? 'Procurando…' : 'Achar pelo endereço'}
         </button>
       </div>

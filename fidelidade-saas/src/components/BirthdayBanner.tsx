@@ -33,7 +33,7 @@ export function BirthdayBanner({ name, places, showList = false }: { name: strin
             ))}
           </ul>
         )}
-        <Link href={n > 0 ? '/lugares?filtro=aniversario' : '/lugares'} className="glass-button-lime btn-sm mt-3 !w-auto px-5" data-testid="birthday-cta">
+        <Link href={n > 0 ? '/lugares?filtro=aniversario' : '/lugares'} className="glass-button-lime btn-sm mt-3 !w-auto" data-testid="birthday-cta">
           {n > 0 ? (n > 3 && showList ? `Ver os ${n} presentes` : 'Ver presentes') : 'Ver lugares'}
         </Link>
       </div>

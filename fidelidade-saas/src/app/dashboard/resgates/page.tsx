@@ -60,7 +60,7 @@ export default async function ResgatesPage({ searchParams }: { searchParams: Pro
         <h2 id="validar" className="font-bold text-primary">Validar código do prêmio</h2>
         <form method="get" action="/dashboard/resgates" autoComplete="off" className="flex gap-2" role="search">
           <input name="codigo" defaultValue={codigo} autoComplete="off" maxLength={12} className="glass-input !font-mono !text-xl !font-bold !uppercase !tracking-[0.2em]" placeholder="K7M4QX" aria-label="Código do prêmio" />
-          <button className="glass-button-navy !w-auto px-6">Validar</button>
+          <button className="glass-button-navy !w-auto">Validar</button>
         </form>
         {codigo && !checked && (
           <p role="alert" className="flex items-center gap-2 rounded-2xl bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700" data-testid="codigo-invalido">Código não encontrado neste estabelecimento. Confira com o cliente.</p>

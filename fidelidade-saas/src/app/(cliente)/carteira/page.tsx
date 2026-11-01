@@ -121,7 +121,7 @@ export default async function CarteiraPage() {
             <p className="mb-5 mt-1 max-w-xs text-sm text-slate-600">
               Depois de pagar, informe o seu CPF no caixa ou leia o QR Code. A carteira de cada lugar aparece aqui sozinha.
             </p>
-            <Link href="/lugares" className="glass-button !rounded-full"><Icon name="compass" size={18} /> Explorar lugares</Link>
+            <Link href="/lugares" className="glass-button"><Icon name="compass" size={18} /> Explorar lugares</Link>
           </div>
         ) : (
           <Carousel label="Suas carteiras">
