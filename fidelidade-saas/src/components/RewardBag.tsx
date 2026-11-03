@@ -133,8 +133,8 @@ export function RewardBag({
                   {missing > 0 && q === 0 && <p className="text-xs text-slate-500">Faltam {formatPoints(missing)} pts</p>}
                   <div className="mt-auto flex justify-end pt-2">
                     {q === 0 ? (
-                      <button type="button" disabled={!canAdd} onClick={() => add(r)} className="glass-button btn-sm" aria-label={`Adicionar ${r.name} à sacola`}>
-                        Adicionar
+                      <button type="button" disabled={!canAdd} onClick={() => add(r)} className="glass-button btn-sm" aria-label={`Escolher ${r.name}`}>
+                        Escolher
                       </button>
                     ) : (
                       <div className="flex items-center gap-1.5" role="group" aria-label={`Quantidade de ${r.name}`}>
@@ -164,15 +164,15 @@ export function RewardBag({
           <div className="glass-panel space-y-3 p-4 shadow-2xl lg:shadow-none">
             {count === 0 ? (
               <div className="py-4 text-center">
-                <Icon name="bag" size={28} className="mx-auto mb-2 text-slate-400" />
-                <p className="font-bold text-slate-700">Sua sacola está vazia</p>
-                <p className="text-sm text-slate-500">Toque em “Adicionar” nos prêmios que quiser levar.</p>
+                <Icon name="gift" size={28} className="mx-auto mb-2 text-slate-400" />
+                <p className="font-bold text-slate-700">Você ainda não escolheu nenhum prêmio</p>
+                <p className="text-sm text-slate-500">Toque em “Escolher” no prêmio que você quer trocar.</p>
               </div>
             ) : (
             <>
             <div className="flex items-center justify-between gap-3">
               <p className="flex items-center gap-2 font-bold text-primary">
-                <Icon name="bag" size={20} /> Sua sacola · {count} {count === 1 ? 'item' : 'itens'}
+                <Icon name="gift" size={20} /> Prêmios escolhidos · {count}
               </p>
               <p className="text-right text-sm">
                 <span className="font-extrabold text-slate-900">{formatPoints(total)} pts</span>
@@ -181,7 +181,7 @@ export function RewardBag({
             </div>
             {state.error && <p role="alert" className="glass-error">{state.error}</p>}
             {!confirming ? (
-              <button type="button" onClick={() => setConfirming(true)} className="glass-button">Resgatar sacola</button>
+              <button type="button" onClick={() => setConfirming(true)} className="glass-button">Trocar pontos pelos prêmios</button>
             ) : (
               <div className="flex gap-2">
                 <button type="button" onClick={() => setConfirming(false)} className="glass-button-ghost !w-auto">Voltar</button>

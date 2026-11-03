@@ -67,7 +67,7 @@ export default async function WalletPage({
         </p>
         <p className="mt-3 text-xs text-slate-400">Para ganhar mais, informe o seu CPF no caixa ou leia o QR Code que ele gerar na sua próxima conta.</p>
         <div className="mt-4 grid grid-cols-2 gap-2">
-          <Link href={`/lugar/${restaurantId}/premios`} className="glass-button-lime btn-sm !w-full">Montar sacola</Link>
+          <Link href={`/lugar/${restaurantId}/premios`} className="glass-button-lime btn-sm !w-full">Trocar meus pontos</Link>
           <Link href={`/lugar/${restaurantId}`} className="glass-button-ghost btn-sm !w-full">Ver o lugar</Link>
         </div>
       </section>
@@ -105,7 +105,7 @@ export default async function WalletPage({
           </p>
         )}
         <div className="mt-3 space-y-3">
-          {rewards.length === 0 && <p className="text-sm text-slate-500">O restaurante ainda não cadastrou prêmios.</p>}
+          {rewards.length === 0 && <p className="text-sm text-slate-500">Este lugar ainda não cadastrou prêmios.</p>}
           {rewards.map((r) => {
             const missing = r.pointsCost - wallet.balance;
             return (

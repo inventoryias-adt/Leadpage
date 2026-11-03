@@ -84,7 +84,7 @@ export function CustomerNav({ unread = 0 }: { unread?: number }) {
     <nav aria-label="Navegação principal" className="pointer-events-none md:hidden fixed inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
       <div className="glass-panel pointer-events-auto relative grid w-full max-w-sm grid-cols-[1fr_1fr_4.5rem_1fr_1fr] gap-1 !rounded-3xl p-2">
         {mobileTabs.slice(0, 2).map((t) => <MobileTab key={t.href} t={t} current={current} unread={unread} onPick={setPending} />)}
-        <span aria-hidden />
+        <span aria-hidden className="flex items-end justify-center pb-1 text-[11px] font-medium text-slate-600">Indicar</span>
         {mobileTabs.slice(2).map((t) => <MobileTab key={t.href} t={t} current={current} unread={unread} onPick={setPending} />)}
         <Link
           href="/indicacoes"
@@ -93,7 +93,7 @@ export function CustomerNav({ unread = 0 }: { unread?: number }) {
           data-testid="fab-indicar"
           className="absolute left-1/2 top-0 flex h-16 w-16 -translate-x-1/2 -translate-y-[38%] items-center justify-center rounded-full border-4 border-[#F7F8FA] bg-lima text-primary shadow-[0_10px_24px_rgba(11,27,58,.32)] transition-transform active:scale-95"
         >
-          <Icon name="plus" size={30} strokeWidth={2.6} />
+          <Icon name="camera" size={28} strokeWidth={2.4} />
         </Link>
       </div>
     </nav>

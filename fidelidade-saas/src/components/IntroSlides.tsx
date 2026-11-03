@@ -19,7 +19,7 @@ const slides = [
   {
     variant: 'gift' as const,
     title: 'Troque por prêmios de verdade',
-    text: 'Monte a sua sacola com os prêmios que cabem nos seus pontos e retire no balcão.',
+    text: 'Escolha os prêmios que cabem nos seus pontos e retire no balcão.',
   },
 ];
 

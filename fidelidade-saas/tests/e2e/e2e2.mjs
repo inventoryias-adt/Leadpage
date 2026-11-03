@@ -180,12 +180,12 @@ console.log('5. indicação de amigos (prêmio só na 1ª compra) OK');
 // ---------------------------------------------------------------- sacola de prêmios
 await l.goto(`${placeUrl}/premios`); await wait(l, 2500);
 const bal = Number(sql(`select balance from "Wallet" w join "Customer" c on c.id=w."customerId" where c.cpf='52998224725'`));
-await l.click('button[aria-label="Adicionar Sobremesa grátis à sacola"]');
+await l.click('button[aria-label="Escolher Sobremesa grátis"]');
 await l.click('button[aria-label="Adicionar mais um Sobremesa grátis"]');
-await l.click('button[aria-label="Adicionar Combo Hambúrguer + Fritas à sacola"]');
-await l.waitForSelector('text=Sua sacola · 3 itens');
+await l.click('button[aria-label="Escolher Combo Hambúrguer + Fritas"]');
+await l.waitForSelector('text=Prêmios escolhidos · 3');
 await shot(l, 'cli-sacola');
-await l.click('button:has-text("Resgatar sacola")');
+await l.click('button:has-text("Trocar pontos pelos prêmios")');
 await l.click('button:has-text("Confirmar (")');
 await l.waitForSelector('text=Resgate realizado!');
 assert.equal(await l.locator('.font-mono').count(), 3);
@@ -194,7 +194,7 @@ await shot(l, 'cli-resgatado');
 assert.equal(sql(`select count(*) from "Redemption" r join "Customer" c on c.id=r."customerId" where c.cpf='52998224725' and r.status='PENDING'`), '3');
 // limite mensal (5): já usou 1 + 3 = 4; só cabe mais 1
 await l.goto(`${placeUrl}/premios`); await wait(l, 2000);
-await l.click('button[aria-label="Adicionar Sobremesa grátis à sacola"]');
+await l.click('button[aria-label="Escolher Sobremesa grátis"]');
 assert.equal(await l.locator('button[aria-label="Adicionar mais um Sobremesa grátis"]').isDisabled(), true);
 console.log('6. sacola de prêmios (vários itens, saldo e limite) OK');
 

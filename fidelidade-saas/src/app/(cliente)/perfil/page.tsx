@@ -201,7 +201,7 @@ export default async function PerfilPage() {
                   ))}
                 </ul>
               )}
-              <p className="mt-3 text-xs text-slate-500">Nesses lugares, na hora de montar a sacola de prêmios, você pode completar o que faltar com os pontos das carteiras compartilhadas. O valor é convertido de um lugar para o outro.</p>
+              <p className="mt-3 text-xs text-slate-500">Nesses lugares, na hora de trocar por prêmios, você pode completar o que faltar com os pontos das carteiras compartilhadas. O valor é convertido de um lugar para o outro.</p>
             </div>
           </div>
         </section>

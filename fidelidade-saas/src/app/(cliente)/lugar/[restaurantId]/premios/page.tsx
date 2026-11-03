@@ -61,7 +61,7 @@ export default async function PremiosPage({ params }: { params: Promise<{ restau
     <main className="p-4 sm:p-6 md:pt-8">
       {back}
       <h1 className="text-2xl font-extrabold tracking-tight text-primary">Troque seus pontos</h1>
-      <p className="mb-5 text-sm text-slate-600">Escolha os prêmios, monte a sua sacola e retire no balcão.</p>
+      <p className="mb-5 text-sm text-slate-600">Escolha os prêmios que quer trocar e retire no balcão.</p>
 
       {!customer ? (
         <div className="glass-panel mx-auto max-w-xl p-6 text-center">
@@ -74,7 +74,7 @@ export default async function PremiosPage({ params }: { params: Promise<{ restau
         <div className="glass-panel mx-auto max-w-xl p-6 text-center">
           <Illustration variant="empty" size={150} />
           <p className="font-bold text-slate-800">Nenhum prêmio por aqui ainda</p>
-          <p className="mt-1 text-sm text-slate-600">O restaurante ainda não cadastrou prêmios. Volte em breve!</p>
+          <p className="mt-1 text-sm text-slate-600">Este lugar ainda não cadastrou prêmios. Volte em breve!</p>
         </div>
       ) : (
         <RewardBag

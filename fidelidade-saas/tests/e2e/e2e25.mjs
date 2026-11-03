@@ -21,11 +21,11 @@ await c.goto(BASE + '/entrar'); await c.fill('#c-email', 'lucas@teste.com'); awa
 await c.goto(BASE + `/lugar/${B}/premios`);
 assert.ok(await c.locator('text=Completar com pontos de outros lugares').count(), 'oferece completar com pontos de outros');
 assert.ok(await c.locator('text=valem 1.000 aqui').count() || await c.locator('text=valem 250 aqui').count(), 'mostra a conversão (500 pts de A valem 250 em B)');
-assert.equal(await c.locator('button:has-text("Adicionar")').first().isDisabled(), true, 'sem marcar, não dá para adicionar (0 pts aqui)');
+assert.equal(await c.locator('button:has-text("Escolher")').first().isDisabled(), true, 'sem marcar, não dá para adicionar (0 pts aqui)');
 await c.check('label:has-text("Completar com pontos de outros lugares") input');
-await c.click('button[aria-label="Adicionar Café grátis à sacola"]');
+await c.click('button[aria-label="Escolher Café grátis"]');
 await c.screenshot({ path: 'compartilhados-sacola.png', fullPage: true });
-await c.click('button:has-text("Resgatar sacola")'); await c.click('button:has-text("Confirmar")');
+await c.click('button:has-text("Trocar pontos pelos prêmios")'); await c.click('button:has-text("Confirmar")');
 await c.waitForSelector('text=Resgate realizado!');
 assert.equal(sql(`select balance from "Wallet" where "customerId"='${cid}' and "restaurantId"='${A}'`), '300', 'A: 500 − 200');
 assert.equal(sql(`select balance from "Wallet" where "customerId"='${cid}' and "restaurantId"='${B}'`), '0');

@@ -38,8 +38,8 @@ await c.fill('#c-email','lucas@teste.com'); await c.fill('#c-password','senha-cl
 await c.goto(`${BASE}/lugar/${rid}/premios`); await wait(c,2000);
 await c.waitForSelector('text=/R\\$\\s*8,00 \\+ 300 pts/');
 await c.waitForSelector('text=R$ + pontos');
-await c.click('button[aria-label="Adicionar Sobremesa grátis à sacola"]');
-await c.click('button:has-text("Resgatar sacola")'); await c.click('button:has-text("Confirmar (")');
+await c.click('button[aria-label="Escolher Sobremesa grátis"]');
+await c.click('button:has-text("Trocar pontos pelos prêmios")'); await c.click('button:has-text("Confirmar (")');
 await c.waitForSelector('text=Resgate realizado!');
 assert.equal(sql(`select "cashCents" from "Redemption" where "rewardId"='${rewardId}' order by "createdAt" desc limit 1`), '800');
 await c.goto(`${BASE}/carteira/${rid}`); await wait(c,1800);
