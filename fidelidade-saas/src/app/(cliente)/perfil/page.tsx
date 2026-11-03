@@ -105,10 +105,10 @@ export default async function PerfilPage() {
                 </ul>
               </div>
             )}
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 gap-2 [&>*]:!w-full">
               <CopyButton text={accountCode} label="Copiar ID" />
               <Link href="/perfil/cartao" className="glass-button-ghost btn-sm" data-testid="print-card-link"><Icon name="receipt" size={16} /> Imprimir cartão</Link>
-              <Link href="/lugares" className="glass-button-ghost btn-sm"><Icon name="compass" size={16} /> Onde ganhar mais</Link>
+              <Link href="/lugares" className="glass-button-ghost btn-sm col-span-2"><Icon name="compass" size={16} /> Onde ganhar mais</Link>
             </div>
           </section>
         </div>
