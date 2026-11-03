@@ -105,10 +105,10 @@ export default async function PerfilPage() {
                 </ul>
               </div>
             )}
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 gap-2 [&>*]:!w-full">
               <CopyButton text={accountCode} label="Copiar ID" />
               <Link href="/perfil/cartao" className="glass-button-ghost btn-sm" data-testid="print-card-link"><Icon name="receipt" size={16} /> Imprimir cartão</Link>
-              <Link href="/lugares" className="glass-button-ghost btn-sm"><Icon name="compass" size={16} /> Onde ganhar mais</Link>
+              <Link href="/lugares" className="glass-button-ghost btn-sm col-span-2"><Icon name="compass" size={16} /> Onde ganhar mais</Link>
             </div>
           </section>
         </div>
@@ -201,7 +201,7 @@ export default async function PerfilPage() {
                   ))}
                 </ul>
               )}
-              <p className="mt-3 text-xs text-slate-500">Nesses lugares, na hora de montar a sacola de prêmios, você pode completar o que faltar com os pontos das carteiras compartilhadas. O valor é convertido de um lugar para o outro.</p>
+              <p className="mt-3 text-xs text-slate-500">Nesses lugares, na hora de trocar por prêmios, você pode completar o que faltar com os pontos das carteiras compartilhadas. O valor é convertido de um lugar para o outro.</p>
             </div>
           </div>
         </section>

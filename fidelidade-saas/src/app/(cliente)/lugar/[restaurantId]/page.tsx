@@ -11,7 +11,7 @@ import { OpeningHours } from '@/components/OpeningHours';
 import { ShareButtons } from '@/components/ShareButtons';
 import { PlaceAvatar, ProgressBar, RewardImage } from '@/components/Visual';
 import { RatingBadge, Stars } from '@/components/Stars';
-import { categoryLabel } from '@/lib/categories';
+import { categoryLabel, suggestsBooking } from '@/lib/categories';
 import { challengeCount } from '@/lib/claims';
 import { describeChallenge, periodRange } from '@/lib/challenges';
 import { claimBirthdayPerkAction } from '@/app/actions/birthday-perk';
@@ -197,7 +197,7 @@ export default async function LugarPage({
           <div className="mt-4 grid grid-cols-2 gap-2">
             {restaurant.ordersEnabled && menuCount > 0 && units.length > 0 && (
               <Link href={`${here}/pedido${multi && unit ? `?unidade=${unit.id}` : ''}`} className="glass-button-navy" data-testid="make-order">
-                <Icon name="bag" size={17} /> Fazer pedido
+                <Icon name="bag" size={17} /> {suggestsBooking(restaurant.category) ? 'Pedir produtos' : 'Fazer pedido'}
               </Link>
             )}
             {canBook && units.length > 0 && (
@@ -530,7 +530,7 @@ export default async function LugarPage({
             )}
             <div className="mt-3 flex flex-wrap gap-2">
               {photos.total > 0 && <Link href={`/indicacoes?lugar=${restaurantId}`} className="glass-button-ghost btn-sm !w-auto" data-testid="place-photos-all">Ver todas as fotos</Link>}
-              {wallet && <Link href={`/indicacoes/nova?lugar=${restaurantId}`} className="glass-button-lime btn-sm !w-auto" data-testid="place-photos-new"><Icon name="camera" size={15} /> Postar uma foto daqui</Link>}
+              {wallet && <Link href={`/indicacoes/nova?lugar=${restaurantId}`} className="glass-button-ghost btn-sm !w-auto" data-testid="place-photos-new"><Icon name="camera" size={15} /> Postar uma foto daqui</Link>}
             </div>
           </CollapsibleSection>
         )}

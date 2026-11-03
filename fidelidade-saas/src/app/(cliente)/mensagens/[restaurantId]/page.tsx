@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Icon } from '@/components/Icons';
 import { ChatThread } from '@/components/ChatThread';
 import { PlaceAvatar } from '@/components/Visual';
 import { BusinessError } from '@/lib/claims';
@@ -31,7 +32,7 @@ export default async function ConversaPage({ params }: { params: Promise<{ resta
   return (
     <main className="space-y-4 p-4 sm:p-6 md:pt-8">
       <header className="flex items-center gap-3">
-        <Link href="/mensagens" aria-label="Voltar para Mensagens" className="text-2xl font-bold text-electric-600">‹</Link>
+        <Link href="/mensagens" aria-label="Voltar para Mensagens" className="btn-icon"><Icon name="back" size={18} /></Link>
         {place && (
           <Link href={`/lugar/${place.id}`} className="flex min-w-0 items-center gap-3">
             <PlaceAvatar name={place.name} src={imageUrl(place.logoImageId)} size={40} />

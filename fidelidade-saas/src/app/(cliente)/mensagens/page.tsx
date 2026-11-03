@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Brand } from '@/components/Brand';
+import { Icon } from '@/components/Icons';
 import { EmptyState } from '@/components/EmptyState';
 import { PlaceAvatar } from '@/components/Visual';
 import { chatTime, preview } from '@/lib/chat';
@@ -16,8 +16,7 @@ export default async function MensagensPage() {
   return (
     <main className="space-y-5 p-4 sm:p-6 md:pt-8">
       <header>
-        <div className="md:hidden"><Brand href="/carteira" /></div>
-        <Link href="/perfil" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-electric-600 md:mt-0">‹ Perfil</Link>
+        <Link href="/perfil" className="inline-flex items-center gap-1 text-sm font-semibold text-electric-600"><Icon name="back" size={16} /> Perfil</Link>
         <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-primary">Mensagens</h1>
         <p className="text-sm text-slate-600">Suas conversas com os lugares. Para começar uma, abra o lugar e toque em Conversar.</p>
       </header>

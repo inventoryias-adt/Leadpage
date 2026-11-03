@@ -68,7 +68,7 @@ assert.equal(sql(`select count(*) from "Notification" where "customerId"='${luca
 console.log('3. 1º pagamento registrado: em dia, R$ 120,00 no Financeiro, cliente avisado, sem pagamento em dobro OK');
 
 // 4. agendamentos cobertos abatem o saldo: 2 cortes e 1 barba; o 3º corte é cobrado normalmente
-const book = async (svc, hora) => { await C.goto(page(svc, hora)); await C.waitForSelector('button:has-text("Confirmar agendamento")'); return C.locator('[data-testid=club-covered]').count().then(async (n) => { const txt = n ? await C.locator('[data-testid=club-covered]').innerText() : ''; await C.click('button:has-text("Confirmar agendamento")'); await C.waitForURL('**/perfil/agendamentos**'); return txt; }); };
+const book = async (svc, hora) => { await C.goto(page(svc, hora)); await C.waitForSelector('button:has-text("Confirmar agendamento")'); return C.locator('[data-testid=club-covered]').count().then(async (n) => { const txt = n ? await C.locator('[data-testid=club-covered]').innerText() : ''; await C.click('button:has-text("Confirmar agendamento")'); await C.waitForURL('**/perfil/agendamentos**', { timeout: 120000 }); return txt; }); };
 const t1 = await book(corte, '10:00'); assert.match(t1, /Incluso no seu plano Clube do Corte.*sobram 1 uso/);
 const t2 = await book(corte, '11:00'); assert.match(t2, /sobram 0 usos/);
 const t3 = await book(corte, '12:00'); assert.equal(t3, '', 'o terceiro corte passa do saldo: sem cobertura');

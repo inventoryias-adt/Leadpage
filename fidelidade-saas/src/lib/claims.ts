@@ -228,7 +228,7 @@ export async function redeemItems(customerId: string, restaurantId: string, rawI
   }
   const items = [...merged].map(([rewardId, qty]) => ({ rewardId, qty }));
   const totalQty = items.reduce((n, i) => n + i.qty, 0);
-  if (totalQty === 0) throw new BusinessError('Sua sacola está vazia.');
+  if (totalQty === 0) throw new BusinessError('Você ainda não escolheu nenhum prêmio.');
   if (totalQty > 10) throw new BusinessError('Resgate no máximo 10 itens por vez.');
 
   return prisma.$transaction(async (tx) => {
@@ -236,7 +236,7 @@ export async function redeemItems(customerId: string, restaurantId: string, rawI
     if (!restaurant || restaurant.subscriptionStatus !== 'ACTIVE') throw new BusinessError('Prêmio indisponível.');
 
     const rewards = await tx.reward.findMany({ where: { id: { in: items.map((i) => i.rewardId) }, restaurantId, active: true } });
-    if (rewards.length !== items.length) throw new BusinessError('Algum prêmio da sacola não está mais disponível. Atualize a página.');
+    if (rewards.length !== items.length) throw new BusinessError('Algum prêmio escolhido não está mais disponível. Atualize a página.');
     // O presente do aniversariante só sai pelo caminho próprio (que confere o aniversário) e sozinho, nunca misturado na sacola.
     const birthdayItems = rewards.filter((r) => r.birthdayOnly);
     if (birthdayItems.length > 0 && (!opts.birthday || rewards.length !== 1 || totalQty !== 1)) throw new BusinessError('Prêmio indisponível.');

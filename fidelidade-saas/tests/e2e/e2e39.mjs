@@ -96,9 +96,9 @@ assert.equal(await c.locator('[data-testid=menu-item]').count(), 1); // o destaq
 assert.match(await c.locator('body').innerText(), /retirada grátis/);
 console.log('5. cliente vê o cardápio: destaque com preço riscado e a lista por categoria OK');
 
-await c.click('button[aria-label="Adicionar Açaí Teste 300 ml à sacola"]');
+await c.click('button[aria-label="Adicionar Açaí Teste 300 ml ao pedido"]');
 await c.click('button[aria-label="Adicionar mais um Açaí Teste 300 ml"]');
-await c.click('button[aria-label="Adicionar Suco Teste à sacola"]');
+await c.click('button[aria-label="Adicionar Suco Teste ao pedido"]');
 assert.match(nb(await c.locator('[data-testid=bag-total]').innerText()), /R\$ 39,80/);
 await c.click('[data-testid=open-bag]'); await c.waitForSelector('[data-testid=bag-line]');
 assert.equal(await c.locator('[data-testid=bag-line]').count(), 2);
@@ -150,7 +150,7 @@ console.log(`10. "Retirado e pago" credita ${expectPoints} pontos uma única vez
 
 // ---- cancelar pelo cliente (pedido novo, ainda não visto pelo lugar)
 await c.goto(BASE + '/lugar/' + rid + '/pedido'); await c.waitForSelector('[data-testid=menu-featured]');
-await c.click('button[aria-label="Adicionar Suco Teste à sacola"]'); await c.click('[data-testid=open-bag]');
+await c.click('button[aria-label="Adicionar Suco Teste ao pedido"]'); await c.click('[data-testid=open-bag]');
 await c.click('[data-testid=bag-continue]'); await c.click('[data-testid=order-confirm]'); await c.waitForSelector('[data-testid=order-done]');
 const code2 = (await c.locator('[data-testid=order-code]').innerText()).trim();
 await c.goto(BASE + '/perfil/pedidos');
@@ -168,7 +168,7 @@ for (let i = 0; i < 3; i++) {
   sql(`insert into "Order"(id,"restaurantId","customerId",code,status,"totalCents","prepMin") values (gen_random_uuid(),'${rid}','${cid}','ZZZZ2${i}','RECEIVED',800,15)`);
 }
 await c.goto(BASE + '/lugar/' + rid + '/pedido'); await c.waitForSelector('[data-testid=menu-featured]');
-await c.click('button[aria-label="Adicionar Suco Teste à sacola"]'); await c.click('[data-testid=open-bag]');
+await c.click('button[aria-label="Adicionar Suco Teste ao pedido"]'); await c.click('[data-testid=open-bag]');
 await c.click('[data-testid=bag-continue]'); await c.click('[data-testid=order-confirm]');
 await c.waitForSelector('text=Você já tem pedidos em andamento neste lugar.');
 console.log('12. com 3 pedidos em aberto, o quarto é recusado OK');

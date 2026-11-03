@@ -83,7 +83,7 @@ export default async function MeusPedidosPage({ searchParams }: { searchParams: 
       {orders.length === 0 ? (
         <div className="glass-panel mx-auto max-w-xl p-6 text-center">
           <p className="font-bold text-slate-800">Você ainda não fez pedidos</p>
-          <p className="mb-4 mt-1 text-sm text-slate-600">Nos lugares que aceitam pedidos pelo app, toque em “Fazer pedido”.</p>
+          <p className="mb-4 mt-1 text-sm text-slate-600">Nos lugares que aceitam pedidos pelo app, abra o lugar e faça o seu pedido.</p>
           <Link href="/lugares" className="glass-button">Ver lugares</Link>
         </div>
       ) : (

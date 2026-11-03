@@ -34,7 +34,7 @@ function Stepper({ qty, name, onMinus, onPlus, canPlus, dark = false }: { qty: n
   const hov = dark ? 'hover:bg-white/15' : 'hover:bg-slate-200';
   return (
     <div className={`flex items-center rounded-lg ${dark ? 'bg-white/10 text-white' : 'bg-[#EAF0FF] text-primary'}`} role="group" aria-label={`Quantidade de ${name}`}>
-      <button type="button" onClick={onMinus} className={`flex h-9 w-9 items-center justify-center rounded-lg ${hov}`} aria-label={qty === 1 ? `Remover ${name} da sacola` : `Tirar um ${name}`}>
+      <button type="button" onClick={onMinus} className={`flex h-9 w-9 items-center justify-center rounded-lg ${hov}`} aria-label={qty === 1 ? `Remover ${name} do pedido` : `Tirar um ${name}`}>
         {qty === 1 ? <Icon name="trash" size={17} /> : <span className="text-xl leading-none">−</span>}
       </button>
       <span className="w-7 text-center font-bold" aria-live="polite">{qty}</span>
@@ -276,7 +276,7 @@ export function OrderMenu({
               <div className="min-w-0">
                 {step === 'bag' ? (
                   <>
-                    <h2 id="sheet-title" className="text-2xl font-extrabold tracking-tight text-primary">Sua sacola<span className="text-electric-500">.</span></h2>
+                    <h2 id="sheet-title" className="text-2xl font-extrabold tracking-tight text-primary">Seu pedido<span className="text-electric-500">.</span></h2>
                     <p className="truncate text-sm italic text-slate-500">{placeName} · {count} {count === 1 ? 'item' : 'itens'}</p>
                   </>
                 ) : (
@@ -382,7 +382,7 @@ export function OrderMenu({
 function AddControl({ id, name, qty, add, sub, max, dark = false }: { id: string; name: string; qty: number; add: (id: string) => void; sub: (id: string) => void; max: number; dark?: boolean }) {
   if (qty === 0) {
     return (
-      <button type="button" onClick={() => add(id)} className={`${dark ? 'glass-button-lime' : 'glass-button-navy'} btn-sm !w-auto`} aria-label={`Adicionar ${name} à sacola`}>
+      <button type="button" onClick={() => add(id)} className={`${dark ? 'glass-button-lime' : 'glass-button-navy'} btn-sm !w-auto`} aria-label={`Adicionar ${name} ao pedido`}>
         Adicionar
       </button>
     );

@@ -37,9 +37,9 @@ export default async function MeusPremiosPage({ searchParams }: { searchParams: 
         <p className="text-sm text-slate-600">O que está esperando você no balcão, o que já dá para trocar e o que você já resgatou.</p>
       </header>
 
-      <nav aria-label="Seus prêmios" className="chip-row">
+      <nav aria-label="Seus prêmios" className="flex flex-wrap gap-2">
         {TABS.map(([key, label]) => (
-          <Link key={key} href={`/perfil/premios?aba=${key}`} aria-current={tab === key ? 'page' : undefined} className={`chip-link shrink-0 gap-1.5 ${tab === key ? 'chip-link-active' : ''}`}>
+          <Link key={key} href={`/perfil/premios?aba=${key}`} aria-current={tab === key ? 'page' : undefined} className={`chip-link gap-1.5 ${tab === key ? 'chip-link-active' : ''}`}>
             {label}
             <span className="rounded-full bg-slate-100 px-1.5 text-xs font-bold text-slate-600">{counts[key]}</span>
           </Link>

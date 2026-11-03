@@ -16,7 +16,7 @@ import { newClaimToken, newVoucherCode } from './tokens';
 export async function placeOrder(customerId: string, restaurantId: string, rawItems: unknown, opts: { unitId?: string; note?: string } = {}) {
   const cart = cleanCart(rawItems);
   const count = cartCount(cart);
-  if (count === 0) throw new BusinessError('Sua sacola está vazia.');
+  if (count === 0) throw new BusinessError('Seu pedido está vazio.');
   if (count > MAX_ITEMS_PER_ORDER) throw new BusinessError(`Faça pedidos de até ${MAX_ITEMS_PER_ORDER} itens por vez.`);
   const note = (opts.note ?? '').trim().slice(0, MAX_NOTE) || null;
 
@@ -31,7 +31,7 @@ export async function placeOrder(customerId: string, restaurantId: string, rawIt
       }
 
       const items = await tx.menuItem.findMany({ where: { id: { in: cart.map((c) => c.menuItemId) }, restaurantId, active: true } });
-      if (items.length !== cart.length) throw new BusinessError('Algum item da sacola não está mais disponível. Atualize a página.');
+      if (items.length !== cart.length) throw new BusinessError('Algum item do pedido não está mais disponível. Atualize a página.');
 
       const units = await tx.unit.findMany({ where: { restaurantId, active: true }, orderBy: { createdAt: 'asc' }, select: { id: true } });
       const unit = opts.unitId ? units.find((u) => u.id === opts.unitId) : units[0];

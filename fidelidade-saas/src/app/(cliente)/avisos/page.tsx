@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Brand } from '@/components/Brand';
 import { Icon } from '@/components/Icons';
 import { Illustration } from '@/components/Illustrations';
 import { MarkAllRead } from '@/components/MarkAllRead';
@@ -67,7 +68,8 @@ export default async function AvisosPage({ searchParams }: { searchParams: Promi
   return (
     <main className="p-4 sm:p-6 md:pt-8">
       <header className="mb-4">
-        <h1 className="text-2xl font-extrabold tracking-tight text-primary md:text-3xl">Avisos</h1>
+        <div className="md:hidden"><Brand href="/carteira" /></div>
+        <h1 className="mt-5 text-2xl font-extrabold tracking-tight text-primary md:mt-0 md:text-3xl">Avisos</h1>
         <p className="text-sm text-slate-600">
           {unreadTotal > 0 ? <><span className="chip-lima">{unreadTotal} {unreadTotal === 1 ? 'novo' : 'novos'}</span>{' '}</> : null}
           Pontos recebidos, pedidos, horários e prêmios. Toque em uma data para ver.

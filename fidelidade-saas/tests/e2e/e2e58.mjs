@@ -77,6 +77,9 @@ await O.click('button:has-text("Bloquear período")'); await O.waitForSelector('
 assert.ok((await clientTimes()).includes('12:00'), 'Bia atende');
 await O.selectOption('#to-who', { label: 'Bia' }); await O.fill('#to-start', day); await O.fill('#to-from', '12:00'); await O.fill('#to-until', '13:00');
 await O.click('button:has-text("Bloquear período")'); await O.waitForSelector('[role=status]:has-text("Bloqueio salvo")');
+// o aviso "Bloqueio salvo" do primeiro bloqueio ainda está na tela: espera o segundo entrar no banco antes de conferir o lado do cliente
+for (let i = 0; i < 40 && sql(`select count(*) from "TimeOff"`) !== '2'; i++) await new Promise((r) => setTimeout(r, 250));
+assert.equal(sql(`select count(*) from "TimeOff"`), '2', 'os dois bloqueios gravados');
 assert.ok(!(await clientTimes()).includes('12:00'), 'as duas em folga: some');
 sql(`delete from "TimeOff"`);
 console.log('5. folga de um profissional só fecha o horário quando todos os que atendem estão fora OK');

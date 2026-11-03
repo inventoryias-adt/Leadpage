@@ -36,7 +36,7 @@ export function NameForm({ name }: { name: string }) {
           <label htmlFor="cf-name" className="sr-only">Seu nome</label>
           <input id="cf-name" name="name" defaultValue={state.values?.name ?? name} maxLength={80} required className="glass-input" autoComplete="name" />
         </div>
-        <SubmitButton pendingText="Salvando…" className="btn-sm !w-auto shrink-0 px-5" data-testid="save-name">Salvar</SubmitButton>
+        <SubmitButton pendingText="Salvando…" className="!w-auto shrink-0" data-testid="save-name">Salvar</SubmitButton>
       </form>
       <FormMessage state={state} />
     </Card>
