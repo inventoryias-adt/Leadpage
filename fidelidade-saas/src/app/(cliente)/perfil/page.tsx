@@ -138,7 +138,7 @@ export default async function PerfilPage() {
             {
               title: 'Minha conta',
               items: [
-                { href: '/perfil/dados', icon: 'cog', label: 'Meus dados', hint: 'Nome, telefone, e-mail, CPF, senha e foto', testId: 'my-data-link' },
+                { href: '/perfil/dados', icon: 'cog', label: 'Sua conta', hint: 'Nome, contato, CPF, senha e foto', testId: 'my-data-link' },
               ],
             },
             {

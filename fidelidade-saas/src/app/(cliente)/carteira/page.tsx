@@ -5,7 +5,6 @@ import { Brand } from '@/components/Brand';
 import { Carousel } from '@/components/Carousel';
 import { Icon } from '@/components/Icons';
 import { IndicacoesShelf } from '@/components/IndicacoesShelf';
-import { Illustration } from '@/components/Illustrations';
 import { Reveal } from '@/components/Reveal';
 import { IntroSlides } from '@/components/IntroSlides';
 import { NextBookingCard } from '@/components/NextBookingCard';
@@ -115,13 +114,12 @@ export default async function CarteiraPage() {
       <section aria-labelledby="carteiras">
         <h2 id="carteiras" className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Suas carteiras</h2>
         {wallets.length === 0 ? (
-          <div className="glass-panel flex flex-col items-center !rounded-[22px] p-6 text-center">
-            <Illustration variant="qr" size={170} />
-            <p className="text-lg font-extrabold text-primary">Seu primeiro cartão começa numa compra</p>
-            <p className="mb-5 mt-1 max-w-xs text-sm text-slate-600">
+          <div className="flex flex-col items-center px-2 py-8 text-center" data-testid="carteira-vazia">
+            <h3 className="text-[2rem] font-extrabold leading-[1.05] tracking-[-0.035em] text-primary">Sua primeira carteira<span className="text-[#9bc70a]">.</span></h3>
+            <p className="sub mb-6 mt-3 max-w-xs">
               Depois de pagar, informe o seu CPF no caixa ou leia o QR Code. A carteira de cada lugar aparece aqui sozinha.
             </p>
-            <Link href="/lugares" className="glass-button"><Icon name="compass" size={18} /> Explorar lugares</Link>
+            <Link href="/lugares" className="glass-button !w-auto px-7"><Icon name="compass" size={18} /> Explorar lugares <Icon name="chevron" size={16} /></Link>
           </div>
         ) : (
           <Carousel label="Suas carteiras">

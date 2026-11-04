@@ -136,9 +136,9 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses, b
           type="button"
           onClick={() => setSearchOpen(true)}
           aria-haspopup="dialog"
-          className={`flex w-full items-center gap-2.5 !rounded-full border border-slate-200 !bg-white py-2 pl-4 text-left text-sm !shadow-none ${query ? 'pr-12' : 'pr-4'}`}
+          className={`flex h-12 w-full items-center gap-2.5 !rounded-2xl !border-0 !bg-[#f1f2f4] pl-4 text-left text-[15px] !shadow-none ${query ? 'pr-12' : 'pr-4'}`}
         >
-          <Icon name="search" size={16} className="shrink-0 text-slate-400" />
+          <Icon name="search" size={18} className="shrink-0 text-slate-500" />
           <span className={`min-w-0 flex-1 truncate ${query ? 'font-semibold text-slate-800' : 'text-slate-400'}`}>{query || 'Buscar lugar ou categoria'}</span>
         </button>
         {query && (
@@ -296,7 +296,7 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses, b
           )}
         </div>
       ) : (
-        <ul className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0 lg:grid-cols-3">
+        <ul className="divide-y divide-[#e6e8ec] md:grid md:grid-cols-2 md:gap-x-6 md:divide-y-0 lg:grid-cols-3">
           {list.flatMap((p, i) => [
             <Reveal as="li" key={p.id} from={i % 2 === 0 ? 'left' : 'right'} delay={(i % 4) * 50}>
               <PlaceRow p={p} />
@@ -380,11 +380,11 @@ type Row = PlaceCard & { unit: PlaceUnit; meters: number | null };
 /** Cartão de um lugar na lista: distância, aberto/fechado e quantas campanhas rolam lá. */
 function PlaceRow({ p }: { p: Row }) {
   return (
-    <Link href={p.units.length > 1 ? `/lugar/${p.id}?unidade=${p.unit.id}` : `/lugar/${p.id}`} className="glass-panel-sm card-link flex items-center gap-3 !rounded-2xl p-3">
-      <PlaceAvatar name={p.name} src={p.logoUrl} size={44} />
+    <Link href={p.units.length > 1 ? `/lugar/${p.id}?unidade=${p.unit.id}` : `/lugar/${p.id}`} className="flex items-center gap-4 py-3.5">
+      <PlaceAvatar name={p.name} src={p.logoUrl} size={60} />
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
-          <p className="truncate text-[15px] font-bold text-slate-900">{p.name}</p>
+          <p className="truncate text-[17px] font-semibold text-primary">{p.name}</p>
           {p.meters != null && <span className="shrink-0 text-xs font-semibold text-electric-600">{formatDistance(p.meters)}</span>}
         </div>
         <p className="flex min-w-0 items-center gap-1.5 text-xs text-slate-500">

@@ -42,18 +42,18 @@ export function ShortcutTiles({ items, label = 'Atalhos' }: { items: Shortcut[];
  */
 export function ShortcutGroups({ groups }: { groups: { title: string; items: Shortcut[] }[] }) {
   return (
-    <div className="space-y-4" data-testid="shortcut-groups">
+    <div className="space-y-6" data-testid="shortcut-groups">
       {groups.map((g) => (
         <section key={g.title} aria-labelledby={`sg-${g.title}`}>
-          <h2 id={`sg-${g.title}`} className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">{g.title}</h2>
-          <ul className="glass-panel divide-y divide-slate-100 !rounded-[20px]">
+          <h2 id={`sg-${g.title}`} className="micro mb-1">{g.title}</h2>
+          <ul className="divide-y divide-[#e6e8ec]">
             {g.items.map((s) => (
               <li key={s.href}>
-                <Link href={s.href} data-testid={s.testId} className="card-link flex items-center gap-3 px-4 py-3">
-                  <span className="icon-tile !h-10 !w-10 shrink-0"><Icon name={s.icon} size={20} /></span>
+                <Link href={s.href} data-testid={s.testId} className="flex min-h-[4.25rem] items-center gap-4 py-3">
+                  <Icon name={s.icon} size={22} className="shrink-0 text-slate-700" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-bold text-slate-800">{s.label}</span>
-                    {s.hint && <span className="block truncate text-xs text-slate-500">{s.hint}</span>}
+                    <span className="block truncate text-[17px] font-semibold text-primary">{s.label}</span>
+                    {s.hint && <span className="block truncate text-sm italic text-slate-500">{s.hint}</span>}
                   </span>
                   {s.count != null && s.count > 0 && <span className="chip-lima shrink-0">{s.count}</span>}
                   <Icon name="chevron" size={18} className="shrink-0 text-slate-400" />
