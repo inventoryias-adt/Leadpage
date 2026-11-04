@@ -2,14 +2,13 @@ import Link from 'next/link';
 import { AppCampaignStrip } from '@/components/AppCampaignStrip';
 import { BirthdayBanner } from '@/components/BirthdayBanner';
 import { Brand } from '@/components/Brand';
-import { Carousel } from '@/components/Carousel';
 import { Icon } from '@/components/Icons';
 import { IndicacoesShelf } from '@/components/IndicacoesShelf';
 import { Reveal } from '@/components/Reveal';
 import { IntroSlides } from '@/components/IntroSlides';
 import { NextBookingCard } from '@/components/NextBookingCard';
 import { ShortcutTiles } from '@/components/Shortcuts';
-import { PlaceAvatar, ProgressBar, RewardImage } from '@/components/Visual';
+import { PlaceAvatar, RewardImage } from '@/components/Visual';
 import { campaignsForCustomers } from '@/lib/app-campaigns-db';
 import { isBirthdayToday } from '@/lib/birthday-perk';
 import { perkPlaces } from '@/lib/birthday-perk-db';
@@ -122,43 +121,37 @@ export default async function CarteiraPage() {
             <Link href="/lugares" className="glass-button !w-auto px-7"><Icon name="compass" size={18} /> Explorar lugares <Icon name="chevron" size={16} /></Link>
           </div>
         ) : (
-          <Carousel label="Suas carteiras">
+          <ul className="divide-y divide-[#e6e8ec] border-y border-[#e6e8ec]" aria-label="Suas carteiras">
             {wallets.map((w) => {
               const pick = toPickUp.get(w.restaurantId) ?? 0;
               const can = canRedeem.has(w.restaurantId);
               const goal = nextGoal(w.restaurantId, w.balance);
+              const cat = categoryLabel(w.restaurant.category, w.restaurant.categoryOther);
               return (
-                <li key={w.id} className={wallets.length === 1 ? 'w-full' : 'w-[13rem] shrink-0 snap-start'}>
-                  <Link href={`/carteira/${w.restaurantId}`} className="glass-panel card-link flex h-full flex-col items-start gap-2 !rounded-[22px] p-4" aria-label={`${w.restaurant.name}: ${formatPoints(w.balance)} pontos${pick ? `, ${pick} para retirar` : ''}${can ? ', já dá para resgatar' : ''}`}>
-                    <span className="flex w-full items-center gap-2.5">
-                      <PlaceAvatar name={w.restaurant.name} src={imageUrl(w.restaurant.logoImageId)} size={44} />
-                      <span className="min-w-0">
-                        <span className="block truncate text-sm font-bold text-slate-900">{w.restaurant.name}</span>
-                        <span className="block truncate text-xs text-slate-500">
-                          {[categoryLabel(w.restaurant.category, w.restaurant.categoryOther)].filter(Boolean).join('')}
-                          {placeStatus(w) && <>{categoryLabel(w.restaurant.category, w.restaurant.categoryOther) ? ' · ' : ''}<span className={placeStatus(w) === 'Aberto agora' ? 'font-semibold text-emerald-700' : ''}>{placeStatus(w)?.toLowerCase()}</span></>}
+                <li key={w.id}>
+                  <Link href={`/carteira/${w.restaurantId}`} className="flex items-center gap-4 py-3.5" aria-label={`${w.restaurant.name}: ${formatPoints(w.balance)} pontos${pick ? `, ${pick} para retirar` : ''}${can ? ', já dá para resgatar' : ''}`}>
+                    <PlaceAvatar name={w.restaurant.name} src={imageUrl(w.restaurant.logoImageId)} size={56} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[17px] font-semibold text-primary">{w.restaurant.name}</span>
+                      <span className="block truncate text-sm italic text-slate-500">
+                        {goal ? <>Faltam <b className="font-semibold not-italic text-slate-700">{formatPoints(goal.pointsCost - w.balance)}</b> para {goal.name}</> : [cat, placeStatus(w)?.toLowerCase()].filter(Boolean).join(' · ')}
+                      </span>
+                      {(pick > 0 || can) && (
+                        <span className="mt-1 flex flex-wrap gap-1.5">
+                          {pick > 0 && <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-bold text-amber-800">{pick} para retirar</span>}
+                          {can && <span className="rounded-full bg-lima px-2.5 py-0.5 text-[11px] font-bold text-primary">Pode resgatar</span>}
                         </span>
-                      </span>
+                      )}
                     </span>
-                    <p className="leading-none">
-                      <span className="text-3xl font-extrabold text-primary">{formatPoints(w.balance)}</span>
-                      <span className="ml-1 text-xs font-semibold text-electric-600">pontos</span>
-                    </p>
-                    {goal && (
-                      <span className="block w-full">
-                        <ProgressBar value={w.balance} max={goal.pointsCost} label={`Progresso para ${goal.name}`} />
-                        <span className="mt-1.5 block text-xs text-slate-500">Faltam <b className="text-slate-700">{formatPoints(goal.pointsCost - w.balance)}</b> para {goal.name}</span>
-                      </span>
-                    )}
-                    <span className="mt-auto flex min-h-[1.5rem] flex-wrap gap-1.5">
-                      {pick > 0 && <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-bold text-amber-800">{pick} para retirar</span>}
-                      {can && <span className="rounded-full bg-lima px-2.5 py-0.5 text-[11px] font-bold text-primary">Pode resgatar</span>}
+                    <span className="shrink-0 text-right">
+                      <span className="block text-2xl font-extrabold leading-none tracking-tight text-primary">{formatPoints(w.balance)}</span>
+                      <span className="text-[11px] font-semibold text-slate-500">pontos</span>
                     </span>
                   </Link>
                 </li>
               );
             })}
-          </Carousel>
+          </ul>
         )}
       </section>
       </Reveal>
