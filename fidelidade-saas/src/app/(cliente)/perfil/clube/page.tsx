@@ -22,7 +22,7 @@ export default async function MeusPlanosPage({ searchParams }: { searchParams: P
   return (
     <main className="space-y-5 p-4 sm:p-6 md:pt-8">
       <header>
-        <Link href="/perfil" className="inline-flex items-center gap-1 text-sm font-semibold text-electric-600"><Icon name="back" size={16} /> Perfil</Link>
+        <Link href="/perfil" className="back-link"><Icon name="back" size={14} /> Perfil</Link>
         <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-primary">Meus planos</h1>
         <p className="text-sm text-slate-600">Assinaturas dos lugares. Cada agendamento coberto pelo plano abate do seu saldo do mês, sem cobrança.</p>
       </header>

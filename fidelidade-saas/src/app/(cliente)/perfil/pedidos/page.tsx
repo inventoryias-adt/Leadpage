@@ -72,8 +72,8 @@ export default async function MeusPedidosPage({ searchParams }: { searchParams: 
 
   return (
     <main className="p-4 sm:p-6 md:pt-8">
-      <Link href="/perfil" className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-electric-600 hover:text-primary">
-        <Icon name="back" size={16} /> Perfil
+      <Link href="/perfil" className="back-link mb-4">
+        <Icon name="back" size={14} /> Perfil
       </Link>
       <h1 className="text-2xl font-extrabold tracking-tight text-primary">Meus pedidos</h1>
       <p className="mb-5 text-sm text-slate-600">Acompanhe o que você pediu pelo app. Você paga e retira no balcão, mostrando o código.</p>

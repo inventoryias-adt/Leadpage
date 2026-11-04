@@ -20,7 +20,7 @@ export default async function MeusDadosPage() {
   return (
     <main className="mx-auto max-w-2xl space-y-4 p-4 sm:p-6 md:pt-8">
       <header>
-        <Link href="/perfil" className="inline-flex items-center gap-1 text-sm font-semibold text-electric-600" data-testid="back-perfil"><Icon name="back" size={16} /> Perfil</Link>
+        <Link href="/perfil" className="back-link" data-testid="back-perfil"><Icon name="back" size={14} /> Perfil</Link>
         <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-primary">Meus dados</h1>
         <p className="text-sm text-slate-600">Mude o que precisar: foto, nome, telefone, e-mail, CPF e senha.</p>
         <ProfilePhoto name={customer.name} photoUrl={profilePhotoUrl(photo?.updatedAt)}>

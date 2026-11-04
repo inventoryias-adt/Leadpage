@@ -6,11 +6,10 @@ import { useEffect, useState } from 'react';
 import { Brand } from './Brand';
 import { Icon, type IconName } from './Icons';
 
-const tabs: { href: string; label: string; icon: IconName; match: (p: string) => boolean; desktopOnly?: boolean }[] = [
+const tabs: { href: string; label: string; icon: IconName; match: (p: string) => boolean }[] = [
   { href: '/carteira', label: 'Início', icon: 'home', match: (p) => p.startsWith('/carteira') },
   { href: '/lugares', label: 'Lugares', icon: 'compass', match: (p) => p.startsWith('/lugares') || p.startsWith('/lugar/') },
-  // No celular o feed fica atrás do botão "+" do meio (nova indicação); no computador é uma aba comum.
-  { href: '/indicacoes', label: 'Indicações', icon: 'camera', match: (p) => p.startsWith('/indicacoes'), desktopOnly: true },
+  { href: '/indicacoes', label: 'Indicações', icon: 'camera', match: (p) => p.startsWith('/indicacoes') },
   { href: '/avisos', label: 'Avisos', icon: 'bell', match: (p) => p.startsWith('/avisos') },
   { href: '/perfil', label: 'Perfil', icon: 'user', match: (p) => p.startsWith('/perfil') },
 ];
@@ -26,8 +25,6 @@ function Badge({ n, floating }: { n: number; floating?: boolean }) {
   );
 }
 
-const mobileTabs = tabs.filter((t) => !t.desktopOnly);
-
 function MobileTab({ t, current, unread, onPick }: { t: (typeof tabs)[number]; current: string; unread: number; onPick: (href: string) => void }) {
   const active = t.match(current);
   return (
@@ -35,13 +32,16 @@ function MobileTab({ t, current, unread, onPick }: { t: (typeof tabs)[number]; c
       href={t.href}
       onClick={() => onPick(t.href)}
       aria-current={active ? 'page' : undefined}
-      className={`nav-tab flex min-w-0 flex-col items-center gap-0.5 !rounded-2xl !px-1 !py-2 !text-[11px] ${active ? 'nav-tab-active nav-tab-lime' : ''}`}
+      aria-label={t.label}
+      title={t.label}
+      data-testid={t.href === '/indicacoes' ? 'fab-indicar' : undefined}
+      className="nav-float-item"
     >
       <span className="relative">
-        <Icon name={t.icon} size={20} />
+        <Icon name={t.icon} size={24} strokeWidth={active ? 2.2 : 1.8} />
         {t.href === '/avisos' && unread > 0 && <Badge n={unread} floating />}
       </span>
-      {t.label}
+      <span className="sr-only">{t.label}</span>
     </Link>
   );
 }
@@ -80,21 +80,10 @@ export function CustomerNav({ unread = 0 }: { unread?: number }) {
       </div>
     </header>
 
-    {/* Celular: barra flutuante embaixo, com o botão "+" (Indicações: a lista das já feitas, com o botão "Indicar") em destaque no meio */}
-    <nav aria-label="Navegação principal" className="pointer-events-none md:hidden fixed inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-      <div className="glass-panel pointer-events-auto relative grid w-full max-w-sm grid-cols-[1fr_1fr_4.5rem_1fr_1fr] gap-1 !rounded-3xl p-2">
-        {mobileTabs.slice(0, 2).map((t) => <MobileTab key={t.href} t={t} current={current} unread={unread} onPick={setPending} />)}
-        <span aria-hidden className="flex items-end justify-center pb-1 text-[11px] font-medium text-slate-600">Indicar</span>
-        {mobileTabs.slice(2).map((t) => <MobileTab key={t.href} t={t} current={current} unread={unread} onPick={setPending} />)}
-        <Link
-          href="/indicacoes"
-          onClick={() => setPending('/indicacoes')}
-          aria-label="Indicações"
-          data-testid="fab-indicar"
-          className="absolute left-1/2 top-0 flex h-16 w-16 -translate-x-1/2 -translate-y-[38%] items-center justify-center rounded-full border-4 border-[#F7F8FA] bg-lima text-primary shadow-[0_10px_24px_rgba(11,27,58,.32)] transition-transform active:scale-95"
-        >
-          <Icon name="camera" size={28} strokeWidth={2.4} />
-        </Link>
+    {/* Celular: pílula flutuante embaixo, só com ícones (o nome de cada aba fica para leitores de tela e no toque longo) */}
+    <nav aria-label="Navegação principal" className="pointer-events-none md:hidden fixed inset-x-0 bottom-0 z-30 flex justify-center px-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="nav-float pointer-events-auto">
+        {tabs.map((t) => <MobileTab key={t.href} t={t} current={current} unread={unread} onPick={setPending} />)}
       </div>
     </nav>
     </>

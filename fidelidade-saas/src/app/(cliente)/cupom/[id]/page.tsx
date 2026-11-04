@@ -24,7 +24,7 @@ export default async function CupomPage({ params }: { params: Promise<{ id: stri
 
   return (
     <main className="mx-auto max-w-xl space-y-5 p-4 sm:p-6 md:pt-8">
-      <Link href="/perfil/premios" className="inline-flex items-center gap-1 text-sm font-semibold text-electric-600"><Icon name="back" size={16} /> Meus prêmios</Link>
+      <Link href="/perfil/premios" className="back-link"><Icon name="back" size={14} /> Meus prêmios</Link>
       <header>
         <h1 className="text-2xl font-extrabold tracking-tight text-primary md:text-3xl">{used ? 'Prêmio entregue' : 'Seu prêmio está pronto'}</h1>
         <p className="text-sm text-slate-600">

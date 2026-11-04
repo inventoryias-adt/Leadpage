@@ -14,7 +14,7 @@ export default async function NovaIndicacaoPage({ searchParams }: { searchParams
   return (
     <main className="space-y-5 p-4 sm:p-6 md:pt-8">
       <header>
-        <Link href="/indicacoes" className="inline-flex items-center gap-1 text-sm font-semibold text-electric-600"><Icon name="back" size={16} /> Indicações</Link>
+        <Link href="/indicacoes" className="back-link"><Icon name="back" size={14} /> Indicações</Link>
         <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-primary">Nova indicação</h1>
         <p className="text-sm text-slate-600">Mostre o que você gostou num lugar do clube: uma foto, a sua nota e, se quiser, um comentário.</p>
       </header>
