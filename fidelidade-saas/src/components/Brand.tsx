@@ -46,13 +46,13 @@ export function LogoMark({ size = 36, className = '', mono }: { size?: number; c
 
 /**
  * Marca completa: o F com degradê é a primeira letra do nome ("F" + "idelize").
- * `size` é o tamanho da letra do nome; `compact` mostra só o F, um pouco maior, no celular (barras apertadas).
+ * `light` deixa o nome branco para fundos escuros; `size` é o tamanho da letra do nome; `compact` mostra só o F, um pouco maior, no celular (barras apertadas).
  */
-export function Brand({ href = '/', size = 28, compact = false }: { href?: string; size?: number; compact?: boolean }) {
+export function Brand({ href = '/', size = 28, compact = false, light = false }: { href?: string; size?: number; compact?: boolean; light?: boolean }) {
   return (
     <Link href={href} className="inline-flex shrink-0 items-baseline" aria-label="Fidelize — início">
       <LogoMark size={Math.round(size * 0.74)} className={`mr-[-0.01em] ${compact ? 'max-sm:!h-[1.9rem] max-sm:!w-auto' : ''}`} />
-      <span aria-hidden className={`font-extrabold leading-none tracking-[-0.045em] text-primary ${compact ? 'max-sm:hidden' : ''}`} style={{ fontSize: size }}>idelize</span>
+      <span aria-hidden className={`font-extrabold leading-none tracking-[-0.045em] ${light ? 'text-white' : 'text-primary'} ${compact ? 'max-sm:hidden' : ''}`} style={{ fontSize: size }}>idelize</span>
     </Link>
   );
 }

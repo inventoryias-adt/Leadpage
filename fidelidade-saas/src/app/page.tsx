@@ -1,5 +1,8 @@
 import Link from 'next/link';
-import { Brand, Coin } from '@/components/Brand';
+import { Coin } from '@/components/Brand';
+import { PublicFooter, PublicNav } from '@/components/PublicShell';
+import { HashFocus } from '@/components/SignupLink';
+import { ChallengesMock, WalletMock } from '@/components/PublicMocks';
 import { Icon, type IconName } from '@/components/Icons';
 import { Reveal } from '@/components/Reveal';
 import { SignupCta } from '@/components/SignupCta';
@@ -105,13 +108,8 @@ function Cta({ children }: { children: React.ReactNode }) {
 export default function LandingPage() {
   return (
     <main className="mx-auto max-w-6xl overflow-x-clip border-x border-[#E5E7EB] bg-white">
-      <nav className="flex items-center justify-between px-5 py-4 sm:px-8">
-        <Brand />
-        <div className="flex items-center gap-2 text-sm font-semibold">
-          <Link href="/entrar" className="nav-tab">Sou cliente</Link>
-          <Link href="/login" className="chip-link">Entrar</Link>
-        </div>
-      </nav>
+      <PublicNav />
+      <HashFocus />
 
       <div aria-hidden className="h-px bg-[#E5E7EB]" />
 
@@ -150,12 +148,30 @@ export default function LandingPage() {
         </Reveal>
       </section>
 
+      {/* O app por dentro */}
+      <section className="bg-primary px-5 py-14 text-white sm:px-8 md:py-20">
+        <Reveal from="top" className="mx-auto mb-10 max-w-2xl text-center">
+          <span className="micro mb-3 block !text-slate-300">O app por dentro</span>
+          <h2 className="mb-3 text-3xl font-extrabold tracking-tight md:text-4xl">Simples para o cliente, completo para você<span className="text-lima">.</span></h2>
+          <p className="text-slate-300">É isso que o seu cliente vê no celular: saldo, desafios do lugar e quanto falta para o prêmio.</p>
+        </Reveal>
+        <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-2">
+          <Reveal from="left"><WalletMock /></Reveal>
+          <Reveal from="right"><ChallengesMock /></Reveal>
+        </div>
+        <p className="mt-10 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm font-semibold">
+          <Link href="/pontos" className="text-lima hover:underline">Conhecer os pontos</Link>
+          <Link href="/desafios" className="text-lima hover:underline">Ver desafios e campanhas</Link>
+          <Link href="/instagram" className="text-lima hover:underline">Divulgação no Instagram</Link>
+        </p>
+      </section>
+
       <Hatch />
 
       {/* Como funciona */}
       <section className="px-5 py-14 sm:px-8">
         <Reveal from="top">
-          <span className="glass-chip mb-4">Como funciona</span>
+          <span className="micro mb-3 block">Como funciona</span>
           <h2 className="mb-3 max-w-2xl text-3xl font-semibold text-primary md:text-4xl">Do balcão à carteira do cliente, em 4 passos.</h2>
           <p className="mb-10 max-w-2xl text-slate-600">Você configura uma vez. Depois, é só lançar a conta de cada cliente e deixar os pontos trabalharem.</p>
         </Reveal>
@@ -183,7 +199,7 @@ export default function LandingPage() {
       {/* Por que funciona */}
       <section id="por-que-funciona" className="bg-[#F6F7F9] px-5 py-14 sm:px-8">
         <Reveal from="left">
-          <span className="glass-chip mb-4">Por que um clube de pontos funciona</span>
+          <span className="micro mb-3 block">Por que um clube de pontos funciona</span>
           <h2 className="mb-3 max-w-2xl text-3xl font-semibold text-primary md:text-4xl">Manter o cliente custa menos do que conquistar outro.</h2>
           <p className="mb-10 max-w-2xl text-slate-600">O que dizem pesquisas e instituições sobre fidelização, com a fonte de cada número.</p>
         </Reveal>
@@ -209,7 +225,7 @@ export default function LandingPage() {
       {/* Benefícios */}
       <section className="px-5 py-14 sm:px-8">
         <Reveal from="right">
-          <span className="glass-chip mb-4">Para os dois lados do balcão</span>
+          <span className="micro mb-3 block">Para os dois lados do balcão</span>
           <h2 className="mb-10 max-w-2xl text-3xl font-semibold text-primary md:text-4xl">O cliente tem motivos para voltar. Você tem controle e resultado.</h2>
         </Reveal>
 
@@ -240,6 +256,7 @@ export default function LandingPage() {
       <section className="bg-dots-dark relative overflow-hidden bg-primary px-5 py-16 text-center sm:px-8">
         <Reveal from="flip" className="mb-5 flex justify-center"><Coin size={72} color="#C6F432" /></Reveal>
         <Reveal from="zoom">
+          <span className="mb-3 inline-block rounded-full bg-lima px-4 py-1 text-xs font-extrabold uppercase tracking-wider text-primary">Preço de lançamento</span>
           <h2 className="mx-auto mb-3 max-w-2xl text-3xl font-semibold text-white md:text-4xl">
             Um plano, tudo incluso.
           </h2>
@@ -257,6 +274,7 @@ export default function LandingPage() {
           </ul>
         </div>
         <SignupCta className="glass-button-lime !w-auto">Quero fidelizar meus clientes</SignupCta>
+        <p className="mt-5 text-sm"><Link href="/precos" className="font-semibold text-lima hover:underline">Ver detalhes dos preços</Link></p>
       </section>
 
       {/* FAQ */}
@@ -280,20 +298,7 @@ export default function LandingPage() {
 
       <Hatch />
 
-      <footer className="flex flex-col items-center gap-4 px-5 py-10 text-center text-sm text-slate-500">
-        <Brand />
-        <div className="flex gap-5 font-semibold text-primary">
-          <Link href="/entrar" className="hover:text-electric-600">Sou cliente</Link>
-          <Link href="/login" className="hover:text-electric-600">Entrar</Link>
-          <SignupCta className="hover:text-electric-600">Assinar</SignupCta>
-        </div>
-        <p className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-          <Link href="/termos/estabelecimento" className="hover:text-electric-600">Termos para Estabelecimentos</Link>
-          <Link href="/termos/cliente" className="hover:text-electric-600">Termos do Cliente</Link>
-          <Link href="/privacidade" className="hover:text-electric-600">Política de Privacidade</Link>
-        </p>
-        <p>© {new Date().getFullYear()} Fidelize. Todos os direitos reservados.</p>
-      </footer>
+      <PublicFooter />
     </main>
   );
 }
