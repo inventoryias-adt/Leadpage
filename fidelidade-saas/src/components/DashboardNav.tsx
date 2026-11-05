@@ -86,13 +86,13 @@ export function DashboardNav({ variant, agenda = false, pending: pendingBookings
   }
 
   return (
-    <nav className={`glass-panel grid ${bottomItems.length > 6 ? 'grid-cols-7' : bottomItems.length > 5 ? 'grid-cols-6' : 'grid-cols-5'} gap-1 p-1.5`}>
+    <nav className={`nav-float-gestor grid ${bottomItems.length > 6 ? 'grid-cols-7' : bottomItems.length > 5 ? 'grid-cols-6' : 'grid-cols-5'}`}>
       {bottomItems.map((i) => (
         <Link
           key={i.href}
           href={i.href}
           onClick={() => setPending(i.href)}
-          className={`nav-tab flex flex-col items-center gap-0.5 !rounded-2xl !px-1 !py-2 !text-[11px] ${active(i.href) ? 'nav-tab-active nav-tab-lime' : ''}`}
+          className={`nav-tab flex flex-col items-center gap-0.5 !rounded-full !px-1 !py-2 !text-[10.5px] ${active(i.href) ? 'nav-tab-active nav-tab-lime' : ''}`}
         >
           <span className="relative">
             <Icon name={i.icon} size={20} />
