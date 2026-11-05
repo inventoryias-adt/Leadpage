@@ -27,6 +27,7 @@ function Badge({ n, floating }: { n: number; floating?: boolean }) {
 
 function MobileTab({ t, current, unread, onPick }: { t: (typeof tabs)[number]; current: string; unread: number; onPick: (href: string) => void }) {
   const active = t.match(current);
+  const fab = t.href === '/indicacoes'; // a câmera salta para fora da pílula, em destaque
   return (
     <Link
       href={t.href}
@@ -35,10 +36,10 @@ function MobileTab({ t, current, unread, onPick }: { t: (typeof tabs)[number]; c
       aria-label={t.label}
       title={t.label}
       data-testid={t.href === '/indicacoes' ? 'fab-indicar' : undefined}
-      className="nav-float-item"
+      className={fab ? 'nav-float-fab' : 'nav-float-item'}
     >
       <span className="relative">
-        <Icon name={t.icon} size={24} strokeWidth={active ? 2.2 : 1.8} />
+        <Icon name={t.icon} size={fab ? 28 : 24} strokeWidth={fab ? 2.4 : active ? 2.2 : 1.8} />
         {t.href === '/avisos' && unread > 0 && <Badge n={unread} floating />}
       </span>
       <span className="sr-only">{t.label}</span>
