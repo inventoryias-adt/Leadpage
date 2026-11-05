@@ -33,8 +33,8 @@ const write = (v: string, key: string) => {
 export function InstallApp({ className = '', variant = 'cliente' }: { className?: string; variant?: 'cliente' | 'gestor' }) {
   const gestor = variant === 'gestor';
   const copy = gestor
-    ? { name: 'Fidelize Gestor', title: 'Tenha o Fidelize Gestor na tela inicial', text: 'Caixa, agenda, pedidos e clientes com um toque, mesmo longe do balcão. Sem baixar nada na loja.', icon: '/gestor-icon-96.png?v=1' }
-    : { name: 'Fidelize', title: 'Tenha o Fidelize na tela inicial', text: 'Abra seus pontos com um toque, como um app — sem baixar nada na loja.', icon: '/icon-96.png?v=4' };
+    ? { name: 'Fidelize Gestor', title: 'Tenha o Fidelize Gestor na tela inicial', text: 'Caixa, agenda, pedidos e clientes com um toque, mesmo longe do balcão. Sem baixar nada na loja.', icon: '/gestor-icon-96.png?v=2' }
+    : { name: 'Fidelize', title: 'Tenha o Fidelize na tela inicial', text: 'Abra seus pontos com um toque, como um app — sem baixar nada na loja.', icon: '/icon-96.png?v=6' };
   // O app do gestor guarda "agora não" e "já instalei" à parte: instalar um não esconde o convite do outro.
   const sfx = gestor ? ':gestor' : '';
   const kDismiss = DISMISS_KEY + sfx, kIntro = INTRO_KEY + sfx, kCollapse = COLLAPSE_KEY + sfx;
@@ -215,7 +215,7 @@ function InstallIntro({ onInstall, onClose }: { onInstall: () => void; onClose: 
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/60 p-5" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-labelledby="install-intro-title" className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl" onClick={(e) => e.stopPropagation()}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/icon-192.png?v=4" alt="" width={72} height={72} className="mx-auto h-[72px] w-[72px] rounded-2xl" />
+        <img src="/icon-192.png?v=6" alt="" width={72} height={72} className="mx-auto h-[72px] w-[72px] rounded-2xl" />
         <h2 id="install-intro-title" className="mt-4 text-xl font-bold text-primary">Adicione o Fidelize à tela inicial do seu celular</h2>
         <p className="mt-2 text-sm leading-relaxed text-slate-600">
           Veja seus pontos e prêmios com um toque, direto da tela inicial — como um app, sem baixar nada na loja.

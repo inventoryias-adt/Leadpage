@@ -18,9 +18,9 @@ export function GET() {
     theme_color: '#0B1B3A',
     lang: 'pt-BR',
     icons: [
-      { src: '/icon-192.png?v=5', sizes: '192x192', type: 'image/png', purpose: 'any' },
-      { src: '/icon-512.png?v=5', sizes: '512x512', type: 'image/png', purpose: 'any' },
-      { src: '/icon-maskable-512.png?v=5', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      { src: '/icon-192.png?v=6', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: '/icon-512.png?v=6', sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: '/icon-maskable-512.png?v=6', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
   };
   return new Response(JSON.stringify(manifest), { headers: { 'Content-Type': 'application/manifest+json; charset=utf-8', 'Cache-Control': 'public, max-age=3600' } });

@@ -23,7 +23,7 @@ export function CardFront({ data }: { data: CardData }) {
       <div className="relative flex h-full flex-col justify-between" style={{ padding: '6cqw' }}>
         <div className="flex items-center justify-between">
           <span className="flex items-center" style={{ gap: '2.4cqw' }}>
-            <LogoMark className="!h-[8.5cqw] !w-[8.5cqw]" />
+            <LogoMark mono="#ffffff" className="!h-[8.5cqw] !w-[8.5cqw]" />
             <span className="font-bold leading-none" style={{ fontSize: '6.2cqw', letterSpacing: '-0.04em' }}>fidelize</span>
           </span>
           <span className="font-bold uppercase opacity-70" style={{ fontSize: '2.5cqw', letterSpacing: '0.2em' }}>Cartão de pontos</span>

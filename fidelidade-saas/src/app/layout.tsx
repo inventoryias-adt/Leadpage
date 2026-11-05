@@ -18,12 +18,12 @@ export const metadata: Metadata = {
   icons: {
     // O número depois do "?v=" faz o navegador (e o Google) baixarem o ícone de novo: some junto com o ícone antigo.
     icon: [
-      { url: '/favicon.ico?v=5', sizes: '48x48', type: 'image/x-icon' },
-      { url: '/icon-48.png?v=5', sizes: '48x48', type: 'image/png' },
-      { url: '/icon-96.png?v=5', sizes: '96x96', type: 'image/png' },
-      { url: '/icon-192.png?v=5', sizes: '192x192', type: 'image/png' },
+      { url: '/favicon.ico?v=6', sizes: '48x48', type: 'image/x-icon' },
+      { url: '/icon-48.png?v=6', sizes: '48x48', type: 'image/png' },
+      { url: '/icon-96.png?v=6', sizes: '96x96', type: 'image/png' },
+      { url: '/icon-192.png?v=6', sizes: '192x192', type: 'image/png' },
     ],
-    apple: [{ url: '/apple-touch-icon.png?v=5', sizes: '180x180', type: 'image/png' }],
+    apple: [{ url: '/apple-touch-icon.png?v=6', sizes: '180x180', type: 'image/png' }],
   },
   openGraph: {
     type: 'website',
