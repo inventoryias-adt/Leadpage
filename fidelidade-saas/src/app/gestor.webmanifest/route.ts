@@ -18,14 +18,14 @@ export function GET() {
     theme_color: '#0B1B3A',
     lang: 'pt-BR',
     icons: [
-      { src: '/gestor-icon-192.png?v=1', sizes: '192x192', type: 'image/png', purpose: 'any' },
-      { src: '/gestor-icon-512.png?v=1', sizes: '512x512', type: 'image/png', purpose: 'any' },
-      { src: '/gestor-icon-maskable-512.png?v=1', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      { src: '/gestor-icon-192.png?v=2', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: '/gestor-icon-512.png?v=2', sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: '/gestor-icon-maskable-512.png?v=2', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
     shortcuts: [
-      { name: 'Caixa', url: '/dashboard/caixa', icons: [{ src: '/gestor-icon-96.png?v=1', sizes: '96x96', type: 'image/png' }] },
-      { name: 'Agenda', url: '/dashboard/agenda', icons: [{ src: '/gestor-icon-96.png?v=1', sizes: '96x96', type: 'image/png' }] },
-      { name: 'Pedidos', url: '/dashboard/pedidos', icons: [{ src: '/gestor-icon-96.png?v=1', sizes: '96x96', type: 'image/png' }] },
+      { name: 'Caixa', url: '/dashboard/caixa', icons: [{ src: '/gestor-icon-96.png?v=2', sizes: '96x96', type: 'image/png' }] },
+      { name: 'Agenda', url: '/dashboard/agenda', icons: [{ src: '/gestor-icon-96.png?v=2', sizes: '96x96', type: 'image/png' }] },
+      { name: 'Pedidos', url: '/dashboard/pedidos', icons: [{ src: '/gestor-icon-96.png?v=2', sizes: '96x96', type: 'image/png' }] },
     ],
   };
   return new Response(JSON.stringify(manifest), { headers: { 'Content-Type': 'application/manifest+json; charset=utf-8', 'Cache-Control': 'public, max-age=3600' } });
