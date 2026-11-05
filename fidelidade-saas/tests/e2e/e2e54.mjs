@@ -60,14 +60,16 @@ assert.ok(await c.locator('#desafios >> text=Toda compra aqui').isVisible());
 console.log('4. um link com #desafios abre a seção sozinho OK');
 
 // 5. passar o mouse muda a cor: cabeçalho vira marinho; linha de ação ganha azul claro
+// Passa o mouse só depois de a página assentar (fontes carregadas): se o layout se mexe depois do hover, o mouse sai de cima do elemento.
+const hoverSettled = async (loc) => { await c.evaluate(() => document.fonts.ready); await loc.scrollIntoViewIfNeeded(); await wait(c, 300); await loc.hover(); await wait(c, 400); };
 const bg = (loc) => loc.evaluate((el) => getComputedStyle(el).backgroundColor);
-await head('acoes').hover(); await wait(c, 400);
+await hoverSettled(head('acoes'));
 assert.equal(await bg(head('acoes')), 'rgb(15, 31, 61)', 'cabeçalho vira azul-marinho');
 await c.mouse.move(5, 5); await wait(c, 400);
 assert.notEqual(await bg(head('acoes')), 'rgb(15, 31, 61)', 'e volta ao branco quando o mouse sai');
 await head('acoes').click(); await c.waitForSelector('#acoes >> text=Check-in no local');
 const row = c.locator('#acoes li').first();
-await row.hover(); await wait(c, 400);
+await hoverSettled(row);
 assert.equal(await bg(row), 'rgb(238, 243, 253)', 'linha ganha azul bem claro');
 console.log('5. passar o mouse troca as cores (cabeçalho marinho, linha azul clara) OK');
 
