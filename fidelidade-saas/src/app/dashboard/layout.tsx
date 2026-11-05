@@ -61,7 +61,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </form>
         </div>
       )}
-      <header className="glass-panel-sm mb-6 flex items-center justify-between gap-3 px-4 py-3">
+      <header className="mb-4 flex items-center justify-between gap-3 py-1">
         <div className="flex min-w-0 items-center gap-3">
           <Brand href="/dashboard" compact />
           <span className="hidden h-6 w-px bg-slate-300 sm:block" />
@@ -93,7 +93,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
       {ready && <OwnerBackBar />}
 
-      {children}
+      <main>{children}</main>
 
       {ASSISTANT_ON && ready && <AssistantFab role="dono" />}
 

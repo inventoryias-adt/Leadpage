@@ -89,6 +89,12 @@ main h1:not([data-h1]) {
   letter-spacing: -0.035em;
   line-height: 1.05;
 }
+/* O texto logo abaixo do título da página é o subtítulo: itálico e cinza, como no benchmark. */
+main h1:not([data-h1]) + p {
+  font-size: 0.9375rem;
+  font-style: italic;
+  color: #64748b;
+}
 /* Rótulos em caixa-alta: letras mais espaçadas. */
 .uppercase {
   letter-spacing: 0.12em;
@@ -390,6 +396,11 @@ main h1:not([data-h1]) {
   /* Barra de abas flutuante do celular: pílula branca só com ícones; a aba ativa é uma pílula lima. */
   .nav-float {
     @apply relative grid w-full max-w-xs grid-cols-5 items-center gap-1 rounded-full bg-white p-1.5;
+    box-shadow: 0 10px 34px rgba(15, 31, 61, 0.16), 0 1px 0 rgba(15, 31, 61, 0.04);
+  }
+  /* Barra de abas do painel do gestor (celular): mesma pílula flutuante do cliente, mas com o nome embaixo do ícone (são 5 a 7 áreas). */
+  .nav-float-gestor {
+    @apply relative mx-auto w-full max-w-md items-center gap-0.5 rounded-full bg-white p-1.5;
     box-shadow: 0 10px 34px rgba(15, 31, 61, 0.16), 0 1px 0 rgba(15, 31, 61, 0.04);
   }
   .nav-float-item {
