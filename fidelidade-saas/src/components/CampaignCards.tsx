@@ -28,6 +28,7 @@ type Group = { placeId: string; placeName: string; logoUrl: string | null; items
  */
 export function CampaignCards({ items, loggedIn }: { items: CampaignView[]; loggedIn: boolean }) {
   const [open, setOpen] = useState<Group | null>(null);
+  const [expanded, setExpanded] = useState(false); // a lista nasce recolhida: só a linha-resumo aparece
   const primary = useRef<HTMLAnchorElement>(null);
 
   const groups = useMemo(() => {
@@ -50,14 +51,29 @@ export function CampaignCards({ items, loggedIn }: { items: CampaignView[]; logg
   }, [open]);
 
   if (groups.length === 0) return null;
+  const total = items.length;
 
   return (
     <section aria-labelledby="campanhas" className="space-y-3">
-      <div className="flex items-end justify-between">
-        <h2 id="campanhas" className="text-[15px] font-bold text-slate-800">Campanhas por lugar</h2>
-        <span className="text-xs text-slate-500">{groups.length} {groups.length === 1 ? 'lugar' : 'lugares'}</span>
-      </div>
+      <h2 id="campanhas" className="m-0">
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          aria-controls="campanhas-lista"
+          className="flex w-full items-center justify-between gap-3 !rounded-none !border-0 !bg-transparent !p-0 py-1 text-left !shadow-none"
+          data-testid="campanhas-toggle"
+        >
+          <span className="text-[15px] font-bold text-slate-800">Campanhas por lugar</span>
+          <span className="flex items-center gap-2 text-xs text-slate-500">
+            {total} {total === 1 ? 'campanha' : 'campanhas'} · {groups.length} {groups.length === 1 ? 'lugar' : 'lugares'}
+            <Icon name="down" size={16} className={`shrink-0 text-slate-500 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
+          </span>
+        </button>
+      </h2>
 
+      {expanded && (
+      <div id="campanhas-lista">
       <Carousel label="Campanhas por lugar">
         {groups.slice(0, 16).map((g) => (
           <li key={g.placeId} className="w-[11.5rem] shrink-0 snap-start">
@@ -83,6 +99,8 @@ export function CampaignCards({ items, loggedIn }: { items: CampaignView[]; logg
           </li>
         ))}
       </Carousel>
+      </div>
+      )}
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 p-0 md:items-center md:p-6" onClick={() => setOpen(null)}>

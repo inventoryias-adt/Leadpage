@@ -55,9 +55,10 @@ const cctx = await browser.newContext({ viewport:{width:390,height:844}, isMobil
 await cctx.addInitScript(()=>localStorage.setItem('fz_intro_v1','1'));
 const c = await cctx.newPage();
 await c.goto(BASE+'/lugares'); await wait(c,2500);
-await c.waitForSelector('section[aria-labelledby=campanhas] button:has-text("campanha")');
+await c.waitForSelector('[data-testid=campanhas-toggle]'); await c.click('[data-testid=campanhas-toggle]'); // a lista nasce recolhida
+await c.waitForSelector('#campanhas-lista button:has-text("campanha")');
 await c.screenshot({path:'promo-cliente.png'});
-await c.click('section[aria-labelledby=campanhas] button:has-text("campanha")');
+await c.click('#campanhas-lista button:has-text("campanha")');
 await c.waitForSelector('[role=dialog]:has-text("Teste em dobro")');
 assert.match(await c.locator('[role=dialog]').innerText(), /2x pontos/);
 console.log('4. card da campanha na vitrine OK');
@@ -74,7 +75,7 @@ for (const t of ['Teste em dobro','Bonus acima de 40']) {
 }
 await o.waitForSelector('li:has-text("Teste em dobro"):has-text("Pausada")');
 await c.goto(BASE+'/lugares'); await wait(c,2000);
-await c.click('section[aria-labelledby=campanhas] button:has-text("campanha")'); await c.waitForSelector('[role=dialog]'); assert.doesNotMatch(await c.locator('[role=dialog]').innerText(), /Teste em dobro/);
+await c.waitForSelector('[data-testid=campanhas-toggle]'); await c.click('[data-testid=campanhas-toggle]'); await c.click('#campanhas-lista button:has-text("campanha")'); await c.waitForSelector('[role=dialog]'); assert.doesNotMatch(await c.locator('[role=dialog]').innerText(), /Teste em dobro/);
 console.log('6. campanha pausada some da vitrine OK');
 
 // ---------- guia reaberto pelo botão
