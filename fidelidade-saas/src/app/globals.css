@@ -804,8 +804,8 @@ label:has(input[type='radio']) {
 /* ------------------------------------------------------------------ */
 /* Abertura do app (Splash.tsx), ~6 s                                  */
 /* 1) o F aparece sozinho; 2) vai para o lado e as letras saem dele;   */
-/* 3) cada letra vira um item (tesoura, xícara, cupcake, batom,        */
-/*    sorvete, pizza, açaí); 4) os itens voltam a ser letras;          */
+/* 3) cada letra vira um item (tesoura, xícara, cerveja, patinha,     */
+/*    haltere, cruz de farmácia, hambúrguer); 4) voltam a ser letras;  */
 /* 5) o fundo se dissolve e o app aparece.                              */
 /* ------------------------------------------------------------------ */
 .splash {
@@ -818,7 +818,7 @@ label:has(input[type='radio']) {
   overflow: hidden;
   /* degradê bem leve: marinho um pouco mais claro no meio */
   background: radial-gradient(circle at 50% 50%, #12295a 0%, #0b1b3a 70%);
-  cursor: pointer;
+  pointer-events: none; /* a abertura nunca bloqueia cliques */
   animation: splash-out 0.8s cubic-bezier(0.4, 0, 0.2, 1) 5.4s forwards;
 }
 html[data-splash='off'] .splash {

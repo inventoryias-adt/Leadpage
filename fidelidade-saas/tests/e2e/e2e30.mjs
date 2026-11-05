@@ -14,7 +14,7 @@ await p.goto(BASE + '/entrar?splash=1');
 assert.ok(await p.locator('.splash').isVisible(), 'a abertura aparece');
 assert.notEqual(await p.evaluate(() => document.documentElement.getAttribute('data-splash')), 'off');
 assert.equal(await p.locator('.splash svg rect').count() >= 4 && await p.locator('.splash svg circle').count() >= 1, true, 'o F e os itens em que as letras viram estão na abertura');
-assert.match(await p.locator('.splash').innerText(), /idelize/, 'as letras de "Fidelize" estão na abertura');
+assert.match(await p.locator('.splash').textContent(), /idelize/, 'as letras de "Fidelize" estão na abertura');
 await p.waitForFunction(() => !document.querySelector('.splash'), null, { timeout: 12000 });
 assert.equal(await p.evaluate(() => sessionStorage.getItem('fz_splash')), '1');
 await p.goto(BASE + '/entrar'); // mesma sessão, sem o parâmetro

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { FGlyph, FGradient, BRAND_BLUE, BRAND_GREEN } from './Brand';
-import { Acai, Batom, Cupcake, Pizza, Sorvete, Tesoura, Xicara } from './BrandItems';
+import { Cerveja, Cruz, Haltere, Hamburguer, Pata, Tesoura, Xicara } from './BrandItems';
 
 const G = 'sp-g';
 const GI = 'sp-gi';
@@ -12,17 +12,17 @@ const BG = '#0b1b3a';
 const SLOTS: { ch: string; wl: number; wi: number; icon: ReactNode }[] = [
   { ch: 'i', wl: 0.27, wi: 0.7, icon: <Tesoura g={GI} bg={BG} /> },
   { ch: 'd', wl: 0.6, wi: 0.7, icon: <Xicara g={GI} bg={BG} /> },
-  { ch: 'e', wl: 0.58, wi: 0.78, icon: <Cupcake g={GI} bg={BG} /> },
-  { ch: 'l', wl: 0.26, wi: 0.62, icon: <Batom g={GI} bg={BG} /> },
-  { ch: 'i', wl: 0.27, wi: 0.7, icon: <Sorvete g={GI} bg={BG} /> },
-  { ch: 'z', wl: 0.5, wi: 0.72, icon: <Pizza g={GI} bg={BG} /> },
-  { ch: 'e', wl: 0.58, wi: 0.7, icon: <Acai g={GI} bg={BG} /> },
+  { ch: 'e', wl: 0.58, wi: 0.78, icon: <Cerveja g={GI} bg={BG} /> },
+  { ch: 'l', wl: 0.26, wi: 0.7, icon: <Pata g={GI} bg={BG} /> },
+  { ch: 'i', wl: 0.27, wi: 0.64, icon: <Haltere g={GI} bg={BG} /> },
+  { ch: 'z', wl: 0.5, wi: 0.7, icon: <Cruz g={GI} bg={BG} /> },
+  { ch: 'e', wl: 0.58, wi: 0.7, icon: <Hamburguer g={GI} bg={BG} /> },
 ];
 
 /**
  * Abertura do app (~6 s): fundo marinho; o F com degradê aparece sozinho no meio, vai para o lado e as outras letras saem de dentro dele;
- * cada letra vira um item dos lugares que o Fidelize atende (tesoura, xícara, cupcake, batom, sorvete, pizza e açaí) e volta a ser letra,
- * formando "Fidelize"; então o fundo se dissolve para mostrar o app (animação em globals.css). Um toque na tela pula.
+ * cada letra vira um item de um tipo de lugar que o Fidelize atende (tesoura, xícara de café, copo de cerveja, patinha, haltere, cruz de farmácia e hambúrguer) e volta a ser letra,
+ * formando "Fidelize"; então o fundo se dissolve para mostrar o app (animação em globals.css). Não bloqueia cliques.
  * Toca uma vez por sessão, só no app (não na landing nem nos textos legais) e nunca com "reduzir movimento" ou navegador automatizado;
  * `?splash=1` força (para testar). A decisão de pular é tomada antes da primeira pintura por SPLASH_GATE (no <head>), que marca <html data-splash="off">.
  */
@@ -39,7 +39,7 @@ export function Splash() {
   }, []);
   if (done) return null;
   return (
-    <div className="splash" aria-hidden onClick={() => setDone(true)}>
+    <div className="splash" aria-hidden>
       <svg width="0" height="0" style={{ position: 'absolute' }}>
         <defs>
           <FGradient id={G} />
