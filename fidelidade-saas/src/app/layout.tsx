@@ -5,7 +5,7 @@ import { RegisterSW } from '@/components/RegisterSW';
 import { Splash } from '@/components/Splash';
 import { SPLASH_GATE } from '@/lib/splash-gate';
 import '@fontsource-variable/inter';
-import '@fontsource-variable/dm-sans';
+import '@fontsource-variable/figtree';
 import './globals.css';
 
 export const metadata: Metadata = {

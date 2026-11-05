@@ -52,8 +52,8 @@ export default async function PremiosPage({ params }: { params: Promise<{ restau
     : [];
   const shared = places.length > 0 ? { total: places.reduce((n, p) => n + p.equiv, 0), places } : null;
   const back = (
-    <Link href={`/lugar/${restaurantId}`} className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-electric-600 hover:text-primary">
-      <Icon name="back" size={16} /> {restaurant.name}
+    <Link href={`/lugar/${restaurantId}`} className="back-link mb-4">
+      <Icon name="back" size={14} /> {restaurant.name}
     </Link>
   );
 

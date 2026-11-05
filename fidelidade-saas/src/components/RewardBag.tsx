@@ -90,12 +90,10 @@ export function RewardBag({
   return (
     <div className="space-y-5 lg:grid lg:grid-cols-3 lg:items-start lg:gap-6 lg:space-y-0">
       <div className="space-y-5 lg:col-span-2">
-      <div className="glass-panel flex items-center justify-between gap-3 p-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Seu saldo aqui</p>
-          <p className="text-3xl font-extrabold text-primary">{formatPoints(balance)} <span className="text-base text-electric-600">pts</span></p>
-        </div>
-        <p className="max-w-[10rem] text-right text-xs text-slate-500">
+      <div>
+        <p className="micro">Seu saldo aqui</p>
+        <p className="mt-1 text-[3.25rem] font-extrabold leading-none tracking-[-0.04em] text-primary">{formatPoints(balance)} <span className="text-[15px] font-semibold tracking-normal text-slate-500">seus pontos</span></p>
+        <p className="sub mt-2">
           {remainingThisMonth > 0
             ? `Você ainda pode resgatar ${remainingThisMonth} ${remainingThisMonth === 1 ? 'item' : 'itens'} neste mês (limite de ${limit}).`
             : `Você atingiu o limite de ${limit} resgates neste mês.`}
@@ -114,38 +112,33 @@ export function RewardBag({
         </label>
       )}
 
-      <ul className="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
+      <ul className="divide-y divide-[#e6e8ec] border-y border-[#e6e8ec]">
         {rewards.map((r) => {
           const q = qty[r.id] ?? 0;
           const canAdd = r.pointsCost <= left && itemsLeft > 0;
           const missing = r.pointsCost - available;
           return (
-            <li key={r.id} className="glass-panel-sm p-3">
-              <div className="flex gap-3">
-                <div className="relative shrink-0">
-                  <RewardImage src={r.imageUrl} name={r.name} className="h-24 w-24 rounded-2xl" />
-                  <span className="absolute bottom-1.5 left-1.5 rounded-md bg-slate-900/90 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">{r.cashCents > 0 ? 'R$ + pontos' : 'Só pontos'}</span>
-                </div>
-                <div className="flex min-w-0 flex-1 flex-col">
-                  <p className="line-clamp-2 font-bold leading-snug text-slate-800">{r.name}</p>
-                  {r.description && <p className="line-clamp-2 text-xs text-slate-500">{r.description}</p>}
-                  <p className="mt-0.5 text-sm font-bold text-electric-600">{formatPrice(r.pointsCost, r.cashCents)}</p>
-                  {missing > 0 && q === 0 && <p className="text-xs text-slate-500">Faltam {formatPoints(missing)} pts</p>}
-                  <div className="mt-auto flex justify-end pt-2">
-                    {q === 0 ? (
-                      <button type="button" disabled={!canAdd} onClick={() => add(r)} className="glass-button btn-sm" aria-label={`Escolher ${r.name}`}>
-                        Escolher
-                      </button>
-                    ) : (
-                      <div className="flex items-center gap-1.5" role="group" aria-label={`Quantidade de ${r.name}`}>
-                        <button type="button" onClick={() => remove(r)} className="glass-button-ghost btn-sm" aria-label={`Remover um ${r.name}`}>−</button>
-                        <span className="w-6 text-center font-bold text-slate-800" aria-live="polite">{q}</span>
-                        <button type="button" disabled={!canAdd} onClick={() => add(r)} className="glass-button btn-sm" aria-label={`Adicionar mais um ${r.name}`}>+</button>
-                      </div>
-                    )}
-                  </div>
-                </div>
+            <li key={r.id} className="flex items-center gap-4 py-3.5">
+              <RewardImage src={r.imageUrl} name={r.name} className="h-16 w-16 shrink-0 rounded-2xl" />
+              <div className="min-w-0 flex-1">
+                <p className="line-clamp-2 text-[17px] font-semibold leading-snug text-primary">{r.name}</p>
+                <p className={`text-sm font-semibold ${missing > 0 && q === 0 ? 'text-slate-500' : 'text-electric-600'}`}>
+                  {formatPrice(r.pointsCost, r.cashCents)}
+                  {r.cashCents > 0 && <span className="ml-1.5 font-medium text-slate-500">· R$ + pontos</span>}
+                </p>
+                {missing > 0 && q === 0 && <p className="text-xs italic text-slate-500">Faltam {formatPoints(missing)} pts</p>}
               </div>
+              {q === 0 ? (
+                <button type="button" disabled={!canAdd} onClick={() => add(r)} className="glass-button-navy btn-sm !w-auto shrink-0 !px-4 uppercase tracking-[0.12em] !text-[12px] disabled:opacity-35" aria-label={`Escolher ${r.name}`}>
+                  Escolher
+                </button>
+              ) : (
+                <div className="flex shrink-0 items-center gap-1.5" role="group" aria-label={`Quantidade de ${r.name}`}>
+                  <button type="button" onClick={() => remove(r)} className="glass-button-ghost btn-sm !w-auto" aria-label={`Remover um ${r.name}`}>−</button>
+                  <span className="w-6 text-center font-bold text-slate-800" aria-live="polite">{q}</span>
+                  <button type="button" disabled={!canAdd} onClick={() => add(r)} className="glass-button btn-sm !w-auto" aria-label={`Adicionar mais um ${r.name}`}>+</button>
+                </div>
+              )}
             </li>
           );
         })}

@@ -7,8 +7,8 @@ module.exports = {
     extend: {
       screens: { wide: '1600px' },
       fontFamily: {
-        sans: ['"Inter Variable"', 'system-ui', 'sans-serif'],
-        display: ['"Inter Variable"', 'system-ui', 'sans-serif'],
+        sans: ['"Figtree Variable"', '"Inter Variable"', 'system-ui', 'sans-serif'],
+        display: ['"Figtree Variable"', '"Inter Variable"', 'system-ui', 'sans-serif'],
       },
       // Pesos mais contidos: títulos e números firmes, sem o peso "chamativo" do extrabold.
       fontWeight: { bold: '600', extrabold: '650' },

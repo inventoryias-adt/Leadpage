@@ -23,7 +23,7 @@ export default async function AvaliarPage({ params, searchParams }: { params: Pr
   if (!booking) notFound();
 
   const back = (
-    <Link href="/perfil/agendamentos" className="inline-flex items-center gap-1 text-sm font-semibold text-electric-600"><Icon name="back" size={16} /> Meus agendamentos</Link>
+    <Link href="/perfil/agendamentos" className="back-link"><Icon name="back" size={14} /> Meus agendamentos</Link>
   );
 
   let body: React.ReactNode;

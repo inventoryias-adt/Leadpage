@@ -27,15 +27,17 @@ const c = await ctx.newPage(); c.on('pageerror', (e) => console.log('PAGEERROR',
 await c.goto(BASE + '/entrar'); await c.fill('#c-email', 'lucas@teste.com'); await c.fill('#c-password', 'senha-cliente-1'); await c.click('button[type=submit]'); await c.waitForURL('**/carteira**');
 const noOverflow = async (what) => assert.ok(await c.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `${what}: sem rolagem lateral`);
 
-// 1. center FAB: botão "+" redondo, lima, no meio da barra e mais alto que as abas
+// 1. barra flutuante só com ícones: cinco abas iguais, a de Indicações (câmera) no meio, e o nome de cada uma para leitor de tela
 await c.waitForSelector('[data-testid=fab-indicar]');
 const nav = await c.locator('nav[aria-label="Navegação principal"].md\\:hidden').boundingBox();
-const fab = await c.locator('[data-testid=fab-indicar]').boundingBox();
-assert.ok(Math.abs(fab.x + fab.width / 2 - (nav.x + nav.width / 2)) < 6, 'no meio da barra');
-assert.ok(fab.y < nav.y + 6, 'sobe acima das abas');
-assert.ok(fab.width >= 56 && Math.abs(fab.width - fab.height) < 2, 'redondo e grande');
-assert.deepEqual((await c.locator('nav[aria-label="Navegação principal"].md\\:hidden a:not([data-testid=fab-indicar])').allInnerTexts()).map((t) => t.replace(/^\d+\n/, '')), ['Início', 'Lugares', 'Avisos', 'Perfil']);
-console.log('1. botão "+" em destaque no meio da barra (center FAB) OK');
+const mid = await c.locator('[data-testid=fab-indicar]').boundingBox();
+assert.ok(Math.abs(mid.x + mid.width / 2 - (nav.x + nav.width / 2)) < 8, 'a aba do meio fica no meio da barra');
+const itens = c.locator('nav[aria-label="Navegação principal"].md\\:hidden a');
+assert.equal(await itens.count(), 5, 'cinco abas');
+assert.deepEqual(await itens.evaluateAll((els) => els.map((e) => e.getAttribute('aria-label'))), ['Início', 'Lugares', 'Indicações', 'Avisos', 'Perfil']);
+const vis = await itens.evaluateAll((els) => els.map((e) => Array.from(e.querySelectorAll('span')).some((s) => s.classList.contains('sr-only')) ));
+assert.ok(vis.every(Boolean), 'o texto de cada aba fica só para leitor de tela');
+console.log('1. barra flutuante só com ícones, câmera no meio, nomes para leitor de tela OK');
 
 // 2. o "+" abre a lista de indicações; o botão "Indicar" abre a nova indicação; sem foto e sem nota não publica
 await c.click('[data-testid=fab-indicar]'); await c.waitForURL('**/indicacoes'); await c.waitForSelector('[data-testid=nova-indicacao]');

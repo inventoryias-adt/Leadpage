@@ -82,6 +82,18 @@ body {
   @apply min-h-screen bg-[#F7F8FA] font-sans text-slate-700 antialiased;
 }
 
+/* Títulos de página: grandes, pesados e com letras juntas, como no benchmark. */
+main h1:not([data-h1]) {
+  font-size: clamp(1.75rem, 8.2vw, 2rem);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+/* Rótulos em caixa-alta: letras mais espaçadas. */
+.uppercase {
+  letter-spacing: 0.12em;
+}
+
 /* ------------------------------------------------------------------ */
 /* Liquid Glass — utilitários                                         */
 /* Vidro mais "firme" (maior opacidade, bordas definidas) para passar */
@@ -106,18 +118,18 @@ body {
   }
 
   .glass-input {
-    @apply w-full rounded-lg border bg-white px-3.5 py-2.5 text-[15px] text-slate-900 placeholder:text-slate-400
+    @apply w-full rounded-2xl border bg-white px-4 py-2.5 text-base text-slate-900 placeholder:text-slate-400
       transition-colors duration-150 hover:border-slate-400 focus:border-electric-500 focus:outline-none focus:ring-2 focus:ring-electric-500/20;
-    border-color: #CBD2DC;
+    border-color: #D5DAE1;
   }
   select.glass-input,
   input[type='time'].glass-input {
     cursor: pointer;
   }
-  /* Campo de uma linha com a mesma altura do botão (44 px): lado a lado, nada fica maior que o vizinho. */
+  /* Campo de uma linha com a mesma altura do botão (48 px): lado a lado, nada fica maior que o vizinho. */
   input.glass-input:not([type='file']):not([type='range']):not([type='checkbox']):not([type='radio']),
   select.glass-input {
-    height: 2.75rem;
+    height: 3rem;
     padding-top: 0;
     padding-bottom: 0;
   }
@@ -139,8 +151,9 @@ body {
   .glass-button-navy,
   .glass-button-ghost,
   .btn-danger {
-    @apply inline-flex w-full select-none items-center justify-center gap-2 rounded-lg border px-5 py-2 text-sm font-semibold leading-tight;
-    min-height: 2.75rem; /* 44 px: mesma altura em todo botão, bom para o toque */
+    @apply inline-flex w-full select-none items-center justify-center gap-2 rounded-full border px-5 py-2 text-[15px] font-semibold leading-tight;
+    white-space: nowrap;
+    min-height: 3rem; /* 48 px: mesma altura em todo botão, bom para o toque */
     cursor: pointer;
     text-decoration: none;
     transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
@@ -165,32 +178,25 @@ body {
     opacity: 0.5;
   }
 
-  .glass-button {
-    color: #fff;
-    border-color: #0f1f3d;
-    background-color: #0f1f3d;
+  /* Botão principal: pílula lima com texto marinho (padrão do benchmark). */
+  .glass-button,
+  .glass-button-navy,
+  .glass-button-lime {
+    color: #0f1f3d;
+    border-color: #c6f432;
+    background-color: #c6f432;
   }
   @media (hover: hover) {
-    .glass-button:not(:disabled):hover {
-      border-color: #0b1b3a;
-      background-color: #0b1b3a;
-    }
-  }
-
-  /* Botão de ação principal da tela (ex.: "Fazer pedido"): azul-marinho, mais firme que o azul comum. */
-  .glass-button-navy {
-    color: #fff;
-    border-color: #0f1f3d;
-    background-color: #0f1f3d;
-  }
-  @media (hover: hover) {
-    .glass-button-navy:not(:disabled):hover {
-      border-color: #0b1b3a;
-      background-color: #0b1b3a;
+    .glass-button:not(:disabled):hover,
+    .glass-button-navy:not(:disabled):hover,
+    .glass-button-lime:not(:disabled):hover {
+      border-color: #b3e01c;
+      background-color: #b3e01c;
     }
   }
   /* Página do lugar: o botão principal usa a cor da marca do estabelecimento (--brand definida no <main class="brand-scope">). */
   .brand-scope .glass-button-navy {
+    color: #fff;
     border-color: var(--brand);
     background-color: var(--brand);
   }
@@ -202,28 +208,16 @@ body {
     }
   }
 
-  /* Botão principal em destaque: lima da marca com texto marinho. */
-  .glass-button-lime {
-    color: #0b1b3a;
-    border-color: #c6f432;
-    background-color: #c6f432;
-  }
-  @media (hover: hover) {
-    .glass-button-lime:not(:disabled):hover {
-      border-color: #b3e01c;
-      background-color: #b3e01c;
-    }
-  }
-
+  /* Botão secundário: pílula branca com contorno claro. */
   .glass-button-ghost {
     color: #0f1f3d;
-    border-color: #cbd2dc;
+    border-color: #d5dae1;
     background-color: #fff;
   }
   @media (hover: hover) {
     .glass-button-ghost:not(:disabled):hover {
-      border-color: #94a3b8;
-      background-color: #e9edf3;
+      border-color: #aeb6c2;
+      background-color: #f3f4f6;
     }
   }
 
@@ -268,7 +262,7 @@ body {
 
   /* Botão só de ícone (fechar, voltar, apagar): quadrado, mesmo raio dos demais botões. */
   .btn-icon {
-    @apply inline-flex h-10 w-10 shrink-0 cursor-pointer select-none items-center justify-center rounded-lg border border-transparent bg-slate-100 text-slate-700 transition-colors;
+    @apply inline-flex h-11 w-11 shrink-0 cursor-pointer select-none items-center justify-center rounded-full border border-transparent bg-[#F1F2F4] text-slate-700 transition-colors;
   }
   @media (hover: hover) {
     .btn-icon:hover {
@@ -343,8 +337,9 @@ body {
     @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EAF0FF] text-electric-600;
   }
   .chip-link {
-    @apply inline-flex items-center rounded-full border bg-white px-3.5 py-1.5 text-sm font-medium text-electric-600;
-    border-color: #cbd2dc;
+    @apply inline-flex items-center rounded-full border bg-white px-4 text-[15px] font-medium text-primary;
+    min-height: 2.625rem; /* 42 px */
+    border-color: #d5dae1;
     cursor: pointer;
     transition: background-color 0.15s ease, border-color 0.15s ease;
   }
@@ -365,6 +360,45 @@ body {
       background-color: #0f1f3d;
       border-color: #0f1f3d;
     }
+  }
+
+  /* "Voltar" do benchmark: seta + nome da tela anterior em caixa-alta miúda e espaçada. */
+  .back-link {
+    @apply inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase text-slate-600;
+    letter-spacing: 0.14em;
+  }
+  @media (hover: hover) {
+    .back-link:hover {
+      @apply text-primary;
+    }
+  }
+  /* Rótulo miúdo de campo ou de grupo ("NOME", "SEU PERFIL"). */
+  .micro {
+    @apply text-[11px] font-semibold uppercase text-slate-500;
+    letter-spacing: 0.14em;
+  }
+  /* Subtítulo em itálico logo abaixo do título. */
+  .sub {
+    @apply text-[15px] italic text-slate-500;
+  }
+  /* Etiqueta de informação ("VALE EM TODA A REDE"): pílula clara, texto miúdo em caixa-alta. */
+  .info-pill {
+    @apply inline-flex items-center rounded-full px-3.5 py-2 text-[10px] font-bold uppercase text-[#4f6a00];
+    letter-spacing: 0.14em;
+    background-color: #f1fbc8;
+  }
+  /* Barra de abas flutuante do celular: pílula branca só com ícones; a aba ativa é uma pílula lima. */
+  .nav-float {
+    @apply relative grid w-full max-w-xs grid-cols-5 items-center gap-1 rounded-full bg-white p-1.5;
+    box-shadow: 0 10px 34px rgba(15, 31, 61, 0.16), 0 1px 0 rgba(15, 31, 61, 0.04);
+  }
+  .nav-float-item {
+    @apply relative mx-auto flex h-12 w-full max-w-[3.75rem] items-center justify-center rounded-full text-slate-700;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+  .nav-float-item[aria-current='page'] {
+    background-color: #c6f432;
+    color: #0f1f3d;
   }
 
   /* Link de texto dentro de conteúdo. */

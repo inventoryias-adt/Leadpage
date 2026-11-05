@@ -21,12 +21,15 @@ await c.goto(BASE + '/entrar'); await c.fill('#c-email', 'dados@teste.com'); awa
 // 1. do Perfil para "Meus dados", com voltar
 await c.goto(BASE + '/perfil'); await c.waitForSelector('[data-testid=edit-profile-link]');
 assert.ok(await c.locator('[data-testid=my-data-link]').count(), 'atalho em "Minha conta"');
-await c.click('[data-testid=edit-profile-link]'); await c.waitForURL('**/perfil/dados'); await c.waitForSelector('[data-testid=data-nome]');
+await c.click('[data-testid=edit-profile-link]'); await c.waitForURL('**/perfil/dados'); await c.waitForSelector('[data-testid=conta-lista]');
 assert.ok(await c.locator('[data-testid=back-perfil]').count());
-for (const k of ['nome', 'contato', 'cpf', 'senha']) assert.ok(await c.locator(`[data-testid=data-${k}]`).count(), k);
+for (const k of ['nome', 'contato', 'cpf', 'senha', 'aniversario', 'instagram']) assert.ok(await c.locator(`[data-testid=conta-${k}]`).count(), k);
 assert.ok(await c.locator('[data-testid=profile-photo-input]').count(), 'foto na mesma tela');
+await c.screenshot({ path: 'sua-conta.png', fullPage: true });
+await c.click('[data-testid=conta-nome]'); await c.waitForURL('**/perfil/dados/nome'); await c.waitForSelector('[data-testid=data-nome]');
+assert.ok(await c.locator('[data-testid=back-conta]').count(), 'voltar para Sua conta');
 await c.screenshot({ path: 'meus-dados.png', fullPage: true });
-console.log('1. Meus dados: foto, nome, telefone/e-mail, CPF, senha, aniversário e Instagram numa tela, com voltar OK');
+console.log('1. Meus dados: foto, nome, telefone/e-mail, CPF, senha, aniversário e Instagram em lista, cada um em sua tela, com voltar OK');
 
 // 2. nome
 await c.fill('#cf-name', 'A'); await c.click('[data-testid=save-name]'); await c.waitForSelector('text=Informe seu nome');
@@ -36,7 +39,7 @@ await c.goto(BASE + '/perfil'); await c.waitForSelector('h1:has-text("Maria da S
 console.log('2. trocar o nome (espaços arrumados) aparece no Perfil OK');
 
 // 3. telefone e e-mail pedem a senha atual
-await c.goto(BASE + '/perfil/dados'); await c.waitForSelector('#cf-phone');
+await c.goto(BASE + '/perfil/dados/contato'); await c.waitForSelector('#cf-phone');
 await c.fill('#cf-phone', '(21) 98888-7777'); await c.click('[data-testid=save-contact]'); await c.waitForSelector('text=Digite a sua senha atual');
 await c.fill('#cf-phone', '(21) 98888-7777'); await c.fill('#cf-password', 'errada-123'); await c.click('[data-testid=save-contact]'); await c.waitForSelector('text=A senha atual está incorreta');
 assert.ok(!row().includes('21988887777'), 'não salva com senha errada');
@@ -46,6 +49,7 @@ await c.fill('#cf-email', 'lucas@teste.com'); await c.fill('#cf-password', 'senh
 console.log('3. telefone e e-mail: pedem a senha atual; e-mail repetido é recusado OK');
 
 // 4. CPF
+await c.goto(BASE + '/perfil/dados/cpf'); await c.waitForSelector('#cf-cpf');
 await c.locator('[data-testid=data-cpf] #cf-cpf').fill('111.111.111-11');
 await c.locator('[data-testid=data-cpf] #cf-password').fill('senha-cliente-1');
 await c.click('[data-testid=save-cpf]'); await c.waitForSelector('text=CPF inválido');
@@ -59,6 +63,7 @@ assert.equal(row().split('|')[3], '16899535009');
 console.log('4. CPF: inválido e repetido são recusados; o certo é salvo com a senha atual OK');
 
 // 5. senha
+await c.goto(BASE + '/perfil/dados/senha'); await c.waitForSelector('#pw-current');
 await c.fill('#pw-current', 'senha-cliente-1'); await c.fill('#pw-next', 'nova-senha-123'); await c.fill('#pw-confirm', 'outra-senha-123'); await c.click('[data-testid=save-password]'); await c.waitForSelector('text=As senhas novas não são iguais');
 await c.fill('#pw-current', 'errada-123'); await c.fill('#pw-next', 'nova-senha-123'); await c.fill('#pw-confirm', 'nova-senha-123'); await c.click('[data-testid=save-password]'); await c.waitForSelector('text=A senha atual está incorreta');
 await c.fill('#pw-current', 'senha-cliente-1'); await c.fill('#pw-next', 'nova-senha-123'); await c.fill('#pw-confirm', 'nova-senha-123'); await c.click('[data-testid=save-password]'); await c.waitForSelector('text=Senha alterada');

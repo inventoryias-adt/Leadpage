@@ -45,7 +45,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
 
   const base = `/lugar/${restaurantId}/agendar`;
   const back = (
-    <Link href={`/lugar/${restaurantId}`} className="inline-flex items-center gap-1 text-sm font-semibold text-electric-600"><Icon name="back" size={16} /> {restaurant.name}</Link>
+    <Link href={`/lugar/${restaurantId}`} className="back-link"><Icon name="back" size={14} /> {restaurant.name}</Link>
   );
 
   if (services.length === 0 || units.length === 0) {

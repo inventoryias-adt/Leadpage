@@ -68,8 +68,8 @@ console.log('4. categorias antes das campanhas; campanhas por lugar com contagem
 // 5. formas ovais
 const radius = (sel) => p.locator(sel).first().evaluate((e) => parseFloat(getComputedStyle(e).borderTopLeftRadius));
 assert.ok((await radius('button[aria-pressed]:has-text("Tudo")')) >= 100, 'filtros em pílula');
-assert.ok((await radius('button:has-text("Buscar lugar ou categoria")')) >= 100, 'busca em pílula');
-console.log('5. filtros e busca em formato oval OK');
+assert.ok((await radius('button:has-text("Buscar lugar ou categoria")')) >= 16, 'busca com cantos bem arredondados (campo cinza do benchmark)');
+console.log('5. filtros em pílula e busca com cantos arredondados OK');
 
 // 6. carrosséis discretos: no celular só um risquinho de posição (sem setas grandes nem texto); a seta existe só no computador
 assert.equal(await p.locator('[aria-label="Categorias"] >> text=Deslize para ver mais').count(), 0, 'sem texto de aviso');

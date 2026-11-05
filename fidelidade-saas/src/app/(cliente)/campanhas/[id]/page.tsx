@@ -28,7 +28,7 @@ export default async function CampanhaPage({ params }: { params: Promise<{ id: s
 
   return (
     <main className="space-y-6 p-4 sm:p-6 md:pt-8">
-      <Link href="/carteira" className="inline-flex items-center gap-1.5 text-sm font-semibold text-electric-600"><Icon name="back" size={16} /> Início</Link>
+      <Link href="/carteira" className="back-link"><Icon name="back" size={14} /> Início</Link>
 
       <header className="rounded-[22px] bg-gradient-to-br from-[#1A3FA3] to-[#2150C9] p-5 text-white">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide"><Icon name="spark" size={13} /> Campanha do app{live ? ' · valendo agora' : ''}</span>
