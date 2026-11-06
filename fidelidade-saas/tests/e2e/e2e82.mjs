@@ -7,7 +7,13 @@ const wait = (p, ms) => p.waitForTimeout(ms);
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
 await ctx.addInitScript(() => { localStorage.setItem('fz_intro_v1', '1'); try { sessionStorage.setItem('fz_splash', '1'); } catch {} });
 const p = await ctx.newPage(); p.on('pageerror', (e) => console.log('PAGEERROR', e.message));
-const css = (page) => page.evaluate(() => { const out = []; for (const ss of document.styleSheets) { try { for (const r of ss.cssRules) { if (r.cssRules) for (const q of r.cssRules) out.push([q.selectorText ?? '', q.cssText]); else out.push([r.selectorText ?? '', r.cssText]); } } catch {} } return out; });
+// Todas as regras do CSS (inclusive as de dentro de @media/@layer): [seletor, texto da regra].
+const css = (page) => page.evaluate(() => {
+  const out = [];
+  const walk = (rules) => { for (const r of rules) { if (r.selectorText !== undefined) out.push([r.selectorText, r.cssText]); if (r.cssRules && r.cssRules.length) walk(r.cssRules); else if (r.selectorText === undefined) out.push(['', r.cssText]); } };
+  for (const ss of document.styleSheets) { try { walk(ss.cssRules); } catch {} }
+  return out;
+});
 
 // 1. página inicial: botão principal azul do logo, texto branco, 40 px
 await p.goto(BASE + '/'); await wait(p, 1500);
@@ -28,6 +34,7 @@ console.log('2. faixa escura: botão branco com texto marinho OK');
 // 3. nenhuma lima no CSS e degradê do logo nos elementos sem texto
 const rules = await css(p);
 const all = rules.map((r) => r[1]).join('\n');
+assert.ok(rules.length > 200 && /nav-float-fab/.test(all), `leu o CSS inteiro (${rules.length} regras)`);
 assert.ok(!/c6f432|198, ?244, ?50|b3e01c|f1fbc8/i.test(all), 'nenhuma lima no CSS');
 const has = (sel, re) => rules.some(([s, t]) => s.split(',').map((x) => x.trim()).includes(sel) && re.test(t));
 assert.ok(has('.nav-float-fab', /linear-gradient/), 'botão da câmera em degradê');
@@ -38,7 +45,7 @@ console.log('3. sem lima no CSS; câmera, aba ativa, barras e marcador em degrad
 
 // 4. o degradê é do azul do F para o verde do F
 for (const sel of ['.nav-float-fab', '.bar-grad']) {
-  const t = rules.find(([s]) => s.split(',').map((x) => x.trim()).includes(sel))[1].toLowerCase();
+  const t = rules.filter(([s]) => s.split(',').map((x) => x.trim()).includes(sel)).map((r) => r[1]).join(' ').toLowerCase();
   assert.ok(/47, ?99, ?230|2f63e6/.test(t) && /123, ?224, ?138|7be08a/.test(t), `${sel}: do azul #2F63E6 ao verde #7BE08A`);
 }
 console.log('4. degradê do azul #2F63E6 ao verde #7BE08A OK');
