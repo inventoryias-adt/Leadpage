@@ -32,15 +32,4 @@ export function InstagramGlyph({ size = 20, className, ...rest }: { size?: numbe
   );
 }
 
-/** Tipo de uma ação, pelo texto que o dono cadastrou. */
-export function actionKind(label: string): 'google' | 'instagram' | 'other' {
-  const t = label.toLowerCase();
-  if (/google|avalia/.test(t)) return 'google';
-  if (/instagram|story|stories|foto|post|marc/.test(t)) return 'instagram';
-  return 'other';
-}
-
-/** O texto da ação como o cliente lê: "Avaliação 5 estrelas no Google" vira "Avaliação no Google" (não dá para conferir a nota). */
-export function actionTitle(label: string): string {
-  return label.replace(/\s*\b5\s*estrelas?\b\s*/i, ' ').replace(/\s{2,}/g, ' ').trim();
-}
+export { actionKind, actionTitle } from '@/lib/interaction-kind';

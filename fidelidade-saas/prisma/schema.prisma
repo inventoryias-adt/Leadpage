@@ -97,15 +97,15 @@ model Restaurant {
   birthdayPerkMinCents Int     @default(0) // consumo mínimo em centavos (modo SPEND)
 
   // Agenda e reservas
-  bookingAutoConfirm  Boolean @default(true) // false: o estabelecimento confirma cada pedido
-  bookingMinNoticeMin Int     @default(60) // antecedência mínima para marcar, em minutos
-  bookingMaxDaysAhead Int     @default(30) // até quantos dias à frente o cliente pode marcar
-  bookingCancelHours  Int     @default(2) // o cliente cancela sozinho até X horas antes
-  bookingBufferMin    Int     @default(0) // intervalo entre atendimentos (limpeza, troca de cliente), em minutos
-  bookingSlotStepMin  Int     @default(0) // de quanto em quanto tempo os horários aparecem para o cliente: 0 = automático (do tamanho do serviço), ou 15, 30, 60 min
+  bookingAutoConfirm  Boolean  @default(true) // false: o estabelecimento confirma cada pedido
+  bookingMinNoticeMin Int      @default(60) // antecedência mínima para marcar, em minutos
+  bookingMaxDaysAhead Int      @default(30) // até quantos dias à frente o cliente pode marcar
+  bookingCancelHours  Int      @default(2) // o cliente cancela sozinho até X horas antes
+  bookingBufferMin    Int      @default(0) // intervalo entre atendimentos (limpeza, troca de cliente), em minutos
+  bookingSlotStepMin  Int      @default(0) // de quanto em quanto tempo os horários aparecem para o cliente: 0 = automático (do tamanho do serviço), ou 15, 30, 60 min
   reviewsSeenAt       DateTime @default(now()) // última vez que o dono abriu Avaliações: o que chegou depois é novidade no Início
   postsSeenAt         DateTime @default(now()) // idem, para Indicações
-  pointsPerRealOff    Int     @default(100) // quantos pontos valem R$ 1,00 de desconto num serviço (padrão: ganha 10 por real, 100 pontos = R$ 1,00)
+  pointsPerRealOff    Int      @default(100) // quantos pontos valem R$ 1,00 de desconto num serviço (padrão: ganha 10 por real, 100 pontos = R$ 1,00)
   bookingNotifyEmail  String? // e-mail que recebe cada novo agendamento (vazio = o e-mail da conta)
 
   // Pedidos pelo app (cardápio, sacola e retirada com pagamento no balcão). Começa desligado.
@@ -158,6 +158,8 @@ model Restaurant {
   orders            Order[]
   birthdayGifts     BirthdayGift[]
   interactionClaims InteractionClaim[]
+  googleConnection  GoogleConnection?
+  googleIntents     GoogleReviewIntent[]
   financeEntries    FinanceEntry[]
   commissionPayouts CommissionPayout[]
   clubPlans         ClubPlan[]
@@ -175,8 +177,9 @@ model InteractionRule {
   approval     String   @default("COUNTER")
   createdAt    DateTime @default(now())
 
-  restaurant Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  restaurant Restaurant           @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   claims     InteractionClaim[]
+  intents    GoogleReviewIntent[]
 
   @@index([restaurantId])
 }
@@ -189,24 +192,63 @@ enum InteractionClaimStatus {
 
 /// "Já fiz": pedido do cliente por pontos de uma interação (avaliar no Google, story no Instagram…), que o dono aprova ou recusa.
 model InteractionClaim {
-  id           String                 @id @default(uuid())
-  restaurantId String
-  customerId   String
-  ruleId       String?
-  label        String // snapshot da descrição
-  points       Int // snapshot
-  status       InteractionClaimStatus @default(PENDING)
-  autoAt       DateTime? // quando entra sozinho (regra AUTO); vazio = só com aprovação do dono
-  createdAt    DateTime               @default(now())
-  decidedAt    DateTime?
-  decidedBy    String? // OWNER ou AUTO
+  id             String                 @id @default(uuid())
+  restaurantId   String
+  customerId     String
+  ruleId         String?
+  label          String // snapshot da descrição
+  points         Int // snapshot
+  status         InteractionClaimStatus @default(PENDING)
+  autoAt         DateTime? // quando entra sozinho (regra AUTO); vazio = só com aprovação do dono
+  createdAt      DateTime               @default(now())
+  decidedAt      DateTime?
+  decidedBy      String? // OWNER, AUTO ou GOOGLE (conferido na avaliação do Google)
+  /// Avaliação do Google: quando o cliente tocou em "Avaliar no Google" (só vale avaliação escrita depois disso) e qual unidade abriu.
+  openedAt       DateTime?
+  unitId         String?
+  /// Última vez que procuramos a avaliação no Google (para não consultar toda hora).
+  checkedAt      DateTime?
+  /// A avaliação do Google que confirmou este pedido (cada avaliação confirma um pedido só).
+  googleReviewId String?
 
   restaurant Restaurant       @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   customer   Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
   rule       InteractionRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
 
+  @@unique([restaurantId, googleReviewId])
   @@index([restaurantId, status])
   @@index([customerId, ruleId, createdAt])
+}
+
+/// O lugar liga o perfil do Google (o dono autoriza só a leitura das avaliações). Guardamos o token de renovação cifrado.
+model GoogleConnection {
+  id              String    @id @default(uuid())
+  restaurantId    String    @unique
+  refreshTokenEnc String
+  googleEmail     String?
+  /// Perfis a que o dono tem acesso: [{ name: "accounts/1/locations/2", title: "Burger do Zé", address: "..." }]
+  locations       Json?
+  connectedAt     DateTime  @default(now())
+  lastCheckedAt   DateTime?
+  lastError       String?
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+}
+
+/// O cliente tocou em "Avaliar no Google": marca a hora para só aceitar uma avaliação escrita depois dela.
+model GoogleReviewIntent {
+  id           String   @id @default(uuid())
+  customerId   String
+  ruleId       String
+  restaurantId String
+  unitId       String?
+  openedAt     DateTime @default(now())
+
+  customer   Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  rule       InteractionRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  restaurant Restaurant      @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, ruleId])
 }
 
 /// Produto do cardápio elegível para resgate com pontos.
@@ -262,6 +304,7 @@ model Customer {
   orders            Order[]
   birthdayGifts     BirthdayGift[]
   interactionClaims InteractionClaim[]
+  googleIntents     GoogleReviewIntent[]
   posts             Post[]
   postLikes         PostLike[]
   conversations     Conversation[]
@@ -470,6 +513,8 @@ model Unit {
   latitude        Float?
   longitude       Float?
   googleReviewUrl String?
+  /// Perfil do Google desta unidade ("accounts/123/locations/456"), para conferir as avaliações sozinho. Vazio = o lugar confere à mão.
+  googleLocation  String?
   active          Boolean  @default(true)
   createdAt       DateTime @default(now())
 

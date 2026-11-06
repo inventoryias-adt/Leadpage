@@ -2,7 +2,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { giveBirthdayGifts } from '@/lib/birthday-db';
 import { sendDueReminders } from '@/lib/booking-db';
-import { settleDueInteractions } from '@/lib/interaction-claims';
+import { settleDueInteractions, verifyGoogleClaims } from '@/lib/interaction-claims';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,11 +23,16 @@ async function handle(req: Request) {
       console.error('[cron/aniversarios]', e);
       return { birthdayGifts: 0 };
     });
+    // Primeiro a conferência no Google (libera antes quem tem avaliação), depois o prazo do modo automático.
+    const googleChecked = await verifyGoogleClaims().catch((e) => {
+      console.error('[cron/google]', e);
+      return 0;
+    });
     const interactions = await settleDueInteractions().catch((e) => {
       console.error('[cron/interacoes]', e);
       return 0;
     });
-    return NextResponse.json({ ok: true, ...reminders, ...gifts, interactionsApproved: interactions });
+    return NextResponse.json({ ok: true, ...reminders, ...gifts, interactionsApproved: interactions, googleApproved: googleChecked });
   } catch (e) {
     console.error('[cron/lembretes]', e);
     return NextResponse.json({ error: 'Falha ao enviar lembretes.' }, { status: 500 });

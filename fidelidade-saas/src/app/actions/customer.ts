@@ -12,7 +12,7 @@ import { TERMS_REQUIRED_MESSAGE, termsAccepted, termsRecord } from '@/lib/legal'
 import { emailConfigured } from '@/lib/mailer';
 import { dummyHash, hashPassword, verifyPassword } from '@/lib/password';
 import { uniqueAccountCode } from '@/lib/account-code-db';
-import { requestInteraction } from '@/lib/interaction-claims';
+import { confirmGoogleReview, googleReviewState, requestInteraction, startGoogleReview } from '@/lib/interaction-claims';
 import { newReferralCode } from '@/lib/tokens';
 import { endCustomerSession, getCustomer, startCustomerSession } from '@/lib/session';
 import { fail, safeNext, type BagState, type FormState } from '@/lib/form';
@@ -208,6 +208,55 @@ export async function requestInteractionAction(_: FormState, formData: FormData)
     if (!(e instanceof BusinessError)) throw e;
     return { error: e.message };
   }
+}
+
+export type GoogleFlowState =
+  | { step: 'checking'; auto: boolean; autoAt: string | null }
+  | { step: 'approved'; points: number; by: string | null }
+  | { step: 'rejected' }
+  | { error: string };
+
+const flowOf = (st: Awaited<ReturnType<typeof googleReviewState>>): GoogleFlowState => {
+  if (!st) return { error: 'Pedido não encontrado.' };
+  if (st.status === 'APPROVED') return { step: 'approved', points: st.points, by: st.by };
+  if (st.status === 'REJECTED') return { step: 'rejected' };
+  return { step: 'checking', auto: st.verifying, autoAt: st.autoAt ? st.autoAt.toISOString() : null };
+};
+
+/** Tela 2 do fluxo de avaliação: o cliente abriu o Google (guarda a hora). Não bloqueia: se falhar, o pedido segue sem conferência automática. */
+export async function startGoogleReviewAction(ruleId: string, unitId: string | null): Promise<{ ok: boolean }> {
+  const customer = await getCustomer();
+  if (!customer) return { ok: false };
+  try {
+    await startGoogleReview(customer.id, ruleId, unitId);
+    return { ok: true };
+  } catch (e) {
+    if (!(e instanceof BusinessError)) throw e;
+    return { ok: false };
+  }
+}
+
+/** "Já avaliei": cria o pedido de pontos e devolve o estado da conferência (tela 3). */
+export async function confirmGoogleReviewAction(ruleId: string, restaurantId: string): Promise<GoogleFlowState> {
+  const customer = await getCustomer();
+  if (!customer) return { error: 'Entre na sua conta para pedir os pontos.' };
+  try {
+    await confirmGoogleReview(customer.id, ruleId);
+    revalidatePath(`/lugar/${restaurantId}`);
+    return flowOf(await googleReviewState(customer.id, ruleId));
+  } catch (e) {
+    if (!(e instanceof BusinessError)) throw e;
+    return { error: e.message };
+  }
+}
+
+/** Tela 3: procura de novo a avaliação no Google (no máximo uma consulta por minuto) e devolve o estado do pedido. */
+export async function checkGoogleReviewAction(ruleId: string, restaurantId: string): Promise<GoogleFlowState> {
+  const customer = await getCustomer();
+  if (!customer) return { error: 'Sua sessão expirou. Entre novamente.' };
+  const state = flowOf(await googleReviewState(customer.id, ruleId, { check: true }));
+  if ('step' in state && state.step !== 'checking') revalidatePath(`/lugar/${restaurantId}`);
+  return state;
 }
 
 /** Resgata a sacola inteira (vários prêmios de um mesmo lugar). */

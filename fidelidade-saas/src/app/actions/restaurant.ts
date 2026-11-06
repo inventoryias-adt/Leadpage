@@ -811,3 +811,29 @@ export async function markRedemptionUsed(formData: FormData) {
   revalidatePath('/dashboard/resgates');
   revalidatePath('/dashboard');
 }
+
+/** Escolhe qual perfil do Google é desta unidade (vazio = o lugar confere as avaliações à mão). */
+export async function saveUnitGoogleLocation(formData: FormData) {
+  const restaurant = await requirePaidRestaurant();
+  const unitId = String(formData.get('unitId') ?? '');
+  const location = String(formData.get('location') ?? '').trim();
+  const unit = await prisma.unit.findFirst({ where: { id: unitId, restaurantId: restaurant.id }, select: { id: true } });
+  if (!unit) return;
+  if (location) {
+    const conn = await prisma.googleConnection.findUnique({ where: { restaurantId: restaurant.id }, select: { locations: true } });
+    const known = Array.isArray(conn?.locations) && (conn!.locations as { name?: string }[]).some((l) => l.name === location);
+    if (!known) return; // só perfis a que o dono realmente tem acesso
+  }
+  await prisma.unit.update({ where: { id: unit.id }, data: { googleLocation: location || null } });
+  revalidatePath('/dashboard/configuracoes');
+}
+
+/** Desliga o Google: some o token guardado e as unidades voltam a ser conferidas à mão. */
+export async function disconnectGoogle() {
+  const restaurant = await requirePaidRestaurant();
+  await prisma.$transaction([
+    prisma.unit.updateMany({ where: { restaurantId: restaurant.id }, data: { googleLocation: null } }),
+    prisma.googleConnection.deleteMany({ where: { restaurantId: restaurant.id } }),
+  ]);
+  revalidatePath('/dashboard/configuracoes');
+}

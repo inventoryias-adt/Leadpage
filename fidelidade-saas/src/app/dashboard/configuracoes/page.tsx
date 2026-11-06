@@ -30,6 +30,7 @@ import { parseSchedule } from '@/lib/hours';
 import { removeResource, removeService } from '@/app/actions/agenda';
 import { AddServiceForm, BookingPolicyForm, StaffForm } from '@/components/AgendaSettings';
 import { RegrasHub } from '@/components/RegrasHub';
+import { GoogleConnectCard } from '@/components/GoogleConnectCard';
 import { ScrollActiveIntoView } from '@/components/ScrollActiveIntoView';
 import { buildHub, topicById, topicHref, TOPICS } from '@/lib/regras-hub';
 import { imageUrl } from '@/lib/images';
@@ -122,7 +123,7 @@ type Etapa = (typeof SECTIONS)[number][0];
 /** Etapa que contém cada bloco: os atalhos de outras telas usam `/dashboard/configuracoes?etapa=…#bloco`. */
 const hrefOf = (etapa: Etapa, hash?: string, extra = '') => `/dashboard/configuracoes?etapa=${etapa}${extra}${hash ? `#${hash}` : ''}`;
 
-export default async function ConfiguracoesPage({ searchParams }: { searchParams: Promise<{ abrir?: string; etapa?: string; topico?: string }> }) {
+export default async function ConfiguracoesPage({ searchParams }: { searchParams: Promise<{ abrir?: string; etapa?: string; topico?: string; google?: string }> }) {
   const restaurant = await requirePaidRestaurant();
   const sp = await searchParams;
   const abrir = sp.abrir;
@@ -365,6 +366,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
             />
           </div>
         </details>
+        <GoogleConnectCard restaurantId={restaurant.id} units={units.filter((u) => u.active).map((u) => ({ id: u.id, name: u.name, googleLocation: u.googleLocation }))} flash={sp.google} />
       </Block>
       </Section>
 )}

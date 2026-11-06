@@ -71,6 +71,10 @@ jobs:
       SUPPORT_WHATSAPP: "5511975944834"
       RESEND_API_KEY: re_fake
       DEV_MAIL_FILE: /tmp/dev-mail.jsonl
+      # Conferência das avaliações do Google em modo de teste: as avaliações vêm de um arquivo, não do Google.
+      GOOGLE_REVIEWS_PROVIDER: mock
+      GOOGLE_REVIEWS_MOCK_FILE: /tmp/google-mock.json
+      GOOGLE_TOKEN_KEY: chave-de-teste-do-google-0123456789
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
