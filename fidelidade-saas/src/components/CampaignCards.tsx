@@ -55,22 +55,24 @@ export function CampaignCards({ items, loggedIn }: { items: CampaignView[]; logg
 
   return (
     <section aria-labelledby="campanhas" className="space-y-3">
-      <h2 id="campanhas" className="m-0">
-        <button
-          type="button"
-          onClick={() => setExpanded((v) => !v)}
-          aria-expanded={expanded}
-          aria-controls="campanhas-lista"
-          className="flex w-full items-center justify-between gap-3 !rounded-none !border-0 !bg-transparent !p-0 py-1 text-left !shadow-none"
-          data-testid="campanhas-toggle"
-        >
-          <span className="text-[15px] font-bold text-slate-800">Campanhas por lugar</span>
-          <span className="flex items-center gap-2 text-xs text-slate-500">
-            {total} {total === 1 ? 'campanha' : 'campanhas'} · {groups.length} {groups.length === 1 ? 'lugar' : 'lugares'}
-            <Icon name="down" size={16} className={`shrink-0 text-slate-500 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
-          </span>
-        </button>
-      </h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 id="campanhas" className="m-0">
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            aria-expanded={expanded}
+            aria-controls="campanhas-lista"
+            className="inline-flex items-center gap-1.5 !rounded-none !border-0 !bg-transparent !p-0 py-1 text-left !shadow-none"
+            data-testid="campanhas-toggle"
+          >
+            <span className="text-[15px] font-bold text-slate-800">Campanhas</span>
+            <Icon name="down" size={18} className={`shrink-0 text-slate-700 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
+          </button>
+        </h2>
+        <span className="text-xs text-slate-500" data-testid="campanhas-resumo">
+          {total} {total === 1 ? 'campanha' : 'campanhas'} · {groups.length} {groups.length === 1 ? 'lugar' : 'lugares'}
+        </span>
+      </div>
 
       {expanded && (
       <div id="campanhas-lista">
