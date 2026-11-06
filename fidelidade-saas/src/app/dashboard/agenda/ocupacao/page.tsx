@@ -86,7 +86,7 @@ export default async function OcupacaoPage({ searchParams }: { searchParams: Pro
 
       {open.length > 0 && (emptiest || hot.length > 0) && (
         <section aria-label="O que fazer" className="space-y-2 rounded-[22px] bg-primary p-4 text-white" data-testid="occupancy-insights">
-          <p className="text-xs font-bold uppercase tracking-wider text-lime-300">O que o painel enxerga</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-verde">O que o painel enxerga</p>
           <ul className="space-y-1.5 text-sm">
             {fullest && (fullest.pct ?? 0) >= 60 && <li>Dia mais cheio: <b>{when(fullest.date)}</b> ({fullest.pct}%).</li>}
             {emptiest && (emptiest.pct ?? 0) < 40 && <li>Sobra espaço em <b>{when(emptiest.date)}</b> ({emptiest.pct}% ocupado): bom dia para uma promoção ou um aviso aos clientes.</li>}

@@ -35,7 +35,7 @@ export function PublicNav({ current, dark }: { current?: string; dark?: boolean 
         </nav>
         <div className="flex items-center gap-2 text-sm font-semibold">
           <Link href="/login" className={`rounded-full px-3 py-2 ${dark ? 'text-slate-200 hover:text-white' : 'text-slate-600 hover:text-primary'}`}>Entrar</Link>
-          <SignupLink className="glass-button-lime btn-sm !w-auto">Começar</SignupLink>
+          <SignupLink className={`${dark ? 'glass-button-light' : 'glass-button-primary'} btn-sm !w-auto`}>Começar</SignupLink>
         </div>
       </div>
       {/* No celular o menu vira uma fileira que rola para o lado. */}
@@ -87,7 +87,7 @@ export function PageHero({ icon, title, text }: { icon: IconName; title: string;
           <Icon name="back" size={14} /> Voltar ao início
         </Link>
         <div className="mt-6 flex items-center gap-4">
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-lima"><Icon name={icon} size={28} /></span>
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-verde"><Icon name={icon} size={28} /></span>
           <h1 data-h1 className="text-4xl font-extrabold tracking-tight md:text-5xl">{title}</h1>
         </div>
         <p className="mt-4 max-w-2xl text-lg text-slate-300">{text}</p>
@@ -155,7 +155,7 @@ export function ClosingBand({ title, text }: { title: string; text: string }) {
     <section className="bg-dots-dark relative overflow-hidden bg-primary px-5 py-16 text-center sm:px-8">
       <h2 className="mx-auto mb-3 max-w-2xl text-3xl font-extrabold tracking-tight text-white md:text-4xl">{title}</h2>
       <p className="mx-auto mb-7 max-w-xl text-slate-300">{text}</p>
-      <SignupLink className="glass-button-lime !w-auto">Quero fidelizar meus clientes</SignupLink>
+      <SignupLink className="glass-button-light !w-auto">Quero fidelizar meus clientes</SignupLink>
     </section>
   );
 }

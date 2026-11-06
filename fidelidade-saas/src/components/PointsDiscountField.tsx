@@ -19,7 +19,7 @@ export function PointsDiscountField({ priceCents, balance, rate, maxPoints, maxP
     <div className="space-y-3 rounded-[20px] bg-[#0F1F3D] p-4 text-white">
       <input type="hidden" name="usePoints" value={used} />
       <label className="flex items-start gap-3">
-        <input type="checkbox" checked={on} onChange={(e) => setOn(e.target.checked)} className="mt-0.5 h-5 w-5 rounded accent-[#C6F432]" />
+        <input type="checkbox" checked={on} onChange={(e) => setOn(e.target.checked)} className="mt-0.5 h-5 w-5 rounded accent-[#2F63E6]" />
         <span className="text-sm">
           <span className="font-semibold">Usar meus pontos como desconto</span>
           <span className="block text-xs text-white/70">Você tem {formatPoints(balance)} pontos aqui. Este serviço aceita até {maxPct}% do preço em pontos.</span>
@@ -34,18 +34,18 @@ export function PointsDiscountField({ priceCents, balance, rate, maxPoints, maxP
             step={step}
             value={Math.min(points, maxPoints)}
             onChange={(e) => setPoints(Number(e.target.value))}
-            className="w-full accent-[#C6F432]"
+            className="w-full accent-[#2F63E6]"
             aria-label="Pontos a usar"
           />
           <div className="flex items-center justify-between gap-2 text-xs text-white/80">
-            <span><span className="chip-lima">{formatPoints(used)} pontos</span> = {formatBRL(discount)} de desconto</span>
-            <button type="button" className="font-semibold text-lima underline underline-offset-2" onClick={() => setPoints(maxPoints)}>Usar o máximo</button>
+            <span><span className="chip-verde">{formatPoints(used)} pontos</span> = {formatBRL(discount)} de desconto</span>
+            <button type="button" className="font-semibold text-verde underline underline-offset-2" onClick={() => setPoints(maxPoints)}>Usar o máximo</button>
           </div>
         </div>
       )}
       <dl className="space-y-0.5 border-t border-white/15 pt-3 text-sm">
         <div className="flex justify-between text-white/70"><dt>Valor do serviço</dt><dd>{formatBRL(priceCents)}</dd></div>
-        {discount > 0 && <div className="flex justify-between text-lima"><dt>Desconto com pontos</dt><dd>− {formatBRL(discount)}</dd></div>}
+        {discount > 0 && <div className="flex justify-between text-verde"><dt>Desconto com pontos</dt><dd>− {formatBRL(discount)}</dd></div>}
         <div className="flex justify-between text-base font-extrabold"><dt>A pagar no local</dt><dd>{formatBRL(priceCents - discount)}</dd></div>
       </dl>
     </div>

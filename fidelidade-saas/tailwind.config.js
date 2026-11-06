@@ -19,13 +19,13 @@ module.exports = {
         glassWhite: 'rgba(255, 255, 255, 0.15)',
         primary: '#0F1F3D', // azul-marinho escuro para títulos
         electric: {
-          400: '#5B84E6',
-          500: '#2150C9', // azul principal, mais sóbrio
-          600: '#1A3FA3',
+          400: '#6F93EE',
+          500: '#2F63E6', // azul do F do logo
+          600: '#2A59CF', // o mesmo azul, um tom mais fundo (hover e texto sobre fundo claro)
         },
         ice: '#F4F8FF',
-        // Lima da marca: só em pontos-chave (botão principal do caixa, aba ativa no celular, destaques), nunca em fundos grandes.
-        lima: { DEFAULT: '#C6F432', deep: '#B3E01C' },
+        // Verde do F do logo: destaques pequenos e textos sobre faixas escuras (nunca em fundos grandes).
+        verde: { DEFAULT: '#7BE08A', deep: '#62C874' },
       },
       backgroundImage: {
         'liquid-bg':

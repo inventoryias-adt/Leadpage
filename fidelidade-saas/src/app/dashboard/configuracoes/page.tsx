@@ -49,7 +49,7 @@ function Section({ id, n, title, hint, where, flat, children }: { id: string; n:
   return (
     <section id={id} data-testid={`etapa-${id}`} className="glass-panel scroll-mt-4 p-5 sm:p-7">
       <div className="mb-5 flex items-start gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0f1f3d] text-sm font-bold text-[#c6f432]">{n}</span>
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0f1f3d] text-sm font-bold text-verde">{n}</span>
         <div className="min-w-0">
           <h2 className="text-lg font-bold text-primary">{title}</h2>
           {hint && <p className="text-sm text-slate-500">{hint}</p>}
@@ -220,7 +220,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
             <Link href="/dashboard/configuracoes" className="glass-button-ghost btn-sm shrink-0 !gap-1" data-testid="topico-voltar" aria-label="Voltar para as Regras">
               <Icon name="back" size={16} /> Regras
             </Link>
-            {nextTopic && <Link href={topicHref(nextTopic.id)} className="glass-button-lime btn-sm !w-auto" data-testid="topico-proximo">Próximo: {nextTopic.title} →</Link>}
+            {nextTopic && <Link href={topicHref(nextTopic.id)} className="glass-button-primary btn-sm !w-auto" data-testid="topico-proximo">Próximo: {nextTopic.title} →</Link>}
           </div>
           <h1 className="text-2xl font-extrabold tracking-tight text-primary">{topic!.title}</h1>
           <p className="text-sm text-slate-600">{topic!.hint}</p>
@@ -251,7 +251,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
       {!inTopic && (prev || next) && (
         <nav aria-label="Etapa anterior e seguinte" data-testid="etapa-nav-top" className="flex items-center justify-between gap-2">
           {prev ? <Link href={hrefOf(prev[0])} className="glass-button-ghost btn-sm !w-auto">← {prev[1]}</Link> : <span />}
-          {next && <Link href={hrefOf(next[0])} className="glass-button-lime btn-sm !w-auto">Próximo: {next[1]} →</Link>}
+          {next && <Link href={hrefOf(next[0])} className="glass-button-primary btn-sm !w-auto">Próximo: {next[1]} →</Link>}
         </nav>
       )}
 
@@ -656,14 +656,14 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
       {(prev || next) && (
         <nav aria-label="Navegação entre etapas" data-testid="etapa-nav" className="flex items-center justify-between gap-3">
           {prev ? <Link href={hrefOf(prev[0])} className="glass-button-ghost !w-auto">← {prev[1]}</Link> : <span />}
-          {next && <Link href={hrefOf(next[0])} className="glass-button-lime !w-auto">Próximo: {next[1]} →</Link>}
+          {next && <Link href={hrefOf(next[0])} className="glass-button-primary !w-auto">Próximo: {next[1]} →</Link>}
         </nav>
       )}
 
       {inTopic && (
         <nav aria-label="Navegação do assunto" data-testid="topico-nav" className="flex items-center justify-between gap-3">
           <Link href="/dashboard/configuracoes" className="glass-button-ghost !w-auto">← Todas as regras</Link>
-          {nextTopic && <Link href={topicHref(nextTopic.id)} className="glass-button-lime !w-auto">Próximo: {nextTopic.title} →</Link>}
+          {nextTopic && <Link href={topicHref(nextTopic.id)} className="glass-button-primary !w-auto">Próximo: {nextTopic.title} →</Link>}
         </nav>
       )}
 

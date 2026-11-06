@@ -92,7 +92,7 @@ export function DashboardNav({ variant, agenda = false, pending: pendingBookings
           key={i.href}
           href={i.href}
           onClick={() => setPending(i.href)}
-          className={`nav-tab flex flex-col items-center gap-0.5 !rounded-full !px-1 !py-2 !text-[10.5px] ${active(i.href) ? 'nav-tab-active nav-tab-lime' : ''}`}
+          className={`nav-tab flex flex-col items-center gap-0.5 !rounded-full !px-1 !py-2 !text-[10.5px] ${active(i.href) ? 'nav-tab-active nav-tab-grad' : ''}`}
         >
           <span className="relative">
             <Icon name={i.icon} size={20} />

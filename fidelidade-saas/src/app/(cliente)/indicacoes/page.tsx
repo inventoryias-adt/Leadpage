@@ -30,7 +30,7 @@ export default async function IndicacoesPage({ searchParams }: { searchParams: P
             <h1 className="text-2xl font-extrabold tracking-tight text-primary">Indicações</h1>
             <p className="text-sm text-slate-600">Fotos e notas de quem frequenta os lugares do clube.</p>
           </div>
-          <Link href={place ? `/indicacoes/nova?lugar=${place.id}` : '/indicacoes/nova'} className="glass-button-lime btn-sm shrink-0" data-testid="nova-indicacao"><Icon name="plus" size={16} /> Indicar</Link>
+          <Link href={place ? `/indicacoes/nova?lugar=${place.id}` : '/indicacoes/nova'} className="glass-button-primary btn-sm shrink-0" data-testid="nova-indicacao"><Icon name="plus" size={16} /> Indicar</Link>
         </div>
       </header>
 
@@ -47,7 +47,7 @@ export default async function IndicacoesPage({ searchParams }: { searchParams: P
           <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#E8EEFB] text-electric-600"><Icon name="camera" size={26} /></span>
           <p className="text-lg font-extrabold text-primary">{mine ? 'Você ainda não indicou nenhum lugar' : 'Ainda não há indicações'}</p>
           <p className="max-w-xs text-sm text-slate-600">Poste a foto de um prato, de um corte ou do que você gostou, com a sua nota. Vale para os lugares onde você já tem carteira.</p>
-          <Link href="/indicacoes/nova" className="glass-button-lime !w-auto">Fazer a primeira indicação</Link>
+          <Link href="/indicacoes/nova" className="glass-button-primary !w-auto">Fazer a primeira indicação</Link>
         </div>
       ) : (
         <div className="mx-auto w-full max-w-md space-y-5" data-testid="feed">

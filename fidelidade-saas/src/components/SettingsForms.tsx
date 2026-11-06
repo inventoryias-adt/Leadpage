@@ -54,7 +54,7 @@ function Switch({ on, onChange, label, id }: { on: boolean; onChange: (v: boolea
       onClick={() => onChange(!on)}
       className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600 ${on ? 'bg-[#0f1f3d]' : 'bg-slate-300'}`}
     >
-      <span className={`inline-block h-5 w-5 rounded-full shadow transition-transform ${on ? 'translate-x-[26px] bg-[#c6f432]' : 'translate-x-1 bg-white'}`} />
+      <span className={`inline-block h-5 w-5 rounded-full shadow transition-transform ${on ? 'translate-x-[26px] bg-verde' : 'translate-x-1 bg-white'}`} />
     </button>
   );
 }

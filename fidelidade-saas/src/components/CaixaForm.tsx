@@ -160,7 +160,7 @@ export function CaixaForm({ pointsPerReal, rules, promos = [], placeName }: { po
                       className="h-5 w-5 shrink-0 rounded accent-[#0f1f3d]"
                     />
                     <span className="min-w-0 flex-1 text-sm text-slate-700">{r.label}</span>
-                    <span className="chip-lima shrink-0">+{formatPoints(r.points)} pts</span>
+                    <span className="chip-verde shrink-0">+{formatPoints(r.points)} pts</span>
                   </label>
                 ))}
               </div>
@@ -178,11 +178,11 @@ export function CaixaForm({ pointsPerReal, rules, promos = [], placeName }: { po
             {(state.error || direct.error) && <p role="alert" className="glass-error">{direct.error ?? state.error}</p>}
             {found ? (
               <>
-                <SubmitButton variant="lime" formAction={directAction} pendingText="Lançando…" data-testid="lancar-direto">Lançar {formatPoints(preview)} pontos para {found.name.split(' ')[0]}</SubmitButton>
+                <SubmitButton variant="solid" formAction={directAction} pendingText="Lançando…" data-testid="lancar-direto">Lançar {formatPoints(preview)} pontos para {found.name.split(' ')[0]}</SubmitButton>
                 <SubmitButton variant="ghost" pendingText="Gerando…">Gerar QR Code em vez disso</SubmitButton>
               </>
             ) : (
-              <SubmitButton variant="lime" pendingText="Gerando…">Gerar QR Code</SubmitButton>
+              <SubmitButton variant="solid" pendingText="Gerando…">Gerar QR Code</SubmitButton>
             )}
             {claim && (
               <button type="button" className="link-inline w-full text-sm" onClick={clear}>

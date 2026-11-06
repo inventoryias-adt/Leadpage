@@ -69,7 +69,7 @@ export function TodayDeals({ deals }: { deals: Deal[] }) {
             >
               <span className="relative block aspect-[4/3] overflow-hidden rounded-2xl bg-slate-100">
                 <RewardImage src={d.imageUrl} name={d.name} className="h-full w-full transition-transform duration-300 group-hover:scale-105" />
-                <span className="absolute left-2 top-2 rounded-full bg-[#C6F432] px-2 py-0.5 text-[11px] font-extrabold text-[#0F1F3D]">-{off(d)}%</span>
+                <span className="absolute left-2 top-2 rounded-full bg-verde px-2 py-0.5 text-[11px] font-extrabold text-[#0F1F3D]">-{off(d)}%</span>
                 {d.stock != null && (
                   <span data-testid="deal-stock" className={`absolute bottom-2 left-2 rounded-md px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white ${d.stock <= 3 ? 'bg-rose-600/90' : 'bg-[#0F1F3D]/85'}`}>{stockLabel(d.stock)}</span>
                 )}
@@ -97,7 +97,7 @@ export function TodayDeals({ deals }: { deals: Deal[] }) {
           >
             <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-slate-100">
               <RewardImage src={open.imageUrl} name={open.name} className="h-full w-full" />
-              <span className="absolute left-3 top-3 rounded-full bg-[#C6F432] px-3 py-1 text-sm font-extrabold text-[#0F1F3D]">-{off(open)}%</span>
+              <span className="absolute left-3 top-3 rounded-full bg-verde px-3 py-1 text-sm font-extrabold text-[#0F1F3D]">-{off(open)}%</span>
               <button type="button" onClick={() => setOpen(null)} className="absolute right-3 top-3 btn-icon !bg-white/90 shadow hover:!bg-white" aria-label="Fechar">✕</button>
             </div>
 

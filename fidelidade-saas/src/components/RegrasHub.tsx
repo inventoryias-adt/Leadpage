@@ -46,11 +46,11 @@ export function RegrasHub({ hub, placeName, placeHref }: { hub: Hub; placeName: 
           <span className="shrink-0 rounded-full bg-[#E8EEFB] px-3 py-1 text-xs font-bold text-electric-600" data-testid="hub-count">{done} de {total}</span>
         </div>
         <div className="h-2.5 overflow-hidden rounded-full bg-slate-200" role="progressbar" aria-valuenow={done} aria-valuemin={0} aria-valuemax={total} aria-label="Itens essenciais prontos">
-          <div className="h-full rounded-full bg-lima transition-all" style={{ width: `${pct}%` }} />
+          <div className="h-full rounded-full bar-grad transition-all" style={{ width: `${pct}%` }} />
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {hub.next ? (
-            <Link href={hub.next.href} className="glass-button-lime btn-sm !w-auto" data-testid="hub-next">Próximo passo: {hub.next.title} →</Link>
+            <Link href={hub.next.href} className="glass-button-primary btn-sm !w-auto" data-testid="hub-next">Próximo passo: {hub.next.title} →</Link>
           ) : (
             <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700"><Icon name="check" size={16} /> Tudo o que é essencial está pronto.</span>
           )}

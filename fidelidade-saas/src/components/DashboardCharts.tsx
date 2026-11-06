@@ -142,7 +142,7 @@ export function PeakHeatmap({ grid }: { grid: number[][] }) {
                 aria-label={`${WEEKDAYS[dow]}, ${h}h: ${plural(count, 'compra', 'compras')}`}
                 data-testid={`heat-${dow}-${h}`}
                 className="aspect-square cursor-pointer rounded-[3px] transition-shadow hover:ring-2 hover:ring-primary hover:ring-offset-1 focus-visible:ring-2 focus-visible:ring-primary"
-                style={{ background: count === 0 ? '#F1F3F6' : `rgba(33, 80, 201, ${0.18 + 0.82 * (count / max)})` }}
+                style={{ background: count === 0 ? '#F1F3F6' : `rgba(47, 99, 230, ${0.18 + 0.82 * (count / max)})` }}
               />
             ))}
           </div>

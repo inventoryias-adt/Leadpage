@@ -73,11 +73,11 @@ await hoverSettled(row);
 assert.equal(await bg(row), 'rgb(238, 243, 253)', 'linha ganha azul bem claro');
 console.log('5. passar o mouse troca as cores (cabeçalho marinho, linha azul clara) OK');
 
-// 6. menos cores: etiquetas calmas (sem lima nem roxo) nas listas
-const lime = await c.locator('#acoes .chip-lima, #desafios .chip-lima, #promocoes .chip-lima').count();
-assert.equal(lime, 0, 'sem etiquetas lima nas listas');
+// 6. menos cores: etiquetas calmas (sem o verde de destaque nem roxo) nas listas
+const verdes = await c.locator('#acoes .chip-verde, #desafios .chip-verde, #promocoes .chip-verde').count();
+assert.equal(verdes, 0, 'sem etiquetas verdes de destaque nas listas');
 assert.equal(await c.locator('#desafios .icon-tile[class*="7C3AED"]').count(), 0, 'sem o roxo do troféu');
-console.log('6. listas com etiquetas azul-claras (sem lima e sem roxo) OK');
+console.log('6. listas com etiquetas azul-claras (sem verde de destaque e sem roxo) OK');
 
 sql(`delete from "Promotion" where "restaurantId"='${rid}'; delete from "Challenge" where "restaurantId"='${rid}'`);
 await b.close();

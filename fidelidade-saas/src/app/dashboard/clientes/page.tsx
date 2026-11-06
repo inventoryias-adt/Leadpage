@@ -64,8 +64,8 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
     byWallet.set(s.walletId, cur);
   }
 
-  const SEG_COLOR: Record<Segment, string> = { novos: '#2150C9', fieis: '#15803d', quase: '#B45309', sumidos: '#e11d48' };
-  const SEG_CHIP: Record<Segment, string> = { novos: 'chip-lima', fieis: 'chip-verde', quase: 'glass-chip', sumidos: 'chip-sumido' };
+  const SEG_COLOR: Record<Segment, string> = { novos: '#2F63E6', fieis: '#15803d', quase: '#B45309', sumidos: '#e11d48' };
+  const SEG_CHIP: Record<Segment, string> = { novos: 'chip-verde', fieis: 'chip-verde', quase: 'glass-chip', sumidos: 'chip-sumido' };
   const today = todayKey();
   const ago = (d: Date) => {
     const n = Math.round((Date.parse(today) - Date.parse(dateKeyOf(d))) / 86_400_000);

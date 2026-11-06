@@ -34,10 +34,10 @@ export default function PrecosPage() {
         <section className="bg-[#F6F7F9]">
           <div className="mx-auto max-w-6xl px-5 py-14 sm:px-8 md:py-20">
             <Reveal from="zoom" className="mx-auto max-w-lg">
-              <div data-testid="plano-lancamento" className="relative rounded-3xl border-2 border-lima bg-primary p-7 text-white shadow-[0_30px_60px_-30px_rgba(18,40,107,0.5)] sm:p-9">
-                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-lima px-4 py-1 text-xs font-extrabold uppercase tracking-wider text-primary">Preço de lançamento</span>
+              <div data-testid="plano-lancamento" className="relative rounded-3xl border-2 border-verde bg-primary p-7 text-white shadow-[0_30px_60px_-30px_rgba(18,40,107,0.5)] sm:p-9">
+                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-verde px-4 py-1 text-xs font-extrabold uppercase tracking-wider text-primary">Preço de lançamento</span>
                 <p className="micro !text-slate-300">Plano completo</p>
-                <p className="mt-2 flex items-end gap-2 text-lima">
+                <p className="mt-2 flex items-end gap-2 text-verde">
                   <span className="text-6xl font-extrabold leading-none tracking-tight">{FIRST_MONTH_PRICE}</span>
                   <span className="pb-1.5 text-base font-semibold text-slate-300">no primeiro mês</span>
                 </p>
@@ -45,11 +45,11 @@ export default function PrecosPage() {
                 <ul className="mt-6 space-y-2.5 text-sm">
                   {['Todas as funções incluídas', 'Clientes e resgates ilimitados', 'Sem taxa de adesão', 'Sem fidelidade'].map((t) => (
                     <li key={t} className="flex items-center gap-3 font-medium">
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-lima text-primary"><Icon name="check" size={13} strokeWidth={3} /></span> {t}
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-verde text-primary"><Icon name="check" size={13} strokeWidth={3} /></span> {t}
                     </li>
                   ))}
                 </ul>
-                <SignupLink className="glass-button-lime mt-8">Começar agora</SignupLink>
+                <SignupLink className="glass-button-light mt-8">Começar agora</SignupLink>
               </div>
               <p className="mt-4 text-center text-xs text-slate-500">Valores de lançamento. Qualquer mudança futura de preço é avisada com antecedência dentro do app.</p>
             </Reveal>

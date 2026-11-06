@@ -18,7 +18,7 @@ const face = { containerType: 'inline-size', aspectRatio: '1.586 / 1', backgroun
 export function CardFront({ data }: { data: CardData }) {
   return (
     <div className="card-face relative h-full w-full overflow-hidden text-white" style={{ ...face, borderRadius: RADIUS }}>
-      <div aria-hidden className="card-deco absolute -right-[14cqw] -top-[22cqw] h-[70cqw] w-[70cqw] rounded-full" style={{ background: 'radial-gradient(circle,rgba(198,244,50,.34),rgba(198,244,50,0) 68%)' }} />
+      <div aria-hidden className="card-deco absolute -right-[14cqw] -top-[22cqw] h-[70cqw] w-[70cqw] rounded-full" style={{ background: 'radial-gradient(circle,rgba(123,224,138,.34),rgba(123,224,138,0) 68%)' }} />
       <div aria-hidden className="card-deco absolute inset-0" style={{ background: 'linear-gradient(115deg,rgba(255,255,255,.13) 0%,rgba(255,255,255,0) 38%,rgba(255,255,255,0) 72%,rgba(255,255,255,.06) 100%)' }} />
       <div className="relative flex h-full flex-col justify-between" style={{ padding: '6cqw' }}>
         <div className="flex items-center justify-between">
@@ -31,7 +31,7 @@ export function CardFront({ data }: { data: CardData }) {
 
         <div className="flex items-center" style={{ gap: '4cqw' }}>
           {/* chip decorativo */}
-          <span aria-hidden className="relative block" style={{ width: '12cqw', height: '9cqw', borderRadius: '1.8cqw', background: 'linear-gradient(135deg,#E9F9A8,#C6F432 55%,#9BC21A)' }}>
+          <span aria-hidden className="relative block" style={{ width: '12cqw', height: '9cqw', borderRadius: '1.8cqw', background: 'linear-gradient(135deg,#D3F7D9,#7BE08A 55%,#4FBF66)' }}>
             <span className="absolute inset-x-0 top-1/2 h-px bg-[#0B1B3A]/25" />
             <span className="absolute inset-y-0 left-1/3 w-px bg-[#0B1B3A]/25" />
             <span className="absolute inset-y-0 left-2/3 w-px bg-[#0B1B3A]/25" />
@@ -41,7 +41,7 @@ export function CardFront({ data }: { data: CardData }) {
 
         <div>
           <p className="font-bold uppercase opacity-60" style={{ fontSize: '2.3cqw', letterSpacing: '0.2em' }}>ID da conta</p>
-          <p className="whitespace-nowrap font-mono font-bold text-lima" style={{ fontSize: '8cqw', letterSpacing: '0.12em', textShadow: '0 1px 0 rgba(0,0,0,.35), 0 0 14px rgba(198,244,50,.25)' }} data-testid="account-id-code">{data.code}</p>
+          <p className="whitespace-nowrap font-mono font-bold text-verde" style={{ fontSize: '8cqw', letterSpacing: '0.12em', textShadow: '0 1px 0 rgba(0,0,0,.35), 0 0 14px rgba(123,224,138,.25)' }} data-testid="account-id-code">{data.code}</p>
         </div>
 
         <div className="flex items-end justify-between" style={{ gap: '4cqw' }}>
@@ -51,7 +51,7 @@ export function CardFront({ data }: { data: CardData }) {
           </span>
           <span className="shrink-0 text-right">
             <span className="block font-bold uppercase opacity-60" style={{ fontSize: '2.3cqw', letterSpacing: '0.2em' }}>Saldo</span>
-            <span className="block whitespace-nowrap font-extrabold leading-none text-lima" style={{ fontSize: '6.4cqw' }} data-testid="card-balance">{formatPoints(data.balance)} <span className="font-semibold text-white/70" style={{ fontSize: '3cqw' }}>pts</span></span>
+            <span className="block whitespace-nowrap font-extrabold leading-none text-verde" style={{ fontSize: '6.4cqw' }} data-testid="card-balance">{formatPoints(data.balance)} <span className="font-semibold text-white/70" style={{ fontSize: '3cqw' }}>pts</span></span>
           </span>
         </div>
       </div>
@@ -66,11 +66,11 @@ export function CardBack({ data }: { data: CardData }) {
     <div className="card-face relative h-full w-full overflow-hidden text-white" style={{ ...face, borderRadius: RADIUS }}>
       <div aria-hidden className="absolute inset-x-0 bg-black/80" style={{ top: '7cqw', height: '11cqw' }} />
       <div className="relative flex h-full flex-col" style={{ padding: '6cqw', paddingTop: '22cqw', gap: '3cqw' }}>
-        <p className="font-bold uppercase text-lima" style={{ fontSize: '2.6cqw', letterSpacing: '0.2em' }}>Como usar</p>
+        <p className="font-bold uppercase text-verde" style={{ fontSize: '2.6cqw', letterSpacing: '0.2em' }}>Como usar</p>
         <ol className="space-y-[1.4cqw]" style={{ fontSize: '3.1cqw', lineHeight: 1.25 }}>
           {steps.map((t, i) => (
             <li key={t} className="flex" style={{ gap: '2cqw' }}>
-              <span className="shrink-0 rounded-full bg-lima text-center font-extrabold text-[#0B1B3A]" style={{ width: '4.4cqw', height: '4.4cqw', lineHeight: '4.4cqw', fontSize: '2.8cqw' }}>{i + 1}</span>
+              <span className="shrink-0 rounded-full bg-verde text-center font-extrabold text-[#0B1B3A]" style={{ width: '4.4cqw', height: '4.4cqw', lineHeight: '4.4cqw', fontSize: '2.8cqw' }}>{i + 1}</span>
               <span>{t}</span>
             </li>
           ))}

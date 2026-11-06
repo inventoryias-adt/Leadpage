@@ -11,15 +11,15 @@ function Area() {
     <svg viewBox={`0 0 ${w} ${h}`} className="h-full w-full" preserveAspectRatio="none" aria-hidden>
       <defs>
         <linearGradient id="lm-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#2150C9" stopOpacity=".45" />
-          <stop offset="1" stopColor="#2150C9" stopOpacity="0" />
+          <stop offset="0" stopColor="#2F63E6" stopOpacity=".45" />
+          <stop offset="1" stopColor="#2F63E6" stopOpacity="0" />
         </linearGradient>
       </defs>
       {[0.25, 0.5, 0.75].map((f) => (
         <line key={f} x1="0" x2={w} y1={h * f} y2={h * f} stroke="#E5E7EB" strokeWidth="1" />
       ))}
       <path d={`${line} L${w} ${h} L0 ${h} Z`} fill="url(#lm-fill)" />
-      <path d={line} fill="none" stroke="#2150C9" strokeWidth="2.2" strokeLinejoin="round" />
+      <path d={line} fill="none" stroke="#2F63E6" strokeWidth="2.2" strokeLinejoin="round" />
     </svg>
   );
 }

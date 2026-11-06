@@ -42,8 +42,8 @@ export function ProgressBar({ value, max, label }: { value: number; max: number;
     <div role="progressbar" aria-valuemin={0} aria-valuemax={max} aria-valuenow={Math.min(value, max)} aria-label={label}>
       <div className="h-2 overflow-hidden rounded-full bg-slate-200">
         <div
-          className="h-full rounded-full"
-          style={{ width: `${pct}%`, background: pct >= 100 ? '#059669' : '#2150C9' }}
+          className="h-full rounded-full bar-grad"
+          style={{ width: `${pct}%` }}
         />
       </div>
     </div>

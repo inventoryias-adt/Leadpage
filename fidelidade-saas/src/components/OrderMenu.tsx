@@ -18,7 +18,7 @@ type Step = 'menu' | 'bag' | 'receive';
 function Price({ item, className = '', dark = false }: { item: MenuView; className?: string; dark?: boolean }) {
   return (
     <span className={className}>
-      <span className={`font-extrabold ${dark ? 'text-lima' : 'text-slate-900'}`}>{formatBRL(unitPrice(item))}</span>
+      <span className={`font-extrabold ${dark ? 'text-verde' : 'text-slate-900'}`}>{formatBRL(unitPrice(item))}</span>
       {hasPromo(item) && <span className={`ml-2 text-sm font-medium line-through ${dark ? 'text-white/60' : 'text-slate-400'}`}>{formatBRL(item.priceCents)}</span>}
     </span>
   );
@@ -211,7 +211,7 @@ export function OrderMenu({
               <div className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <h3 className="text-lg font-extrabold leading-snug">{featured.name}</h3>
-                  {hasPromo(featured) && <span className="chip-lima shrink-0">−{promoPct(featured)}%</span>}
+                  {hasPromo(featured) && <span className="chip-verde shrink-0">−{promoPct(featured)}%</span>}
                 </div>
                 {featured.description && <p className="mt-1 line-clamp-3 text-sm text-white/75">{featured.description}</p>}
                 <StockTag item={featured} />
@@ -255,9 +255,9 @@ export function OrderMenu({
             <PlaceAvatar name={placeName} src={logoUrl} size={44} />
             <div className="min-w-0 flex-1">
               <p className="text-xs text-white/70">Total com retirada</p>
-              <p className="font-extrabold text-lima" data-testid="bag-total">{formatBRL(total)} <span className="text-sm font-medium text-white/70">/ {count} {count === 1 ? 'item' : 'itens'}</span></p>
+              <p className="font-extrabold text-verde" data-testid="bag-total">{formatBRL(total)} <span className="text-sm font-medium text-white/70">/ {count} {count === 1 ? 'item' : 'itens'}</span></p>
             </div>
-            <button type="button" onClick={() => setStep('bag')} className="glass-button-lime !w-auto" data-testid="open-bag">Ver pedido</button>
+            <button type="button" onClick={() => setStep('bag')} className="glass-button-light !w-auto" data-testid="open-bag">Ver pedido</button>
           </div>
         </div>
       )}
@@ -314,7 +314,7 @@ export function OrderMenu({
                   {points > 0 && (
                     <p className="mt-4 flex items-center justify-between rounded-xl bg-[#F3F6FD] px-4 py-3 text-sm">
                       <span className="flex items-center gap-2 text-slate-700"><Icon name="gift" size={16} /> Você ganha nesse pedido</span>
-                      <strong className="chip-lima" data-testid="bag-points">+{formatPoints(points)} pts</strong>
+                      <strong className="chip-verde" data-testid="bag-points">+{formatPoints(points)} pts</strong>
                     </p>
                   )}
                 </>
@@ -382,7 +382,7 @@ export function OrderMenu({
 function AddControl({ id, name, qty, add, sub, max, dark = false }: { id: string; name: string; qty: number; add: (id: string) => void; sub: (id: string) => void; max: number; dark?: boolean }) {
   if (qty === 0) {
     return (
-      <button type="button" onClick={() => add(id)} className={`${dark ? 'glass-button-lime' : 'glass-button-navy'} btn-sm !w-auto`} aria-label={`Adicionar ${name} ao pedido`}>
+      <button type="button" onClick={() => add(id)} className={`${dark ? 'glass-button-light' : 'glass-button-navy'} btn-sm !w-auto`} aria-label={`Adicionar ${name} ao pedido`}>
         Adicionar
       </button>
     );

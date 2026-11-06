@@ -359,8 +359,8 @@ const art: Record<string, ReactNode> = {
     <>
       <g className="cat-bob">
         <rect x="14" y="29" width="36" height="6" rx="3" fill="#64748B" />
-        <rect x="9" y="20" width="9" height="24" rx="3.5" fill="#2150C9" />
-        <rect x="46" y="20" width="9" height="24" rx="3.5" fill="#2150C9" />
+        <rect x="9" y="20" width="9" height="24" rx="3.5" fill="#2F63E6" />
+        <rect x="46" y="20" width="9" height="24" rx="3.5" fill="#2F63E6" />
         <rect x="3" y="25" width="6" height="14" rx="2.5" fill="#334155" />
         <rect x="55" y="25" width="6" height="14" rx="2.5" fill="#334155" />
       </g>

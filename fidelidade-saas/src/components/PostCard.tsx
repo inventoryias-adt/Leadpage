@@ -60,7 +60,7 @@ export function PostCard({ post, highlight = false, viewerInstagram = null }: { 
   }
 
   return (
-    <article className={`glass-panel overflow-hidden !rounded-[22px] ${highlight ? 'ring-2 ring-lima' : ''}`} data-testid="post-card" data-post-id={post.id}>
+    <article className={`glass-panel overflow-hidden !rounded-[22px] ${highlight ? 'ring-2 ring-verde' : ''}`} data-testid="post-card" data-post-id={post.id}>
       <header className="flex items-center gap-3 px-4 py-3">
         <Link href={`/lugar/${post.place.id}`} aria-label={post.place.name}><PlaceAvatar name={post.place.name} src={post.place.logoImageId ? `/api/imagem/${post.place.logoImageId}` : null} size={40} /></Link>
         <div className="min-w-0 flex-1">

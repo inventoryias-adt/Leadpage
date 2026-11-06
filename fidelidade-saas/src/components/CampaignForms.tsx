@@ -38,7 +38,7 @@ function ChallengePreview({ kind, period, target, bonus, min }: { kind: 'PURCHAS
             <span className="icon-tile !bg-[#F1EAFE] !text-[#7C3AED]"><Icon name="trophy" /></span>
             <span className="pt-2">{text}</span>
           </span>
-          <span className="chip-lima shrink-0">+{formatPoints(parseInt(bonus, 10) || 0)} pts</span>
+          <span className="chip-verde shrink-0">+{formatPoints(parseInt(bonus, 10) || 0)} pts</span>
         </div>
         <ProgressBar value={0} max={goal} label="Progresso do cliente" />
         <p className="text-xs font-semibold text-slate-500">0 de {goal} {period === 'WEEK' ? 'nesta semana' : 'neste mês'}</p>

@@ -26,7 +26,7 @@ export function ShortcutTiles({ items, label = 'Atalhos' }: { items: Shortcut[];
               <span className="icon-tile !h-10 !w-10"><Icon name={s.icon} size={20} /></span>
               <span className="text-[11px] font-bold leading-tight text-slate-700">{s.label}</span>
               {s.count != null && s.count > 0 && (
-                <span aria-label={`${s.count} esperando`} className="absolute right-1.5 top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#0F1F3D] px-1 text-[10px] font-extrabold text-lima">{s.count}</span>
+                <span aria-label={`${s.count} esperando`} className="absolute right-1.5 top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#0F1F3D] px-1 text-[10px] font-extrabold text-verde">{s.count}</span>
               )}
             </Link>
           </li>
@@ -55,7 +55,7 @@ export function ShortcutGroups({ groups }: { groups: { title: string; items: Sho
                     <span className="block truncate text-[17px] font-semibold text-primary">{s.label}</span>
                     {s.hint && <span className="block truncate text-sm italic text-slate-500">{s.hint}</span>}
                   </span>
-                  {s.count != null && s.count > 0 && <span className="chip-lima shrink-0">{s.count}</span>}
+                  {s.count != null && s.count > 0 && <span className="chip-verde shrink-0">{s.count}</span>}
                   <Icon name="chevron" size={18} className="shrink-0 text-slate-400" />
                 </Link>
               </li>

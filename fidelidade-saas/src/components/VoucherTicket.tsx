@@ -23,7 +23,7 @@ export function VoucherTicket({
   return (
     <article className="overflow-hidden rounded-[24px] bg-[#0F1F3D] text-white shadow-[0_10px_28px_rgba(15,31,61,.28)]" aria-label={`Cupom: ${rewardName} em ${placeName}`}>
       <div className={`flex items-center gap-3 ${compact ? 'p-4' : 'p-5'}`}>
-        <span className={`flex shrink-0 items-center justify-center rounded-2xl bg-lima text-primary ${compact ? 'h-11 w-11' : 'h-14 w-14'}`}><Icon name="gift" size={compact ? 22 : 28} /></span>
+        <span className={`flex shrink-0 items-center justify-center rounded-2xl bg-verde text-primary ${compact ? 'h-11 w-11' : 'h-14 w-14'}`}><Icon name="gift" size={compact ? 22 : 28} /></span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">{placeName}</p>
           <h3 className={`font-extrabold leading-snug ${compact ? 'truncate text-base' : 'text-xl'}`}>{rewardName}</h3>
@@ -38,7 +38,7 @@ export function VoucherTicket({
       </div>
       <div className={`text-center ${compact ? 'px-4 pb-4 pt-3' : 'px-5 pb-6 pt-4'}`}>
         <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/60">Seu código</p>
-        <p className={`mx-auto mt-1 w-fit rounded-2xl border-2 border-dashed border-lima/70 px-5 py-1.5 font-mono font-bold tracking-[0.25em] text-lima ${compact ? 'text-2xl' : 'text-4xl'}`} data-testid="voucher-code">{code}</p>
+        <p className={`mx-auto mt-1 w-fit rounded-2xl border-2 border-dashed border-verde/70 px-5 py-1.5 font-mono font-bold tracking-[0.25em] text-verde ${compact ? 'text-2xl' : 'text-4xl'}`} data-testid="voucher-code">{code}</p>
         {!compact && <p className="mt-3 text-sm text-white/80">Mostre este código no balcão para retirar.</p>}
       </div>
     </article>

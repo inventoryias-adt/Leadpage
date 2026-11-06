@@ -78,7 +78,7 @@ export default async function CarteiraPage() {
         <h1 className="mt-5 text-2xl font-extrabold md:mt-0 md:text-3xl tracking-tight text-primary">Olá, {customer.name.split(' ')[0]}</h1>
         {wallets.length > 0 && (
           <p className="text-sm text-slate-600">
-            <span className="mark-lime font-bold text-primary">{formatPoints(total)} pontos</span> em {wallets.length} {wallets.length === 1 ? 'lugar' : 'lugares'}
+            <span className="mark-grad font-bold text-primary">{formatPoints(total)} pontos</span> em {wallets.length} {wallets.length === 1 ? 'lugar' : 'lugares'}
           </p>
         )}
       </Reveal>
@@ -89,12 +89,12 @@ export default async function CarteiraPage() {
         <Reveal from="zoom">
           <section aria-label="Resumo" className="grid grid-cols-2 gap-3" data-testid="home-summary">
             <Link href="/perfil/pontos" className="card-link col-span-2 flex items-center gap-4 rounded-[22px] bg-[#0F1F3D] p-4 text-white shadow-[0_10px_26px_rgba(15,31,61,.25)]">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-lima text-primary"><Icon name="star" size={24} /></span>
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-verde text-primary"><Icon name="star" size={24} /></span>
               <span className="min-w-0 flex-1">
                 <span className="block text-[11px] font-bold uppercase tracking-[0.16em] text-white/70">Saldo total</span>
-                <span className="block text-3xl font-extrabold leading-tight text-lima">{formatPoints(total)} <span className="text-sm font-semibold text-white/70">pontos</span></span>
+                <span className="block text-3xl font-extrabold leading-tight text-verde">{formatPoints(total)} <span className="text-sm font-semibold text-white/70">pontos</span></span>
               </span>
-              <span className="chip-lima shrink-0">+{formatPoints(earnedMonth?._sum.points ?? 0)} no mês</span>
+              <span className="chip-verde shrink-0">+{formatPoints(earnedMonth?._sum.points ?? 0)} no mês</span>
             </Link>
             {[
               { href: '/perfil/premios?aba=disponiveis', icon: 'gift' as const, n: affordable.length, label: affordable.length === 1 ? 'Prêmio ao alcance' : 'Prêmios ao alcance' },
@@ -139,7 +139,7 @@ export default async function CarteiraPage() {
                       {(pick > 0 || can) && (
                         <span className="mt-1 flex flex-wrap gap-1.5">
                           {pick > 0 && <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-bold text-amber-800">{pick} para retirar</span>}
-                          {can && <span className="rounded-full bg-lima px-2.5 py-0.5 text-[11px] font-bold text-primary">Pode resgatar</span>}
+                          {can && <span className="rounded-full bg-verde px-2.5 py-0.5 text-[11px] font-bold text-primary">Pode resgatar</span>}
                         </span>
                       )}
                     </span>
@@ -174,7 +174,7 @@ export default async function CarteiraPage() {
                       <span className="block truncate font-bold text-slate-800">{r.name}</span>
                       <span className="block truncate text-xs text-slate-500">{r.place.name}</span>
                     </span>
-                    <span className="chip-lima shrink-0">{formatPoints(r.pointsCost)} pts</span>
+                    <span className="chip-verde shrink-0">{formatPoints(r.pointsCost)} pts</span>
                   </Link>
                 </li>
               ))}
