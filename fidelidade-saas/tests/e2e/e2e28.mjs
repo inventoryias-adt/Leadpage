@@ -58,7 +58,10 @@ const yCamp = (await p.locator('section[aria-labelledby=campanhas]').boundingBox
 assert.ok(yCat < yCamp, 'categorias vêm antes das campanhas');
 // a lista de campanhas nasce recolhida (só a linha-resumo com o total); tocar abre os cartões por lugar
 assert.equal(await p.locator('[data-testid=campanhas-toggle]').getAttribute('aria-expanded'), 'false', 'campanhas recolhidas');
-assert.match(await p.locator('[data-testid=campanhas-toggle]').innerText(), /\d+ campanhas? · \d+ lugar/);
+assert.match(await p.locator('[data-testid=campanhas-resumo]').innerText(), /\d+ campanhas? · \d+ lugar/);
+assert.equal((await p.locator('[data-testid=campanhas-toggle]').innerText()).trim(), 'Campanhas', 'o título é só "Campanhas", com a setinha ao lado');
+const tg = await p.locator('[data-testid=campanhas-toggle]').boundingBox(); const rs = await p.locator('[data-testid=campanhas-resumo]').boundingBox();
+assert.ok(tg.width < 200 && tg.x + tg.width < rs.x, `a área de toque é só o título e a setinha (${Math.round(tg.width)} px), não a linha toda`);
 assert.equal(await p.locator('#campanhas-lista').count(), 0, 'cartões escondidos enquanto recolhido');
 await p.click('[data-testid=campanhas-toggle]'); await p.waitForSelector('#campanhas-lista');
 assert.equal(await p.locator('[data-testid=campanhas-toggle]').getAttribute('aria-expanded'), 'true');
