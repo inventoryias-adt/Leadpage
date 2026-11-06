@@ -358,9 +358,6 @@ main h1:not([data-h1]) + p {
   .chip-sumido {
     @apply inline-flex items-center whitespace-nowrap rounded-full border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600;
   }
-  .chip-verde {
-    @apply inline-flex items-center whitespace-nowrap rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700;
-  }
   /* Quadradinho arredondado com ícone (ações, prêmios, avisos). */
   .icon-tile {
     @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EAF0FF] text-electric-600;
