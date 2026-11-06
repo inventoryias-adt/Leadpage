@@ -17,6 +17,15 @@ for n in "${files[@]}"; do
   pre+=(--import "$PWD/$E/sections-preload.mjs")
   timeout 400 node "${pre[@]}" "$E/$n.mjs" > "$n.log" 2>&1
   code=$?
+  # O app de desenvolvimento do CI às vezes cai por alguns segundos no meio de um teste (ERR_CONNECTION_REFUSED, Failed to fetch).
+  # Só nesse caso, e uma vez: espera o app voltar e roda o teste de novo. Qualquer outra falha derruba o teste na hora.
+  if [ $code -ne 0 ] && grep -qE "ERR_CONNECTION_(REFUSED|RESET)|ECONNREFUSED|ECONNRESET|Failed to fetch" "$n.log"; then
+    echo "(perdeu a conexão com o app em $n; esperando o app voltar e tentando mais uma vez)"
+    cp "$n.log" "$n.queda.log"
+    for i in $(seq 1 60); do curl -fsS -o /dev/null --max-time 5 http://localhost:3000/entrar && break; sleep 2; done
+    timeout 400 node "${pre[@]}" "$E/$n.mjs" > "$n.log" 2>&1
+    code=$?
+  fi
   tail -25 "$n.log"
   [ $code -eq 0 ] || { echo "FALHOU: $n (código $code)"; fail=1; }
 done
