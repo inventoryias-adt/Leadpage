@@ -8,7 +8,7 @@ import { Icon, type IconName } from './Icons';
  * a setinha pisca de leve até a pessoa abrir uma vez, para ela saber que dá para tocar. O que ela deixa aberto fica lembrado
  * neste aparelho (`fz_sec_<id>`) e um link com `#id` na URL abre a seção sozinho.
  */
-export function CollapsibleSection({ id, title, summary, icon, defaultOpen = false, children }: { id: string; title: string; summary?: string; icon?: IconName; defaultOpen?: boolean; children: ReactNode }) {
+export function CollapsibleSection({ id, title, summary, icon, badges, defaultOpen = false, children }: { id: string; title: string; summary?: string; icon?: IconName; badges?: ReactNode; defaultOpen?: boolean; children: ReactNode }) {
   const [open, setOpen] = useState(defaultOpen);
   const [seen, setSeen] = useState(false); // já abriu/fechou alguma vez? Até lá a setinha pisca
   const panel = useId();
@@ -49,7 +49,7 @@ export function CollapsibleSection({ id, title, summary, icon, defaultOpen = fal
           aria-controls={panel}
           className="hover-flip glass-panel-sm flex w-full items-center gap-3 !p-3.5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600"
         >
-          {icon && <span className="icon-tile"><Icon name={icon} /></span>}
+          {badges ?? (icon && <span className="icon-tile"><Icon name={icon} /></span>)}
           <span className="min-w-0 flex-1">
             <span className="hf-t block font-bold text-slate-800">{title}</span>
             {summary && <span className="hf-s block truncate text-xs font-medium text-slate-500">{summary}</span>}

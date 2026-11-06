@@ -37,6 +37,7 @@ import { brandOf } from '@/lib/palette';
 import { INTERACTION_COOLDOWN_DAYS, releaseText } from '@/lib/interaction-approval';
 import { settleDueInteractions } from '@/lib/interaction-claims';
 import { newReferralCode } from '@/lib/tokens';
+import { GoogleG, InstagramGlyph, actionKind, actionTitle } from '@/components/BrandIcons';
 
 export const dynamic = 'force-dynamic';
 
@@ -142,6 +143,14 @@ export default async function LugarPage({
   const pts = (n: number) => `${formatPoints(n)} ${n === 1 ? 'pt' : 'pts'}`;
   const actionPoints = [restaurant.checkInPoints, restaurant.referralPoints, ...rules.map((r) => r.points)].filter((n) => n > 0);
   const actionsSummary = actionPoints.length ? `${actionPoints.length} ${actionPoints.length === 1 ? 'jeito' : 'jeitos'} de ganhar · até +${pts(Math.max(...actionPoints))}` : 'Toda compra já gera pontos';
+  // Na barra da seção: o G do Google e o Instagram, para quem logo vê que há pontos por avaliar e por postar.
+  const kinds = new Set(rules.map((r) => actionKind(r.label)));
+  const actionBadges = kinds.has('google') || kinds.has('instagram') ? (
+    <span className="flex shrink-0 items-center -space-x-1.5" aria-hidden data-testid="acoes-icones">
+      {kinds.has('google') && <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#EAF0FF]"><GoogleG size={16} /></span>}
+      {kinds.has('instagram') && <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#EAF0FF]"><InstagramGlyph size={16} /></span>}
+    </span>
+  ) : undefined;
   const shownPromos = promotions.filter((p) => promoStatus(p, nowDate) !== 'ended');
   const livePromos = shownPromos.filter((p) => promoActiveAt(p, nowDate)).length;
   const promosSummary = `${shownPromos.length} ${shownPromos.length === 1 ? 'campanha' : 'campanhas'}${livePromos ? ` · ${livePromos} valendo agora` : ''}`;
@@ -288,7 +297,7 @@ export default async function LugarPage({
         )}
 
         {/* Ações da unidade */}
-        <CollapsibleSection id="acoes" icon="star" title="Ações para ganhar pontos" summary={actionsSummary}>
+        <CollapsibleSection id="acoes" icon="star" title="Ações para ganhar pontos" summary={actionsSummary} badges={actionBadges}>
           <ul className="glass-panel-sm divide-y divide-slate-200/70 overflow-hidden">
             {restaurant.checkInPoints > 0 && (
               <li className="hover-tint p-4">
@@ -311,10 +320,10 @@ export default async function LugarPage({
               return (
                 <li key={r.id} className="hover-tint p-4">
                   <div className="flex items-start gap-3">
-                    <span className="icon-tile"><Icon name={meta.icon} /></span>
+                    <span className="icon-tile">{actionKind(r.label) === 'google' ? <GoogleG size={20} /> : actionKind(r.label) === 'instagram' ? <InstagramGlyph size={20} /> : <Icon name={meta.icon} />}</span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="font-bold text-slate-800">{r.label}</p>
+                        <p className="font-bold text-slate-800">{actionTitle(r.label)}</p>
                         <span className="chip-soft shrink-0">+{formatPoints(r.points)} pts</span>
                       </div>
                       {(() => {

@@ -14,6 +14,7 @@ import { Illustration } from './Illustrations';
 import { LocationBar } from './LocationBar';
 import { Reveal } from './Reveal';
 import { TodayDeals, type Deal } from './TodayDeals';
+import { GoogleG, InstagramGlyph } from './BrandIcons';
 import { RatingBadge } from './Stars';
 import { PlaceAvatar, RewardImage } from './Visual';
 import { compareByRating, type RatingSummary } from '@/lib/reviews';
@@ -394,8 +395,8 @@ function PlaceRow({ p }: { p: Row }) {
         <div className="mt-1 flex flex-wrap items-center gap-1">
           {(p.hasGoogle || p.hasInstagram || p.hasRewards || p.challenges > 0) && (
           <ul className="flex items-center gap-1 text-electric-600" aria-label="O que este lugar oferece" data-testid="offers-icons">
-          {p.hasGoogle && <li title="Pontos por avaliar no Google" aria-label="Avaliação no Google" className="flex h-5 w-5 items-center justify-center rounded-md bg-[#EAF0FF]"><Icon name="star" size={12} /></li>}
-          {p.hasInstagram && <li title="Pontos por marcar no Instagram" aria-label="Instagram" className="flex h-5 w-5 items-center justify-center rounded-md bg-[#EAF0FF]"><Icon name="camera" size={12} /></li>}
+          {p.hasGoogle && <li title="Pontos por avaliar no Google" aria-label="Avaliação no Google" className="flex h-5 w-5 items-center justify-center rounded-md bg-[#EAF0FF]"><GoogleG size={12} /></li>}
+          {p.hasInstagram && <li title="Pontos por marcar no Instagram" aria-label="Instagram" className="flex h-5 w-5 items-center justify-center rounded-md bg-[#EAF0FF]"><InstagramGlyph size={12} /></li>}
           {p.hasRewards && <li title="Tem prêmios para trocar" aria-label="Prêmios" className="flex h-5 w-5 items-center justify-center rounded-md bg-[#EAF0FF]"><Icon name="gift" size={12} /></li>}
           {p.challenges > 0 && <li title="Tem desafios" aria-label="Desafios" className="flex h-5 w-5 items-center justify-center rounded-md bg-[#EAF0FF]"><Icon name="trophy" size={12} /></li>}
           </ul>

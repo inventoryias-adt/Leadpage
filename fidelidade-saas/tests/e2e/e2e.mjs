@@ -86,7 +86,7 @@ console.log('2. onboarding OK');
 
 // ---------- Caixa
 await r.fill('#amount', '150,00');
-await r.check('text=Avaliação 5 estrelas no Google');
+await r.check('text=Avaliação no Google');
 await r.check('text=Foto no Instagram');
 await r.waitForSelector('text=1.650 pontos');
 await r.click('text=Gerar QR Code');
