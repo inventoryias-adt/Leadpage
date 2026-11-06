@@ -20,7 +20,7 @@ const mins = (hm: string) => Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3, 5)
 /** Cores por situação, como no PDF: azul confirmado, verde concluído, âmbar aguardando, rosa faltou. */
 export const STATUS_CHIP: Record<string, { label: string; bg: string; fg: string }> = {
   PENDING: { label: 'Aguardando', bg: '#FFF1D6', fg: '#B45309' },
-  CONFIRMED: { label: 'Confirmado', bg: '#DBE7FF', fg: '#1A3FA3' },
+  CONFIRMED: { label: 'Confirmado', bg: '#DBE7FF', fg: '#2A59CF' },
   COMPLETED: { label: 'Concluído', bg: '#E6F7EC', fg: '#15803d' },
   NO_SHOW: { label: 'Faltou', bg: '#FDE2E4', fg: '#BE123C' },
 };

@@ -24,7 +24,7 @@ export default async function QueroOFidelize({ searchParams }: { searchParams: P
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-5 px-5 py-8">
       <Brand href="/" />
       <section className="glass-panel p-6 sm:p-8">
-        <p className="mb-2 inline-block rounded-full bg-[#c6f432] px-3 py-1 text-xs font-bold uppercase tracking-wide text-primary">Para comerciantes</p>
+        <p className="mb-2 inline-block rounded-full bg-verde px-3 py-1 text-xs font-bold uppercase tracking-wide text-primary">Para comerciantes</p>
         <h1 className="mb-2 text-3xl font-extrabold leading-tight tracking-tight text-primary">Quer o Fidelize no seu negócio?</h1>
         <p className="mb-5 text-slate-600">Deixe o seu contato e a gente fala com você. Leva 1 minuto e não tem compromisso. O primeiro mês sai por {FIRST_MONTH_PRICE}; depois, {PLAN_PRICE} por mês, tudo incluso.</p>
         <ul className="mb-6 space-y-3">

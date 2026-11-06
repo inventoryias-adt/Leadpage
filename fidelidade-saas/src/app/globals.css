@@ -13,7 +13,7 @@
   --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.08), 0 1px 0 rgba(255, 255, 255, 0.8) inset;
   --glass-blur: 18px;
   --glass-saturate: 160%;
-  --blue-electric: #2150c9;
+  --blue-electric: #2F63E6;
   --blue-deep: #0f1f3d;
   --ice: #f7f8fa;
 }
@@ -36,7 +36,7 @@ summary,
 .card-link,
 .glass-button,
 .glass-button-ghost,
-.glass-button-lime,
+.glass-button-primary,
 .glass-button-navy {
   -webkit-user-select: none;
   user-select: none;
@@ -153,29 +153,32 @@ main h1:not([data-h1]) + p {
   /* Botões: retos, sólidos e previsíveis. Hover escurece (sem inverter). */
   /* ---------------------------------------------------------------- */
   .glass-button,
-  .glass-button-lime,
+  .glass-button-primary,
+  .glass-button-light,
   .glass-button-navy,
   .glass-button-ghost,
   .btn-danger {
-    @apply inline-flex w-full select-none items-center justify-center gap-2 rounded-full border px-5 py-2 text-[15px] font-semibold leading-tight;
+    @apply inline-flex w-full select-none items-center justify-center gap-2 rounded-full border px-4 py-1.5 text-[14px] font-semibold leading-tight;
     white-space: nowrap;
-    min-height: 3rem; /* 48 px: mesma altura em todo botão, bom para o toque */
+    min-height: 2.5rem; /* 40 px: botões discretos, a mesma altura em todos */
     cursor: pointer;
     text-decoration: none;
     transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   }
   .glass-button:focus-visible,
-  .glass-button-lime:focus-visible,
+  .glass-button-primary:focus-visible,
+  .glass-button-light:focus-visible,
   .glass-button-navy:focus-visible,
   .glass-button-ghost:focus-visible,
   .btn-danger:focus-visible,
   .nav-tab:focus-visible,
   .chip-link:focus-visible {
-    outline: 2px solid rgba(33, 80, 201, 0.55);
+    outline: 2px solid rgba(47, 99, 230, 0.55);
     outline-offset: 2px;
   }
   .glass-button:disabled,
-  .glass-button-lime:disabled,
+  .glass-button-primary:disabled,
+  .glass-button-light:disabled,
   .glass-button-navy:disabled,
   .glass-button-ghost:disabled,
   .btn-danger:disabled,
@@ -184,20 +187,32 @@ main h1:not([data-h1]) + p {
     opacity: 0.5;
   }
 
-  /* Botão principal: pílula lima com texto marinho (padrão do benchmark). */
+  /* Botão principal: pílula no azul do F do logo, com texto branco. */
   .glass-button,
   .glass-button-navy,
-  .glass-button-lime {
-    color: #0f1f3d;
-    border-color: #c6f432;
-    background-color: #c6f432;
+  .glass-button-primary {
+    color: #fff;
+    border-color: #2f63e6;
+    background-color: #2f63e6;
   }
   @media (hover: hover) {
     .glass-button:not(:disabled):hover,
     .glass-button-navy:not(:disabled):hover,
-    .glass-button-lime:not(:disabled):hover {
-      border-color: #b3e01c;
-      background-color: #b3e01c;
+    .glass-button-primary:not(:disabled):hover {
+      border-color: #2a59cf;
+      background-color: #2a59cf;
+    }
+  }
+  /* Botão principal sobre faixa escura (marinho): pílula branca com texto marinho. */
+  .glass-button-light {
+    color: #0f1f3d;
+    border-color: #fff;
+    background-color: #fff;
+  }
+  @media (hover: hover) {
+    .glass-button-light:not(:disabled):hover {
+      border-color: #e5e9f0;
+      background-color: #e5e9f0;
     }
   }
   /* Página do lugar: o botão principal usa a cor da marca do estabelecimento (--brand definida no <main class="brand-scope">). */
@@ -251,9 +266,9 @@ main h1:not([data-h1]) + p {
     }
   }
   .action-tile[aria-expanded='true'] {
-    border-color: #2150c9;
+    border-color: #2F63E6;
     background-color: #f3f6fd;
-    color: #2150c9;
+    color: #2F63E6;
   }
   .action-tile:disabled {
     cursor: not-allowed;
@@ -262,8 +277,8 @@ main h1:not([data-h1]) + p {
 
   /* Tamanho compacto (botões dentro de listas, buscas, linhas). */
   .btn-sm {
-    @apply !w-auto !gap-1.5 !px-3.5 !py-1.5 !text-[13px];
-    min-height: 2.25rem !important; /* 36 px: o compacto também tem altura única; o raio é o mesmo do botão normal */
+    @apply !w-auto !gap-1.5 !px-3 !py-1 !text-[13px];
+    min-height: 2rem !important; /* 32 px: o compacto também tem altura única; o raio é o mesmo do botão normal */
   }
 
   /* Botão só de ícone (fechar, voltar, apagar): quadrado, mesmo raio dos demais botões. */
@@ -276,7 +291,7 @@ main h1:not([data-h1]) + p {
     }
   }
   .btn-icon:focus-visible {
-    outline: 2px solid rgba(33, 80, 201, 0.55);
+    outline: 2px solid rgba(47, 99, 230, 0.55);
     outline-offset: 2px;
   }
   .btn-icon:disabled {
@@ -308,16 +323,24 @@ main h1:not([data-h1]) + p {
     }
   }
 
-  /* Aba ativa das barras do celular e do app do cliente: pílula lima com ícone e texto marinhos. */
-  .nav-tab-active.nav-tab-lime,
-  .nav-tab-active.nav-tab-lime:hover {
-    @apply border-transparent text-primary;
-    background-color: #c6f432;
+  /* Aba ativa das barras do celular e do app do cliente: pílula em degradê do logo, com ícone e texto brancos. */
+  .nav-tab-active.nav-tab-grad,
+  .nav-tab-active.nav-tab-grad:hover {
+    @apply border-transparent text-white;
+    background-image: linear-gradient(135deg, #2f63e6 0%, #7be08a 100%);
   }
 
-  /* Destaque de marca-texto lima atrás de uma palavra (texto continua marinho). */
-  .mark-lime {
-    background-image: linear-gradient(transparent 58%, #c6f432 58%, #c6f432 92%, transparent 92%);
+  /* Barra de progresso: preenchimento em degradê do logo (do azul para o verde). */
+  .bar-grad {
+    background-image: linear-gradient(90deg, #2f63e6 0%, #7be08a 100%);
+  }
+
+  /* Destaque de marca-texto em degradê do logo atrás de uma palavra (texto continua marinho). */
+  .mark-grad {
+    background-image: linear-gradient(100deg, #2f63e6 0%, #7be08a 100%);
+    background-size: 100% 30%;
+    background-position: 0 92%;
+    background-repeat: no-repeat;
     padding: 0 0.12em;
     -webkit-box-decoration-break: clone;
     box-decoration-break: clone;
@@ -327,16 +350,13 @@ main h1:not([data-h1]) + p {
   .glass-chip {
     @apply inline-flex items-center whitespace-nowrap rounded-full border border-transparent bg-[#EAF0FF] px-2.5 py-1 text-xs font-semibold text-electric-600;
   }
-  /* Etiquetas coloridas: pontos em lima, situação boa em verde. */
-  .chip-lima {
+  /* Etiquetas coloridas: pontos e situação boa em verde claro (tom do verde do logo). */
+  .chip-verde {
     @apply inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold text-primary;
-    background-color: #c6f432;
+    background-color: rgba(123, 224, 138, 0.32);
   }
   .chip-sumido {
     @apply inline-flex items-center whitespace-nowrap rounded-full border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600;
-  }
-  .chip-verde {
-    @apply inline-flex items-center whitespace-nowrap rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700;
   }
   /* Quadradinho arredondado com ícone (ações, prêmios, avisos). */
   .icon-tile {
@@ -352,7 +372,7 @@ main h1:not([data-h1]) + p {
   @media (hover: hover) {
     .chip-link:hover {
       @apply bg-[#F3F6FD];
-      border-color: #2150c9;
+      border-color: #2F63E6;
     }
   }
   .chip-link-active {
@@ -389,11 +409,11 @@ main h1:not([data-h1]) + p {
   }
   /* Etiqueta de informação ("VALE EM TODA A REDE"): pílula clara, texto miúdo em caixa-alta. */
   .info-pill {
-    @apply inline-flex items-center rounded-full px-3.5 py-2 text-[10px] font-bold uppercase text-[#4f6a00];
+    @apply inline-flex items-center rounded-full px-3.5 py-2 text-[10px] font-bold uppercase text-[#1d6b35];
     letter-spacing: 0.14em;
-    background-color: #f1fbc8;
+    background-color: #e4f9e7;
   }
-  /* Barra de abas flutuante do celular: pílula branca só com ícones; a aba ativa é uma pílula lima. */
+  /* Barra de abas flutuante do celular: pílula branca só com ícones; a aba ativa é uma pílula em degradê do logo. */
   .nav-float {
     @apply relative grid w-full max-w-xs grid-cols-5 items-center gap-1 rounded-full bg-white p-1.5;
     box-shadow: 0 10px 34px rgba(15, 31, 61, 0.16), 0 1px 0 rgba(15, 31, 61, 0.04);
@@ -407,20 +427,21 @@ main h1:not([data-h1]) + p {
     @apply relative mx-auto flex h-12 w-full max-w-[3.75rem] items-center justify-center rounded-full text-slate-700;
     transition: background-color 0.2s ease, color 0.2s ease;
   }
-  /* Botão de Indicações (câmera): círculo lima que salta para fora da pílula, no meio da barra. */
+  /* Botão de Indicações (câmera): círculo em degradê do logo que salta para fora da pílula, no meio da barra. */
   .nav-float-fab {
-    @apply relative mx-auto flex h-16 w-16 -translate-y-[36%] items-center justify-center rounded-full text-primary transition-transform active:scale-95;
-    background-color: #c6f432;
+    @apply relative mx-auto flex h-16 w-16 -translate-y-[36%] items-center justify-center rounded-full text-white transition-transform active:scale-95;
+    background-image: linear-gradient(135deg, #2f63e6 0%, #7be08a 100%);
     border: 4px solid #f7f8fa;
     box-shadow: 0 10px 24px rgba(11, 27, 58, 0.28);
   }
   .nav-float-fab[aria-current='page'] {
+    background-image: none;
     background-color: #0f1f3d;
-    color: #c6f432;
+    color: #7be08a;
   }
   .nav-float-item[aria-current='page'] {
-    background-color: #c6f432;
-    color: #0f1f3d;
+    background-image: linear-gradient(135deg, #2f63e6 0%, #7be08a 100%);
+    color: #fff;
   }
 
   /* Link de texto dentro de conteúdo. */
@@ -478,7 +499,7 @@ main h1:not([data-h1]) + p {
     .hover-flip:hover .icon-tile,
     .hover-flip:focus-visible .icon-tile {
       background-color: rgba(255, 255, 255, 0.14);
-      color: #c6f432;
+      color: #7be08a;
     }
     .hover-tint:hover {
       background-color: #eef3fd;
@@ -786,18 +807,18 @@ label:has(input[type='radio']) {
 
 /* Chama a atenção para o cadastro depois de clicar em "Começar agora" (pisca três vezes). */
 @keyframes pulse-attention {
-  0% { box-shadow: 0 0 0 0 rgba(33, 80, 201, 0.55); border-color: #2150c9; }
-  70% { box-shadow: 0 0 0 12px rgba(33, 80, 201, 0); border-color: #2150c9; }
-  100% { box-shadow: 0 0 0 0 rgba(33, 80, 201, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(47, 99, 230, 0.55); border-color: #2F63E6; }
+  70% { box-shadow: 0 0 0 12px rgba(47, 99, 230, 0); border-color: #2F63E6; }
+  100% { box-shadow: 0 0 0 0 rgba(47, 99, 230, 0); }
 }
 .pulse-attention {
   animation: pulse-attention 1.2s ease-out 3;
-  border-color: #2150c9 !important;
+  border-color: #2F63E6 !important;
 }
 @media (prefers-reduced-motion: reduce) {
   .pulse-attention {
     animation: none;
-    box-shadow: 0 0 0 4px rgba(33, 80, 201, 0.35);
+    box-shadow: 0 0 0 4px rgba(47, 99, 230, 0.35);
   }
 }
 

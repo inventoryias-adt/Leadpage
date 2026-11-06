@@ -136,13 +136,13 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
 
       {fresh && (
         <section role="status" data-testid="booking-success" aria-label="Agendamento feito" className="space-y-3 rounded-[24px] bg-primary p-5 text-white">
-          <p className="flex items-center gap-2 text-sm font-semibold text-lime-300"><Icon name="check" size={18} /> {fresh.status === 'CONFIRMED' ? 'Horário garantido!' : 'Pedido enviado! O lugar vai confirmar.'}</p>
+          <p className="flex items-center gap-2 text-sm font-semibold text-verde"><Icon name="check" size={18} /> {fresh.status === 'CONFIRMED' ? 'Horário garantido!' : 'Pedido enviado! O lugar vai confirmar.'}</p>
           <div>
             <p className="text-xl font-extrabold tracking-tight">{fresh.serviceName}</p>
             <p className="text-sm text-white/80">{formatBookingWhen(fresh.startsAt)}{fresh.resource ? ` · com ${fresh.resource.name}` : ''}</p>
             <p className="text-sm text-white/70">{fresh.restaurant.name}{fresh.unit.address ? ` · ${fresh.unit.address}` : ''}</p>
           </div>
-          {freshPoints > 0 && <p className="text-sm"><span className="chip-lima">Ao concluir você ganha +{formatPoints(freshPoints)} pontos</span></p>}
+          {freshPoints > 0 && <p className="text-sm"><span className="chip-verde">Ao concluir você ganha +{formatPoints(freshPoints)} pontos</span></p>}
         </section>
       )}
       {sp.avaliado && <p role="status" className="glass-success" data-testid="review-thanks">Obrigado pela avaliação! Ela ajuda outros clientes a escolher.</p>}

@@ -73,7 +73,7 @@ export function PeakGridFull({ grid, from, to }: { grid: number[][]; from: numbe
                   data-testid={`heat-${d}-${h}`}
                   aria-label={`${WEEKDAYS[d]}, ${h}h: ${plural(count, 'compra', 'compras')}`}
                   className={`flex h-9 items-center justify-center rounded-lg text-xs font-extrabold transition-shadow hover:ring-2 hover:ring-primary focus-visible:ring-2 focus-visible:ring-primary ${count / max > 0.55 ? 'text-white' : 'text-primary'}`}
-                  style={{ background: count === 0 ? '#F1F3F6' : `rgba(33, 80, 201, ${0.18 + 0.82 * (count / max)})` }}
+                  style={{ background: count === 0 ? '#F1F3F6' : `rgba(47, 99, 230, ${0.18 + 0.82 * (count / max)})` }}
                 >
                   {count > 0 ? count : ''}
                 </button>
@@ -99,7 +99,7 @@ export function TopSlots({ items }: { items: { dow: number; hour: number; count:
             <button type="button" onClick={() => setSel({ dow: s.dow, hour: s.hour })} className="card-link flex w-full items-center gap-3 px-4 py-3 text-left">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#E8EEFB] text-sm font-extrabold text-electric-600">{i + 1}</span>
               <span className="min-w-0 flex-1 font-bold text-slate-800">{cap(WEEKDAYS[s.dow])}, {s.hour}h às {s.hour + 1}h</span>
-              <span className="chip-lima shrink-0">{plural(s.count, 'compra', 'compras')}</span>
+              <span className="chip-verde shrink-0">{plural(s.count, 'compra', 'compras')}</span>
             </button>
           </li>
         ))}

@@ -24,7 +24,7 @@ export function InteractionRequests({ items }: { items: PendingInteraction[] }) 
                 <p className="truncate text-sm text-slate-600">{i.label}</p>
                 <p className="text-xs text-slate-400">{agoText(i.createdAt, now)}{i.autoAt ? ` · ${releaseText(i.autoAt, now)}` : ''}</p>
               </div>
-              <span className="chip-lima shrink-0">+{i.points.toLocaleString('pt-BR')} pts</span>
+              <span className="chip-verde shrink-0">+{i.points.toLocaleString('pt-BR')} pts</span>
             </div>
             <div className="flex gap-2">
               {(['approve', 'reject'] as const).map((op) => (

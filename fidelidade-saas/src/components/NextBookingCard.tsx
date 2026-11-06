@@ -24,7 +24,7 @@ export function NextBookingCard({ booking, back = '/carteira' }: { booking: Next
     <div className="glass-panel !rounded-[22px] p-4">
       <Link href="/perfil/agendamentos" className="flex items-center gap-3" aria-label={`Seu próximo horário: ${booking.serviceName}, ${formatBookingWhen(booking.startsAt)}`}>
         <span className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl bg-[#0F1F3D] text-white">
-          <span className="text-[10px] font-bold tracking-wider text-lima">{MONTHS[br.getUTCMonth()]}</span>
+          <span className="text-[10px] font-bold tracking-wider text-verde">{MONTHS[br.getUTCMonth()]}</span>
           <span className="text-xl font-extrabold leading-none">{br.getUTCDate()}</span>
         </span>
         <span className="min-w-0 flex-1">

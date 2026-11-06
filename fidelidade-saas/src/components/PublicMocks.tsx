@@ -7,7 +7,7 @@ function Frame({ children, label, badge }: { children: ReactNode; label: string;
   return (
     <div className="relative mx-auto w-full max-w-md">
       {badge && (
-        <span className="absolute -right-2 -top-3 z-10 rounded-full bg-lima px-4 py-1.5 text-sm font-bold text-primary shadow-md">{badge}</span>
+        <span className="absolute -right-2 -top-3 z-10 rounded-full bg-verde px-4 py-1.5 text-sm font-bold text-primary shadow-md">{badge}</span>
       )}
       <div className="overflow-hidden rounded-[2rem] border border-[#E5E7EB] bg-white p-5 shadow-[0_30px_60px_-30px_rgba(18,40,107,0.35)]">{children}</div>
       <p className="mt-3 text-center text-xs font-semibold text-slate-500">{label}</p>
@@ -15,7 +15,7 @@ function Frame({ children, label, badge }: { children: ReactNode; label: string;
   );
 }
 
-function Bar({ pct, color = 'bg-electric-500' }: { pct: number; color?: string }) {
+function Bar({ pct, color = 'bar-grad' }: { pct: number; color?: string }) {
   return (
     <div className="h-2 overflow-hidden rounded-full bg-[#E5E7EB]" role="presentation">
       <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
@@ -63,7 +63,7 @@ function ChallengeRow({ icon, title, tag, now, total }: { icon: IconName; title:
       <div className="mb-3 flex items-center gap-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-electric-500/10 text-electric-600"><Icon name={icon} size={20} /></span>
         <p className="min-w-0 flex-1 text-sm font-semibold text-primary">{title}</p>
-        <span className="shrink-0 rounded-full bg-lima/40 px-2.5 py-1 text-xs font-bold text-primary">{tag}</span>
+        <span className="shrink-0 rounded-full bg-verde/40 px-2.5 py-1 text-xs font-bold text-primary">{tag}</span>
       </div>
       <div className="flex items-center gap-3">
         <div className="flex-1"><Bar pct={(now / total) * 100} /></div>
@@ -82,12 +82,12 @@ export function ChallengesMock() {
         <ChallengeRow icon="receipt" title="Compre 3x esta semana" tag="+500 pts" now={2} total={3} />
         <ChallengeRow icon="pin" title="Visite 4x este mês (check-in)" tag="+300 pts" now={1} total={4} />
         <li className="flex items-center gap-3 rounded-2xl bg-primary p-4 text-white">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-lima"><Icon name="spark" size={20} /></span>
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-verde"><Icon name="spark" size={20} /></span>
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-semibold">Terça em dobro</span>
             <span className="block text-xs text-slate-300">Compras de terça valem 2x em pontos</span>
           </span>
-          <span className="rounded-full bg-lima px-2.5 py-1 text-xs font-bold text-primary">2x</span>
+          <span className="rounded-full bg-verde px-2.5 py-1 text-xs font-bold text-primary">2x</span>
         </li>
       </ul>
     </Frame>
@@ -105,7 +105,7 @@ export function InstagramMock() {
             <span className="block font-semibold text-primary">Story marcando o lugar</span>
             <span className="block text-xs text-slate-500">Ganhe pontos extras por divulgar</span>
           </span>
-          <span className="rounded-full bg-lima/40 px-2.5 py-1 text-xs font-bold text-primary">+50 pts</span>
+          <span className="rounded-full bg-verde/40 px-2.5 py-1 text-xs font-bold text-primary">+50 pts</span>
         </div>
         <button type="button" tabIndex={-1} aria-hidden className="mt-4 w-full rounded-full bg-electric-500 py-3 text-sm font-semibold text-white">Já fiz</button>
       </Frame>

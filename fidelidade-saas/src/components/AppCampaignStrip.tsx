@@ -7,7 +7,7 @@ export type StripCampaign = AppCampaignLike & { places: number };
 
 // Cores sóbrias da marca, uma por cartão, para a fila não ficar monótona.
 const TONES = [
-  'from-[#1A3FA3] to-[#2150C9] text-white',
+  'from-[#2A59CF] to-[#2F63E6] text-white',
   'from-[#0F5C4D] to-[#17806B] text-white',
   'from-[#5B2A86] to-[#7A3FB0] text-white',
   'from-[#9A3412] to-[#C2410C] text-white',

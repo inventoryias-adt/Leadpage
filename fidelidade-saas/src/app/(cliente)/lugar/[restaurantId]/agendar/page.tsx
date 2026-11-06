@@ -171,8 +171,8 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
             <span>Horário atual: <b>{formatBookingWhen(rb.startsAt)}</b>{rb.resource ? <> com <b>{rb.resource.name}</b></> : null}. Escolha o novo dia, horário e profissional.</span>
           </p>
         )}
-        {club && <p className="mt-1.5"><span className="chip-lima" data-testid="club-covered">Incluso no seu plano {club.planName}: sobram {club.left} {club.left === 1 ? 'uso' : 'usos'} neste ciclo depois deste</span></p>}
-        {!rb && !club && points > 0 && <p className="mt-1.5"><span className="chip-lima">Ao concluir você ganha {formatPoints(points)} pontos aqui</span></p>}
+        {club && <p className="mt-1.5"><span className="chip-verde" data-testid="club-covered">Incluso no seu plano {club.planName}: sobram {club.left} {club.left === 1 ? 'uso' : 'usos'} neste ciclo depois deste</span></p>}
+        {!rb && !club && points > 0 && <p className="mt-1.5"><span className="chip-verde">Ao concluir você ganha {formatPoints(points)} pontos aqui</span></p>}
         {!rb && !club && service.pointsDiscountMaxPct > 0 && service.priceCents > 0 && <p className="mt-1.5"><span className="glass-chip">Aceita pontos como desconto, até {service.pointsDiscountMaxPct}% do preço.</span></p>}
       </header>
 
@@ -252,7 +252,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
         {nextFree && (
           <Link href={slotHref(hrefBase, nextFree)} data-testid="next-free" className="mb-3 flex items-center justify-between gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white">
             <span className="flex items-center gap-2"><Icon name="clock" size={16} /> Próximo horário livre</span>
-            <span className="text-lime-300">{formatBookingWhen(new Date(`${nextFree.date}T${nextFree.time}:00-03:00`))}</span>
+            <span className="text-verde">{formatBookingWhen(new Date(`${nextFree.date}T${nextFree.time}:00-03:00`))}</span>
           </Link>
         )}
         {lost && (
@@ -270,7 +270,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
               {grid.map((g) => (
                 <li key={g.time}>
                   {g.state === 'free' ? (
-                    <Link href={url({ data: date, hora: g.time })} aria-current={chosen?.time === g.time ? 'true' : undefined} className={`block rounded-lg border py-2.5 text-center text-sm font-semibold ${chosen?.time === g.time ? 'border-[#0F1F3D] bg-[#0F1F3D] text-lima' : 'border-slate-200 bg-white text-slate-800 hover:border-electric-500'}`}>
+                    <Link href={url({ data: date, hora: g.time })} aria-current={chosen?.time === g.time ? 'true' : undefined} className={`block rounded-lg border py-2.5 text-center text-sm font-semibold ${chosen?.time === g.time ? 'border-[#0F1F3D] bg-[#0F1F3D] text-verde' : 'border-slate-200 bg-white text-slate-800 hover:border-electric-500'}`}>
                   {g.time}
                 </Link>
                   ) : (

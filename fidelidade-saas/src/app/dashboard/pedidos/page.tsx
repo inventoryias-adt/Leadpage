@@ -39,7 +39,7 @@ export default async function PedidosPage({ searchParams }: { searchParams: Prom
   const pickedUp = closed.filter((o) => o.status === 'PICKED_UP').slice(0, 8);
   const canceled = closed.filter((o) => o.status === 'CANCELED');
   const columns = [
-    { key: 'RECEIVED', title: 'Recebidos', color: '#2150C9', orders: open.filter((o) => o.status === 'RECEIVED') },
+    { key: 'RECEIVED', title: 'Recebidos', color: '#2F63E6', orders: open.filter((o) => o.status === 'RECEIVED') },
     { key: 'PREPARING', title: 'Preparando', color: '#B45309', orders: open.filter((o) => o.status === 'PREPARING') },
     { key: 'READY', title: 'Prontos', color: '#15803d', orders: open.filter((o) => o.status === 'READY') },
     { key: 'PICKED_UP', title: 'Retirados', color: '#64748B', orders: pickedUp },

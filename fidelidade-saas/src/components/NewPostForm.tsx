@@ -76,7 +76,7 @@ export function NewPostForm({ places, defaultPlace }: { places: { id: string; na
       </div>
 
       <FormMessage state={state} />
-      <SubmitButton pendingText="Publicando…" variant="lime" data-testid="publish-post">Publicar indicação</SubmitButton>
+      <SubmitButton pendingText="Publicando…" variant="solid" data-testid="publish-post">Publicar indicação</SubmitButton>
     </form>
   );
 }

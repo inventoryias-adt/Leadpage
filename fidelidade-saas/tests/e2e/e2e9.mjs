@@ -51,7 +51,7 @@ assert.equal(sql(`select ("inviteTokenHash" is null)::text from "AdminUser"`),'t
 const sg = a.locator('svg[aria-label^="Cadastros por dia"] rect[aria-label]').last();
 await sg.scrollIntoViewIfNeeded(); await sg.hover();
 await a.waitForSelector('[role=tooltip]'); assert.match(await a.locator('[role=tooltip]').innerText(), /cadastro/);
-assert.equal(await a.locator('svg[aria-label^="Cadastros por dia"] path[stroke="#2150C9"]').count(), 1, 'cadastros por dia no gráfico de área padrão');
+assert.equal(await a.locator('svg[aria-label^="Cadastros por dia"] path[stroke="#2F63E6"]').count(), 1, 'cadastros por dia no gráfico de área padrão');
 console.log('3. convite aceito, senha definida e visão geral OK');
 
 // convite só vale uma vez

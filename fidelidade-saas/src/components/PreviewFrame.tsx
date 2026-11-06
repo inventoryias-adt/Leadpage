@@ -6,7 +6,7 @@ export function PreviewFrame({ title = 'Assim o cliente vê no app', where, chil
   return (
     <aside data-testid="client-preview" aria-label={title} className="rounded-2xl border border-[#d9e1f2] bg-[#f3f6fd] p-3.5">
       <div className="mb-2.5 flex items-center gap-2">
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0f1f3d] text-[#c6f432]"><Icon name="phone" size={14} /></span>
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0f1f3d] text-verde"><Icon name="phone" size={14} /></span>
         <div className="min-w-0">
           <p className="text-sm font-bold leading-tight text-primary">{title}</p>
           <p className="text-xs text-slate-500">Aparece em: {where}</p>

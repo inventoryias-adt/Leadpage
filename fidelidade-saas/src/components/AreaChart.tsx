@@ -57,8 +57,8 @@ export function AreaChart({ points, label, yKind = 'number', empty, onSelect }: 
       <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="block max-w-full" role="img" aria-label={label} onMouseLeave={() => setHover(null)}>
         <defs>
           <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#2150C9" stopOpacity=".22" />
-            <stop offset="1" stopColor="#2150C9" stopOpacity="0" />
+            <stop offset="0" stopColor="#2F63E6" stopOpacity=".22" />
+            <stop offset="1" stopColor="#2F63E6" stopOpacity="0" />
           </linearGradient>
         </defs>
         {[0, 0.5, 1].map((f) => (
@@ -68,7 +68,7 @@ export function AreaChart({ points, label, yKind = 'number', empty, onSelect }: 
           </g>
         ))}
         <path d={`${line} L${x(n - 1)} ${padT + innerH} L${x(0)} ${padT + innerH} Z`} fill={`url(#${gid})`} />
-        <path d={line} fill="none" stroke="#2150C9" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+        <path d={line} fill="none" stroke="#2F63E6" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
         {hover != null && <rect x={x(hover) - 1} y={padT} width={2} height={innerH} fill="#C7D6F7" />}
         {points.map((p, i) => {
           const on = hover === i;
@@ -76,7 +76,7 @@ export function AreaChart({ points, label, yKind = 'number', empty, onSelect }: 
           return (
             <g key={i}>
               {on && <circle cx={x(i)} cy={y(p.value)} r={9} fill="#BFD0F7" />}
-              {dot && <circle cx={x(i)} cy={y(p.value)} r={on ? 6 : 4} fill={on ? '#1A3FA3' : '#0F1F3D'} stroke="#fff" strokeWidth={on ? 2.5 : 1.5} />}
+              {dot && <circle cx={x(i)} cy={y(p.value)} r={on ? 6 : 4} fill={on ? '#2A59CF' : '#0F1F3D'} stroke="#fff" strokeWidth={on ? 2.5 : 1.5} />}
               {(i % tickEvery === 0 || i === n - 1) && (i === n - 1 || n - 1 - i >= tickEvery * 0.7) && (
                 <text x={x(i)} y={H - 6} textAnchor={i === n - 1 ? 'end' : 'middle'} fontSize="11" fill="#64748B">{p.label}</text>
               )}

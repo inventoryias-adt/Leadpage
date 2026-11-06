@@ -5,7 +5,7 @@ export type MonthBooking = { startsAt: Date; status: string };
 
 const WEEKDAYS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 const FULL = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
-const DOT: Record<string, string> = { PENDING: '#F59E0B', CONFIRMED: '#2150C9', COMPLETED: '#16A34A', NO_SHOW: '#E11D48' };
+const DOT: Record<string, string> = { PENDING: '#F59E0B', CONFIRMED: '#2F63E6', COMPLETED: '#16A34A', NO_SHOW: '#E11D48' };
 
 /**
  * Agenda do mês em calendário: cada dia mostra quantos atendimentos tem e a situação deles (pontinhos coloridos).

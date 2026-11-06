@@ -76,7 +76,7 @@ export function LeadForm({ source }: { source: string }) {
         <textarea id="l-msg" name="message" rows={3} maxLength={400} className="glass-input" placeholder="Quantas unidades, como vende hoje, alguma dúvida…" defaultValue={state.values?.message} />
       </div>
       <FormMessage state={state} />
-      <SubmitButton variant="lime" pendingText="Enviando…" data-testid="lead-enviar">Quero o Fidelize no meu negócio</SubmitButton>
+      <SubmitButton variant="solid" pendingText="Enviando…" data-testid="lead-enviar">Quero o Fidelize no meu negócio</SubmitButton>
       <p className="text-center text-xs text-slate-500">Usamos o seu contato só para falar sobre o Fidelize. Sem compromisso.</p>
     </form>
   );

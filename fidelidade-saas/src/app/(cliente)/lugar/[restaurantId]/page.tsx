@@ -260,7 +260,7 @@ export default async function LugarPage({
             ) : (
               <form action={claimBirthdayPerkAction} className="mt-3">
                 <input type="hidden" name="restaurantId" value={restaurantId} />
-                <button type="submit" className="glass-button-lime btn-sm !w-auto" data-testid="birthday-perk-claim">Quero meu presente</button>
+                <button type="submit" className="glass-button-primary btn-sm !w-auto" data-testid="birthday-perk-claim">Quero meu presente</button>
               </form>
             )}
           </section>
@@ -270,12 +270,12 @@ export default async function LugarPage({
         {/* Saldo / entrar */}
         {customer ? (
           <section className="relative flex items-center justify-between gap-3 overflow-hidden rounded-xl bg-primary p-5">
-            <div aria-hidden className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-lima/20 blur-2xl" />
+            <div aria-hidden className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-verde/20 blur-2xl" />
             <div className="relative">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Seu saldo aqui</p>
-              <p className="text-4xl font-extrabold text-lima">{formatPoints(balance)} <span className="text-base font-semibold text-slate-200">pts</span></p>
+              <p className="text-4xl font-extrabold text-verde">{formatPoints(balance)} <span className="text-base font-semibold text-slate-200">pts</span></p>
             </div>
-            <Link href={`${here}/premios`} className="glass-button-lime btn-sm relative">
+            <Link href={`${here}/premios`} className="glass-button-light btn-sm relative">
               <Icon name="gift" size={16} /> Escolher prêmio
             </Link>
           </section>
@@ -398,7 +398,7 @@ export default async function LugarPage({
                             <p className="mt-1 text-xs text-slate-500">{formatPoints(balance)} / {formatPoints(r.pointsCost)} pts · faltam {formatPoints(missing)}</p>
                           </div>
                         ) : (
-                          <span className="chip-lima mt-1.5">Você já pode resgatar</span>
+                          <span className="chip-verde mt-1.5">Você já pode resgatar</span>
                         ))}
                       </div>
                       <Icon name="chevron" size={18} className="shrink-0 text-slate-400" />

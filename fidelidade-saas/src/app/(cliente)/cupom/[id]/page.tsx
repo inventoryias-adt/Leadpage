@@ -40,7 +40,7 @@ export default async function CupomPage({ params }: { params: Promise<{ id: stri
           <ol className="space-y-3 text-sm text-slate-700">
             {['Vá até o lugar no horário de funcionamento.', 'Mostre este código no balcão.', v.cashCents > 0 ? 'Pague a diferença em dinheiro e receba o prêmio.' : 'Receba o prêmio. Pronto!'].map((t, i) => (
               <li key={t} className="flex items-center gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-lima text-xs font-extrabold text-primary">{i + 1}</span>
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-verde text-xs font-extrabold text-primary">{i + 1}</span>
                 {t}
               </li>
             ))}

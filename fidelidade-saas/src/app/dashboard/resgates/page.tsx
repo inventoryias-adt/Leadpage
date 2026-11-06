@@ -78,7 +78,7 @@ export default async function ResgatesPage({ searchParams }: { searchParams: Pro
             {checked.status === 'PENDING' && (
               <form action={markRedemptionUsed} autoComplete="off">
                 <input type="hidden" name="id" value={checked.id} />
-                <SubmitButton variant="lime" pendingText="Entregando…">Entregar prêmio e dar baixa</SubmitButton>
+                <SubmitButton variant="solid" pendingText="Entregando…">Entregar prêmio e dar baixa</SubmitButton>
               </form>
             )}
           </div>

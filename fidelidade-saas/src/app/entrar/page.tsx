@@ -25,12 +25,12 @@ export default async function EntrarPage({ searchParams }: { searchParams: Promi
         <CustomerAuthForm next={next} cta="Entrar" initial={sp.criar ? 'criar' : 'entrar'} />
       </div>
       <Link href="/quero-o-fidelize?origem=qr" data-testid="sou-comerciante" className="flex w-full max-w-md items-center gap-3 rounded-3xl bg-primary p-4 text-white shadow-lg transition-transform hover:-translate-y-0.5">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#c6f432] text-primary"><Icon name="receipt" size={22} /></span>
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-verde text-primary"><Icon name="receipt" size={22} /></span>
         <span className="min-w-0 flex-1 text-sm leading-snug">
           <b className="block text-base">Tem um comércio?</b>
           <span className="text-slate-300">Quero o Fidelize no meu negócio</span>
         </span>
-        <Icon name="chevron" size={20} className="shrink-0 text-[#c6f432]" />
+        <Icon name="chevron" size={20} className="shrink-0 text-verde" />
       </Link>
       <LegalLinks audience="cliente" />
     </main>

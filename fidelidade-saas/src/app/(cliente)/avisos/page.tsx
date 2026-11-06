@@ -71,7 +71,7 @@ export default async function AvisosPage({ searchParams }: { searchParams: Promi
         <div className="md:hidden"><Brand href="/carteira" /></div>
         <h1 className="mt-5 text-2xl font-extrabold tracking-tight text-primary md:mt-0 md:text-3xl">Avisos</h1>
         <p className="text-sm text-slate-600">
-          {unreadTotal > 0 ? <><span className="chip-lima">{unreadTotal} {unreadTotal === 1 ? 'novo' : 'novos'}</span>{' '}</> : null}
+          {unreadTotal > 0 ? <><span className="chip-verde">{unreadTotal} {unreadTotal === 1 ? 'novo' : 'novos'}</span>{' '}</> : null}
           Pontos recebidos, pedidos, horários e prêmios. Toque em uma data para ver.
         </p>
         {unreadShown > 0 && <div className="mt-1"><MarkAllRead restaurantId={filter ?? undefined} /></div>}

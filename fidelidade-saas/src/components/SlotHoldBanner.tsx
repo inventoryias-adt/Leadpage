@@ -86,12 +86,12 @@ export function SlotHoldBanner({ params, hrefBase }: { params: Params; hrefBase:
   }
   const remaining = left ?? HOLD_MS;
   return (
-    <div role="status" data-testid="hold-active" className="space-y-2 rounded-2xl bg-lime-100/70 px-3 py-2.5 ring-1 ring-lime-300">
+    <div role="status" data-testid="hold-active" className="space-y-2 rounded-2xl bg-verde/15 px-3 py-2.5 ring-1 ring-verde/50">
       <p className="flex items-center justify-between gap-2 text-sm font-semibold text-primary">
         <span className="flex items-center gap-1.5"><Icon name="lock" size={15} /> Horário reservado para você</span>
         <span data-testid="hold-timer" className="tabular-nums">{formatCountdown(remaining)}</span>
       </p>
-      <div className="h-1.5 overflow-hidden rounded-full bg-lime-200"><div className="h-full rounded-full bg-primary transition-[width] duration-1000 ease-linear" style={{ width: `${Math.min(100, (remaining / HOLD_MS) * 100)}%` }} /></div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-verde/30"><div className="h-full rounded-full bg-primary transition-[width] duration-1000 ease-linear" style={{ width: `${Math.min(100, (remaining / HOLD_MS) * 100)}%` }} /></div>
     </div>
   );
 }

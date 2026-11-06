@@ -3,7 +3,7 @@
  * assim toda cor combina com a marca e tem contraste bom com texto branco.
  */
 export const COLORS = [
-  { key: 'azul', label: 'Azul', hex: '#2150C9', soft: '#EAF0FF' },
+  { key: 'azul', label: 'Azul', hex: '#2F63E6', soft: '#EAF0FF' },
   { key: 'verde', label: 'Verde', hex: '#15803D', soft: '#E6F7EC' },
   { key: 'laranja', label: 'Laranja', hex: '#C2410C', soft: '#FFEFE3' },
   { key: 'roxo', label: 'Roxo', hex: '#7C3AED', soft: '#F1EAFE' },
@@ -40,8 +40,8 @@ export function resourceColor(r: { id: string; color?: string | null }): ColorIn
  * Fica separada de COLORS de propósito: mexer em COLORS mudaria as cores automáticas de campanhas e profissionais.
  */
 export const BRAND_COLORS = [
-  { key: 'marinho', label: 'Marinho', hex: '#0F1F3D', deep: '#1A3FA3' },
-  { key: 'azul', label: 'Azul', hex: '#2150C9', deep: '#0F1F3D' },
+  { key: 'marinho', label: 'Marinho', hex: '#0F1F3D', deep: '#2A59CF' },
+  { key: 'azul', label: 'Azul', hex: '#2F63E6', deep: '#0F1F3D' },
   { key: 'verde', label: 'Verde', hex: '#15803D', deep: '#0B4A24' },
   { key: 'turquesa', label: 'Turquesa', hex: '#0F766E', deep: '#0A3F3B' },
   { key: 'laranja', label: 'Laranja', hex: '#C2410C', deep: '#7A2A08' },

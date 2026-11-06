@@ -16,7 +16,7 @@ await o.fill('#email','ze@burger.com'); await o.fill('#password','senha-segura-1
 await wait(o,1500);
 
 // 1. início do restaurante usa o gráfico de área padrão (linha), com dica imediata
-assert.equal(await o.locator('svg[aria-label="Vendas lançadas por dia"] path[stroke="#2150C9"]').count(), 1, 'linha azul do gráfico de área');
+assert.equal(await o.locator('svg[aria-label="Vendas lançadas por dia"] path[stroke="#2F63E6"]').count(), 1, 'linha azul do gráfico de área');
 const slot = o.locator('svg[aria-label="Vendas lançadas por dia"] rect[aria-label]:not([aria-label*="Sem vendas"])').last();
 await slot.scrollIntoViewIfNeeded(); await slot.hover();
 const tip = o.locator('[role=tooltip]'); await tip.waitFor({ timeout: 1000 });
