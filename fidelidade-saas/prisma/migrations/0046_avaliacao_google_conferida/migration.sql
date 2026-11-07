@@ -54,3 +54,19 @@ ALTER TABLE "GoogleReviewIntent" ADD CONSTRAINT "GoogleReviewIntent_ruleId_fkey"
 -- AddForeignKey
 ALTER TABLE "GoogleReviewIntent" ADD CONSTRAINT "GoogleReviewIntent_restaurantId_fkey" FOREIGN KEY ("restaurantId") REFERENCES "Restaurant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
+
+-- Produção: tabelas do papel "fidelize_app", com RLS ligado sem políticas (ver 0026 e o README). GoogleConnection guarda o token do Google (cifrado):
+-- nada de acesso público. Sem esses papéis (dev, CI) não faz nada.
+DO $$
+DECLARE t text;
+BEGIN
+  FOREACH t IN ARRAY ARRAY['GoogleConnection', 'GoogleReviewIntent'] LOOP
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'fidelize_app') THEN
+      EXECUTE format('ALTER TABLE %I OWNER TO fidelize_app', t);
+      EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+      EXECUTE format('REVOKE ALL ON TABLE %I FROM anon, authenticated, service_role', t);
+    END IF;
+  END LOOP;
+END $$;
