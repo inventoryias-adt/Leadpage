@@ -38,6 +38,8 @@ import { INTERACTION_COOLDOWN_DAYS, releaseText } from '@/lib/interaction-approv
 import { settleDueInteractions } from '@/lib/interaction-claims';
 import { newReferralCode } from '@/lib/tokens';
 import { GoogleG, InstagramGlyph, actionKind, actionTitle } from '@/components/BrandIcons';
+import { GoogleReviewFlow } from '@/components/GoogleReviewFlow';
+import { googleConfigured } from '@/lib/google-reviews';
 
 export const dynamic = 'force-dynamic';
 
@@ -130,6 +132,8 @@ export default async function LugarPage({
   // Unidade em destaque: a escolhida no link (?unidade=) ou a primeira. Endereço, horário, mapa e Google vêm dela.
   const unit = units.find((u) => u.id === sp.unidade) ?? units[0] ?? null;
   const multi = units.length > 1;
+  // Conferência automática das avaliações: o lugar ligou o Google e esta unidade tem o perfil escolhido.
+  const googleLinked = googleConfigured() && !!unit?.googleLocation && !!(await prisma.googleConnection.findUnique({ where: { restaurantId }, select: { id: true } }));
   const schedule = parseSchedule(unit?.openingSchedule);
   const open = schedule ? isOpenNow(schedule) : null;
   const balance = wallet?.balance ?? 0;
@@ -316,6 +320,7 @@ export default async function LugarPage({
               </li>
             )}
             {rules.map((r) => {
+              const flowRow = (x: typeof r) => !!customer && x.approval !== 'COUNTER' && actionKind(x.label) === 'google' && !!unit?.googleReviewUrl;
               const meta = actionMeta(r.label, { googleReviewUrl: unit?.googleReviewUrl ?? null, instagram: restaurant.instagram });
               return (
                 <li key={r.id} className="hover-tint p-4">
@@ -332,6 +337,7 @@ export default async function LugarPage({
                         if (r.approval === 'COUNTER') return <p className="text-sm text-slate-500">Faça e mostre ao caixa para receber os pontos.</p>;
                         if (last?.status === 'PENDING') return <p className="mt-1"><span className="glass-chip" data-testid="claim-pending">Em análise{last.autoAt ? ` · ${releaseText(last.autoAt)}` : ''}</span></p>;
                         if (last?.status === 'APPROVED' && !cooldownOver) return <p className="mt-1"><span className="chip-verde">Pontos recebidos</span></p>;
+                        if (flowRow(r)) return <p className="text-sm text-slate-500">Avalie no Google e volte aqui. {googleLinked ? 'Conferimos sozinhos em poucos minutos.' : r.approval === 'AUTO' ? 'Os pontos entram sozinhos em até 24 h.' : 'O lugar confere e libera os seus pontos.'}</p>;
                         return (
                           <>
                             <p className="text-sm text-slate-500">Faça e toque em <b>Já fiz</b>. {r.approval === 'AUTO' ? 'Os pontos entram sozinhos em até 24 h.' : 'O lugar confere e libera os seus pontos.'}</p>
@@ -339,15 +345,33 @@ export default async function LugarPage({
                           </>
                         );
                       })()}
-                      {(meta.copy || meta.cta) && (
+                      {(meta.copy || (meta.cta && !flowRow(r))) && (
                         <div className="mt-3 flex flex-wrap gap-2">
                           {meta.copy && <CopyButton text={meta.copy} label={`Copiar ${meta.copy}`} copiedLabel="Copiado! Cole na sua foto" />}
-                          {meta.cta && <a href={meta.cta.href} target="_blank" rel="noopener noreferrer" className="glass-button-ghost btn-sm">{meta.cta.text}</a>}
+                          {meta.cta && !flowRow(r) && <a href={meta.cta.href} target="_blank" rel="noopener noreferrer" className="glass-button-ghost btn-sm">{meta.cta.text}</a>}
                         </div>
                       )}
                       {customer && r.approval !== 'COUNTER' && (() => {
                         const last = lastClaim.get(r.id);
                         const blocked = last?.status === 'PENDING' || (last?.status === 'APPROVED' && Date.now() - last.createdAt.getTime() <= INTERACTION_COOLDOWN_DAYS * 24 * 3_600_000);
+                        if (flowRow(r) && unit?.googleReviewUrl) {
+                          const got = last?.status === 'APPROVED' && blocked; // pontos já recebidos: sem botão, mas a tela aberta segue até a pessoa fechar
+                          return (
+                            <div className="mt-3">
+                              <GoogleReviewFlow
+                                ruleId={r.id}
+                                restaurantId={restaurantId}
+                                unitId={unit.id}
+                                googleUrl={unit.googleReviewUrl}
+                                points={r.points}
+                                placeName={restaurant.name}
+                                initial={got ? 'approved' : last?.status === 'PENDING' ? 'checking' : 'idle'}
+                                auto={googleLinked && !!last?.openedAt}
+                                autoAt={last?.autoAt ? last.autoAt.toISOString() : null}
+                              />
+                            </div>
+                          );
+                        }
                         return blocked ? null : <div className="mt-3"><JaFizButton ruleId={r.id} restaurantId={restaurantId} /></div>;
                       })()}
                     </div>

@@ -6,6 +6,7 @@ const DB = 'postgresql://postgres:postgres@localhost:5432/fidelidade';
 const sql = (q) => execFileSync('psql', [DB, '-At', '-c', q]).toString().trim();
 sql(`truncate "RateLimit"; update "Restaurant" set "guideDoneAt"=now(); delete from "Notification"`);
 const rid = sql(`select id from "Restaurant" where email='ze@burger.com'`);
+sql(`update "Unit" set "googleReviewUrl"='https://g.page/r/CdemoBurgerDoZe/review' where "restaurantId"='${rid}'`); // o fluxo em três telas só existe quando a unidade tem o link do Google
 const cid = sql(`select id from "Customer" where email='lucas@teste.com'`);
 sql(`delete from "InteractionClaim"; delete from "InteractionRule" where "restaurantId"='${rid}'; delete from "Wallet" where "customerId"='${cid}'`);
 sql(`insert into "InteractionRule" (id,"restaurantId",label,points,approval) values ('r-manual','${rid}','Avaliar no Google',50,'MANUAL'),('r-auto','${rid}','Story no Instagram',30,'AUTO'),('r-balcao','${rid}','Indicar um amigo no balcão',20,'COUNTER')`);
@@ -17,21 +18,31 @@ const c = await ctx.newPage(); c.on('pageerror', (e) => console.log('PAGEERROR',
 const o = await ctx.newPage(); o.on('pageerror', (e) => console.log('PAGEERROR', e.message));
 await c.goto(BASE + '/entrar'); await c.fill('#c-email', 'lucas@teste.com'); await c.fill('#c-password', 'senha-cliente-1'); await c.click('button[type=submit]'); await c.waitForURL('**/carteira**');
 await o.goto(BASE + '/login'); await o.fill('#email', 'ze@burger.com'); await o.fill('#password', 'senha-segura-1'); await o.click('button[type=submit]'); await o.waitForURL('**/dashboard');
+await ctx.route('**/g.page/**', (r) => r.fulfill({ contentType: 'text/html', body: 'ok' })); // o Google de verdade não é aberto nos testes
+// "Avaliar no Google" tem fluxo próprio em três telas (ver e2e84): aqui só percorremos até o pedido.
+const avaliarNoGoogle = async () => {
+  await c.locator('li:has-text("Avaliar no Google") [data-testid=gr-trigger]').click();
+  await c.locator('[data-testid=gr-open]').click();
+  await c.locator('[data-testid=gr-done]').click();
+  await c.waitForSelector('[data-testid=gr-step-checking]');
+  await c.locator('[data-testid=gr-close]').click();
+};
 const balance = () => Number(sql(`select coalesce(sum(balance),0) from "Wallet" where "customerId"='${cid}' and "restaurantId"='${rid}'`));
 
 // 1. só as interações com aprovação mostram "Já fiz"; a do balcão segue igual
 await c.goto(`${BASE}/lugar/${rid}`); await c.waitForSelector('text=Ações para ganhar pontos');
-assert.equal(await c.locator('button:has-text("Já fiz")').count(), 2, 'dois botões Já fiz');
+assert.equal(await c.locator('button:has-text("Já fiz")').count(), 1, 'um botão Já fiz (Instagram); a do Google tem o fluxo em três telas');
+assert.equal(await c.locator('[data-testid=gr-trigger]').count(), 1, 'a avaliação do Google abre o fluxo');
 assert.ok(await c.locator('text=Faça e mostre ao caixa para receber os pontos.').count(), 'a do balcão continua pedindo para mostrar ao caixa');
 console.log('1. Já fiz só nas interações com aprovação OK');
 
 // 2. pedido manual: fica pendente e não credita
-await c.locator('li:has-text("Avaliar no Google") button:has-text("Já fiz")').click();
+await avaliarNoGoogle();
 await c.waitForSelector('[data-testid=claim-pending]');
 assert.equal(sql(`select status from "InteractionClaim" where "ruleId"='r-manual'`), 'PENDING');
 assert.equal(balance(), 0);
 await c.reload(); await c.waitForSelector('[data-testid=claim-pending]');
-assert.equal(await c.locator('li:has-text("Avaliar no Google") button:has-text("Já fiz")').count(), 0, 'sem botão enquanto pendente');
+assert.equal(await c.locator('li:has-text("Avaliar no Google") [data-testid=gr-trigger]').innerText(), 'Ver a conferência', 'enquanto pendente o botão só mostra a conferência');
 console.log('2. pedido manual pendente, sem pontos e sem repetir OK');
 
 // 3. o dono vê o pedido no Caixa (com bolinha no menu) e aprova: +50 e aviso ao cliente
@@ -47,7 +58,7 @@ console.log('3. dono aprova: carteira +50, extrato e aviso OK');
 
 // 4. depois de aprovada, não dá para pedir de novo (30 dias)
 await c.goto(`${BASE}/lugar/${rid}`); await c.waitForSelector('text=Pontos recebidos');
-assert.equal(await c.locator('li:has-text("Avaliar no Google") button:has-text("Já fiz")').count(), 0);
+assert.equal(await c.locator('li:has-text("Avaliar no Google") [data-testid=gr-trigger]').count(), 0, 'depois de aprovada não pede de novo');
 console.log('4. depois de aprovada não repete dentro de 30 dias OK');
 
 // 5. automático: pendente com prazo; antes do prazo não credita; passado o prazo entra sozinho ao abrir a tela
@@ -80,7 +91,7 @@ console.log('6. recusa: sem pontos, cliente avisado e pode tentar de novo OK');
 // 7. decisão repetida não credita duas vezes
 sql(`delete from "InteractionClaim"; delete from "Wallet" where "customerId"='${cid}'`);
 await c.goto(`${BASE}/lugar/${rid}`);
-await c.locator('li:has-text("Avaliar no Google") button:has-text("Já fiz")').click(); await c.waitForSelector('[data-testid=claim-pending]');
+await avaliarNoGoogle(); await c.waitForSelector('[data-testid=claim-pending]');
 await o.goto(BASE + '/dashboard/caixa'); await o.waitForSelector('[data-testid=interaction-requests]');
 const o2 = await ctx.newPage();
 await o2.goto(BASE + '/dashboard/caixa'); await o2.waitForSelector('[data-testid=interaction-requests]');
