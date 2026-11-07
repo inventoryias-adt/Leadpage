@@ -91,9 +91,9 @@ jobs:
         run: bash tests/e2e/subir-app.sh
       - name: Testes de tela
         env:
-          # O app de desenvolvimento acumula memória e se reinicia sozinho por volta de 20 minutos no ar, derrubando o teste da hora
-          # (era o e2e21 e o e2e69): o run.sh o reinicia, entre dois testes, a cada 10 minutos.
-          REINICIAR_APOS: "600"
+          # O app de desenvolvimento acumula memória e se reinicia sozinho e, às vezes, cai de vez, derrubando o teste da hora
+          # (era o e2e21 e o e2e69): o run.sh o reinicia, entre dois testes, a cada 5 minutos.
+          REINICIAR_APOS: "300"
         run: tests/e2e/run.sh
       - name: Registro do servidor se falhou
         if: failure()

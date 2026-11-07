@@ -15,8 +15,11 @@ inicio_app=$(date +%s) # o CI sobe o app logo antes de chamar este script
 APP_LOG=${APP_LOG:-/tmp/app.log}
 # "Identidade" do servidor de desenvolvimento: os PIDs do next-server e quantas vezes o log já registrou o reinício por memória.
 app_id() { echo "$(pgrep -f next-server 2>/dev/null | sort | tr '\n' ' ')|$(grep -c 'approaching the used memory threshold' "$APP_LOG" 2>/dev/null || echo 0)"; }
+# Memória livre do computador e do servidor de desenvolvimento (MB): vai para o log do CI para sabermos quando o app está perto de cair.
+mem() { echo "livre=$(free -m 2>/dev/null | awk '/^Mem:/{print $7}')MB app=$(ps -o rss= -p "$(pgrep -f next-server 2>/dev/null | paste -sd, -)" 2>/dev/null | awk '{s+=$1} END{printf "%d", s/1024}')MB"; }
 for n in "${files[@]}"; do
   echo "=== $n"
+  echo "(memória antes: $(mem))"
   # e2e17 e e2e22 já tratam o aceite dos termos sozinhos; nos demais o preload marca a caixa "Li e concordo".
   pre=(--import "$PWD/$E/hydrate-preload.mjs")
   if [ "$n" != e2e17 ] && [ "$n" != e2e22 ]; then pre+=(--import "$PWD/$E/terms-preload.mjs"); fi
@@ -30,6 +33,9 @@ for n in "${files[@]}"; do
   # roda o teste de novo. Qualquer outra falha derruba o teste na hora.
   if [ $code -ne 0 ] && { grep -qE "ERR_CONNECTION_(REFUSED|RESET)|ECONNREFUSED|ECONNRESET|Failed to fetch" "$n.log" || [ "$antes" != "$(app_id)" ]; }; then
     echo "(o app caiu ou reiniciou durante $n; esperando o app voltar e tentando mais uma vez)"
+    echo "(memória agora: $(mem))"
+    echo "--- fim do registro do app:"; tail -n 25 "$APP_LOG" 2>/dev/null | cut -c1-200
+    echo "--- mensagens do sistema:"; dmesg 2>/dev/null | tail -n 5 | cut -c1-200
     cp "$n.log" "$n.queda.log"
     for i in $(seq 1 60); do curl -fsS -o /dev/null --max-time 5 http://localhost:3000/entrar && break; sleep 2; done
     timeout 400 node "${pre[@]}" "$E/$n.mjs" > "$n.log" 2>&1
