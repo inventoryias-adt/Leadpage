@@ -1,7 +1,7 @@
 #!/bin/bash
 # Sobe (ou sobe de novo) o app em modo desenvolvimento na porta 3000 e aquece as rotas principais. Usado pelo CI.
 # O servidor de desenvolvimento acumula memória e, perto do limite, se reinicia sozinho ("approaching the used memory threshold"),
-# derrubando a conexão no meio de um teste. O CI roda os testes em duas metades e chama este script entre elas.
+# derrubando a conexão no meio de um teste. O run.sh chama este script entre dois testes quando o app já está no ar há REINICIAR_APOS segundos.
 # O estado dos testes fica no Postgres, então reiniciar o servidor é seguro.
 cd "$(dirname "$0")/../.." || exit 1
 pkill -f "next dev" 2>/dev/null

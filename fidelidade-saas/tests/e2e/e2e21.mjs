@@ -5,7 +5,7 @@ const BASE = 'http://localhost:3000';
 const DB = 'postgresql://postgres:postgres@localhost:5432/fidelidade';
 const sql = (q) => execFileSync('psql', [DB, '-At', '-c', q]).toString().trim();
 const week = JSON.stringify(Array.from({ length: 7 }, (_, day) => ({ day, closed: false, open: '09:00', close: '18:00' })));
-sql(`truncate "RateLimit"; update "Restaurant" set "guideDoneAt"=now(),"bookingAutoConfirm"=true,"bookingMinNoticeMin"=0,"bookingMaxDaysAhead"=30,"bookingCancelHours"=2,"pointsPerReal"=10,"pointsPerRealOff"=100; delete from "Booking"; delete from "Service"; delete from "Resource"; update "Unit" set "openingSchedule"='${week}'::jsonb`);
+sql(`truncate "RateLimit"; update "Restaurant" set "guideDoneAt"=now(),"bookingAutoConfirm"=true,"bookingMinNoticeMin"=0,"bookingMaxDaysAhead"=30,"bookingCancelHours"=2,"pointsPerReal"=10,"pointsPerRealOff"=100; delete from "Booking"; delete from "Service"; delete from "Resource"; delete from "Transaction" where description like 'Desconto no agendamento:%' or description like 'Pontos devolvidos:%'; update "Unit" set "openingSchedule"='${week}'::jsonb`);
 const rid = sql(`select id from "Restaurant" where email='ze@burger.com'`);
 const lucas = sql(`select id from "Customer" where email='lucas@teste.com'`);
 sql(`insert into "Resource"(id,"restaurantId",name,capacity) values (gen_random_uuid()::text,'${rid}','João',1)`);
