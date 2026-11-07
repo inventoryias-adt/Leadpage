@@ -89,20 +89,12 @@ jobs:
         run: npx prisma migrate deploy
       - name: Subir o app (modo desenvolvimento, que aceita o pagamento simulado)
         run: bash tests/e2e/subir-app.sh
-      - name: Testes de tela (1ª metade)
-        run: |
-          # Mesma ordem do run.sh (o e2e.mjs cria os dados que os seguintes usam), em duas metades.
-          mapfile -t todos < <(echo e2e; ls tests/e2e/e2e[0-9]*.mjs | xargs -n1 basename | sed 's/\.mjs$//' | sort -V)
-          meio=$(( ${#todos[@]} / 2 ))
-          printf '%s\n' "${todos[@]:0:$meio}" > /tmp/e2e-parte1
-          printf '%s\n' "${todos[@]:$meio}" > /tmp/e2e-parte2
-          tests/e2e/run.sh $(cat /tmp/e2e-parte1)
-      - name: Reiniciar o app entre as metades (a memória do modo desenvolvimento só cresce)
-        if: ${{ !cancelled() }}
-        run: bash tests/e2e/subir-app.sh
-      - name: Testes de tela (2ª metade)
-        if: ${{ !cancelled() }}
-        run: tests/e2e/run.sh $(cat /tmp/e2e-parte2)
+      - name: Testes de tela
+        env:
+          # O app de desenvolvimento acumula memória e se reinicia sozinho por volta de 20 minutos no ar, derrubando o teste da hora
+          # (era o e2e21 e o e2e69): o run.sh o reinicia, entre dois testes, a cada 10 minutos.
+          REINICIAR_APOS: "600"
+        run: tests/e2e/run.sh
       - name: Registro do servidor se falhou
         if: failure()
         run: tail -n 120 /tmp/app.log || true
