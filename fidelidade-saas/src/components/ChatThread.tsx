@@ -60,7 +60,7 @@ export function ChatThread({ as, conversationId, initial, otherName }: { as: Cha
           const mine = m.sender === as;
           return (
             <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`} data-testid={mine ? 'msg-mine' : 'msg-theirs'}>
-              <div className={`max-w-[82%] rounded-2xl px-3.5 py-2 text-sm shadow-sm ${mine ? 'rounded-br-md bg-[#0F1F3D] text-white' : 'rounded-bl-md bg-white text-slate-800'}`}>
+              <div className={`max-w-[82%] rounded-2xl px-3.5 py-2 text-sm shadow-sm ${mine ? 'rounded-br-md bg-[#12241C] text-white' : 'rounded-bl-md bg-white text-slate-800'}`}>
                 <p className="whitespace-pre-wrap break-words">{m.body}</p>
                 <p className={`mt-0.5 text-right text-[10px] ${mine ? 'text-white/60' : 'text-slate-400'}`}>{chatTime(new Date(m.createdAt))}</p>
               </div>

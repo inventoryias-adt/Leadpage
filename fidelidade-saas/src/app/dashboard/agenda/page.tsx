@@ -22,7 +22,7 @@ export const dynamic = 'force-dynamic';
 
 const STATUS: Record<string, { label: string; cls: string }> = {
   PENDING: { label: 'Aguardando', cls: 'bg-amber-100 text-amber-800' },
-  CONFIRMED: { label: 'Confirmado', cls: 'bg-[#EAF0FF] text-electric-600' },
+  CONFIRMED: { label: 'Confirmado', cls: 'bg-[#E6EDE8] text-acao-600' },
   COMPLETED: { label: 'Concluído', cls: 'bg-emerald-100 text-emerald-700' },
   CANCELED: { label: 'Cancelado', cls: 'bg-slate-100 text-slate-500' },
   NO_SHOW: { label: 'Faltou', cls: 'bg-rose-100 text-rose-700' },
@@ -83,7 +83,7 @@ function Item({ b, back, showDay }: { b: Row; back: string; showDay?: boolean })
         <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold ${st.cls}`}>{st.label}</span>
       </div>
       {b.discountCents > 0 && (
-        <p className="text-xs font-semibold text-electric-600">
+        <p className="text-xs font-semibold text-acao-600">
           Desconto de {formatBRL(b.discountCents)} com {formatPoints(b.pointsUsed)} pontos do cliente{b.status === 'CANCELED' ? ' (devolvidos)' : ''}. Valor cheio: {formatBRL(b.priceCents)}.
         </p>
       )}
@@ -106,7 +106,7 @@ function PendingRow({ b, back }: { b: Row; back: string }) {
           <p className="truncate text-sm font-bold text-slate-800">{formatBookingWhen(b.startsAt)} · {b.serviceName}</p>
           <p className="truncate text-xs text-slate-600">{guestOf(b).name}{b.resource ? ` · com ${b.resource.name}` : ''}</p>
         </div>
-        <Link href={detail} className="shrink-0 text-xs font-semibold text-electric-600" aria-label={`Detalhes de ${guestOf(b).name}`}>Detalhes</Link>
+        <Link href={detail} className="shrink-0 text-xs font-semibold text-acao-600" aria-label={`Detalhes de ${guestOf(b).name}`}>Detalhes</Link>
       </div>
       <Actions b={b} back={back} />
     </li>
@@ -265,7 +265,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
       <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-600" data-testid="agenda-resumo">
         <strong className="text-primary">{live.length} {live.length === 1 ? 'agendamento' : 'agendamentos'}</strong>
         {count('PENDING') > 0 && <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">{count('PENDING')} aguardando</span>}
-        {count('CONFIRMED') > 0 && <span className="rounded-md bg-[#EAF0FF] px-2 py-0.5 text-xs font-semibold text-electric-600">{count('CONFIRMED')} {count('CONFIRMED') === 1 ? 'confirmado' : 'confirmados'}</span>}
+        {count('CONFIRMED') > 0 && <span className="rounded-md bg-[#E6EDE8] px-2 py-0.5 text-xs font-semibold text-acao-600">{count('CONFIRMED')} {count('CONFIRMED') === 1 ? 'confirmado' : 'confirmados'}</span>}
         {count('COMPLETED') > 0 && <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">{count('COMPLETED')} {count('COMPLETED') === 1 ? 'concluído' : 'concluídos'}</span>}
         {count('NO_SHOW') > 0 && <span className="rounded-md bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">{count('NO_SHOW')} {count('NO_SHOW') === 1 ? 'faltou' : 'faltaram'}</span>}
       </p>
@@ -280,7 +280,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
         const inProgress = next.startsAt <= nowD;
         return (
           <Link href={`${back}${back.includes('?') ? '&' : '?'}ag=${next.id}`} className="glass-panel-sm card-link flex items-center gap-3 !rounded-2xl p-3" data-testid="proximo-atendimento">
-            <span aria-hidden className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#E8EEFB] text-electric-600"><Icon name="clock" size={20} /></span>
+            <span aria-hidden className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#E6EDE8] text-acao-600"><Icon name="clock" size={20} /></span>
             <span className="min-w-0 flex-1">
               <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">{inProgress ? 'Em atendimento agora' : 'Próximo atendimento'}</span>
               <span className="block truncate font-bold text-slate-800">{hmOf(next.startsAt)} · {guestOf(next).name} · {next.serviceName}</span>
@@ -330,7 +330,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
 
       {list.length === 0 ? (
         <div className="glass-panel flex flex-col items-center gap-2 !rounded-[22px] p-6 text-center" data-testid="agenda-vazia">
-          <span aria-hidden className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E8EEFB] text-electric-600"><Icon name="calendar" size={24} /></span>
+          <span aria-hidden className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E6EDE8] text-acao-600"><Icon name="calendar" size={24} /></span>
           <p className="font-bold text-primary">Nenhum agendamento {per === 'dia' ? 'neste dia' : 'neste período'}{who ? ` para ${who.name}` : ''}</p>
           <p className="max-w-sm text-sm text-slate-600">Quando um cliente marcar pelo app, ele aparece aqui. Você também pode encaixar alguém agora.</p>
           <div className="flex flex-wrap justify-center gap-2 pt-1">

@@ -42,9 +42,9 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
       </header>
 
       <nav className="glass-panel-sm flex items-center justify-between !rounded-2xl px-3 py-2" aria-label="Mês">
-        <Link href={`/dashboard/financeiro?mes=${prev}`} className="px-3 py-1 text-xl font-bold text-electric-600" aria-label="Mês anterior" data-testid="month-prev">‹</Link>
+        <Link href={`/dashboard/financeiro?mes=${prev}`} className="px-3 py-1 text-xl font-bold text-acao-600" aria-label="Mês anterior" data-testid="month-prev">‹</Link>
         <p className="font-bold text-slate-800 first-letter:uppercase" data-testid="month-label">{monthLabel(month)}</p>
-        {month < now ? <Link href={`/dashboard/financeiro?mes=${next}`} className="px-3 py-1 text-xl font-bold text-electric-600" aria-label="Próximo mês" data-testid="month-next">›</Link> : <span className="px-3 py-1 text-xl text-slate-300" aria-hidden>›</span>}
+        {month < now ? <Link href={`/dashboard/financeiro?mes=${next}`} className="px-3 py-1 text-xl font-bold text-acao-600" aria-label="Próximo mês" data-testid="month-next">›</Link> : <span className="px-3 py-1 text-xl text-slate-300" aria-hidden>›</span>}
       </nav>
 
       <section className="grid grid-cols-3 gap-2 sm:gap-3" data-testid="finance-kpis">
@@ -123,7 +123,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
                   {c.paid ? (
                     <form action={undoCommissionAction} className="flex items-center gap-2">
                       <input type="hidden" name="resourceId" value={c.resourceId} /><input type="hidden" name="month" value={month} />
-                      <span className="chip-verde" data-testid="commission-paid">Pago em {c.paid.paidAt.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit' })}</span>
+                      <span className="chip-ouro" data-testid="commission-paid">Pago em {c.paid.paidAt.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit' })}</span>
                       <button className="text-xs font-semibold text-slate-500 underline" data-testid="commission-undo">Desfazer</button>
                     </form>
                   ) : c.commissionCents > 0 ? (
@@ -163,7 +163,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
           </ul>
         )}
         <details className="mt-4 rounded-2xl border border-slate-200 bg-white p-3" open={r.expenses.length + r.incomes.length === 0}>
-          <summary className="cursor-pointer text-sm font-bold text-electric-600" data-testid="entry-new">+ Lançar despesa ou entrada</summary>
+          <summary className="cursor-pointer text-sm font-bold text-acao-600" data-testid="entry-new">+ Lançar despesa ou entrada</summary>
           <div className="mt-3"><FinanceEntryForm today={todayKey()} /></div>
         </details>
       </section>

@@ -40,7 +40,7 @@ export function ClubPlanForm({ services, plan, uid }: { services: Svc[]; plan?: 
             {services.map((sv) => (
               <li key={sv.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
                 <label className="flex min-w-0 flex-1 items-center gap-2 text-sm text-slate-800">
-                  <input type="checkbox" name="svc" value={sv.id} checked={!!checked[sv.id]} onChange={(e) => setChecked((c) => ({ ...c, [sv.id]: e.target.checked }))} className="h-4 w-4 shrink-0 rounded accent-electric-500" data-testid={`svc-${sv.id}`} />
+                  <input type="checkbox" name="svc" value={sv.id} checked={!!checked[sv.id]} onChange={(e) => setChecked((c) => ({ ...c, [sv.id]: e.target.checked }))} className="h-4 w-4 shrink-0 rounded accent-acao-500" data-testid={`svc-${sv.id}`} />
                   <span className="truncate">{sv.name} <span className="text-xs text-slate-400">{sv.priceLabel}</span></span>
                 </label>
                 {checked[sv.id] && (
@@ -80,7 +80,7 @@ export function AddSubscriberForm({ plans }: { plans: { id: string; name: string
         </div>
       </div>
       <label className="flex items-center gap-2 text-sm text-slate-700">
-        <input type="checkbox" name="paid" defaultChecked className="h-4 w-4 rounded accent-electric-500" data-testid="sub-paid" />
+        <input type="checkbox" name="paid" defaultChecked className="h-4 w-4 rounded accent-acao-500" data-testid="sub-paid" />
         Já recebi o primeiro pagamento (o plano começa hoje)
       </label>
       <FormMessage state={state} />

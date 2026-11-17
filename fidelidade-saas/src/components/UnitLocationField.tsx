@@ -109,7 +109,7 @@ export function UnitLocationField({ coords, setCoords, addr }: { coords: Coords;
   return (
     <div className="glass-inset space-y-3 p-4">
       <div className="flex items-start gap-3">
-        <Icon name="pin" className="mt-0.5 shrink-0 text-electric-600" />
+        <Icon name="pin" className="mt-0.5 shrink-0 text-acao-600" />
         <div className="min-w-0">
           <p className="font-semibold text-slate-800">Localização no mapa</p>
           <p className="text-xs text-slate-500">Usada no check-in (o cliente precisa estar dentro da loja, então marque o ponto exato) e para a unidade aparecer em “Lugares perto de você”.</p>
@@ -120,7 +120,7 @@ export function UnitLocationField({ coords, setCoords, addr }: { coords: Coords;
         <>
           <div className="relative h-48 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 sm:h-56">
             <LocationMap target={target} onMove={moved} />
-            <span aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 z-[500] -translate-x-1/2 -translate-y-full text-electric-600 drop-shadow-lg">
+            <span aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 z-[500] -translate-x-1/2 -translate-y-full text-acao-600 drop-shadow-lg">
               <Icon name="pin" size={36} strokeWidth={2.2} />
             </span>
           </div>

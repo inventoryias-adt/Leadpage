@@ -30,7 +30,7 @@ export function NoticeDay({ label, count, unreadIds, children }: { label: string
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="flex w-full items-center gap-2.5 !rounded-2xl border border-slate-200 !bg-white px-3.5 py-2.5 text-left !shadow-none transition-colors hover:!bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600"
+          className="flex w-full items-center gap-2.5 !rounded-2xl border border-slate-200 !bg-white px-3.5 py-2.5 text-left !shadow-none transition-colors hover:!bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acao-600"
         >
           <span className="text-sm font-bold uppercase tracking-wide text-slate-700">{label}</span>
           <span className="text-xs font-semibold normal-case tracking-normal text-slate-400">· {count} {count === 1 ? 'aviso' : 'avisos'}</span>

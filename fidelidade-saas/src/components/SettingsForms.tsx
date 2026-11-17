@@ -52,9 +52,9 @@ function Switch({ on, onChange, label, id }: { on: boolean; onChange: (v: boolea
       aria-label={label}
       title={on ? 'Ligado: toque para desligar' : 'Desligado: toque para ligar'}
       onClick={() => onChange(!on)}
-      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600 ${on ? 'bg-[#0f1f3d]' : 'bg-slate-300'}`}
+      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acao-600 ${on ? 'bg-[#12241C]' : 'bg-slate-300'}`}
     >
-      <span className={`inline-block h-5 w-5 rounded-full shadow transition-transform ${on ? 'translate-x-[26px] bg-verde' : 'translate-x-1 bg-white'}`} />
+      <span className={`inline-block h-5 w-5 rounded-full shadow transition-transform ${on ? 'translate-x-[26px] bg-ouro' : 'translate-x-1 bg-white'}`} />
     </button>
   );
 }
@@ -98,7 +98,7 @@ export function RulesForm({ defaults, cheapest }: { defaults: { pointsPerReal: n
           <SubmitButton pendingText="Salvando…" className="btn-sm">Salvar regras</SubmitButton>
         </div>
       </div>
-      <div className="rounded-xl border border-[#d9e1f2] bg-[#f3f6fd] p-3 text-sm text-slate-700" data-testid="points-sim" aria-live="polite">
+      <div className="rounded-xl border border-[#DCE5DE] bg-[#F3F5F0] p-3 text-sm text-slate-700" data-testid="points-sim" aria-live="polite">
         {n > 0 ? (
           <>
             <p>Uma compra de <b>{brl(50)}</b> rende <b>{(50 * n).toLocaleString('pt-BR')} pontos</b>.</p>
@@ -142,7 +142,7 @@ export function InteractionRow({ id, label, points, approval = 'COUNTER', remove
   return (
     <li className="py-3" data-testid="interaction-row">
       <div className="flex items-center gap-3">
-        <span className="flex h-10 min-w-[3.5rem] shrink-0 items-center justify-center rounded-lg bg-[#E8EEFB] px-2 text-sm font-bold tabular-nums text-electric-600">+{points.toLocaleString('pt-BR')}</span>
+        <span className="flex h-10 min-w-[3.5rem] shrink-0 items-center justify-center rounded-lg bg-[#E6EDE8] px-2 text-sm font-bold tabular-nums text-acao-600">+{points.toLocaleString('pt-BR')}</span>
         <span className="min-w-0 flex-1 text-sm leading-snug text-slate-800">{label}{approval !== 'COUNTER' && <span className="glass-chip ml-2 align-middle">{approval === 'AUTO' ? 'Automático em 24 h' : 'Você aprova'}</span>}</span>
         <button
           type="button"
@@ -232,7 +232,7 @@ export function AddRewardForm() {
           <RewardImage src={photo} name={draft.name || 'Seu produto'} className="h-16 w-16 shrink-0 rounded-2xl" />
           <div className="min-w-0 flex-1">
             <p className="truncate font-bold text-slate-800">{draft.name || 'Nome do produto'}</p>
-            <p className="text-sm font-semibold text-electric-600">{points > 0 ? formatPrice(points, cashCents) : '— pts'}</p>
+            <p className="text-sm font-semibold text-acao-600">{points > 0 ? formatPrice(points, cashCents) : '— pts'}</p>
             {points > 0 && (
               <div className="mt-1.5">
                 <ProgressBar value={Math.round(points * 0.4)} max={points} label="Exemplo de progresso" />
@@ -398,7 +398,7 @@ export function IdentityForm({ defaults, placeName, supportEnv }: { defaults: Id
   const [category, setCategory] = useState(state.values?.category ?? defaults.category);
   const [other, setOther] = useState(state.values?.categoryOther ?? defaults.categoryOther);
   const [listed, setListed] = useState(state.values ? state.values.listed === 'on' : defaults.listed);
-  const [brand, setBrand] = useState(state.values?.brandColor || defaults.brandColor || 'marinho');
+  const [brand, setBrand] = useState(state.values?.brandColor || defaults.brandColor || 'floresta');
   const [tagline, setTagline] = useState(state.values?.tagline ?? defaults.tagline);
   const [about, setAbout] = useState(state.values?.about ?? defaults.about);
   const brandInfo = brandOf(brand);
@@ -456,7 +456,7 @@ export function IdentityForm({ defaults, placeName, supportEnv }: { defaults: Id
           ))}
         </div>
         <div className="overflow-hidden rounded-2xl border border-slate-200" aria-label="Prévia da sua página" data-testid="brand-preview">
-          <div className="h-16" style={{ background: defaults.coverUrl ? `center/cover url(${defaults.coverUrl})` : `linear-gradient(135deg, ${brandInfo.hex} 0%, ${brandInfo.deep} 100%)` }} />
+          <div className="h-16" style={{ background: defaults.coverUrl ? `center/cover url(${defaults.coverUrl})` : brandInfo.hex }} />
           <div className="space-y-2 bg-white p-3">
             <p className="font-extrabold text-slate-900">{placeName}</p>
             {tagline.trim() && <p className="text-xs text-slate-500">{tagline.trim()}</p>}
@@ -499,7 +499,7 @@ export function IdentityForm({ defaults, placeName, supportEnv }: { defaults: Id
           </select>
           {category !== 'outros' && catNote}
           {suggestsBooking(category) && (
-            <p className="mt-2 rounded-lg border border-[#C3D2F4] bg-[#EEF3FD] p-3 text-xs text-slate-700">
+            <p className="mt-2 rounded-lg border border-[#C3D2F4] bg-[#EEF2EE] p-3 text-xs text-slate-700">
               Esse tipo de negócio costuma atender com <strong>hora marcada</strong>. A aba <strong>Agenda</strong> já está liberada no menu: cadastre seus serviços para o cliente agendar pelo app.{' '}
               <Link href="/dashboard/configuracoes?etapa=agenda&abrir=agenda-conteudo#agenda" className="link-inline">Configurar a agenda</Link>
             </p>
@@ -530,7 +530,7 @@ export function IdentityForm({ defaults, placeName, supportEnv }: { defaults: Id
 
       <div className="grid items-center gap-3 sm:grid-cols-2">
         <label className="flex items-start gap-3">
-          <input type="checkbox" name="listed" checked={listed} onChange={(e) => setListed(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 rounded accent-electric-500" />
+          <input type="checkbox" name="listed" checked={listed} onChange={(e) => setListed(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 rounded accent-acao-500" />
           <span className="text-sm text-slate-700">
             <span className="font-semibold">Aparecer em “Lugares” no app dos clientes</span>
             <span className="block text-xs text-slate-500">Ligado por padrão: quem usa o Fidelize encontra seu estabelecimento, vê os prêmios e as ações que dão pontos.</span>
@@ -576,7 +576,7 @@ function RadiusSlider({ initial }: { initial: number }) {
         onChange={(e) => setIdx(Number(e.target.value))}
         aria-valuetext={cur.label}
         autoComplete="off"
-        className="mt-3 h-2 w-full cursor-pointer accent-electric-500"
+        className="mt-3 h-2 w-full cursor-pointer accent-acao-500"
       />
       <div className="mt-1 flex justify-between text-[11px] font-medium text-slate-500" aria-hidden>
         {[0, 3, 5, 7, last].map((i) => <span key={i}>{CHECKIN_RADIUS_OPTIONS[i].label}</span>)}
@@ -653,7 +653,7 @@ export function BirthdayPerkForm({ defaults }: { defaults: { on: boolean; title:
   const [mode, setMode] = useState<PerkMode>(((PERK_MODES as readonly string[]).includes(v?.mode ?? '') ? v?.mode : defaults.mode) as PerkMode);
   const [points, setPoints] = useState(v?.points ?? (defaults.points > 0 ? String(defaults.points) : ''));
   const [min, setMin] = useState(v?.min ?? (defaults.minCents > 0 ? (defaults.minCents / 100).toFixed(2).replace('.', ',') : ''));
-  const option = 'flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-3.5 transition-colors hover:border-slate-300 has-[:checked]:border-electric-500 has-[:checked]:bg-[#F3F6FD]';
+  const option = 'flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-3.5 transition-colors hover:border-slate-300 has-[:checked]:border-acao-500 has-[:checked]:bg-[#F3F5F0]';
   const minCents = Math.round(Number(min.replace(/\./g, '').replace(',', '.')) * 100) || 0;
   const preview = title.trim() ? `${title.trim()} · ${perkCondition({ mode, points: Number(points) || 0, minCents })}` : null;
   return (
@@ -677,7 +677,7 @@ export function BirthdayPerkForm({ defaults }: { defaults: { on: boolean; title:
             <legend className="glass-label">Como o cliente ganha</legend>
             {PERK_MODES.map((m) => (
               <label key={m} className={option}>
-                <input type="radio" name="mode" value={m} checked={mode === m} onChange={() => setMode(m)} className="mt-1 h-4 w-4 shrink-0 accent-electric-500" />
+                <input type="radio" name="mode" value={m} checked={mode === m} onChange={() => setMode(m)} className="mt-1 h-4 w-4 shrink-0 accent-acao-500" />
                 <span className="min-w-0 flex-1">
                   <span className="block font-semibold text-slate-800">{PERK_MODE_LABEL[m]}</span>
                   <span className="block text-sm text-slate-500">
@@ -703,7 +703,7 @@ export function BirthdayPerkForm({ defaults }: { defaults: { on: boolean; title:
             ))}
           </fieldset>
           {preview && (
-            <p className="rounded-xl bg-[#F3F6FD] px-3.5 py-2.5 text-sm text-slate-700" data-testid="perk-preview">
+            <p className="rounded-xl bg-[#F3F5F0] px-3.5 py-2.5 text-sm text-slate-700" data-testid="perk-preview">
               <span className="font-semibold text-primary">Como o cliente vê:</span> 🎂 {preview}
             </p>
           )}
@@ -717,18 +717,18 @@ export function BirthdayPerkForm({ defaults }: { defaults: { on: boolean; title:
 
 export function SharingForm({ defaults }: { defaults: { pointsShareOut: boolean; pointsAcceptIn: boolean } }) {
   const [state, action] = useActionState(saveSharing, {});
-  const option = 'flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:border-slate-300 has-[:checked]:border-electric-500 has-[:checked]:bg-[#F3F6FD]';
+  const option = 'flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:border-slate-300 has-[:checked]:border-acao-500 has-[:checked]:bg-[#F3F5F0]';
   return (
     <form action={action} className="space-y-3">
       <label className={option}>
-        <input type="checkbox" name="pointsShareOut" defaultChecked={defaults.pointsShareOut} className="mt-0.5 h-5 w-5 shrink-0 rounded accent-electric-500" />
+        <input type="checkbox" name="pointsShareOut" defaultChecked={defaults.pointsShareOut} className="mt-0.5 h-5 w-5 shrink-0 rounded accent-acao-500" />
         <span className="min-w-0">
           <span className="block font-semibold text-slate-800">Meus pontos valem em outros lugares</span>
           <span className="mt-0.5 block text-sm text-slate-500">Seus clientes usam os pontos ganhos aqui nos lugares que aceitam pontos de outros.</span>
         </span>
       </label>
       <label className={option}>
-        <input type="checkbox" name="pointsAcceptIn" defaultChecked={defaults.pointsAcceptIn} className="mt-0.5 h-5 w-5 shrink-0 rounded accent-electric-500" />
+        <input type="checkbox" name="pointsAcceptIn" defaultChecked={defaults.pointsAcceptIn} className="mt-0.5 h-5 w-5 shrink-0 rounded accent-acao-500" />
         <span className="min-w-0">
           <span className="block font-semibold text-slate-800">Aceito pontos de outros lugares</span>
           <span className="mt-0.5 block text-sm text-slate-500">Clientes de outros lugares usam aqui os pontos que ganharam lá. Seu nome aparece na lista de quem aceita.</span>
@@ -736,7 +736,7 @@ export function SharingForm({ defaults }: { defaults: { pointsShareOut: boolean;
       </label>
       <details className="group rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
         <summary className="flex cursor-pointer list-none items-center gap-2 font-semibold text-slate-700">
-          <Icon name="info" size={16} className="shrink-0 text-electric-600" />
+          <Icon name="info" size={16} className="shrink-0 text-acao-600" />
           <span className="flex-1">Como funciona</span>
           <Icon name="down" size={16} className="shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
         </summary>
@@ -906,7 +906,7 @@ export function UnitForm({ unit, uid }: { unit: UnitFormData; uid: string }) {
 
       {!isNew && (
         <label className="flex items-center gap-3">
-          <input type="checkbox" name="active" checked={activeOn} onChange={(e) => setActiveOn(e.target.checked)} className="h-5 w-5 rounded accent-electric-500" />
+          <input type="checkbox" name="active" checked={activeOn} onChange={(e) => setActiveOn(e.target.checked)} className="h-5 w-5 rounded accent-acao-500" />
           <span className="text-sm text-slate-700"><span className="font-semibold">Unidade ativa</span> — aparece para os clientes e pode lançar pontos</span>
         </label>
       )}

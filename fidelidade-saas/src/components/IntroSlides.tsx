@@ -63,7 +63,7 @@ export function IntroSlides() {
 
         <div className="my-5 flex justify-center gap-1.5" aria-hidden>
           {slides.map((_, n) => (
-            <span key={n} className={`h-2 rounded-full transition-all ${n === i ? 'w-6 bg-electric-600' : 'w-2 bg-slate-300'}`} />
+            <span key={n} className={`h-2 rounded-full transition-all ${n === i ? 'w-6 bg-acao-600' : 'w-2 bg-slate-300'}`} />
           ))}
         </div>
 

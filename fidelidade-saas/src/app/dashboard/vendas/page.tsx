@@ -39,7 +39,7 @@ export default async function VendasPage({ searchParams }: { searchParams: Promi
   return (
     <div className="mx-auto max-w-3xl min-w-0 space-y-5">
       <header className="space-y-1">
-        <Link href="/dashboard" className="inline-flex items-center gap-1 text-sm font-semibold text-electric-600">‹ Painel</Link>
+        <Link href="/dashboard" className="inline-flex items-center gap-1 text-sm font-semibold text-acao-600">‹ Painel</Link>
         <h1 className="text-2xl font-extrabold tracking-tight text-primary">Vendas por dia</h1>
         <p className="text-sm text-slate-600">Soma das compras lançadas no caixa e lidas pelos clientes. Toque num dia para ver o que aconteceu.</p>
       </header>

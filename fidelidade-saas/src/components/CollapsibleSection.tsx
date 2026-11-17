@@ -47,15 +47,15 @@ export function CollapsibleSection({ id, title, summary, icon, badges, defaultOp
           onClick={toggle}
           aria-expanded={open}
           aria-controls={panel}
-          className="hover-flip glass-panel-sm flex w-full items-center gap-3 !p-3.5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600"
+          className="hover-flip glass-panel-sm flex w-full items-center gap-3 !p-3.5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acao-600"
         >
           {badges ?? (icon && <span className="icon-tile"><Icon name={icon} /></span>)}
           <span className="min-w-0 flex-1">
             <span className="hf-t block font-bold text-slate-800">{title}</span>
             {summary && <span className="hf-s block truncate text-xs font-medium text-slate-500">{summary}</span>}
           </span>
-          <span aria-hidden className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E8EEFB] text-electric-600">
-            {!open && !seen && <span className="absolute inset-0 animate-ping rounded-full bg-electric-500/30" />}
+          <span aria-hidden className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E6EDE8] text-acao-600">
+            {!open && !seen && <span className="absolute inset-0 animate-ping rounded-full bg-acao-500/30" />}
             <Icon name="down" size={18} className={`relative transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
           </span>
         </button>

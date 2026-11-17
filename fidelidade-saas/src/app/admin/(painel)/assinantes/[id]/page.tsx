@@ -46,7 +46,7 @@ export default async function Ficha({ params }: { params: Promise<{ id: string }
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/admin/assinantes" className="text-sm font-semibold text-electric-600">← Todos os assinantes</Link>
+        <Link href="/admin/assinantes" className="text-sm font-semibold text-acao-600">← Todos os assinantes</Link>
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <h1 className="flex items-center gap-2 truncate text-2xl font-semibold text-primary">{r.name}{r.isTest && <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">TESTE</span>}</h1>

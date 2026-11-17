@@ -7,10 +7,10 @@ export type StripCampaign = AppCampaignLike & { places: number };
 
 // Cores sóbrias da marca, uma por cartão, para a fila não ficar monótona.
 const TONES = [
-  'from-[#2A59CF] to-[#2F63E6] text-white',
-  'from-[#0F5C4D] to-[#17806B] text-white',
-  'from-[#5B2A86] to-[#7A3FB0] text-white',
-  'from-[#9A3412] to-[#C2410C] text-white',
+  'bg-[#174A36] text-white',
+  'bg-[#0F5C4D] text-white',
+  'bg-[#5B2A86] text-white',
+  'bg-[#9A3412] text-white',
 ];
 
 /** Carrossel de campanhas do app (as que os estabelecimentos adotam). Tocar abre a lista de quem participa. */
@@ -24,7 +24,7 @@ export function AppCampaignStrip({ campaigns }: { campaigns: StripCampaign[] }) 
           <li key={c.id} className="w-[17.5rem] shrink-0 snap-start">
             <Link
               href={`/campanhas/${c.id}`}
-              className={`card-link flex h-full min-h-[10.5rem] flex-col justify-between gap-3 rounded-[22px] bg-gradient-to-br p-4 ${TONES[i % TONES.length]}`}
+              className={`card-link flex h-full min-h-[10.5rem] flex-col justify-between gap-3 rounded-[22px] p-4 ${TONES[i % TONES.length]}`}
               aria-label={`${c.title}: ${campaignBadge(c)}. ${c.places} ${c.places === 1 ? 'lugar participa' : 'lugares participam'}. Toque para ver quais`}
             >
               <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide">

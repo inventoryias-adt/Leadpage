@@ -15,8 +15,8 @@ export type PolaroidInput = {
   host: string;
 };
 
-const NAVY = '#0B1B3A';
-const LIMA = '#7BE08A'; // verde do F do logo
+const NAVY = '#12241C';
+const LIMA = '#E9C46A'; // verde do F do logo
 const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
@@ -87,10 +87,10 @@ export async function renderPolaroid(input: PolaroidInput): Promise<Blob> {
 
   // fundo azul-marinho com brilho lima
   const bg = ctx.createLinearGradient(0, 0, W, H);
-  bg.addColorStop(0, '#0B1B3A'); bg.addColorStop(0.55, '#16305F'); bg.addColorStop(1, '#0B1B3A');
+  bg.addColorStop(0, '#12241C'); bg.addColorStop(0.55, '#16305F'); bg.addColorStop(1, '#12241C');
   ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
   const glow = ctx.createRadialGradient(W * 0.9, 120, 0, W * 0.9, 120, 700);
-  glow.addColorStop(0, 'rgba(123,224,138,.32)'); glow.addColorStop(1, 'rgba(123,224,138,0)');
+  glow.addColorStop(0, 'rgba(233, 196, 106,.32)'); glow.addColorStop(1, 'rgba(233, 196, 106,0)');
   ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
 
   // marca no topo

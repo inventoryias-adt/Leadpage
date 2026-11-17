@@ -39,7 +39,7 @@ export default async function PedidosPage({ searchParams }: { searchParams: Prom
   const pickedUp = closed.filter((o) => o.status === 'PICKED_UP').slice(0, 8);
   const canceled = closed.filter((o) => o.status === 'CANCELED');
   const columns = [
-    { key: 'RECEIVED', title: 'Recebidos', color: '#2F63E6', orders: open.filter((o) => o.status === 'RECEIVED') },
+    { key: 'RECEIVED', title: 'Recebidos', color: '#1E5B43', orders: open.filter((o) => o.status === 'RECEIVED') },
     { key: 'PREPARING', title: 'Preparando', color: '#B45309', orders: open.filter((o) => o.status === 'PREPARING') },
     { key: 'READY', title: 'Prontos', color: '#15803d', orders: open.filter((o) => o.status === 'READY') },
     { key: 'PICKED_UP', title: 'Retirados', color: '#64748B', orders: pickedUp },
@@ -56,7 +56,7 @@ export default async function PedidosPage({ searchParams }: { searchParams: Prom
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className={restaurant.ordersEnabled ? 'chip-verde' : 'chip-sumido'}>● {restaurant.ordersEnabled ? `recebendo pedidos · ${prepText(restaurant.orderPrepMin)}` : 'pedidos desligados'}</span>
+          <span className={restaurant.ordersEnabled ? 'chip-ouro' : 'chip-sumido'}>● {restaurant.ordersEnabled ? `recebendo pedidos · ${prepText(restaurant.orderPrepMin)}` : 'pedidos desligados'}</span>
           <Link href="/dashboard/cardapio" className="glass-button-ghost btn-sm !w-auto">
             <Icon name="gift" size={16} /> Cardápio e ajustes
           </Link>

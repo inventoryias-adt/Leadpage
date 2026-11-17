@@ -10,13 +10,13 @@ export function UnitSwitcher({ units, currentId }: { units: { id: string; name: 
   return (
     <form ref={form} action={setCurrentUnitAction} className="flex items-center gap-1.5">
       <label htmlFor="unit-switch" className="sr-only">Unidade deste caixa</label>
-      <Icon name="pin" size={16} className="text-electric-600" />
+      <Icon name="pin" size={16} className="text-acao-600" />
       <select
         id="unit-switch"
         name="unitId"
         defaultValue={currentId}
         onChange={() => form.current?.requestSubmit()}
-        className="max-w-[9.5rem] cursor-pointer truncate rounded-lg border border-slate-300 bg-white/90 py-1.5 pl-2 pr-1 text-sm font-semibold text-slate-700 transition-colors hover:border-electric-600 focus:border-electric-600 focus:outline-none focus:ring-2 focus:ring-electric-500/30"
+        className="max-w-[9.5rem] cursor-pointer truncate rounded-lg border border-slate-300 bg-white/90 py-1.5 pl-2 pr-1 text-sm font-semibold text-slate-700 transition-colors hover:border-acao-600 focus:border-acao-600 focus:outline-none focus:ring-2 focus:ring-acao-500/30"
       >
         {units.map((u) => (
           <option key={u.id} value={u.id}>{u.name}</option>

@@ -82,7 +82,7 @@ export function CampaignCards({ items, loggedIn }: { items: CampaignView[]; logg
             <button
               type="button"
               onClick={() => setOpen(g)}
-              className="card-link flex h-full w-full flex-col justify-between gap-2.5 rounded-2xl border border-slate-200 bg-white p-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600"
+              className="card-link flex h-full w-full flex-col justify-between gap-2.5 rounded-2xl border border-slate-200 bg-white p-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acao-600"
               aria-label={`${g.placeName}: ${g.items.length} ${g.items.length === 1 ? 'campanha' : 'campanhas'} rolando. Toque para ver`}
             >
               <span className="flex items-center gap-2.5">
@@ -93,8 +93,8 @@ export function CampaignCards({ items, loggedIn }: { items: CampaignView[]; logg
               <span className="block">
                 <span className="block text-lg font-bold leading-none text-primary">{g.items.length} {g.items.length === 1 ? 'campanha' : 'campanhas'}</span>
                 <span className="mt-1.5 flex items-center justify-between gap-2">
-                  <span aria-hidden className="text-xs font-semibold text-electric-600">Ver {g.items.length === 1 ? 'a campanha' : 'as campanhas'}</span>
-                  <Icon name="chevron" size={14} className="shrink-0 text-electric-600" />
+                  <span aria-hidden className="text-xs font-semibold text-acao-600">Ver {g.items.length === 1 ? 'a campanha' : 'as campanhas'}</span>
+                  <Icon name="chevron" size={14} className="shrink-0 text-acao-600" />
                 </span>
               </span>
             </button>
@@ -127,7 +127,7 @@ export function CampaignCards({ items, loggedIn }: { items: CampaignView[]; logg
                 const look = LOOK[c.kind];
                 const color = colorOf(c.color);
                 return (
-                  <li key={c.id} className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_4px_14px_rgba(15,31,61,0.05)]">
+                  <li key={c.id} className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_4px_14px_rgba(18, 36, 28,0.05)]">
                     <div className="flex items-center gap-3.5">
                       <span aria-hidden className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-center font-extrabold leading-none text-white" style={{ background: color.hex, fontSize: c.big.length > 4 ? 16 : c.big.length > 3 ? 19 : 23 }}>{c.big}</span>
                       <div className="min-w-0 flex-1">

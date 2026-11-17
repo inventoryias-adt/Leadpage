@@ -9,21 +9,27 @@ export type CardData = { name: string; code: string; since: string; balance: num
 
 /** Cantos arredondados em porcentagem (da largura e da altura do próprio cartão), para valer em qualquer tamanho. */
 const RADIUS = '5.4% / 8.5%';
-const GRAD = 'linear-gradient(135deg,#0B1B3A 0%,#16305F 52%,#0B1B3A 100%)';
+const BG = '#12241C'; // verde-floresta, cor chapada (sem degradê nem brilho)
 
 /** Todas as medidas usam `cqw` (1% da largura do cartão): o mesmo desenho serve na tela do celular e na impressão (85,6 mm). */
-const face = { containerType: 'inline-size', aspectRatio: '1.586 / 1', background: GRAD, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as const;
+const face = { containerType: 'inline-size', aspectRatio: '1.586 / 1', background: BG, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as const;
 
 /** Frente: marca, chip, ID da conta em destaque, nome e saldo. */
 export function CardFront({ data }: { data: CardData }) {
   return (
     <div className="card-face relative h-full w-full overflow-hidden text-white" style={{ ...face, borderRadius: RADIUS }}>
-      <div aria-hidden className="card-deco absolute -right-[14cqw] -top-[22cqw] h-[70cqw] w-[70cqw] rounded-full" style={{ background: 'radial-gradient(circle,rgba(123,224,138,.34),rgba(123,224,138,0) 68%)' }} />
-      <div aria-hidden className="card-deco absolute inset-0" style={{ background: 'linear-gradient(115deg,rgba(255,255,255,.13) 0%,rgba(255,255,255,0) 38%,rgba(255,255,255,0) 72%,rgba(255,255,255,.06) 100%)' }} />
+      <svg aria-hidden className="card-deco absolute text-ouro" style={{ right: '-18cqw', top: '-26cqw', width: '80cqw', height: '80cqw' }} viewBox="0 0 100 100">
+        <g fill="none" stroke="currentColor" strokeWidth=".5">
+          <circle cx="50" cy="50" r="46" opacity=".5" />
+          <circle cx="50" cy="50" r="34" opacity=".4" />
+          <circle cx="50" cy="50" r="22" opacity=".3" />
+          <circle cx="50" cy="50" r="10" opacity=".2" />
+        </g>
+      </svg>
       <div className="relative flex h-full flex-col justify-between" style={{ padding: '6cqw' }}>
         <div className="flex items-center justify-between">
           <span className="flex items-center" style={{ gap: '2.4cqw' }}>
-            <LogoMark mono="#ffffff" className="!h-[8.5cqw] !w-[8.5cqw]" />
+            <LogoMark mono="#E9C46A" className="!h-[8.5cqw] !w-[8.5cqw]" />
             <span className="font-bold leading-none" style={{ fontSize: '6.2cqw', letterSpacing: '-0.04em' }}>fidelize</span>
           </span>
           <span className="font-bold uppercase opacity-70" style={{ fontSize: '2.5cqw', letterSpacing: '0.2em' }}>Cartão de pontos</span>
@@ -31,17 +37,17 @@ export function CardFront({ data }: { data: CardData }) {
 
         <div className="flex items-center" style={{ gap: '4cqw' }}>
           {/* chip decorativo */}
-          <span aria-hidden className="relative block" style={{ width: '12cqw', height: '9cqw', borderRadius: '1.8cqw', background: 'linear-gradient(135deg,#D3F7D9,#7BE08A 55%,#4FBF66)' }}>
-            <span className="absolute inset-x-0 top-1/2 h-px bg-[#0B1B3A]/25" />
-            <span className="absolute inset-y-0 left-1/3 w-px bg-[#0B1B3A]/25" />
-            <span className="absolute inset-y-0 left-2/3 w-px bg-[#0B1B3A]/25" />
+          <span aria-hidden className="relative block" style={{ width: '12cqw', height: '9cqw', borderRadius: '1.8cqw', background: '#E9C46A' }}>
+            <span className="absolute inset-x-0 top-1/2 h-px bg-[#12241C]/25" />
+            <span className="absolute inset-y-0 left-1/3 w-px bg-[#12241C]/25" />
+            <span className="absolute inset-y-0 left-2/3 w-px bg-[#12241C]/25" />
           </span>
           <span aria-hidden className="opacity-60" style={{ fontSize: '5cqw', letterSpacing: '-0.1em' }}>)))</span>
         </div>
 
         <div>
           <p className="font-bold uppercase opacity-60" style={{ fontSize: '2.3cqw', letterSpacing: '0.2em' }}>ID da conta</p>
-          <p className="whitespace-nowrap font-mono font-bold text-verde" style={{ fontSize: '8cqw', letterSpacing: '0.12em', textShadow: '0 1px 0 rgba(0,0,0,.35), 0 0 14px rgba(123,224,138,.25)' }} data-testid="account-id-code">{data.code}</p>
+          <p className="whitespace-nowrap font-mono font-bold text-ouro" style={{ fontSize: '8cqw', letterSpacing: '0.12em' }} data-testid="account-id-code">{data.code}</p>
         </div>
 
         <div className="flex items-end justify-between" style={{ gap: '4cqw' }}>
@@ -51,7 +57,7 @@ export function CardFront({ data }: { data: CardData }) {
           </span>
           <span className="shrink-0 text-right">
             <span className="block font-bold uppercase opacity-60" style={{ fontSize: '2.3cqw', letterSpacing: '0.2em' }}>Saldo</span>
-            <span className="block whitespace-nowrap font-extrabold leading-none text-verde" style={{ fontSize: '6.4cqw' }} data-testid="card-balance">{formatPoints(data.balance)} <span className="font-semibold text-white/70" style={{ fontSize: '3cqw' }}>pts</span></span>
+            <span className="block whitespace-nowrap font-extrabold leading-none text-ouro" style={{ fontSize: '6.4cqw' }} data-testid="card-balance">{formatPoints(data.balance)} <span className="font-semibold text-white/70" style={{ fontSize: '3cqw' }}>pts</span></span>
           </span>
         </div>
       </div>
@@ -66,11 +72,11 @@ export function CardBack({ data }: { data: CardData }) {
     <div className="card-face relative h-full w-full overflow-hidden text-white" style={{ ...face, borderRadius: RADIUS }}>
       <div aria-hidden className="absolute inset-x-0 bg-black/80" style={{ top: '7cqw', height: '11cqw' }} />
       <div className="relative flex h-full flex-col" style={{ padding: '6cqw', paddingTop: '22cqw', gap: '3cqw' }}>
-        <p className="font-bold uppercase text-verde" style={{ fontSize: '2.6cqw', letterSpacing: '0.2em' }}>Como usar</p>
+        <p className="font-bold uppercase text-ouro" style={{ fontSize: '2.6cqw', letterSpacing: '0.2em' }}>Como usar</p>
         <ol className="space-y-[1.4cqw]" style={{ fontSize: '3.1cqw', lineHeight: 1.25 }}>
           {steps.map((t, i) => (
             <li key={t} className="flex" style={{ gap: '2cqw' }}>
-              <span className="shrink-0 rounded-full bg-verde text-center font-extrabold text-[#0B1B3A]" style={{ width: '4.4cqw', height: '4.4cqw', lineHeight: '4.4cqw', fontSize: '2.8cqw' }}>{i + 1}</span>
+              <span className="shrink-0 rounded-full bg-ouro text-center font-extrabold text-[#12241C]" style={{ width: '4.4cqw', height: '4.4cqw', lineHeight: '4.4cqw', fontSize: '2.8cqw' }}>{i + 1}</span>
               <span>{t}</span>
             </li>
           ))}
@@ -97,7 +103,7 @@ export function MemberCard({ data }: { data: CardData }) {
         aria-pressed={flipped}
         aria-label={flipped ? 'Cartão Fidelize, verso com instruções. Toque para ver a frente' : `Cartão Fidelize, ID ${data.code}, saldo ${formatPoints(data.balance)} pontos. Toque para ver como usar`}
         data-testid="card-flip"
-        className="relative block w-full cursor-pointer text-left shadow-[0_18px_40px_rgba(11,27,58,.32)] outline-none transition-transform duration-700 focus-visible:ring-4 focus-visible:ring-electric-500/40 motion-reduce:transition-none"
+        className="relative block w-full cursor-pointer text-left shadow-[0_18px_40px_rgba(18, 36, 28,.32)] outline-none transition-transform duration-700 focus-visible:ring-4 focus-visible:ring-acao-500/40 motion-reduce:transition-none"
         style={{ aspectRatio: '1.586 / 1', transformStyle: 'preserve-3d', transform: flipped ? 'rotateY(180deg)' : 'none', borderRadius: RADIUS }}
       >
         <div className="absolute inset-0" style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}><CardFront data={data} /></div>

@@ -1,19 +1,9 @@
 import Link from 'next/link';
-import { useId } from 'react';
 
-/** Degradê leve do azul da marca para o verde. Mantenha igual a public/logo.svg, src/app/icon.svg, src/app/opengraph-image.tsx e scripts/gerar-icones.mjs. */
-export const BRAND_BLUE = '#2F63E6';
-export const BRAND_GREEN = '#7BE08A';
-
-/** Definição do degradê, em coordenadas do F (18..48 × 12..52). */
-export function FGradient({ id }: { id: string }) {
-  return (
-    <linearGradient id={id} gradientUnits="userSpaceOnUse" x1="19" y1="12" x2="47" y2="52">
-      <stop offset="0" stopColor={BRAND_BLUE} />
-      <stop offset="1" stopColor={BRAND_GREEN} />
-    </linearGradient>
-  );
-}
+/** Cores do símbolo. Mantenha iguais a public/logo.svg, src/app/icon.svg, src/app/opengraph-image.tsx e scripts/gerar-icones.mjs. */
+export const BRAND_INK = '#12241C'; // verde-floresta escuro
+export const BRAND_ACAO = '#1E5B43'; // o F sobre fundo claro
+export const BRAND_OURO = '#E9C46A'; // o F sobre fundo escuro
 
 /** Desenho do F: haste e duas barras arredondadas (coordenadas 18..48 × 12..52). As barras aceitam classe para a abertura animada. */
 export function FGlyph({ fill, topClass, midClass }: { fill: string; topClass?: string; midClass?: string }) {
@@ -27,38 +17,32 @@ export function FGlyph({ fill, topClass, midClass }: { fill: string; topClass?: 
 }
 
 /**
- * Símbolo do Fidelize: só o "F", com degradê leve do azul para o verde. `size` é a altura do F.
- * Com `mono` o F sai numa cor só (ex.: branco sobre o cartão azul).
+ * Símbolo do Fidelize: só o "F", numa cor só. `size` é a altura do F.
+ * Padrão: verde de ação (sobre fundo claro). Sobre fundo escuro use `mono={BRAND_OURO}`.
  */
-export function LogoMark({ size = 36, className = '', mono }: { size?: number; className?: string; mono?: string }) {
-  const gid = `fz${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+export function LogoMark({ size = 36, className = '', mono = BRAND_ACAO }: { size?: number; className?: string; mono?: string }) {
   return (
     <svg width={(size * 32) / 42} height={size} viewBox="17 11 32 42" aria-hidden className={`shrink-0 ${className}`}>
-      {!mono && (
-        <defs>
-          <FGradient id={gid} />
-        </defs>
-      )}
-      <FGlyph fill={mono ?? `url(#${gid})`} />
+      <FGlyph fill={mono} />
     </svg>
   );
 }
 
 /**
- * Marca completa: o F com degradê é a primeira letra do nome ("F" + "idelize").
+ * Marca completa: o F (verde de ação, ou dourado em fundo escuro) é a primeira letra do nome ("F" + "idelize").
  * `light` deixa o nome branco para fundos escuros; `size` é o tamanho da letra do nome; `compact` mostra só o F, um pouco maior, no celular (barras apertadas).
  */
 export function Brand({ href = '/', size = 28, compact = false, light = false }: { href?: string; size?: number; compact?: boolean; light?: boolean }) {
   return (
     <Link href={href} className="inline-flex shrink-0 items-baseline" aria-label="Fidelize — início">
-      <LogoMark size={Math.round(size * 0.74)} className={`mr-[-0.01em] ${compact ? 'max-sm:!h-[1.9rem] max-sm:!w-auto' : ''}`} />
-      <span aria-hidden className={`font-extrabold leading-none tracking-[-0.045em] ${light ? 'text-white' : 'text-primary'} ${compact ? 'max-sm:hidden' : ''}`} style={{ fontSize: size }}>idelize</span>
+      <LogoMark size={Math.round(size * 0.74)} mono={light ? BRAND_OURO : BRAND_ACAO} className={`mr-[-0.01em] ${compact ? 'max-sm:!h-[1.9rem] max-sm:!w-auto' : ''}`} />
+      <span aria-hidden className={`font-extrabold leading-none tracking-[-0.045em] ${light ? 'text-papel' : 'text-primary'} ${compact ? 'max-sm:hidden' : ''}`} style={{ fontSize: size }}>idelize</span>
     </Link>
   );
 }
 
 /** O ponto final sozinho, para enfeitar a página (landing). */
-export function Coin({ size = 64, className = '', color = '#0B1B3A' }: { size?: number; className?: string; color?: string }) {
+export function Coin({ size = 64, className = '', color = '#12241C' }: { size?: number; className?: string; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="-6 -6 12 12" aria-hidden className={`shrink-0 ${className}`}>
       <circle r="5.4" fill={color} />

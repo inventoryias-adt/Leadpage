@@ -64,14 +64,14 @@ export function TodayDeals({ deals }: { deals: Deal[] }) {
               type="button"
               onClick={() => setOpen(d)}
               data-testid="deal-card"
-              className="group block w-full !bg-transparent !p-0 text-left !shadow-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-600"
+              className="group block w-full !bg-transparent !p-0 text-left !shadow-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acao-600"
               aria-label={`${d.name}, ${d.placeName}: de ${formatBRL(d.priceCents)} por ${formatBRL(d.promoCents)}${d.stock != null ? `, ${stockLabel(d.stock).toLowerCase()}` : ''}. Toque para ver`}
             >
               <span className="relative block aspect-[4/3] overflow-hidden rounded-2xl bg-slate-100">
                 <RewardImage src={d.imageUrl} name={d.name} className="h-full w-full transition-transform duration-300 group-hover:scale-105" />
-                <span className="absolute left-2 top-2 rounded-full bg-verde px-2 py-0.5 text-[11px] font-extrabold text-[#0F1F3D]">-{off(d)}%</span>
+                <span className="absolute left-2 top-2 rounded-full bg-ouro px-2 py-0.5 text-[11px] font-extrabold text-[#12241C]">-{off(d)}%</span>
                 {d.stock != null && (
-                  <span data-testid="deal-stock" className={`absolute bottom-2 left-2 rounded-md px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white ${d.stock <= 3 ? 'bg-rose-600/90' : 'bg-[#0F1F3D]/85'}`}>{stockLabel(d.stock)}</span>
+                  <span data-testid="deal-stock" className={`absolute bottom-2 left-2 rounded-md px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white ${d.stock <= 3 ? 'bg-rose-600/90' : 'bg-[#12241C]/85'}`}>{stockLabel(d.stock)}</span>
                 )}
               </span>
               <span className="mt-2 block truncate text-sm font-bold text-slate-900">{d.name}</span>
@@ -97,7 +97,7 @@ export function TodayDeals({ deals }: { deals: Deal[] }) {
           >
             <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-slate-100">
               <RewardImage src={open.imageUrl} name={open.name} className="h-full w-full" />
-              <span className="absolute left-3 top-3 rounded-full bg-verde px-3 py-1 text-sm font-extrabold text-[#0F1F3D]">-{off(open)}%</span>
+              <span className="absolute left-3 top-3 rounded-full bg-ouro px-3 py-1 text-sm font-extrabold text-[#12241C]">-{off(open)}%</span>
               <button type="button" onClick={() => setOpen(null)} className="absolute right-3 top-3 btn-icon !bg-white/90 shadow hover:!bg-white" aria-label="Fechar">✕</button>
             </div>
 
@@ -119,7 +119,7 @@ export function TodayDeals({ deals }: { deals: Deal[] }) {
                   </div>
                   {pct != null && (
                     <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-slate-200" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label="Estoque restante da oferta">
-                      <div className="h-full rounded-full" style={{ width: `${pct}%`, background: open.stock <= 3 ? '#E11D48' : '#0F1F3D' }} />
+                      <div className="h-full rounded-full" style={{ width: `${pct}%`, background: open.stock <= 3 ? '#E11D48' : '#12241C' }} />
                     </div>
                   )}
                   <p className="mt-1.5 text-xs text-slate-500">Quando acabar, o produto volta ao preço normal.</p>

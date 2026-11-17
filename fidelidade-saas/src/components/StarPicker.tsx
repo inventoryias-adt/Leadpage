@@ -20,7 +20,7 @@ export function StarPicker({ name, label, defaultValue = 0, optional = false }: 
             aria-checked={value === i}
             aria-label={`${i} ${i === 1 ? 'estrela' : 'estrelas'}`}
             onClick={() => setValue(optional && value === i ? 0 : i)}
-            className={`flex h-12 w-12 items-center justify-center rounded-xl text-3xl transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-electric-600 ${i <= value ? 'text-amber-400' : 'text-slate-300'}`}
+            className={`flex h-12 w-12 items-center justify-center rounded-xl text-3xl transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-acao-600 ${i <= value ? 'text-amber-400' : 'text-slate-300'}`}
           >
             ★
           </button>

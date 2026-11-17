@@ -52,7 +52,7 @@ export function ProfilePhoto({ name, photoUrl, children }: { name: string; photo
         <label htmlFor={id} className="block cursor-pointer" aria-label={label}>
           <span
             className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg text-2xl font-semibold text-white"
-            style={{ background: '#0F1F3D' }}
+            style={{ background: '#12241C' }}
           >
             {photoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -61,7 +61,7 @@ export function ProfilePhoto({ name, photoUrl, children }: { name: string; photo
               <span aria-hidden>{name.trim().charAt(0).toUpperCase()}</span>
             )}
           </span>
-          <span className="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-electric-600 text-white shadow-sm">
+          <span className="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-acao-600 text-white shadow-sm">
             <Icon name="camera" size={14} />
           </span>
         </label>

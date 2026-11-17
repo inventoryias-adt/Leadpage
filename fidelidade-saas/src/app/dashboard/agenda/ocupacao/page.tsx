@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 const RANGES = [7, 14, 30] as const;
 
 /** Cor da barra: vazio chama atenção (âmbar), meio cheio é azul, quase lotado é verde, lotado é marinho. */
-const barColor = (pct: number) => (pct >= 100 ? 'bg-[#0F1F3D]' : pct >= 75 ? 'bg-emerald-500' : pct >= 40 ? 'bg-electric-600' : 'bg-amber-400');
+const barColor = (pct: number) => (pct >= 100 ? 'bg-[#12241C]' : pct >= 75 ? 'bg-emerald-500' : pct >= 40 ? 'bg-acao-600' : 'bg-amber-400');
 
 export default async function OcupacaoPage({ searchParams }: { searchParams: Promise<{ dias?: string }> }) {
   const restaurant = await requireActiveRestaurant();
@@ -63,7 +63,7 @@ export default async function OcupacaoPage({ searchParams }: { searchParams: Pro
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <header>
-        <Link href="/dashboard/agenda" className="inline-flex items-center gap-1 text-sm font-semibold text-electric-600"><Icon name="back" size={16} /> Agenda</Link>
+        <Link href="/dashboard/agenda" className="inline-flex items-center gap-1 text-sm font-semibold text-acao-600"><Icon name="back" size={16} /> Agenda</Link>
         <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-primary">Ocupação da agenda</h1>
         <p className="text-sm text-slate-600">Quanto do tempo da equipe já está vendido, dia a dia. Folgas e bloqueios não entram na conta.</p>
       </header>
@@ -86,7 +86,7 @@ export default async function OcupacaoPage({ searchParams }: { searchParams: Pro
 
       {open.length > 0 && (emptiest || hot.length > 0) && (
         <section aria-label="O que fazer" className="space-y-2 rounded-[22px] bg-primary p-4 text-white" data-testid="occupancy-insights">
-          <p className="text-xs font-bold uppercase tracking-wider text-verde">O que o painel enxerga</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-ouro">O que o painel enxerga</p>
           <ul className="space-y-1.5 text-sm">
             {fullest && (fullest.pct ?? 0) >= 60 && <li>Dia mais cheio: <b>{when(fullest.date)}</b> ({fullest.pct}%).</li>}
             {emptiest && (emptiest.pct ?? 0) < 40 && <li>Sobra espaço em <b>{when(emptiest.date)}</b> ({emptiest.pct}% ocupado): bom dia para uma promoção ou um aviso aos clientes.</li>}
@@ -114,7 +114,7 @@ export default async function OcupacaoPage({ searchParams }: { searchParams: Pro
                   </>
                 )}
                 <span className="hidden w-28 shrink-0 text-right text-xs text-slate-500 sm:block">{d.pct === null ? '' : `${d.bookings} agend. · ${formatHours(d.capacityMin - d.bookedMin)} livres`}</span>
-                {wait > 0 && <span className="shrink-0 rounded-md bg-[#EAF0FF] px-2 py-0.5 text-xs font-semibold text-electric-600" title="Na lista de espera">{wait} na espera</span>}
+                {wait > 0 && <span className="shrink-0 rounded-md bg-[#E6EDE8] px-2 py-0.5 text-xs font-semibold text-acao-600" title="Na lista de espera">{wait} na espera</span>}
               </li>
             );
           })}

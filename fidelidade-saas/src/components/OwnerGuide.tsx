@@ -214,7 +214,7 @@ export function OwnerGuide({ autoOpen, progress, clientUrl }: { autoOpen: boolea
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="fixed bottom-24 left-4 z-30 inline-flex items-center gap-2 rounded-full border border-[#0F1F3D] bg-white px-4 py-2.5 text-sm font-semibold text-primary shadow-lg shadow-blue-900/15 transition-colors hover:bg-[#0F1F3D] hover:text-white md:bottom-6"
+          className="fixed bottom-24 left-4 z-30 inline-flex items-center gap-2 rounded-full border border-[#12241C] bg-white px-4 py-2.5 text-sm font-semibold text-primary shadow-lg shadow-blue-900/15 transition-colors hover:bg-[#12241C] hover:text-white md:bottom-6"
         >
           <Icon name="info" size={16} /> Guia · passo {step + 1} de {STEPS.length}
         </button>
@@ -238,12 +238,12 @@ export function OwnerGuide({ autoOpen, progress, clientUrl }: { autoOpen: boolea
 
               <div className="mb-5 flex gap-1.5" aria-hidden>
                 {STEPS.map((x, i) => (
-                  <span key={x.id} className={`h-1.5 flex-1 rounded-full ${i < step ? 'bg-electric-500' : i === step ? 'bg-electric-500/60' : 'bg-[#e8ecf8]'}`} />
+                  <span key={x.id} className={`h-1.5 flex-1 rounded-full ${i < step ? 'bg-acao-500' : i === step ? 'bg-acao-500/60' : 'bg-[#e8ecf8]'}`} />
                 ))}
               </div>
 
               <div className="mb-4 flex items-center gap-4">
-                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-electric-500/10 text-electric-600">
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-acao-500/10 text-acao-600">
                   <Icon name={s.icon} size={28} />
                 </span>
                 <div className="min-w-0">
@@ -261,7 +261,7 @@ export function OwnerGuide({ autoOpen, progress, clientUrl }: { autoOpen: boolea
                 <ul className="mb-4 space-y-2">
                   {s.bullets.map((b) => (
                     <li key={b} className="flex items-start gap-2.5 text-sm text-slate-700">
-                      <Icon name="check" size={16} className="mt-0.5 shrink-0 text-electric-500" /> {b}
+                      <Icon name="check" size={16} className="mt-0.5 shrink-0 text-acao-500" /> {b}
                     </li>
                   ))}
                 </ul>

@@ -26,7 +26,7 @@ export function ReviewPopup({ prompt }: { prompt: ReviewPrompt | null }) {
   };
   const go = (n: number) => router.push(`/perfil/agendamentos/${prompt.bookingId}/avaliar?nota=${n}`);
   return (
-    <aside role="dialog" aria-label="Avaliar atendimento" data-testid="review-popup" className="fixed inset-x-0 bottom-28 z-40 mx-auto w-[calc(100%-2rem)] max-w-sm rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_18px_40px_rgba(11,27,58,.28)] md:bottom-6 md:right-6 md:left-auto md:mx-0">
+    <aside role="dialog" aria-label="Avaliar atendimento" data-testid="review-popup" className="fixed inset-x-0 bottom-28 z-40 mx-auto w-[calc(100%-2rem)] max-w-sm rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_18px_40px_rgba(18, 36, 28,.28)] md:bottom-6 md:right-6 md:left-auto md:mx-0">
       <p className="font-extrabold text-primary">Como foi o atendimento?</p>
       <p className="text-sm text-slate-600">{prompt.serviceName} · {prompt.placeName}</p>
       <div className="mt-2 flex items-center justify-between gap-2">

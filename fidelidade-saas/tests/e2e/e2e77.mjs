@@ -66,7 +66,7 @@ console.log('3. lista de desafios legível no celular OK');
 // 4. prévia da campanha: título, "Valendo agora" e quando vale não se sobrepõem
 await o.goto(BASE + '/dashboard/configuracoes?etapa=regras&abrir=campanhas'); await o.waitForSelector('[data-testid=promo-preview]');
 const tile = o.locator('[data-testid=promo-preview]');
-const t = await tile.locator('p.font-bold').boundingBox(); const chip = await tile.locator('.chip-verde').boundingBox(); const when = await tile.locator('p.text-xs').boundingBox();
+const t = await tile.locator('p.font-bold').boundingBox(); const chip = await tile.locator('.chip-ouro').boundingBox(); const when = await tile.locator('p.text-xs').boundingBox();
 assert.ok(chip.y >= t.y + t.height - 2, 'o selo fica abaixo do título');
 assert.ok(when.y >= chip.y + chip.height - 2, 'o texto de quando vale fica abaixo do selo');
 assert.ok(when.height < 40, `"Todos os dias" em uma linha (${Math.round(when.height)}px)`);

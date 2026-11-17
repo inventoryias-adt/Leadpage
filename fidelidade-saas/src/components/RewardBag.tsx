@@ -102,7 +102,7 @@ export function RewardBag({
 
       {shared && (
         <label className="glass-panel-sm flex cursor-pointer items-start gap-3 p-4">
-          <input type="checkbox" className="mt-1 h-4 w-4 rounded accent-electric-500" checked={useShared} onChange={(e) => { setUseShared(e.target.checked); setConfirming(false); if (!e.target.checked) setQty({}); }} />
+          <input type="checkbox" className="mt-1 h-4 w-4 rounded accent-acao-500" checked={useShared} onChange={(e) => { setUseShared(e.target.checked); setConfirming(false); if (!e.target.checked) setQty({}); }} />
           <span className="min-w-0 text-sm">
             <span className="block font-bold text-slate-800">Completar com pontos de outros lugares (+{formatPoints(shared.total)} pts)</span>
             <span className="block text-xs text-slate-600">
@@ -122,7 +122,7 @@ export function RewardBag({
               <RewardImage src={r.imageUrl} name={r.name} className="h-16 w-16 shrink-0 rounded-2xl" />
               <div className="min-w-0 flex-1">
                 <p className="line-clamp-2 text-[17px] font-semibold leading-snug text-primary">{r.name}</p>
-                <p className={`text-sm font-semibold ${missing > 0 && q === 0 ? 'text-slate-500' : 'text-electric-600'}`}>
+                <p className={`text-sm font-semibold ${missing > 0 && q === 0 ? 'text-slate-500' : 'text-acao-600'}`}>
                   {formatPrice(r.pointsCost, r.cashCents)}
                   {r.cashCents > 0 && <span className="ml-1.5 font-medium text-slate-500">· R$ + pontos</span>}
                 </p>

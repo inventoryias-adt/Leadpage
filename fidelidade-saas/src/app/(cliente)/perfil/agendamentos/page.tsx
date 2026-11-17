@@ -64,7 +64,7 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
     const st = STATUS[b.status];
     const cancelable = withCancel && canCustomerCancel(b, b.restaurant.bookingCancelHours, now);
     return (
-      <li key={b.id} className={`glass-panel-sm space-y-2 p-4 ${sp.novo === b.id || sp.remarcado === b.id ? 'ring-2 ring-electric-500' : ''}`}>
+      <li key={b.id} className={`glass-panel-sm space-y-2 p-4 ${sp.novo === b.id || sp.remarcado === b.id ? 'ring-2 ring-acao-500' : ''}`}>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="truncate font-bold text-slate-800">{b.serviceName}</p>
@@ -81,7 +81,7 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
           {b.pointsAwarded > 0 ? ` · +${formatPoints(b.pointsAwarded)} pts` : ''}
         </p>
         {withCancel && b.reminderSentAt && !b.reminderAnswer && (
-          <div role="group" aria-label={`Está tudo certo? ${b.serviceName}`} className={`space-y-2 rounded-xl bg-electric-600/10 p-3 ${sp.lembrete === b.id ? 'ring-2 ring-electric-500' : ''}`}>
+          <div role="group" aria-label={`Está tudo certo? ${b.serviceName}`} className={`space-y-2 rounded-xl bg-acao-600/10 p-3 ${sp.lembrete === b.id ? 'ring-2 ring-acao-500' : ''}`}>
             <p className="text-sm font-bold text-slate-800">Está tudo certo para o seu horário?</p>
             <p className="text-xs text-slate-600">Se não puder ir, libere o horário para outra pessoa usar. Se não responder, mantemos o seu horário.</p>
             <div className="flex flex-wrap gap-2">
@@ -136,13 +136,13 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
 
       {fresh && (
         <section role="status" data-testid="booking-success" aria-label="Agendamento feito" className="space-y-3 rounded-[24px] bg-primary p-5 text-white">
-          <p className="flex items-center gap-2 text-sm font-semibold text-verde"><Icon name="check" size={18} /> {fresh.status === 'CONFIRMED' ? 'Horário garantido!' : 'Pedido enviado! O lugar vai confirmar.'}</p>
+          <p className="flex items-center gap-2 text-sm font-semibold text-ouro"><Icon name="check" size={18} /> {fresh.status === 'CONFIRMED' ? 'Horário garantido!' : 'Pedido enviado! O lugar vai confirmar.'}</p>
           <div>
             <p className="text-xl font-extrabold tracking-tight">{fresh.serviceName}</p>
             <p className="text-sm text-white/80">{formatBookingWhen(fresh.startsAt)}{fresh.resource ? ` · com ${fresh.resource.name}` : ''}</p>
             <p className="text-sm text-white/70">{fresh.restaurant.name}{fresh.unit.address ? ` · ${fresh.unit.address}` : ''}</p>
           </div>
-          {freshPoints > 0 && <p className="text-sm"><span className="chip-verde">Ao concluir você ganha +{formatPoints(freshPoints)} pontos</span></p>}
+          {freshPoints > 0 && <p className="text-sm"><span className="chip-ouro">Ao concluir você ganha +{formatPoints(freshPoints)} pontos</span></p>}
         </section>
       )}
       {sp.avaliado && <p role="status" className="glass-success" data-testid="review-thanks">Obrigado pela avaliação! Ela ajuda outros clientes a escolher.</p>}
@@ -177,7 +177,7 @@ export default async function MeusAgendamentosPage({ searchParams }: { searchPar
                     <p className="truncate text-sm text-slate-600">{formatBookingWhen(new Date(`${w.date}T12:00:00-03:00`)).split(' às ')[0]} · {WAIT_PERIODS[w.period as keyof typeof WAIT_PERIODS] ?? 'Qualquer horário'}{w.resource ? ` · com ${w.resource.name}` : ''}</p>
                     <p className="truncate text-xs text-slate-500"><Link href={`/lugar/${w.restaurant.id}`} className="link-inline !font-medium">{w.restaurant.name}</Link> · {waitingAt[i]}º da fila</p>
                   </div>
-                  <span className="shrink-0 rounded-md bg-[#EAF0FF] px-2 py-0.5 text-xs font-semibold text-electric-600">Esperando</span>
+                  <span className="shrink-0 rounded-md bg-[#E6EDE8] px-2 py-0.5 text-xs font-semibold text-acao-600">Esperando</span>
                 </div>
                 <p className="text-xs text-slate-500">Avisamos no app quando abrir um horário. Quem confirmar primeiro fica com ele.</p>
                 <div className="flex flex-wrap gap-2">

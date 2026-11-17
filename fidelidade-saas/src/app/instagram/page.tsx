@@ -42,13 +42,13 @@ export default function InstagramPage() {
           <div className="mx-auto max-w-6xl px-5 py-14 sm:px-8 md:py-20">
             <Reveal from="top">
               <span className="micro mb-3 block">Como funciona</span>
-              <h2 className="mb-10 max-w-2xl text-3xl font-extrabold tracking-tight text-primary md:text-4xl">Em três passos, sem integração complicada<span className="text-electric-500">.</span></h2>
+              <h2 className="mb-10 max-w-2xl text-3xl font-extrabold tracking-tight text-primary md:text-4xl">Em três passos, sem integração complicada<span className="text-acao-500">.</span></h2>
             </Reveal>
             <ol className="grid gap-5 md:grid-cols-3">
               {how.map((s, i) => (
                 <Reveal as="li" key={s.title} from="bottom" delay={i * 100} className="rounded-2xl border border-[#E5E7EB] p-5">
-                  <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-electric-500 text-sm font-bold text-white">{i + 1}</span>
-                  <h3 className="mb-1 flex items-center gap-2 font-semibold text-primary"><Icon name={s.icon} size={18} className="text-electric-500" /> {s.title}</h3>
+                  <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-acao-500 text-sm font-bold text-white">{i + 1}</span>
+                  <h3 className="mb-1 flex items-center gap-2 font-semibold text-primary"><Icon name={s.icon} size={18} className="text-acao-500" /> {s.title}</h3>
                   <p className="text-sm text-slate-600">{s.text}</p>
                 </Reveal>
               ))}

@@ -44,7 +44,7 @@ export function FinanceEntryForm({ today }: { today: string }) {
         </div>
         <div className="flex items-end">
           <label className="flex items-center gap-2 pb-2 text-sm text-slate-700">
-            <input type="checkbox" name="recurrence" value="MONTHLY" checked={monthly} onChange={(e) => setMonthly(e.target.checked)} className="h-4 w-4 rounded accent-electric-500" data-testid="entry-monthly" />
+            <input type="checkbox" name="recurrence" value="MONTHLY" checked={monthly} onChange={(e) => setMonthly(e.target.checked)} className="h-4 w-4 rounded accent-acao-500" data-testid="entry-monthly" />
             Repete todo mês (despesa fixa)
           </label>
         </div>

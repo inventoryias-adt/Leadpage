@@ -171,7 +171,7 @@ function InstallGuide({ platform, inApp, safari, name, onClose }: { platform: In
       ]
     : ios
       ? [
-          { n: 1, text: <>Toque em <strong>Compartilhar</strong> <span className="mx-0.5 inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-300 bg-white align-middle text-electric-600"><Icon name="share" size={16} /></span> {safari ? 'na barra aqui embaixo.' : 'na barra do navegador.'}</> },
+          { n: 1, text: <>Toque em <strong>Compartilhar</strong> <span className="mx-0.5 inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-300 bg-white align-middle text-acao-600"><Icon name="share" size={16} /></span> {safari ? 'na barra aqui embaixo.' : 'na barra do navegador.'}</> },
           { n: 2, text: <>Role a lista e toque em <strong>Adicionar à Tela de Início</strong>.</> },
           { n: 3, text: <>Toque em <strong>Adicionar</strong> (canto superior). Pronto!</> },
         ]
@@ -195,7 +195,7 @@ function InstallGuide({ platform, inApp, safari, name, onClose }: { platform: In
           ))}
         </ol>
         {ios && safari && !inApp && (
-          <p aria-hidden className="mt-3 animate-bounce text-center text-2xl text-electric-600">↓</p>
+          <p aria-hidden className="mt-3 animate-bounce text-center text-2xl text-acao-600">↓</p>
         )}
         <button type="button" autoFocus onClick={onClose} className="glass-button mt-4 w-full">Entendi</button>
       </div>

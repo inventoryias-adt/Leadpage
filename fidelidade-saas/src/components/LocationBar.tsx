@@ -51,12 +51,12 @@ export function LocationBar({ saved, loggedIn, onChange }: { saved: SavedAddress
         aria-label={chosen ? `Localização: ${chosen.title}. Trocar` : 'Onde está? Escolher localização'}
         className="flex w-full min-w-0 items-center gap-2 !rounded-full !border !border-[#D5E0F7] !bg-[#F1F5FD] !px-3 !py-1.5 text-left !shadow-none"
       >
-        <Icon name="pin" size={16} className="shrink-0 text-electric-600" />
+        <Icon name="pin" size={16} className="shrink-0 text-acao-600" />
         <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
           <span className="shrink-0 text-sm font-bold leading-tight text-slate-900" data-testid="loc-title">{chosen ? chosen.title : 'Onde está?'}</span>
           <span className="truncate text-xs text-slate-500">{chosen ? chosen.sub : 'Veja a distância dos lugares'}</span>
         </span>
-        <span className="shrink-0 text-xs font-bold text-electric-600">{chosen ? 'Alterar' : 'Informar'}</span>
+        <span className="shrink-0 text-xs font-bold text-acao-600">{chosen ? 'Alterar' : 'Informar'}</span>
       </button>
       {open && (
         <LocationPicker

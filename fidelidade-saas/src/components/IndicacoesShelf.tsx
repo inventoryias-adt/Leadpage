@@ -24,7 +24,7 @@ export async function IndicacoesShelf({ customerId, hasWallets }: { customerId: 
     <section aria-labelledby="indicacoes-inicio" data-testid="indicacoes-shelf">
       <div className="mb-3 flex items-baseline justify-between gap-3">
         <h2 id="indicacoes-inicio" className="text-xs font-bold uppercase tracking-wider text-slate-500">Indicações</h2>
-        <Link href="/indicacoes" className="text-xs font-bold text-electric-600">Ver todas</Link>
+        <Link href="/indicacoes" className="text-xs font-bold text-acao-600">Ver todas</Link>
       </div>
       <Carousel label="Indicações recentes">
         {posts.map((p) => (

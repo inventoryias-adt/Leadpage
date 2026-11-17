@@ -186,10 +186,10 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses, b
                 onClick={() => setCategory(on ? null : c.value)}
                 className="group flex w-14 flex-col items-center gap-1 !bg-transparent !p-0 !shadow-none"
               >
-                <span className={`rounded-lg p-0.5 transition-colors ${on ? 'bg-electric-500' : 'group-hover:bg-slate-200'}`}>
+                <span className={`rounded-lg p-0.5 transition-colors ${on ? 'bg-acao-500' : 'group-hover:bg-slate-200'}`}>
                   <CategoryArt name={c.value} size={42} />
                 </span>
-                <span className={`text-center text-[10.5px] font-medium leading-tight ${on ? 'text-electric-600' : 'text-slate-700'}`}>{c.label}</span>
+                <span className={`text-center text-[10.5px] font-medium leading-tight ${on ? 'text-acao-600' : 'text-slate-700'}`}>{c.label}</span>
               </button>
             </li>
           );
@@ -257,10 +257,10 @@ export function PlacesExplorer({ places, categories, loggedIn, savedAddresses, b
                       title={c.hint}
                       className="group flex w-[4.5rem] flex-col items-center gap-1.5 !bg-transparent !p-0 !shadow-none"
                     >
-                      <span className={`rounded-xl p-0.5 transition-colors ${on ? 'bg-electric-500' : 'group-hover:bg-slate-200'}`}>
+                      <span className={`rounded-xl p-0.5 transition-colors ${on ? 'bg-acao-500' : 'group-hover:bg-slate-200'}`}>
                         <CategoryArt name={c.value} size={60} />
                       </span>
-                      <span className={`text-center text-[11px] font-medium leading-tight ${on ? 'text-electric-600' : 'text-slate-700'}`}>{c.label}</span>
+                      <span className={`text-center text-[11px] font-medium leading-tight ${on ? 'text-acao-600' : 'text-slate-700'}`}>{c.label}</span>
                     </button>
                   </li>
                 );
@@ -386,7 +386,7 @@ function PlaceRow({ p }: { p: Row }) {
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
           <p className="truncate text-[17px] font-semibold text-primary">{p.name}</p>
-          {p.meters != null && <span className="shrink-0 text-xs font-semibold text-electric-600">{formatDistance(p.meters)}</span>}
+          {p.meters != null && <span className="shrink-0 text-xs font-semibold text-acao-600">{formatDistance(p.meters)}</span>}
         </div>
         <p className="flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
           <RatingBadge summary={p.rating ?? undefined} className="shrink-0 !text-xs" />
@@ -394,11 +394,11 @@ function PlaceRow({ p }: { p: Row }) {
         </p>
         <div className="mt-1 flex flex-wrap items-center gap-1">
           {(p.hasGoogle || p.hasInstagram || p.hasRewards || p.challenges > 0) && (
-          <ul className="flex items-center gap-1 text-electric-600" aria-label="O que este lugar oferece" data-testid="offers-icons">
-          {p.hasGoogle && <li title="Pontos por avaliar no Google" aria-label="Avaliação no Google" className="flex h-5 w-5 items-center justify-center rounded-md bg-[#EAF0FF]"><GoogleG size={12} /></li>}
-          {p.hasInstagram && <li title="Pontos por marcar no Instagram" aria-label="Instagram" className="flex h-5 w-5 items-center justify-center rounded-md bg-[#EAF0FF]"><InstagramGlyph size={12} /></li>}
-          {p.hasRewards && <li title="Tem prêmios para trocar" aria-label="Prêmios" className="flex h-5 w-5 items-center justify-center rounded-md bg-[#EAF0FF]"><Icon name="gift" size={12} /></li>}
-          {p.challenges > 0 && <li title="Tem desafios" aria-label="Desafios" className="flex h-5 w-5 items-center justify-center rounded-md bg-[#EAF0FF]"><Icon name="trophy" size={12} /></li>}
+          <ul className="flex items-center gap-1 text-acao-600" aria-label="O que este lugar oferece" data-testid="offers-icons">
+          {p.hasGoogle && <li title="Pontos por avaliar no Google" aria-label="Avaliação no Google" className="flex h-5 w-5 items-center justify-center rounded-md bg-[#E6EDE8]"><GoogleG size={12} /></li>}
+          {p.hasInstagram && <li title="Pontos por marcar no Instagram" aria-label="Instagram" className="flex h-5 w-5 items-center justify-center rounded-md bg-[#E6EDE8]"><InstagramGlyph size={12} /></li>}
+          {p.hasRewards && <li title="Tem prêmios para trocar" aria-label="Prêmios" className="flex h-5 w-5 items-center justify-center rounded-md bg-[#E6EDE8]"><Icon name="gift" size={12} /></li>}
+          {p.challenges > 0 && <li title="Tem desafios" aria-label="Desafios" className="flex h-5 w-5 items-center justify-center rounded-md bg-[#E6EDE8]"><Icon name="trophy" size={12} /></li>}
           </ul>
           )}
           {p.unit.openNow != null && (
@@ -414,7 +414,7 @@ function PlaceRow({ p }: { p: Row }) {
           )}
           {p.units.length > 1 && <span className="rounded-full bg-slate-100 px-2 py-px text-[10.5px] font-medium text-slate-700">{p.units.length} unidades</span>}
           {p.cashbackPct ? (
-            <span className="chip-verde !px-2 !py-px !text-[10.5px]" data-testid="cashback-chip">{String(p.cashbackPct).replace('.', ',')}% de volta</span>
+            <span className="chip-ouro !px-2 !py-px !text-[10.5px]" data-testid="cashback-chip">{String(p.cashbackPct).replace('.', ',')}% de volta</span>
           ) : (
             <span className="glass-chip !px-2 !py-px !text-[10.5px]">{p.pointsPerReal} pts por R$ 1</span>
           )}
@@ -434,11 +434,11 @@ function OfferCard({ p, offer }: { p: Row; offer: PlaceOffer }) {
   return (
     <section aria-label={`Oferta de ${p.name}`} data-testid="offer-card">
       <p className="mb-1.5 px-1 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">{p.name} · oferta</p>
-      <div className="flex items-center justify-between gap-3 rounded-[28px] bg-[#0F1F3D] p-5 text-white">
+      <div className="flex items-center justify-between gap-3 rounded-[28px] bg-[#12241C] p-5 text-white">
         <div className="min-w-0">
           <h3 className="text-xl font-extrabold leading-tight tracking-tight">{offer.name}</h3>
           <p className="mt-1.5">
-            <span className="text-2xl font-extrabold text-verde">{formatBRL(offer.promoCents)}</span>
+            <span className="text-2xl font-extrabold text-ouro">{formatBRL(offer.promoCents)}</span>
             <span className="ml-2 text-sm font-medium text-white/60 line-through">{formatBRL(offer.priceCents)}</span>
           </p>
           {offer.endsText && <p className="mt-1 flex items-center gap-1.5 text-sm text-white/80"><Icon name="clock" size={15} /> {offer.endsText}</p>}
@@ -449,7 +449,7 @@ function OfferCard({ p, offer }: { p: Row; offer: PlaceOffer }) {
             {pct != null && (
               <svg viewBox="0 0 100 100" className="absolute inset-0 -rotate-90" aria-hidden>
                 <circle cx="50" cy="50" r={R} fill="none" stroke="rgba(255,255,255,.18)" strokeWidth="5" />
-                <circle cx="50" cy="50" r={R} fill="none" stroke="#7BE08A" strokeWidth="5" strokeLinecap="round" strokeDasharray={`${C * pct} ${C}`} />
+                <circle cx="50" cy="50" r={R} fill="none" stroke="#E9C46A" strokeWidth="5" strokeLinecap="round" strokeDasharray={`${C * pct} ${C}`} />
               </svg>
             )}
             <div className="absolute inset-[7px] overflow-hidden rounded-full bg-white">

@@ -9,7 +9,7 @@ export function PlaceAvatar({ name, src, size = 56 }: { name: string; src?: stri
   }
   return (
     <span
-      style={{ ...style, background: '#0F1F3D', fontSize: size * 0.42 }}
+      style={{ ...style, background: '#12241C', fontSize: size * 0.42 }}
       className="flex shrink-0 items-center justify-center rounded-lg font-semibold text-white"
       aria-hidden
     >
@@ -27,7 +27,7 @@ export function RewardImage({ src, name, className = '' }: { src?: string | null
   return (
     <span
       aria-hidden
-      className={`flex items-center justify-center text-electric-600 ${className}`}
+      className={`flex items-center justify-center text-acao-600 ${className}`}
       style={{ background: '#F1F3F6' }}
     >
       <Icon name="gift" size={28} />

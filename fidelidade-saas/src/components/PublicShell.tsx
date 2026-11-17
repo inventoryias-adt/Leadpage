@@ -62,15 +62,15 @@ export function PublicFooter() {
         <Brand />
         <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 font-semibold text-primary">
           {PUBLIC_LINKS.map((l) => (
-            <Link key={l.href} href={l.href} className="hover:text-electric-600">{l.label}</Link>
+            <Link key={l.href} href={l.href} className="hover:text-acao-600">{l.label}</Link>
           ))}
-          <Link href="/entrar" className="hover:text-electric-600">Sou cliente</Link>
-          <Link href="/login" className="hover:text-electric-600">Entrar</Link>
+          <Link href="/entrar" className="hover:text-acao-600">Sou cliente</Link>
+          <Link href="/login" className="hover:text-acao-600">Entrar</Link>
         </div>
         <p className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-          <Link href="/termos/estabelecimento" className="hover:text-electric-600">Termos para Estabelecimentos</Link>
-          <Link href="/termos/cliente" className="hover:text-electric-600">Termos do Cliente</Link>
-          <Link href="/privacidade" className="hover:text-electric-600">Política de Privacidade</Link>
+          <Link href="/termos/estabelecimento" className="hover:text-acao-600">Termos para Estabelecimentos</Link>
+          <Link href="/termos/cliente" className="hover:text-acao-600">Termos do Cliente</Link>
+          <Link href="/privacidade" className="hover:text-acao-600">Política de Privacidade</Link>
         </p>
         <p>© {new Date().getFullYear()} Fidelize. Todos os direitos reservados.</p>
       </div>
@@ -87,7 +87,7 @@ export function PageHero({ icon, title, text }: { icon: IconName; title: string;
           <Icon name="back" size={14} /> Voltar ao início
         </Link>
         <div className="mt-6 flex items-center gap-4">
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-verde"><Icon name={icon} size={28} /></span>
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-ouro"><Icon name={icon} size={28} /></span>
           <h1 data-h1 className="text-4xl font-extrabold tracking-tight md:text-5xl">{title}</h1>
         </div>
         <p className="mt-4 max-w-2xl text-lg text-slate-300">{text}</p>
@@ -124,13 +124,13 @@ export function FeatureSplit({
         <Reveal from={reverse ? 'right' : 'left'} className={reverse ? 'md:order-2' : ''}>
           <span className="glass-chip mb-4">{chip}</span>
           <h2 className="mb-4 text-3xl font-extrabold leading-tight tracking-tight text-primary md:text-4xl">
-            {title} <span className="text-electric-500">{accent}</span>
+            {title} <span className="text-acao-500">{accent}</span>
           </h2>
           <p className="mb-6 text-slate-600">{text}</p>
           <ul className="mb-7 space-y-3">
             {items.map((it) => (
               <li key={it.title} className="flex items-center gap-4 rounded-2xl border border-[#E5E7EB] bg-white p-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-electric-500/10 text-electric-600"><Icon name={it.icon} size={20} /></span>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-acao-500/10 text-acao-600"><Icon name={it.icon} size={20} /></span>
                 <span className="min-w-0">
                   <span className="block font-semibold text-primary">{it.title}</span>
                   <span className="block text-sm text-slate-500">{it.text}</span>

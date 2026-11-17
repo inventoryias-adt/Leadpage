@@ -150,17 +150,17 @@ export function CaixaForm({ pointsPerReal, rules, promos = [], placeName }: { po
               <legend className="glass-label">Interações</legend>
               <div className="space-y-2">
                 {rules.map((r) => (
-                  <label key={r.id} className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-2xl border px-3 transition-colors ${checked.includes(r.id) ? 'border-[#0f1f3d] bg-[#f3f6fd]' : 'border-slate-200 bg-white hover:bg-[#f3f6fd]'}`}>
+                  <label key={r.id} className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-2xl border px-3 transition-colors ${checked.includes(r.id) ? 'border-[#12241C] bg-[#F3F5F0]' : 'border-slate-200 bg-white hover:bg-[#F3F5F0]'}`}>
                     <input
                       type="checkbox"
                       name="interaction"
                       value={r.id}
                       checked={checked.includes(r.id)}
                       onChange={() => toggle(r.id)}
-                      className="h-5 w-5 shrink-0 rounded accent-[#0f1f3d]"
+                      className="h-5 w-5 shrink-0 rounded accent-[#12241C]"
                     />
                     <span className="min-w-0 flex-1 text-sm text-slate-700">{r.label}</span>
-                    <span className="chip-verde shrink-0">+{formatPoints(r.points)} pts</span>
+                    <span className="chip-ouro shrink-0">+{formatPoints(r.points)} pts</span>
                   </label>
                 ))}
               </div>
@@ -197,7 +197,7 @@ export function CaixaForm({ pointsPerReal, rules, promos = [], placeName }: { po
             <h2 className="text-left text-base font-bold text-primary">Cliente sem conta?</h2>
             <div className="mx-auto my-4 inline-block rounded-2xl border border-slate-200 bg-white p-2.5">
               {claim ? (
-                <QRCodeSVG value={claim.url} size={176} fgColor="#0F1F3D" level="M" marginSize={1} />
+                <QRCodeSVG value={claim.url} size={176} fgColor="#12241C" level="M" marginSize={1} />
               ) : (
                 <div className="flex h-[176px] w-[176px] flex-col items-center justify-center gap-2 rounded-xl bg-slate-50 px-3 text-xs text-slate-400">
                   <Icon name="qr" size={44} className="text-slate-300" />

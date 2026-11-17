@@ -73,13 +73,13 @@ export function MenuItemForm({ item = EMPTY, categories, onDone }: { item?: Menu
           </div>
         </div>
         <label className="flex cursor-pointer items-start gap-3 text-sm">
-          <input type="checkbox" name="spotlight" defaultChecked={item.spotlight} className="mt-0.5 h-4 w-4 rounded accent-electric-500" />
+          <input type="checkbox" name="spotlight" defaultChecked={item.spotlight} className="mt-0.5 h-4 w-4 rounded accent-acao-500" />
           <span><span className="block font-semibold text-slate-800">Também mostrar o cartão grande na lista de Lugares</span><span className="block text-xs text-slate-500">Além de “Promoções de hoje”, aparece um cartão grande com o prazo e “restam N” junto do seu lugar. Um por vez.</span></span>
         </label>
         <p className="text-xs text-slate-500">Com prazo e unidades, o cliente vê “restam N” e até quando vale. Acabou o prazo ou o estoque, o produto volta sozinho ao preço normal e sai de “Promoções de hoje”. Precisa do preço promocional.</p>
       </fieldset>
-      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-3 text-sm has-[:checked]:border-electric-500 has-[:checked]:bg-[#F3F6FD]">
-        <input type="checkbox" name="featured" defaultChecked={item.featured} className="mt-0.5 h-4 w-4 rounded accent-electric-500" />
+      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-3 text-sm has-[:checked]:border-acao-500 has-[:checked]:bg-[#F3F5F0]">
+        <input type="checkbox" name="featured" defaultChecked={item.featured} className="mt-0.5 h-4 w-4 rounded accent-acao-500" />
         <span><span className="block font-semibold text-slate-800">Destaque da casa</span><span className="block text-xs text-slate-500">Aparece primeiro, em cartão grande. Só um produto por vez.</span></span>
       </label>
       <FormMessage state={state} />
@@ -96,8 +96,8 @@ export function OrderSettingsForm({ defaults }: { defaults: { ordersEnabled: boo
   const [state, action] = useActionState(saveOrderSettings, {});
   return (
     <form action={action} className="space-y-4">
-      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 has-[:checked]:border-electric-500 has-[:checked]:bg-[#F3F6FD]">
-        <input type="checkbox" name="ordersEnabled" defaultChecked={state.values ? state.values.ordersEnabled === 'on' : defaults.ordersEnabled} className="mt-0.5 h-4 w-4 rounded accent-electric-500" />
+      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 has-[:checked]:border-acao-500 has-[:checked]:bg-[#F3F5F0]">
+        <input type="checkbox" name="ordersEnabled" defaultChecked={state.values ? state.values.ordersEnabled === 'on' : defaults.ordersEnabled} className="mt-0.5 h-4 w-4 rounded accent-acao-500" />
         <span>
           <span className="block font-bold text-slate-800">Receber pedidos pelo app</span>
           <span className="block text-sm text-slate-600">O cliente escolhe do cardápio, monta a sacola e retira no balcão. Você cobra no balcão como sempre; os pontos entram quando você marca o pedido como retirado.</span>

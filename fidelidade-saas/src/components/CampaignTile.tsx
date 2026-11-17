@@ -30,7 +30,7 @@ export function CampaignTile({ big, title, when, color, live, compact, children 
       </span>
       <div className="min-w-0 flex-1">
         <p className="font-bold leading-tight text-slate-800 [overflow-wrap:anywhere]">{title}</p>
-        {live && <span className="chip-verde mt-1 inline-block">Valendo agora</span>}
+        {live && <span className="chip-ouro mt-1 inline-block">Valendo agora</span>}
         {when && <p className="mt-1 text-xs leading-snug text-slate-500">{when}</p>}
         {children}
       </div>

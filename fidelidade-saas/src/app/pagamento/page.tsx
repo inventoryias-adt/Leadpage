@@ -25,14 +25,14 @@ export default async function PagamentoPage() {
         <p className="mb-6 text-slate-600">{copy[restaurant.subscriptionStatus]}</p>
         {firstMonth ? (
           <div className="mb-6" data-testid="preco-primeiro-mes">
-            <p className="text-5xl font-extrabold text-electric-600">
+            <p className="text-5xl font-extrabold text-acao-600">
               {FIRST_MONTH_PRICE_INT}<span className="text-2xl">{FIRST_MONTH_PRICE_DEC}</span>
               <span className="block text-base font-semibold text-slate-500">no primeiro mês</span>
             </p>
             <p className="mt-1 text-sm text-slate-500">Depois, {PLAN_PRICE} por mês. Sem taxa de adesão e sem fidelidade.</p>
           </div>
         ) : (
-          <p className="mb-6 text-4xl font-extrabold text-electric-600">
+          <p className="mb-6 text-4xl font-extrabold text-acao-600">
             {PLAN_PRICE_INT}<span className="text-lg text-slate-500">{PLAN_PRICE_DEC}/mês</span>
           </p>
         )}

@@ -42,12 +42,12 @@ export default function DesafiosPage() {
           <div className="mx-auto max-w-6xl px-5 py-14 sm:px-8 md:py-20">
             <Reveal from="top">
               <span className="micro mb-3 block">Tipos de incentivo</span>
-              <h2 className="mb-10 max-w-2xl text-3xl font-extrabold tracking-tight text-primary md:text-4xl">Quatro formas de dar motivo para voltar<span className="text-electric-500">.</span></h2>
+              <h2 className="mb-10 max-w-2xl text-3xl font-extrabold tracking-tight text-primary md:text-4xl">Quatro formas de dar motivo para voltar<span className="text-acao-500">.</span></h2>
             </Reveal>
             <div className="grid gap-5 sm:grid-cols-2">
               {kinds.map((k, i) => (
                 <Reveal key={k.title} from={i % 2 === 0 ? 'left' : 'right'} delay={Math.floor(i / 2) * 100} className="flex gap-4 rounded-2xl border border-[#E5E7EB] p-5">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-electric-500/10 text-electric-600"><Icon name={k.icon} size={22} /></span>
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-acao-500/10 text-acao-600"><Icon name={k.icon} size={22} /></span>
                   <div>
                     <h3 className="mb-1 font-semibold text-primary">{k.title}</h3>
                     <p className="mb-2 text-sm text-slate-600">{k.text}</p>

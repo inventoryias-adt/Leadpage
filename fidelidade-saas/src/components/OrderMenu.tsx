@@ -18,7 +18,7 @@ type Step = 'menu' | 'bag' | 'receive';
 function Price({ item, className = '', dark = false }: { item: MenuView; className?: string; dark?: boolean }) {
   return (
     <span className={className}>
-      <span className={`font-extrabold ${dark ? 'text-verde' : 'text-slate-900'}`}>{formatBRL(unitPrice(item))}</span>
+      <span className={`font-extrabold ${dark ? 'text-ouro' : 'text-slate-900'}`}>{formatBRL(unitPrice(item))}</span>
       {hasPromo(item) && <span className={`ml-2 text-sm font-medium line-through ${dark ? 'text-white/60' : 'text-slate-400'}`}>{formatBRL(item.priceCents)}</span>}
     </span>
   );
@@ -33,7 +33,7 @@ function StockTag({ item }: { item: MenuView }) {
 function Stepper({ qty, name, onMinus, onPlus, canPlus, dark = false }: { qty: number; name: string; onMinus: () => void; onPlus: () => void; canPlus: boolean; dark?: boolean }) {
   const hov = dark ? 'hover:bg-white/15' : 'hover:bg-slate-200';
   return (
-    <div className={`flex items-center rounded-lg ${dark ? 'bg-white/10 text-white' : 'bg-[#EAF0FF] text-primary'}`} role="group" aria-label={`Quantidade de ${name}`}>
+    <div className={`flex items-center rounded-lg ${dark ? 'bg-white/10 text-white' : 'bg-[#E6EDE8] text-primary'}`} role="group" aria-label={`Quantidade de ${name}`}>
       <button type="button" onClick={onMinus} className={`flex h-9 w-9 items-center justify-center rounded-lg ${hov}`} aria-label={qty === 1 ? `Remover ${name} do pedido` : `Tirar um ${name}`}>
         {qty === 1 ? <Icon name="trash" size={17} /> : <span className="text-xl leading-none">−</span>}
       </button>
@@ -164,7 +164,7 @@ export function OrderMenu({
           </span>
           <h1 className="text-xl font-extrabold text-primary">Pedido enviado!</h1>
           <p className="mt-1 text-sm text-slate-600">{placeName} já recebeu. Mostre este código no balcão, {prepText(order.prepMin)}.</p>
-          <p className="my-4 font-mono text-4xl font-bold tracking-[0.3em] text-electric-600" data-testid="order-code">{order.code}</p>
+          <p className="my-4 font-mono text-4xl font-bold tracking-[0.3em] text-acao-600" data-testid="order-code">{order.code}</p>
           <p className="text-sm font-semibold text-slate-700">Pague {formatBRL(order.totalCents)} no balcão ao retirar.</p>
           {points > 0 && <p className="mt-1 text-xs text-slate-500">Você ganha {formatPoints(orderPoints(order.totalCents, pointsPerReal))} pontos quando retirar.</p>}
         </div>
@@ -179,7 +179,7 @@ export function OrderMenu({
   return (
     <div className={count > 0 ? 'pb-40' : 'pb-8'}>
       <div className="space-y-6 p-4 sm:p-6 md:pt-8">
-        <Link href={backHref} className="inline-flex items-center gap-1.5 text-sm font-semibold text-electric-600 hover:text-primary">
+        <Link href={backHref} className="inline-flex items-center gap-1.5 text-sm font-semibold text-acao-600 hover:text-primary">
           <Icon name="back" size={16} /> {placeName}
         </Link>
 
@@ -190,7 +190,7 @@ export function OrderMenu({
             <div className="min-w-0">
               <h1 className="truncate text-xl font-extrabold tracking-tight text-slate-900">{placeName}</h1>
               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600">
-                {open != null && <span className={open ? 'chip-verde' : 'rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600'}>● {open ? 'Aberto' : 'Fechado agora'}</span>}
+                {open != null && <span className={open ? 'chip-ouro' : 'rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600'}>● {open ? 'Aberto' : 'Fechado agora'}</span>}
                 <span className="flex items-center gap-1"><Icon name="clock" size={14} /> {prepMin} min</span>
                 <span className="flex items-center gap-1"><Icon name="bag" size={14} /> retirada grátis</span>
               </div>
@@ -203,7 +203,7 @@ export function OrderMenu({
         {featured && (
           <section aria-labelledby="destaque">
             <h2 id="destaque" className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Destaque da casa</h2>
-            <article className="overflow-hidden rounded-[22px] bg-[#0F1F3D] text-white shadow-[0_8px_24px_rgba(15,31,61,.25)]" data-testid="menu-featured">
+            <article className="overflow-hidden rounded-[22px] bg-[#12241C] text-white shadow-[0_8px_24px_rgba(18, 36, 28,.25)]" data-testid="menu-featured">
               {featured.imageUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={featured.imageUrl} alt={featured.name} className="h-40 w-full bg-slate-100 object-cover sm:h-52" />
@@ -211,7 +211,7 @@ export function OrderMenu({
               <div className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <h3 className="text-lg font-extrabold leading-snug">{featured.name}</h3>
-                  {hasPromo(featured) && <span className="chip-verde shrink-0">−{promoPct(featured)}%</span>}
+                  {hasPromo(featured) && <span className="chip-ouro shrink-0">−{promoPct(featured)}%</span>}
                 </div>
                 {featured.description && <p className="mt-1 line-clamp-3 text-sm text-white/75">{featured.description}</p>}
                 <StockTag item={featured} />
@@ -251,11 +251,11 @@ export function OrderMenu({
       {/* Barra da sacola, acima das abas do app */}
       {count > 0 && step === 'menu' && (
         <div className="fixed inset-x-0 bottom-24 z-20 mx-auto w-full max-w-md px-4">
-          <div className="flex items-center gap-3 rounded-[22px] bg-[#0F1F3D] p-3 text-white shadow-2xl">
+          <div className="flex items-center gap-3 rounded-[22px] bg-[#12241C] p-3 text-white shadow-2xl">
             <PlaceAvatar name={placeName} src={logoUrl} size={44} />
             <div className="min-w-0 flex-1">
               <p className="text-xs text-white/70">Total com retirada</p>
-              <p className="font-extrabold text-verde" data-testid="bag-total">{formatBRL(total)} <span className="text-sm font-medium text-white/70">/ {count} {count === 1 ? 'item' : 'itens'}</span></p>
+              <p className="font-extrabold text-ouro" data-testid="bag-total">{formatBRL(total)} <span className="text-sm font-medium text-white/70">/ {count} {count === 1 ? 'item' : 'itens'}</span></p>
             </div>
             <button type="button" onClick={() => setStep('bag')} className="glass-button-light !w-auto" data-testid="open-bag">Ver pedido</button>
           </div>
@@ -276,11 +276,11 @@ export function OrderMenu({
               <div className="min-w-0">
                 {step === 'bag' ? (
                   <>
-                    <h2 id="sheet-title" className="text-2xl font-extrabold tracking-tight text-primary">Seu pedido<span className="text-electric-500">.</span></h2>
+                    <h2 id="sheet-title" className="text-2xl font-extrabold tracking-tight text-primary">Seu pedido<span className="text-acao-500">.</span></h2>
                     <p className="truncate text-sm italic text-slate-500">{placeName} · {count} {count === 1 ? 'item' : 'itens'}</p>
                   </>
                 ) : (
-                  <h2 id="sheet-title" className="text-2xl font-extrabold tracking-tight text-primary">Como você quer receber<span className="text-electric-500">?</span></h2>
+                  <h2 id="sheet-title" className="text-2xl font-extrabold tracking-tight text-primary">Como você quer receber<span className="text-acao-500">?</span></h2>
                 )}
               </div>
               <button type="button" onClick={() => setStep('menu')} className="btn-icon" aria-label="Fechar">✕</button>
@@ -307,14 +307,14 @@ export function OrderMenu({
                       <textarea id="o-note" value={note} onChange={(e) => setNote(e.target.value)} maxLength={MAX_NOTE} rows={2} className="glass-input" placeholder="Ex.: sem granola, colher extra" />
                     </div>
                   ) : (
-                    <button type="button" onClick={() => setNoteOpen(true)} className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-electric-600 hover:text-primary">
+                    <button type="button" onClick={() => setNoteOpen(true)} className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-acao-600 hover:text-primary">
                       <Icon name="plus" size={16} /> {note ? 'Editar observação' : 'Observação'}
                     </button>
                   )}
                   {points > 0 && (
-                    <p className="mt-4 flex items-center justify-between rounded-xl bg-[#F3F6FD] px-4 py-3 text-sm">
+                    <p className="mt-4 flex items-center justify-between rounded-xl bg-[#F3F5F0] px-4 py-3 text-sm">
                       <span className="flex items-center gap-2 text-slate-700"><Icon name="gift" size={16} /> Você ganha nesse pedido</span>
-                      <strong className="chip-verde" data-testid="bag-points">+{formatPoints(points)} pts</strong>
+                      <strong className="chip-ouro" data-testid="bag-points">+{formatPoints(points)} pts</strong>
                     </p>
                   )}
                 </>
@@ -329,7 +329,7 @@ export function OrderMenu({
                             type="button"
                             onClick={() => setUnitId(u.id)}
                             aria-pressed={on}
-                            className={`flex w-full items-center gap-3 rounded-2xl border-2 p-4 text-left transition-colors ${on ? 'border-primary bg-[#F3F6FD]' : 'border-slate-200 hover:border-slate-300'}`}
+                            className={`flex w-full items-center gap-3 rounded-2xl border-2 p-4 text-left transition-colors ${on ? 'border-primary bg-[#F3F5F0]' : 'border-slate-200 hover:border-slate-300'}`}
                           >
                             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700"><Icon name="bag" size={22} /></span>
                             <span className="min-w-0 flex-1">

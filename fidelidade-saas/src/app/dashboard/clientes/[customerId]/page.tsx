@@ -39,7 +39,7 @@ export default async function ClienteDetalhe({ params }: { params: Promise<{ cus
 
   return (
     <div className="mx-auto max-w-5xl space-y-5 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6 lg:space-y-0">
-      <Link href="/dashboard/clientes" className="text-sm font-semibold text-electric-600 lg:col-span-2">← Todos os clientes</Link>
+      <Link href="/dashboard/clientes" className="text-sm font-semibold text-acao-600 lg:col-span-2">← Todos os clientes</Link>
 
       <section className="glass-panel p-5 sm:p-7 lg:col-span-2">
         <h1 className="text-2xl font-extrabold text-primary">{customer.name}</h1>

@@ -75,7 +75,7 @@ export default async function MeusPremiosPage({ searchParams }: { searchParams: 
                   <div className="space-y-0.5 p-3">
                     <p className="truncate text-sm font-bold text-slate-800">{r.name}</p>
                     <p className="truncate text-xs text-slate-500">{r.place.name}</p>
-                    <p className="text-sm font-semibold text-electric-600">{formatPrice(r.pointsCost, r.cashCents)}</p>
+                    <p className="text-sm font-semibold text-acao-600">{formatPrice(r.pointsCost, r.cashCents)}</p>
                   </div>
                 </Link>
               </li>

@@ -153,7 +153,7 @@ export default async function PontosPage({ searchParams }: { searchParams: Promi
                       <td className="px-4 py-3 font-semibold text-slate-800">{r.title}</td>
                       <td className="px-3 py-3 text-right">{formatPoints(r.uses)}</td>
                       <td className="hidden px-3 py-3 text-right sm:table-cell">{formatPoints(r.customers.size)}</td>
-                      <td className="px-3 py-3 text-right font-bold text-electric-600">+{formatPoints(r.points)}</td>
+                      <td className="px-3 py-3 text-right font-bold text-acao-600">+{formatPoints(r.points)}</td>
                       <td className="hidden px-4 py-3 text-right sm:table-cell">{formatBRL(r.cents)}</td>
                     </tr>
                   ))}

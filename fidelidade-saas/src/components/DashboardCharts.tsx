@@ -78,7 +78,7 @@ export function DaySheet({ ymd, onClose }: { ymd: string; onClose: () => void })
             <h4 className="mb-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">O que pode explicar</h4>
             <ul className="space-y-1.5 text-sm text-slate-700" data-testid="day-reasons">
               {view.reasons.map((r) => (
-                <li key={r} className="flex gap-2"><span aria-hidden className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-electric-500" />{r}</li>
+                <li key={r} className="flex gap-2"><span aria-hidden className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-acao-500" />{r}</li>
               ))}
             </ul>
           </section>
@@ -142,7 +142,7 @@ export function PeakHeatmap({ grid }: { grid: number[][] }) {
                 aria-label={`${WEEKDAYS[dow]}, ${h}h: ${plural(count, 'compra', 'compras')}`}
                 data-testid={`heat-${dow}-${h}`}
                 className="aspect-square cursor-pointer rounded-[3px] transition-shadow hover:ring-2 hover:ring-primary hover:ring-offset-1 focus-visible:ring-2 focus-visible:ring-primary"
-                style={{ background: count === 0 ? '#F1F3F6' : `rgba(47, 99, 230, ${0.18 + 0.82 * (count / max)})` }}
+                style={{ background: count === 0 ? '#F1F3F6' : `rgba(30, 91, 67, ${0.18 + 0.82 * (count / max)})` }}
               />
             ))}
           </div>
@@ -180,7 +180,7 @@ export function SlotSheet({ dow, hour, onClose }: { dow: number; hour: number; o
             <h4 className="mb-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">O que isso diz</h4>
             <ul className="space-y-1.5 text-sm text-slate-700" data-testid="slot-tips">
               {view.tips.map((t) => (
-                <li key={t} className="flex gap-2"><span aria-hidden className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-electric-500" />{t}</li>
+                <li key={t} className="flex gap-2"><span aria-hidden className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-acao-500" />{t}</li>
               ))}
             </ul>
           </section>
@@ -223,7 +223,7 @@ export function BarList({ items, unit }: { items: { label: string; value: number
             <span className="shrink-0 text-slate-600">{i.value} {unit}</span>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-[#F1F3F6]">
-            <div className="h-full rounded-full bg-electric-500" style={{ width: `${Math.max(4, (i.value / max) * 100)}%` }} />
+            <div className="h-full rounded-full bg-acao-500" style={{ width: `${Math.max(4, (i.value / max) * 100)}%` }} />
           </div>
         </li>
       ))}

@@ -13,7 +13,7 @@ import { TERMS_HREF, TERMS_TITLE, type TermsKind } from '@/lib/legal';
 function AcceptTerms({ id, checked, kind }: { id: string; checked?: boolean; kind: TermsKind }) {
   return (
     <label className="flex items-start gap-2.5 text-sm text-slate-600" htmlFor={id}>
-      <input id={id} type="checkbox" name="acceptTerms" required defaultChecked={checked} className="mt-0.5 h-4 w-4 shrink-0 rounded accent-electric-500" />
+      <input id={id} type="checkbox" name="acceptTerms" required defaultChecked={checked} className="mt-0.5 h-4 w-4 shrink-0 rounded accent-acao-500" />
       <span>
         Li e concordo com os{' '}
         <Link href={TERMS_HREF[kind]} target="_blank" className="link-inline">{TERMS_TITLE[kind]}</Link> e a{' '}

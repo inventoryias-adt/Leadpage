@@ -197,8 +197,8 @@ export function LocationPicker({
               <ul className="mb-5 space-y-2" aria-label="Seus endereços">
                 {saved.map((a) => (
                   <li key={a.id} className="flex items-center gap-2">
-                    <button type="button" onClick={() => onChoose({ kind: 'saved', id: a.id, lat: a.lat, lng: a.lng, title: a.title, sub: a.sub })} className={`glass-panel-sm flex min-w-0 flex-1 items-center gap-3 p-3 text-left ${current?.id === a.id ? 'ring-2 ring-electric-500' : ''}`}>
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E8EEFB] text-electric-600"><Icon name={labelIcon(a.label)} size={20} /></span>
+                    <button type="button" onClick={() => onChoose({ kind: 'saved', id: a.id, lat: a.lat, lng: a.lng, title: a.title, sub: a.sub })} className={`glass-panel-sm flex min-w-0 flex-1 items-center gap-3 p-3 text-left ${current?.id === a.id ? 'ring-2 ring-acao-500' : ''}`}>
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E6EDE8] text-acao-600"><Icon name={labelIcon(a.label)} size={20} /></span>
                       <span className="min-w-0"><span className="block font-bold text-slate-800">{a.title}</span><span className="block truncate text-xs text-slate-500">{a.sub}</span></span>
                     </button>
                     <button type="button" onClick={() => remove(a.id)} aria-label={`Apagar endereço ${a.title}`} className="shrink-0 rounded-lg px-2 py-2 text-xs font-semibold text-slate-500 hover:bg-slate-100 hover:text-red-600">Apagar</button>
@@ -240,7 +240,7 @@ export function LocationPicker({
             </div>
             <div className="relative mx-5 min-h-0 flex-1 overflow-hidden rounded-2xl">
               <LocationMap target={target} onMove={moved} />
-              <span aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 z-[500] -translate-x-1/2 -translate-y-full text-electric-600 drop-shadow-lg"><Icon name="pin" size={40} strokeWidth={2.2} /></span>
+              <span aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 z-[500] -translate-x-1/2 -translate-y-full text-acao-600 drop-shadow-lg"><Icon name="pin" size={40} strokeWidth={2.2} /></span>
             </div>
             <div className="space-y-3 p-5">
               <p className="min-h-[1.5rem] truncate text-base font-bold text-slate-800" data-testid="guess" aria-live="polite">
@@ -255,7 +255,7 @@ export function LocationPicker({
           <div className="flex-1 overflow-y-auto p-5">
             <div className="mb-3 flex items-center gap-3">{back('map')}<h2 className="text-2xl font-extrabold tracking-tight text-primary">Qual o número?</h2></div>
             <p className="mb-4 flex items-center gap-2 text-sm text-slate-600">
-              <Icon name="pin" size={16} className="shrink-0 text-electric-600" />
+              <Icon name="pin" size={16} className="shrink-0 text-acao-600" />
               <span className="min-w-0 flex-1 truncate">{guess ? placeLine(guess) : 'Ponto no mapa'}</span>
               <button type="button" onClick={() => setStep('map')} className="link-inline shrink-0">Ajustar</button>
             </p>
@@ -275,7 +275,7 @@ export function LocationPicker({
                 </div>
               </div>
               <label className="flex items-center gap-2 text-sm text-slate-700">
-                <input type="checkbox" checked={form.semNumero} onChange={(e) => setForm((f) => ({ ...f, semNumero: e.target.checked }))} className="h-4 w-4 rounded accent-electric-500" /> Sem número
+                <input type="checkbox" checked={form.semNumero} onChange={(e) => setForm((f) => ({ ...f, semNumero: e.target.checked }))} className="h-4 w-4 rounded accent-acao-500" /> Sem número
               </label>
               <div role="radiogroup" aria-label="Tipo de endereço" className="flex flex-wrap gap-2">
                 {ADDRESS_LABELS.map((l) => (

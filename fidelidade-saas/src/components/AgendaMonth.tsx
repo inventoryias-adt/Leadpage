@@ -5,7 +5,7 @@ export type MonthBooking = { startsAt: Date; status: string };
 
 const WEEKDAYS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 const FULL = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
-const DOT: Record<string, string> = { PENDING: '#F59E0B', CONFIRMED: '#2F63E6', COMPLETED: '#16A34A', NO_SHOW: '#E11D48' };
+const DOT: Record<string, string> = { PENDING: '#F59E0B', CONFIRMED: '#1E5B43', COMPLETED: '#16A34A', NO_SHOW: '#E11D48' };
 
 /**
  * Agenda do mês em calendário: cada dia mostra quantos atendimentos tem e a situação deles (pontinhos coloridos).
@@ -44,7 +44,7 @@ export function AgendaMonth({ from, to, today, bookings, dayHref }: { from: stri
               aria-label={label}
               data-testid="month-day"
               data-count={n}
-              className={`hover-tint flex min-h-[4.25rem] flex-col justify-between rounded-xl border p-1.5 ${n > 0 ? 'border-[#cfd9f3] bg-[#F3F6FD]' : 'border-slate-100 bg-white'} ${inMonth ? '' : 'opacity-40'} ${isToday ? 'ring-2 ring-primary' : ''}`}
+              className={`hover-tint flex min-h-[4.25rem] flex-col justify-between rounded-xl border p-1.5 ${n > 0 ? 'border-[#cfd9f3] bg-[#F3F5F0]' : 'border-slate-100 bg-white'} ${inMonth ? '' : 'opacity-40'} ${isToday ? 'ring-2 ring-primary' : ''}`}
             >
               <span className={`text-sm font-bold ${isToday ? 'text-primary' : 'text-slate-700'}`}>{Number(k.slice(8))}</span>
               {n > 0 && (

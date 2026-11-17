@@ -84,7 +84,7 @@ await login(l);
 try { await l.click('button:has-text("Pular")', { timeout: 3000 }); } catch {}
 
 await l.goto(BASE + '/lugares'); await wait(l, 3000);
-await l.waitForSelector('a[href^="/lugar/"]:has-text("Burger do Zé") span.shrink-0.text-electric-600');
+await l.waitForSelector('a[href^="/lugar/"]:has-text("Burger do Zé") span.shrink-0.text-acao-600');
 const card = 'li:has-text("Burger do Zé")';
 await l.waitForSelector(`${card} >> text=2 unidades`);
 await l.waitForSelector(`${card} >> text=Shopping Norte`); // mostra a unidade mais perto de quem está no norte

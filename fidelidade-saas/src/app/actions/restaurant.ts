@@ -378,7 +378,7 @@ export async function saveIdentity(_: FormState, formData: FormData): Promise<Fo
         category: parsed.category || null,
         categoryOther: parsed.category === 'outros' && parsed.categoryOther ? parsed.categoryOther : null,
         instagram: instagram || null,
-        brandColor: parsed.brandColor && parsed.brandColor !== 'marinho' ? parsed.brandColor : null,
+        brandColor: parsed.brandColor && parsed.brandColor !== 'floresta' ? parsed.brandColor : null,
         tagline: parsed.tagline.replace(/\s+/g, ' ') || null,
         about: parsed.about.replace(/\r\n?/g, '\n').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n') || null, // o navegador manda quebra de linha como \r\n
         listed: formData.get('listed') === 'on',

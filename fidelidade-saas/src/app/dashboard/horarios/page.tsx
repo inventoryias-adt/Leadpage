@@ -30,7 +30,7 @@ export default async function HorariosPage() {
   return (
     <div className="mx-auto max-w-3xl min-w-0 space-y-5">
       <header className="space-y-1">
-        <Link href="/dashboard" className="inline-flex items-center gap-1 text-sm font-semibold text-electric-600">‹ Painel</Link>
+        <Link href="/dashboard" className="inline-flex items-center gap-1 text-sm font-semibold text-acao-600">‹ Painel</Link>
         <h1 className="text-2xl font-extrabold tracking-tight text-primary">Dias e horários de pico</h1>
         <p className="text-sm text-slate-600">
           {peak ? <>Seu movimento é maior na <strong className="text-slate-800">{WEEKDAYS[peak.dow]}, perto das {peak.hour}h</strong>. Últimos 90 dias. </> : 'Mostra quando os clientes mais compram (últimos 90 dias). '}

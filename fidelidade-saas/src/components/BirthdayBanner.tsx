@@ -11,8 +11,8 @@ export type PerkPlace = { id: string; name: string; birthdayPerkTitle: string | 
 export function BirthdayBanner({ name, places, showList = false }: { name: string; places: PerkPlace[]; showList?: boolean }) {
   const n = places.length;
   return (
-    <section aria-label="Feliz aniversário" data-testid="birthday-banner" className="relative overflow-hidden rounded-[22px] bg-[#0F1F3D] p-4 text-white shadow-[0_10px_26px_rgba(15,31,61,.22)]">
-      <span aria-hidden className="absolute -right-6 -top-8 h-28 w-28 rounded-full bg-verde/25 blur-2xl" />
+    <section aria-label="Feliz aniversário" data-testid="birthday-banner" className="relative overflow-hidden rounded-[22px] bg-[#12241C] p-4 text-white shadow-[0_10px_26px_rgba(18, 36, 28,.22)]">
+      <span aria-hidden className="absolute -right-6 -top-8 h-28 w-28 rounded-full bg-ouro/25 blur-2xl" />
       <div className="relative">
         <p className="text-lg font-extrabold leading-tight">Feliz aniversário, {name}! 🎂</p>
         <p className="mt-1 text-sm text-white/80">
@@ -25,7 +25,7 @@ export function BirthdayBanner({ name, places, showList = false }: { name: strin
             {places.slice(0, 3).map((p) => (
               <li key={p.id}>
                 <Link href={`/lugar/${p.id}`} className="flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-sm transition-colors hover:bg-white/15">
-                  <Icon name="gift" size={16} className="shrink-0 text-verde" />
+                  <Icon name="gift" size={16} className="shrink-0 text-ouro" />
                   <span className="min-w-0 flex-1 truncate"><b>{p.name}</b> · {p.birthdayPerkTitle} <span className="text-white/60">({perkCondition({ mode: p.birthdayPerkMode, points: p.birthdayPerkPoints, minCents: p.birthdayPerkMinCents })})</span></span>
                   <Icon name="chevron" size={14} className="shrink-0 text-white/50" />
                 </Link>

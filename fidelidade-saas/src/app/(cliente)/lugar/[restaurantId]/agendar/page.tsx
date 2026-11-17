@@ -166,13 +166,13 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
           {!rb && <Link href={url({ servico: undefined, hora: undefined })} className="link-inline text-xs">trocar</Link>}
         </p>
         {rb && (
-          <p className="mt-2 flex flex-wrap items-center gap-2 rounded-2xl bg-[#EAF0FF] px-4 py-3 text-sm text-primary" data-testid="reschedule-current">
-            <Icon name="clock" size={18} className="text-electric-600" />
+          <p className="mt-2 flex flex-wrap items-center gap-2 rounded-2xl bg-[#E6EDE8] px-4 py-3 text-sm text-primary" data-testid="reschedule-current">
+            <Icon name="clock" size={18} className="text-acao-600" />
             <span>Horário atual: <b>{formatBookingWhen(rb.startsAt)}</b>{rb.resource ? <> com <b>{rb.resource.name}</b></> : null}. Escolha o novo dia, horário e profissional.</span>
           </p>
         )}
-        {club && <p className="mt-1.5"><span className="chip-verde" data-testid="club-covered">Incluso no seu plano {club.planName}: sobram {club.left} {club.left === 1 ? 'uso' : 'usos'} neste ciclo depois deste</span></p>}
-        {!rb && !club && points > 0 && <p className="mt-1.5"><span className="chip-verde">Ao concluir você ganha {formatPoints(points)} pontos aqui</span></p>}
+        {club && <p className="mt-1.5"><span className="chip-ouro" data-testid="club-covered">Incluso no seu plano {club.planName}: sobram {club.left} {club.left === 1 ? 'uso' : 'usos'} neste ciclo depois deste</span></p>}
+        {!rb && !club && points > 0 && <p className="mt-1.5"><span className="chip-ouro">Ao concluir você ganha {formatPoints(points)} pontos aqui</span></p>}
         {!rb && !club && service.pointsDiscountMaxPct > 0 && service.priceCents > 0 && <p className="mt-1.5"><span className="glass-chip">Aceita pontos como desconto, até {service.pointsDiscountMaxPct}% do preço.</span></p>}
       </header>
 
@@ -227,7 +227,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
                     <span className="text-lg font-bold">{day}</span>
                   </span>
                 ) : (
-                  <Link href={url({ data: key, hora: undefined })} aria-current={on ? 'date' : undefined} className={`flex w-14 flex-col items-center rounded-2xl border py-2 ${on ? 'border-electric-600 bg-electric-600 text-white shadow-md' : 'border-slate-200 bg-white text-slate-700 hover:border-electric-500'}`}>
+                  <Link href={url({ data: key, hora: undefined })} aria-current={on ? 'date' : undefined} className={`flex w-14 flex-col items-center rounded-2xl border py-2 ${on ? 'border-acao-600 bg-acao-600 text-white shadow-md' : 'border-slate-200 bg-white text-slate-700 hover:border-acao-500'}`}>
                     <span className="text-[11px] font-semibold">{label(key, i)}</span>
                     <span className="text-lg font-bold">{day}</span>
                   </Link>
@@ -252,7 +252,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
         {nextFree && (
           <Link href={slotHref(hrefBase, nextFree)} data-testid="next-free" className="mb-3 flex items-center justify-between gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white">
             <span className="flex items-center gap-2"><Icon name="clock" size={16} /> Próximo horário livre</span>
-            <span className="text-verde">{formatBookingWhen(new Date(`${nextFree.date}T${nextFree.time}:00-03:00`))}</span>
+            <span className="text-ouro">{formatBookingWhen(new Date(`${nextFree.date}T${nextFree.time}:00-03:00`))}</span>
           </Link>
         )}
         {lost && (
@@ -270,7 +270,7 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
               {grid.map((g) => (
                 <li key={g.time}>
                   {g.state === 'free' ? (
-                    <Link href={url({ data: date, hora: g.time })} aria-current={chosen?.time === g.time ? 'true' : undefined} className={`block rounded-lg border py-2.5 text-center text-sm font-semibold ${chosen?.time === g.time ? 'border-[#0F1F3D] bg-[#0F1F3D] text-verde' : 'border-slate-200 bg-white text-slate-800 hover:border-electric-500'}`}>
+                    <Link href={url({ data: date, hora: g.time })} aria-current={chosen?.time === g.time ? 'true' : undefined} className={`block rounded-lg border py-2.5 text-center text-sm font-semibold ${chosen?.time === g.time ? 'border-[#12241C] bg-[#12241C] text-ouro' : 'border-slate-200 bg-white text-slate-800 hover:border-acao-500'}`}>
                   {g.time}
                 </Link>
                   ) : (
@@ -288,9 +288,9 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
       </section>
 
       {waitEntry && (
-        <section aria-labelledby="espera" data-testid="waitlist-on" className="space-y-3 rounded-[22px] bg-[#EAF0FF] p-4">
+        <section aria-labelledby="espera" data-testid="waitlist-on" className="space-y-3 rounded-[22px] bg-[#E6EDE8] p-4">
           <div>
-            <h2 id="espera" className="flex items-center gap-2 text-base font-bold text-primary"><Icon name="bell" size={18} className="text-electric-600" /> Você está na lista de espera</h2>
+            <h2 id="espera" className="flex items-center gap-2 text-base font-bold text-primary"><Icon name="bell" size={18} className="text-acao-600" /> Você está na lista de espera</h2>
             <p className="text-sm text-slate-700">{WAIT_PERIODS[waitEntry.period as keyof typeof WAIT_PERIODS] ?? 'Qualquer horário'} · {waitAt}º da fila neste dia. Avisamos no app assim que abrir um horário; quem confirmar primeiro fica com ele.</p>
           </div>
           <form action={leaveWaitingList}>
@@ -301,9 +301,9 @@ export default async function AgendarPage({ params, searchParams }: { params: Pr
         </section>
       )}
       {!waitEntry && !rb && slots.length === 0 && dayOpen && waitPeriods.length > 0 && (
-        <section aria-labelledby="espera" data-testid="waitlist-offer" className="space-y-3 rounded-[22px] border border-dashed border-electric-500/50 bg-white p-4">
+        <section aria-labelledby="espera" data-testid="waitlist-offer" className="space-y-3 rounded-[22px] border border-dashed border-acao-500/50 bg-white p-4">
           <div>
-            <h2 id="espera" className="flex items-center gap-2 text-base font-bold text-primary"><Icon name="bell" size={18} className="text-electric-600" /> Dia lotado? Entre na lista de espera</h2>
+            <h2 id="espera" className="flex items-center gap-2 text-base font-bold text-primary"><Icon name="bell" size={18} className="text-acao-600" /> Dia lotado? Entre na lista de espera</h2>
             <p className="text-sm text-slate-600">Se alguém cancelar ou remarcar, você é avisado no app e pode pegar o horário antes dos outros.</p>
           </div>
           {customer ? (

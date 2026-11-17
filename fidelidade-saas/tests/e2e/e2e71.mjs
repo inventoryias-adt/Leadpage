@@ -30,7 +30,7 @@ const rgb = (hex) => { const n = parseInt(hex.slice(1), 16); return `rgb(${n >> 
 await C.goto(BASE + `/lugar/${rid}`); await C.waitForSelector('main.brand-scope');
 const btn = C.locator('main.brand-scope .glass-button-navy').first();
 await btn.waitFor();
-assert.equal(await btn.evaluate((e) => getComputedStyle(e).backgroundColor), rgb('#0F1F3D'));
+assert.equal(await btn.evaluate((e) => getComputedStyle(e).backgroundColor), rgb('#12241C'));
 assert.equal(await C.locator('[data-testid=place-tagline]').count(), 0);
 assert.equal(await C.locator('[data-testid=place-about]').count(), 0);
 console.log('1. sem personalização: marinho padrão, sem slogan nem sobre nós OK');

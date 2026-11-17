@@ -121,7 +121,7 @@ export default function LandingPage() {
           </span>
           <h1 className="enter-top mb-5 text-4xl font-semibold leading-[1.05] text-primary md:text-6xl" style={d(120)}>
             Seu cliente volta,
-            <span className="block text-electric-500">gasta mais e <span className="mark-grad text-primary">indica amigos.</span></span>
+            <span className="block text-acao-500">gasta mais e <span className="mark-ouro text-primary">indica amigos.</span></span>
           </h1>
           <p className="enter-top mb-8 max-w-xl text-lg text-slate-600" style={d(240)}>
             Cada compra vira pontos na carteira do cliente, e os pontos viram prêmios que você escolhe. Você lança pelo CPF ou por QR Code, e o cliente acompanha tudo pelo celular, sem baixar app.
@@ -152,7 +152,7 @@ export default function LandingPage() {
       <section className="bg-primary px-5 py-14 text-white sm:px-8 md:py-20">
         <Reveal from="top" className="mx-auto mb-10 max-w-2xl text-center">
           <span className="micro mb-3 block !text-slate-300">O app por dentro</span>
-          <h2 className="mb-3 text-3xl font-extrabold tracking-tight md:text-4xl">Simples para o cliente, completo para você<span className="text-verde">.</span></h2>
+          <h2 className="mb-3 text-3xl font-extrabold tracking-tight md:text-4xl">Simples para o cliente, completo para você<span className="text-ouro">.</span></h2>
           <p className="text-slate-300">É isso que o seu cliente vê no celular: saldo, desafios do lugar e quanto falta para o prêmio.</p>
         </Reveal>
         <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-2">
@@ -160,9 +160,9 @@ export default function LandingPage() {
           <Reveal from="right"><ChallengesMock /></Reveal>
         </div>
         <p className="mt-10 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm font-semibold">
-          <Link href="/pontos" className="text-verde hover:underline">Conhecer os pontos</Link>
-          <Link href="/desafios" className="text-verde hover:underline">Ver desafios e campanhas</Link>
-          <Link href="/instagram" className="text-verde hover:underline">Divulgação no Instagram</Link>
+          <Link href="/pontos" className="text-ouro hover:underline">Conhecer os pontos</Link>
+          <Link href="/desafios" className="text-ouro hover:underline">Ver desafios e campanhas</Link>
+          <Link href="/instagram" className="text-ouro hover:underline">Divulgação no Instagram</Link>
         </p>
       </section>
 
@@ -178,16 +178,16 @@ export default function LandingPage() {
         <ol className="grid gap-5 md:grid-cols-2">
           {steps.map((s, i) => (
             <Reveal as="li" key={s.n} from={i % 2 === 0 ? 'left' : 'right'} delay={Math.floor(i / 2) * 120} className="flex gap-4 rounded-xl border border-[#E5E7EB] bg-white p-5">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-electric-500 text-lg font-bold text-white">{s.n}</span>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-acao-500 text-lg font-bold text-white">{s.n}</span>
               <div>
-                <h3 className="mb-1 flex items-center gap-2 text-lg font-semibold text-primary"><Icon name={s.icon} size={18} className="text-electric-500" /> {s.title}</h3>
+                <h3 className="mb-1 flex items-center gap-2 text-lg font-semibold text-primary"><Icon name={s.icon} size={18} className="text-acao-500" /> {s.title}</h3>
                 <p className="text-sm text-slate-600">{s.text}</p>
               </div>
             </Reveal>
           ))}
         </ol>
-        <Reveal from="bottom" className="mt-6 rounded-xl border border-electric-500/30 bg-electric-500/5 p-5">
-          <p className="mb-1 text-xs font-bold uppercase tracking-wide text-electric-600">Exemplo</p>
+        <Reveal from="bottom" className="mt-6 rounded-xl border border-acao-500/30 bg-acao-500/5 p-5">
+          <p className="mb-1 text-xs font-bold uppercase tracking-wide text-acao-600">Exemplo</p>
           <p className="text-sm text-slate-700">
             Você define R$ 1 = 10 pontos e um prêmio de 1.500 pontos. A Maria gasta R$ 80 e ganha 800 pontos. Na próxima visita, mais R$ 80 e o saldo vai a 1.600: ela troca por um prêmio e já sai com um motivo para voltar de novo.
           </p>
@@ -206,7 +206,7 @@ export default function LandingPage() {
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {facts.map((f, i) => (
             <Reveal as="figure" key={f.big} from="zoom" delay={(i % 3) * 110} className="flex flex-col rounded-xl border border-[#E5E7EB] bg-white p-5">
-              <p className="mb-2 text-4xl font-semibold tracking-tight text-electric-500">{f.big}</p>
+              <p className="mb-2 text-4xl font-semibold tracking-tight text-acao-500">{f.big}</p>
               <blockquote className="flex-1 text-sm text-slate-700">{f.text}</blockquote>
               <figcaption className="mt-3 text-xs text-slate-500">
                 Fonte:{' '}
@@ -232,8 +232,8 @@ export default function LandingPage() {
         <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-500">O que o seu cliente ganha</h3>
         <div className="mb-10 grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
           {forCustomer.map((b, i) => (
-            <Reveal key={b.title} from="top" delay={i * 90} className="border-l-2 border-electric-500 pl-5">
-              <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-electric-500/10 text-electric-600"><Icon name={b.icon} size={22} /></span>
+            <Reveal key={b.title} from="top" delay={i * 90} className="border-l-2 border-acao-500 pl-5">
+              <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-acao-500/10 text-acao-600"><Icon name={b.icon} size={22} /></span>
               <h4 className="mb-1 text-base font-semibold text-primary">{b.title}</h4>
               <p className="text-sm text-slate-600">{b.text}</p>
             </Reveal>
@@ -243,8 +243,8 @@ export default function LandingPage() {
         <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-500">O que você ganha</h3>
         <div className="grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
           {forYou.map((b, i) => (
-            <Reveal key={b.title} from="bottom" delay={(i % 3) * 90} className="border-l-2 border-electric-500 pl-5">
-              <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-electric-500/10 text-electric-600"><Icon name={b.icon} size={22} /></span>
+            <Reveal key={b.title} from="bottom" delay={(i % 3) * 90} className="border-l-2 border-acao-500 pl-5">
+              <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-acao-500/10 text-acao-600"><Icon name={b.icon} size={22} /></span>
               <h4 className="mb-1 text-base font-semibold text-primary">{b.title}</h4>
               <p className="text-sm text-slate-600">{b.text}</p>
             </Reveal>
@@ -254,13 +254,13 @@ export default function LandingPage() {
 
       {/* Preço */}
       <section className="bg-dots-dark relative overflow-hidden bg-primary px-5 py-16 text-center sm:px-8">
-        <Reveal from="flip" className="mb-5 flex justify-center"><Coin size={72} color="#7BE08A" /></Reveal>
+        <Reveal from="flip" className="mb-5 flex justify-center"><Coin size={72} color="#E9C46A" /></Reveal>
         <Reveal from="zoom">
-          <span className="mb-3 inline-block rounded-full bg-verde px-4 py-1 text-xs font-extrabold uppercase tracking-wider text-primary">Preço de lançamento</span>
+          <span className="mb-3 inline-block rounded-full bg-ouro px-4 py-1 text-xs font-extrabold uppercase tracking-wider text-primary">Preço de lançamento</span>
           <h2 className="mx-auto mb-3 max-w-2xl text-3xl font-semibold text-white md:text-4xl">
             Um plano, tudo incluso.
           </h2>
-          <p className="mb-2 text-verde"><span className="text-5xl font-extrabold md:text-6xl">{FIRST_MONTH_PRICE}</span> <span className="text-base font-semibold text-slate-300">no primeiro mês</span></p>
+          <p className="mb-2 text-ouro"><span className="text-5xl font-extrabold md:text-6xl">{FIRST_MONTH_PRICE}</span> <span className="text-base font-semibold text-slate-300">no primeiro mês</span></p>
           <p className="mx-auto mb-8 max-w-xl text-slate-300">Depois, {PLAN_PRICE} por mês. Sem taxa de adesão e sem fidelidade. Cancele quando quiser.</p>
         </Reveal>
         <div className="mx-auto mb-8 max-w-xl rounded-xl border border-white/15 bg-white/5 p-5 text-left sm:p-6">
@@ -268,13 +268,13 @@ export default function LandingPage() {
           <ul className="space-y-2.5">
             {included.map((i, n) => (
               <Reveal as="li" key={i} from="left" delay={n * 80} className="flex items-start gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white">
-                <Icon name="check" size={18} className="mt-0.5 shrink-0 text-verde" /> {i}
+                <Icon name="check" size={18} className="mt-0.5 shrink-0 text-ouro" /> {i}
               </Reveal>
             ))}
           </ul>
         </div>
         <SignupCta className="glass-button-light !w-auto">Quero fidelizar meus clientes</SignupCta>
-        <p className="mt-5 text-sm"><Link href="/precos" className="font-semibold text-verde hover:underline">Ver detalhes dos preços</Link></p>
+        <p className="mt-5 text-sm"><Link href="/precos" className="font-semibold text-ouro hover:underline">Ver detalhes dos preços</Link></p>
       </section>
 
       {/* FAQ */}
@@ -286,8 +286,8 @@ export default function LandingPage() {
         <Reveal from="bottom" className="divide-y divide-[#E5E7EB] border-y border-[#E5E7EB]">
           {faqs.map((f) => (
             <details key={f.q} className="group py-1">
-              <summary className="flex list-none items-center gap-4 py-4 font-semibold text-primary transition-colors hover:text-electric-600">
-                <Icon name="plus" size={18} className="shrink-0 text-electric-500 transition-transform group-open:rotate-45" />
+              <summary className="flex list-none items-center gap-4 py-4 font-semibold text-primary transition-colors hover:text-acao-600">
+                <Icon name="plus" size={18} className="shrink-0 text-acao-500 transition-transform group-open:rotate-45" />
                 {f.q}
               </summary>
               <p className="pb-4 pl-[2.1rem] text-slate-600">{f.a}</p>

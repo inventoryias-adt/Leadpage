@@ -13,7 +13,7 @@ export default async function RetornoPage() {
     <main className="flex min-h-screen items-center justify-center p-5">
       <AutoRefresh />
       <div className="glass-panel w-full max-w-md p-8 text-center">
-        <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-electric-500/30 border-t-electric-500" />
+        <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-acao-500/30 border-t-acao-500" />
         <h1 className="mb-2 text-xl font-bold text-primary">Confirmando seu pagamento…</h1>
         <p className="text-slate-600">Isso leva alguns segundos. Esta página atualiza sozinha.</p>
       </div>

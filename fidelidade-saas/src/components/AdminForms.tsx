@@ -207,7 +207,7 @@ export function CreateForm() {
         </div>
       </div>
       <label className="flex items-start gap-3">
-        <input type="checkbox" name="isTest" defaultChecked={v?.isTest === 'on'} className="mt-0.5 h-5 w-5 rounded accent-electric-500" />
+        <input type="checkbox" name="isTest" defaultChecked={v?.isTest === 'on'} className="mt-0.5 h-5 w-5 rounded accent-acao-500" />
         <span className="text-sm text-slate-700"><span className="font-semibold">Conta de teste</span> — fica fora da receita e dos números de assinantes.</span>
       </label>
       <p className="text-xs text-slate-500">Uma senha temporária é gerada e mostrada uma única vez, depois de criar.</p>
@@ -252,11 +252,11 @@ export function EditForm({ r }: { r: Editable }) {
         </div>
       </div>
       <label className="flex items-center gap-3">
-        <input type="checkbox" name="listed" defaultChecked={v ? v.listed === 'on' : r.listed} className="h-5 w-5 rounded accent-electric-500" />
+        <input type="checkbox" name="listed" defaultChecked={v ? v.listed === 'on' : r.listed} className="h-5 w-5 rounded accent-acao-500" />
         <span className="text-sm text-slate-700"><span className="font-semibold">Aparece na vitrine “Lugares”</span></span>
       </label>
       <label className="flex items-start gap-3">
-        <input type="checkbox" name="isTest" defaultChecked={v ? v.isTest === 'on' : r.isTest} className="mt-0.5 h-5 w-5 rounded accent-electric-500" />
+        <input type="checkbox" name="isTest" defaultChecked={v ? v.isTest === 'on' : r.isTest} className="mt-0.5 h-5 w-5 rounded accent-acao-500" />
         <span className="text-sm text-slate-700"><span className="font-semibold">Conta de teste</span> — fica fora da receita e dos números de assinantes. Para esconder da vitrine dos clientes, desmarque a opção acima.</span>
       </label>
       <FormMessage state={state} />
