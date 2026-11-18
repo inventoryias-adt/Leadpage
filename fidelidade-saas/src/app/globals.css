@@ -786,12 +786,9 @@ label:has(input[type='radio']) {
     print-color-adjust: exact;
   }
   /* Na impressão (principalmente no PDF do iPhone) degradês com transparência apagam o fundo da frente e viram uma faixa preta:
-     o cartão sai com fundo verde-floresta sólido e sem os enfeites (anéis em linha), que só existem na tela. */
+     o cartão tem fundo verde-floresta sólido, igual na tela e na impressão. */
   .print-cards .card-face {
     background: #12241c !important;
-  }
-  .print-cards .card-deco {
-    display: none !important;
   }
   .print-cards .pc-card * {
     text-shadow: none !important;

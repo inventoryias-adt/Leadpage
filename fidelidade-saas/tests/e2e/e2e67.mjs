@@ -64,11 +64,14 @@ assert.deepEqual(widths.length, 2);
 assert.ok(widths.every((w) => Math.abs(w - 323.5) <= 3), `85,6 mm em cada face (${widths})`);
 assert.equal(await c.locator('main').isVisible(), false, 'no modo de impressão a página some');
 assert.ok(await c.locator('.print-cards').isVisible());
-// na impressão a frente tem fundo sólido e sem os enfeites de degradê com transparência (no PDF do iPhone eles apagavam o fundo e viravam uma faixa preta)
+// o cartão é de cor chapada, sem degradê nem enfeites: igual na tela e na impressão (no PDF do iPhone degradês com transparência apagavam o fundo e viravam uma faixa preta)
 for (const face of await c.locator('.print-cards .card-face').all()) assert.equal(await face.evaluate((e) => getComputedStyle(e).backgroundColor), 'rgb(18, 36, 28)', 'fundo verde-floresta sólido na impressão');
-assert.equal(await c.locator('.print-cards .card-deco').count() > 0, true);
-for (const deco of await c.locator('.print-cards .card-deco').all()) assert.equal(await deco.evaluate((e) => getComputedStyle(e).display), 'none', 'sem enfeites na impressão');
+for (const face of await c.locator('.print-cards .card-face').all()) assert.equal(await face.evaluate((e) => getComputedStyle(e).backgroundImage), 'none', 'sem degradê na impressão');
 await c.emulateMedia({ media: 'screen' });
-assert.notEqual(await c.locator('.card-preview .card-deco, [data-testid=card-preview] .card-deco').first().evaluate((e) => getComputedStyle(e).display), 'none', 'na tela os enfeites continuam');
+for (const face of await c.locator('[data-testid=card-preview] .card-face').all()) {
+  assert.equal(await face.evaluate((e) => getComputedStyle(e).backgroundColor), 'rgb(18, 36, 28)', 'fundo verde-floresta na tela');
+  assert.equal(await face.evaluate((e) => getComputedStyle(e).backgroundImage), 'none', 'sem degradê na tela');
+  assert.equal(await face.locator('svg:not([class*=shrink-0])').count(), 0, 'sem enfeites no cartão');
+}
 console.log('4. imprimir cartão: frente e verso em 85,6 mm, resto da página escondido OK');
 await b.close();

@@ -9,7 +9,7 @@ export type CardData = { name: string; code: string; since: string; balance: num
 
 /** Cantos arredondados em porcentagem (da largura e da altura do próprio cartão), para valer em qualquer tamanho. */
 const RADIUS = '5.4% / 8.5%';
-const BG = '#12241C'; // verde-floresta, cor chapada (sem degradê nem brilho)
+const BG = '#12241C'; // verde-floresta, cor chapada (sem degradê, brilho nem enfeites)
 
 /** Todas as medidas usam `cqw` (1% da largura do cartão): o mesmo desenho serve na tela do celular e na impressão (85,6 mm). */
 const face = { containerType: 'inline-size', aspectRatio: '1.586 / 1', background: BG, WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' } as const;
@@ -18,14 +18,6 @@ const face = { containerType: 'inline-size', aspectRatio: '1.586 / 1', backgroun
 export function CardFront({ data }: { data: CardData }) {
   return (
     <div className="card-face relative h-full w-full overflow-hidden text-white" style={{ ...face, borderRadius: RADIUS }}>
-      <svg aria-hidden className="card-deco absolute text-ouro" style={{ right: '-18cqw', top: '-26cqw', width: '80cqw', height: '80cqw' }} viewBox="0 0 100 100">
-        <g fill="none" stroke="currentColor" strokeWidth=".5">
-          <circle cx="50" cy="50" r="46" opacity=".5" />
-          <circle cx="50" cy="50" r="34" opacity=".4" />
-          <circle cx="50" cy="50" r="22" opacity=".3" />
-          <circle cx="50" cy="50" r="10" opacity=".2" />
-        </g>
-      </svg>
       <div className="relative flex h-full flex-col justify-between" style={{ padding: '6cqw' }}>
         <div className="flex items-center justify-between">
           <span className="flex items-center" style={{ gap: '2.4cqw' }}>
