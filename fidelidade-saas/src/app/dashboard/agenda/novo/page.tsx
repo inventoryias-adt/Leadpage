@@ -19,7 +19,7 @@ export default async function NovoAgendamentoPage({ searchParams }: { searchPara
   let services = await prisma.service.findMany({ where: { restaurantId: rid, active: true }, orderBy: { createdAt: 'asc' } });
   if (services.length === 0 && (await ensureDefaultService(restaurant))) services = await prisma.service.findMany({ where: { restaurantId: rid, active: true }, orderBy: { createdAt: 'asc' } });
   const units = await prisma.unit.findMany({ where: { restaurantId: rid, active: true }, orderBy: { createdAt: 'asc' } });
-  const back = <Link href="/dashboard/agenda" className="inline-flex items-center gap-1 text-sm font-semibold text-electric-600"><Icon name="back" size={16} /> Agenda</Link>;
+  const back = <Link href="/dashboard/agenda" className="inline-flex items-center gap-1 text-sm font-semibold text-acao-600"><Icon name="back" size={16} /> Agenda</Link>;
   if (services.length === 0 || units.length === 0) {
     return (
       <div className="mx-auto max-w-3xl space-y-4">
@@ -93,7 +93,7 @@ export default async function NovoAgendamentoPage({ searchParams }: { searchPara
           <ul className="grid grid-cols-4 gap-2 sm:grid-cols-6" data-testid="owner-slots">
             {slots.map((s) => (
               <li key={s.time}>
-                <Link href={link({ hora: s.time })} aria-current={chosen?.time === s.time ? 'true' : undefined} className={`block rounded-lg border py-2.5 text-center text-sm font-semibold ${chosen?.time === s.time ? 'border-[#0F1F3D] bg-[#0F1F3D] text-verde' : 'border-slate-200 bg-white text-slate-800 hover:border-[#0F1F3D]'}`}>{s.time}</Link>
+                <Link href={link({ hora: s.time })} aria-current={chosen?.time === s.time ? 'true' : undefined} className={`block rounded-lg border py-2.5 text-center text-sm font-semibold ${chosen?.time === s.time ? 'border-[#12241C] bg-[#12241C] text-ouro' : 'border-slate-200 bg-white text-slate-800 hover:border-[#12241C]'}`}>{s.time}</Link>
               </li>
             ))}
           </ul>

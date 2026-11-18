@@ -12,7 +12,7 @@ export function InteractionRequests({ items }: { items: PendingInteraction[] }) 
   return (
     <section aria-labelledby="pedidos-pontos" className="glass-panel !rounded-[22px] p-4" data-testid="interaction-requests">
       <h2 id="pedidos-pontos" className="mb-1 flex items-center gap-2 text-sm font-bold text-primary">
-        <Icon name="bell" size={16} className="text-electric-600" /> Pedidos de pontos <span className="rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-4 text-white">{items.length}</span>
+        <Icon name="bell" size={16} className="text-acao-600" /> Pedidos de pontos <span className="rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-4 text-white">{items.length}</span>
       </h2>
       <p className="mb-3 text-xs text-slate-500">O cliente diz que fez (avaliou, postou…). Confira e aprove; os automáticos entram sozinhos no prazo, se você não recusar.</p>
       <ul className="divide-y divide-slate-100">
@@ -24,7 +24,7 @@ export function InteractionRequests({ items }: { items: PendingInteraction[] }) 
                 <p className="truncate text-sm text-slate-600">{i.label}</p>
                 <p className="text-xs text-slate-400">{agoText(i.createdAt, now)}{i.autoAt ? ` · ${releaseText(i.autoAt, now)}` : ''}</p>
               </div>
-              <span className="chip-verde shrink-0">+{i.points.toLocaleString('pt-BR')} pts</span>
+              <span className="chip-ouro shrink-0">+{i.points.toLocaleString('pt-BR')} pts</span>
             </div>
             <div className="flex gap-2">
               {(['approve', 'reject'] as const).map((op) => (

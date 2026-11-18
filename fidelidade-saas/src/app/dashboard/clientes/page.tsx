@@ -64,8 +64,8 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
     byWallet.set(s.walletId, cur);
   }
 
-  const SEG_COLOR: Record<Segment, string> = { novos: '#2F63E6', fieis: '#15803d', quase: '#B45309', sumidos: '#e11d48' };
-  const SEG_CHIP: Record<Segment, string> = { novos: 'chip-verde', fieis: 'chip-verde', quase: 'glass-chip', sumidos: 'chip-sumido' };
+  const SEG_COLOR: Record<Segment, string> = { novos: '#1E5B43', fieis: '#15803d', quase: '#B45309', sumidos: '#e11d48' };
+  const SEG_CHIP: Record<Segment, string> = { novos: 'chip-ouro', fieis: 'chip-ouro', quase: 'glass-chip', sumidos: 'chip-sumido' };
   const today = todayKey();
   const ago = (d: Date) => {
     const n = Math.round((Date.parse(today) - Date.parse(dateKeyOf(d))) / 86_400_000);
@@ -92,7 +92,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
             aria-current={seg === k ? 'true' : undefined}
             title={SEGMENT_HINT[k]}
             data-testid={`seg-${k}`}
-            className={`glass-panel-sm card-link block !rounded-2xl border-t-4 px-4 py-3 ${seg === k ? 'ring-2 ring-[#0f1f3d]' : ''}`}
+            className={`glass-panel-sm card-link block !rounded-2xl border-t-4 px-4 py-3 ${seg === k ? 'ring-2 ring-[#12241C]' : ''}`}
             style={{ borderTopColor: SEG_COLOR[k] }}
           >
             <span className="block text-sm font-semibold text-slate-600">{SEGMENT_LABEL[k]}</span>

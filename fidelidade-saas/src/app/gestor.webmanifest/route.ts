@@ -14,8 +14,8 @@ export function GET() {
     start_url: '/dashboard',
     scope: '/',
     display: 'standalone',
-    background_color: '#0B1B3A',
-    theme_color: '#0B1B3A',
+    background_color: '#12241C',
+    theme_color: '#12241C',
     lang: 'pt-BR',
     icons: [
       { src: '/gestor-icon-192.png?v=2', sizes: '192x192', type: 'image/png', purpose: 'any' },

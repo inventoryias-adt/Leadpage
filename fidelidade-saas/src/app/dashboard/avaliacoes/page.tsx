@@ -101,7 +101,7 @@ export default async function AvaliacoesPage({ searchParams }: { searchParams: P
               {r.ownerReply && <p className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700"><b>Sua resposta:</b> {r.ownerReply}</p>}
 
               <details className="text-sm">
-                <summary className="cursor-pointer font-semibold text-electric-600">{r.ownerReply ? 'Editar resposta' : 'Responder'}</summary>
+                <summary className="cursor-pointer font-semibold text-acao-600">{r.ownerReply ? 'Editar resposta' : 'Responder'}</summary>
                 <form action={replyReviewAction} className="mt-2 space-y-2">
                   <input type="hidden" name="id" value={r.id} />
                   <textarea name="reply" required maxLength={COMMENT_MAX} rows={3} defaultValue={r.ownerReply ?? ''} className="glass-input" placeholder="Agradeça ou esclareça com educação" />

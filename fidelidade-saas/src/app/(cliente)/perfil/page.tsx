@@ -77,7 +77,7 @@ export default async function PerfilPage() {
         <ProfilePhoto name={customer.name} photoUrl={profilePhotoUrl(photo?.updatedAt)}>
           <h1 className="truncate text-2xl font-extrabold tracking-tight text-primary">{customer.name}</h1>
           <p className="text-sm text-slate-500">CPF {maskCpf(customer.cpf)} · {formatPhone(customer.phone)}</p>
-          <Link href="/perfil/dados" className="mt-0.5 inline-flex items-center gap-1 text-xs font-bold text-electric-600" data-testid="edit-profile-link"><Icon name="pencil" size={13} /> Editar meus dados</Link>
+          <Link href="/perfil/dados" className="mt-0.5 inline-flex items-center gap-1 text-xs font-bold text-acao-600" data-testid="edit-profile-link"><Icon name="pencil" size={13} /> Editar meus dados</Link>
         </ProfilePhoto>
       </Reveal>
 
@@ -87,7 +87,7 @@ export default async function PerfilPage() {
           <section aria-labelledby="saldo-conta" className="glass-panel space-y-4 !rounded-[22px] p-4" data-testid="account-balance">
             <div>
               <h2 id="saldo-conta" className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Saldo disponível</h2>
-              <p className="text-4xl font-extrabold leading-tight tracking-tight text-primary">{formatPoints(balance)} <span className="text-base font-semibold text-electric-600">pontos</span></p>
+              <p className="text-4xl font-extrabold leading-tight tracking-tight text-primary">{formatPoints(balance)} <span className="text-base font-semibold text-acao-600">pontos</span></p>
               <p className="text-xs text-slate-500">{wallets.length === 0 ? 'Sua primeira compra abre a primeira carteira.' : `em ${wallets.length} ${wallets.length === 1 ? 'lugar' : 'lugares'} do clube`}</p>
             </div>
             {wallets.some((w) => w.balance > 0) && (
@@ -98,7 +98,7 @@ export default async function PerfilPage() {
                     <li key={w.id}>
                       <Link href={`/carteira/${w.restaurantId}`} className="chip-link gap-2 !py-1">
                         <PlaceAvatar name={w.restaurant.name} src={imageUrl(w.restaurant.logoImageId)} size={20} />
-                        {w.restaurant.name} <b className="text-electric-600">{formatPoints(w.balance)}</b>
+                        {w.restaurant.name} <b className="text-acao-600">{formatPoints(w.balance)}</b>
                       </Link>
                     </li>
                   ))}

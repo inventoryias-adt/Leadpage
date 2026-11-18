@@ -49,7 +49,7 @@ export default async function ClaimPage({ params }: { params: Promise<{ token: s
         <div className="my-4 text-center">
           <p className="text-sm text-slate-600">Você ganhou</p>
           <p className="text-6xl font-extrabold text-primary">{formatPoints(claim.points)}</p>
-          <p className="font-semibold text-electric-600">pontos</p>
+          <p className="font-semibold text-acao-600">pontos</p>
           <p className="mt-2 text-xs text-slate-500">{claim.description}</p>
         </div>
 

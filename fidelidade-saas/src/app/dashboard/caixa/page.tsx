@@ -55,7 +55,7 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
       <div className="space-y-4">
         {units.length > 1 && unit && (
           <p className="glass-inset flex items-center gap-2 px-4 py-3 text-sm text-slate-700">
-            <Icon name="pin" size={16} className="text-electric-600" />
+            <Icon name="pin" size={16} className="text-acao-600" />
             Lançando pela unidade <strong className="text-primary">{unit.name}</strong>
             <span className="text-slate-500">(troque no topo da tela)</span>
           </p>
@@ -98,7 +98,7 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
               })}
             </div>
             <details open={!!(f.de || f.ate)} className="group" data-testid="lancamentos-mais-filtros">
-              <summary className="inline-flex cursor-pointer list-none items-center gap-1 text-xs font-semibold text-electric-600">
+              <summary className="inline-flex cursor-pointer list-none items-center gap-1 text-xs font-semibold text-acao-600">
                 Escolher datas
                 <Icon name="chevron" size={13} className="transition-transform group-open:rotate-90" />
               </summary>
@@ -141,7 +141,7 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600" data-testid="lancamentos-resumo">
           <span><b className="text-primary">{total}</b> {total === 1 ? 'lançamento' : 'lançamentos'}</span>
           {credited._count > 0 && <span>· {formatPoints(credited._sum.points ?? 0)} pts creditados</span>}
-          {filtered && <Link href={link({ q: null, de: null, ate: null, sit: null, unid: null, pg: null })} className="font-semibold text-electric-600 hover:underline">Limpar filtros</Link>}
+          {filtered && <Link href={link({ q: null, de: null, ate: null, sit: null, unid: null, pg: null })} className="font-semibold text-acao-600 hover:underline">Limpar filtros</Link>}
         </p>
 
         {recent.length === 0 ? (
@@ -156,7 +156,7 @@ export default async function CaixaPage({ searchParams }: { searchParams: Promis
                     {c.createdAt.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' })} · {statusOf(c)}{units.length > 1 && c.unit ? ` · ${c.unit.name}` : ''}
                   </p>
                 </div>
-                <span className="shrink-0 font-bold text-electric-600">{formatPoints(c.points)} pts</span>
+                <span className="shrink-0 font-bold text-acao-600">{formatPoints(c.points)} pts</span>
               </li>
             ))}
           </ul>

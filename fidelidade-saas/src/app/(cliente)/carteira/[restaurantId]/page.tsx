@@ -59,10 +59,10 @@ export default async function WalletPage({
       <div>
       {/* Saldo */}
       <section className="glass-panel relative mb-6 overflow-hidden !border-primary !bg-primary p-6">
-        <div aria-hidden className="absolute right-0 top-0 h-32 w-32 -translate-y-10 translate-x-10 rounded-full bg-verde/20 blur-2xl" />
+        <div aria-hidden className="absolute right-0 top-0 h-32 w-32 -translate-y-10 translate-x-10 rounded-full bg-ouro/20 blur-2xl" />
         <p className="mb-1 font-medium text-slate-300">Seu saldo atual</p>
         <p className="flex items-end gap-2">
-          <span className="text-5xl font-extrabold text-verde">{formatPoints(wallet.balance)}</span>
+          <span className="text-5xl font-extrabold text-ouro">{formatPoints(wallet.balance)}</span>
           <span className="mb-1 text-lg font-semibold text-slate-200">pts</span>
         </p>
         <p className="mt-3 text-xs text-slate-400">Para ganhar mais, informe o seu CPF no caixa ou leia o QR Code que ele gerar na sua próxima conta.</p>
@@ -112,7 +112,7 @@ export default async function WalletPage({
               <div key={r.id} className="glass-panel-sm flex items-center justify-between gap-3 p-4">
                 <div className="min-w-0">
                   <h3 className="truncate font-bold text-slate-800">{r.name}</h3>
-                  <p className="text-sm font-medium text-electric-600">{formatPrice(r.pointsCost, r.cashCents)}</p>
+                  <p className="text-sm font-medium text-acao-600">{formatPrice(r.pointsCost, r.cashCents)}</p>
                   {missing > 0 && <p className="text-xs text-slate-500">Faltam {formatPoints(missing)} pts</p>}
                 </div>
                 <RedeemButton rewardId={r.id} name={r.name} disabled={missing > 0 || limitReached} />

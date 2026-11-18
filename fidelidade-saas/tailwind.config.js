@@ -15,21 +15,16 @@ module.exports = {
       // Cantos macios, como no material de apresentação: cartões e botões mais amigáveis, sem virar brinquedo.
       borderRadius: { sm: '6px', DEFAULT: '8px', md: '10px', lg: '14px', xl: '18px', '2xl': '22px', '3xl': '28px' },
       colors: {
-        glassBlue: 'rgba(37, 99, 235, 0.1)',
-        glassWhite: 'rgba(255, 255, 255, 0.15)',
-        primary: '#0F1F3D', // azul-marinho escuro para títulos
-        electric: {
-          400: '#6F93EE',
-          500: '#2F63E6', // azul do F do logo
-          600: '#2A59CF', // o mesmo azul, um tom mais fundo (hover e texto sobre fundo claro)
+        primary: '#12241C', // verde-floresta escuro: títulos, cartão e fundos escuros
+        // Cor de ação (botões, links, destaques sobre fundo claro).
+        acao: {
+          400: '#4F8F73',
+          500: '#1E5B43',
+          600: '#174A36', // um tom mais fundo (hover e texto sobre fundo claro)
         },
-        ice: '#F4F8FF',
-        // Verde do F do logo: destaques pequenos e textos sobre faixas escuras (nunca em fundos grandes).
-        verde: { DEFAULT: '#7BE08A', deep: '#62C874' },
-      },
-      backgroundImage: {
-        'liquid-bg':
-          'radial-gradient(1200px 600px at 10% -10%, #dbeafe 0%, transparent 60%), radial-gradient(900px 500px at 100% 10%, #e0f2fe 0%, transparent 55%), linear-gradient(135deg, #eaf3ff 0%, #ffffff 100%)',
+        papel: '#F5F3EC', // fundo
+        // Dourado: o F e os destaques sobre fundos escuros (nunca em fundos grandes nem como texto sobre fundo claro).
+        ouro: { DEFAULT: '#E9C46A', deep: '#D4A94A' },
       },
       keyframes: {
         blob: {

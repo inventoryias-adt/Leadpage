@@ -113,12 +113,12 @@ export function GoogleReviewFlow({
         onClose={() => setOpen(false)}
         onClick={(e) => { if (e.target === dialog.current) close(); }}
         aria-labelledby={`gr-title-${ruleId}`}
-        className="m-0 mt-auto w-full max-w-none rounded-t-3xl bg-white p-0 text-primary shadow-2xl backdrop:bg-[#0F1F3D]/55 sm:m-auto sm:max-w-md sm:rounded-3xl"
+        className="m-0 mt-auto w-full max-w-none rounded-t-3xl bg-white p-0 text-primary shadow-2xl backdrop:bg-[#12241C]/55 sm:m-auto sm:max-w-md sm:rounded-3xl"
         data-testid="gr-dialog"
       >
         <div className="space-y-4 px-6 pb-6 pt-5">
           <div className="flex items-center justify-between">
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EAF0FF]"><GoogleG size={26} /></span>
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E6EDE8]"><GoogleG size={26} /></span>
             <button type="button" onClick={close} aria-label="Fechar" className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F1F3F6] text-slate-600">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><path d="M6 6l12 12M18 6 6 18" /></svg>
             </button>
@@ -149,7 +149,7 @@ export function GoogleReviewFlow({
           {step === 'checking' && (
             <section data-testid="gr-step-checking" className="space-y-3" aria-live="polite">
               <h3 id={`gr-title-${ruleId}`} className="flex items-center gap-2 text-2xl font-extrabold tracking-tight">
-                <span aria-hidden className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-electric-500 border-t-transparent" />
+                <span aria-hidden className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-acao-500 border-t-transparent" />
                 Conferindo sua avaliação…
               </h3>
               {info.auto ? (

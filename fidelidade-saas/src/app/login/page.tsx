@@ -17,7 +17,7 @@ export default async function LoginPage() {
         <p className="mb-6 text-sm text-slate-500">Acesso do estabelecimento.</p>
         <LoginForm />
         <p className="mt-6 text-center text-sm text-slate-600">
-          Ainda não tem conta? <Link href="/#assinar" className="font-semibold text-electric-600">Assinar</Link>
+          Ainda não tem conta? <Link href="/#assinar" className="font-semibold text-acao-600">Assinar</Link>
         </p>
         <LegalLinks audience="estabelecimento" className="mt-4" />
       </div>

@@ -49,8 +49,8 @@ export function Carousel({ children, label, className = '' }: { children: ReactN
         {children}
       </ul>
 
-      {!edge.end && <span aria-hidden className="pointer-events-none absolute -right-4 bottom-2 top-0 z-[5] w-12 bg-gradient-to-l from-[#F7F8FA] to-transparent sm:-right-6 md:right-0" />}
-      {!edge.start && <span aria-hidden className="pointer-events-none absolute -left-4 bottom-2 top-0 z-[5] w-8 bg-gradient-to-r from-[#F7F8FA] to-transparent sm:-left-6 md:left-0" />}
+      {!edge.end && <span aria-hidden className="pointer-events-none absolute -right-4 bottom-2 top-0 z-[5] w-12 bg-gradient-to-l from-[#F5F3EC] to-transparent sm:-right-6 md:right-0" />}
+      {!edge.start && <span aria-hidden className="pointer-events-none absolute -left-4 bottom-2 top-0 z-[5] w-8 bg-gradient-to-r from-[#F5F3EC] to-transparent sm:-left-6 md:left-0" />}
 
       {!edge.start && (
         <button type="button" onClick={() => go(-1)} aria-label={`${label}: anteriores`} className={`${arrow} md:-left-3`}>
@@ -65,8 +65,8 @@ export function Carousel({ children, label, className = '' }: { children: ReactN
 
       {scrollable && (
         <div className="mt-0.5 flex justify-end" aria-hidden>
-          <div className="relative h-[3px] w-10 overflow-hidden rounded-full bg-electric-500/10">
-            <span className="absolute inset-y-0 rounded-full bg-electric-500/50 transition-[left] duration-100" style={{ width: `${bar.width}%`, left: `${bar.left}%` }} />
+          <div className="relative h-[3px] w-10 overflow-hidden rounded-full bg-acao-500/10">
+            <span className="absolute inset-y-0 rounded-full bg-acao-500/50 transition-[left] duration-100" style={{ width: `${bar.width}%`, left: `${bar.left}%` }} />
           </div>
         </div>
       )}

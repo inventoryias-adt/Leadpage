@@ -1,5 +1,5 @@
 // Perfil personalizado do lugar: o dono escolhe a cor da marca, o slogan e o "sobre nós"; a página do lugar no app do cliente usa a cor
-// (botão principal e capa sem foto), mostra o slogan e o texto; cor fora da lista é recusada; sem escolha vale o marinho padrão.
+// (botão principal e capa sem foto), mostra o slogan e o texto; cor fora da lista é recusada; sem escolha vale o floresta (verde-floresta) padrão.
 import { chromium } from 'playwright-core';
 import { execFileSync } from 'node:child_process';
 import assert from 'node:assert/strict';
@@ -26,14 +26,14 @@ const C = await mk(390, 844);
 await C.goto(BASE + '/entrar'); await C.fill('#c-email', 'lucas@teste.com'); await C.fill('#c-password', 'senha-cliente-1'); await C.click('button[type=submit]'); await C.waitForURL('**/carteira**');
 const rgb = (hex) => { const n = parseInt(hex.slice(1), 16); return `rgb(${n >> 16}, ${(n >> 8) & 255}, ${n & 255})`; };
 
-// 1. sem personalização: marinho padrão, sem slogan nem "sobre nós"
+// 1. sem personalização: floresta padrão, sem slogan nem "sobre nós"
 await C.goto(BASE + `/lugar/${rid}`); await C.waitForSelector('main.brand-scope');
 const btn = C.locator('main.brand-scope .glass-button-navy').first();
 await btn.waitFor();
-assert.equal(await btn.evaluate((e) => getComputedStyle(e).backgroundColor), rgb('#0F1F3D'));
+assert.equal(await btn.evaluate((e) => getComputedStyle(e).backgroundColor), rgb('#12241C'));
 assert.equal(await C.locator('[data-testid=place-tagline]').count(), 0);
 assert.equal(await C.locator('[data-testid=place-about]').count(), 0);
-console.log('1. sem personalização: marinho padrão, sem slogan nem sobre nós OK');
+console.log('1. sem personalização: floresta padrão, sem slogan nem sobre nós OK');
 
 // 2. o dono escolhe cor, slogan e sobre nós e salva; a prévia acompanha a cor
 await O.goto(BASE + '/dashboard/configuracoes?abrir=tudo'); await O.waitForSelector('[data-testid=brand-fields]');
@@ -55,14 +55,14 @@ assert.match(await C.locator('main.brand-scope div.h-44 > div').first().evaluate
 assert.ok(await C.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'sem rolagem lateral');
 console.log('3. cliente vê a cor da marca nos botões e na capa, o slogan e o sobre nós OK');
 
-// 4. o dono volta ao marinho (guarda nada) e limpa os textos
+// 4. o dono volta ao floresta, o padrão (guarda nada) e limpa os textos
 await O.goto(BASE + '/dashboard/configuracoes?abrir=tudo'); await O.waitForSelector('[data-testid=brand-fields]');
 assert.equal(await O.locator('[data-testid=brand-vinho]').isChecked(), true, 'o formulário volta marcado na cor salva');
-await O.locator('[data-testid=brand-marinho]').check({ force: true });
+await O.locator('[data-testid=brand-floresta]').check({ force: true });
 await O.fill('[data-testid=brand-tagline]', ''); await O.fill('[data-testid=brand-about]', '');
 await O.click('button:has-text("Salvar identidade")'); await O.waitForSelector('text=Identidade da marca salva');
 assert.equal(sql(`select coalesce("brandColor",'-')||'|'||coalesce(tagline,'-')||'|'||coalesce(about,'-') from "Restaurant" where id='${rid}'`), '-|-|-');
-console.log('4. voltar ao marinho e limpar os textos OK');
+console.log('4. voltar ao floresta e limpar os textos OK');
 
 // 5. o servidor recusa cor fora da lista e textos grandes demais (mesmo que a tela seja burlada)
 await O.goto(BASE + '/dashboard/configuracoes?abrir=tudo'); await O.waitForSelector('[data-testid=brand-fields]');

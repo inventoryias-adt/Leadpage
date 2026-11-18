@@ -20,7 +20,7 @@ export default async function FolgasPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <header>
-        <Link href="/dashboard/agenda" className="inline-flex items-center gap-1 text-sm font-semibold text-electric-600"><Icon name="back" size={16} /> Agenda</Link>
+        <Link href="/dashboard/agenda" className="inline-flex items-center gap-1 text-sm font-semibold text-acao-600"><Icon name="back" size={16} /> Agenda</Link>
         <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-primary">Folgas e bloqueios</h1>
         <p className="text-sm text-slate-600">Férias, folga, almoço, feriado ou manutenção: o período some da agenda do cliente, então ninguém marca em cima. Quem já tinha horário marcado continua valendo.</p>
       </header>

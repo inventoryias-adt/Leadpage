@@ -64,18 +64,18 @@ console.log('4. um link com #desafios abre a seção sozinho OK');
 const hoverSettled = async (loc) => { await c.evaluate(() => document.fonts.ready); await loc.scrollIntoViewIfNeeded(); await wait(c, 300); await loc.hover(); await wait(c, 400); };
 const bg = (loc) => loc.evaluate((el) => getComputedStyle(el).backgroundColor);
 await hoverSettled(head('acoes'));
-assert.equal(await bg(head('acoes')), 'rgb(15, 31, 61)', 'cabeçalho vira azul-marinho');
+assert.equal(await bg(head('acoes')), 'rgb(18, 36, 28)', 'cabeçalho vira azul-marinho');
 await c.mouse.move(5, 5); await wait(c, 400);
-assert.notEqual(await bg(head('acoes')), 'rgb(15, 31, 61)', 'e volta ao branco quando o mouse sai');
+assert.notEqual(await bg(head('acoes')), 'rgb(18, 36, 28)', 'e volta ao branco quando o mouse sai');
 await head('acoes').click(); await c.waitForSelector('#acoes >> text=Check-in no local');
 const row = c.locator('#acoes li').first();
 await hoverSettled(row);
-assert.equal(await bg(row), 'rgb(238, 243, 253)', 'linha ganha azul bem claro');
+assert.equal(await bg(row), 'rgb(238, 242, 238)', 'linha ganha azul bem claro');
 console.log('5. passar o mouse troca as cores (cabeçalho marinho, linha azul clara) OK');
 
 // 6. menos cores: etiquetas calmas (sem o verde de destaque nem roxo) nas listas
 // As etiquetas de PONTOS ("+10 pts") das listas são calmas; o verde de "situação boa" (Valendo agora, Pontos creditados) existe e depende de dados de outros testes.
-const verdes = await c.locator('#acoes .chip-verde, #desafios .chip-verde, #promocoes .chip-verde').filter({ hasText: /^\+?[\d.]+\s*pts/ }).count();
+const verdes = await c.locator('#acoes .chip-ouro, #desafios .chip-ouro, #promocoes .chip-ouro').filter({ hasText: /^\+?[\d.]+\s*pts/ }).count();
 assert.equal(verdes, 0, 'sem etiquetas verdes de destaque nos pontos das listas');
 assert.equal(await c.locator('#desafios .icon-tile[class*="7C3AED"]').count(), 0, 'sem o roxo do troféu');
 console.log('6. listas com etiquetas azul-claras (sem verde de destaque e sem roxo) OK');

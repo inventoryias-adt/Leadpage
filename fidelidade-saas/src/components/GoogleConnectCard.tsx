@@ -25,7 +25,7 @@ export async function GoogleConnectCard({ restaurantId, units, flash }: { restau
   return (
     <section className="glass-inset mt-5 space-y-3 p-4" data-testid="google-card">
       <div className="flex items-start gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EAF0FF]"><GoogleG size={22} /></span>
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E6EDE8]"><GoogleG size={22} /></span>
         <div className="min-w-0">
           <h3 className="font-bold text-slate-800">Conferir avaliações do Google sozinho</h3>
           <p className="text-sm text-slate-500">

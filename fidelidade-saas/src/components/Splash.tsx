@@ -1,29 +1,26 @@
 'use client';
 
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
-import { FGlyph, FGradient, BRAND_BLUE, BRAND_GREEN } from './Brand';
+import { FGlyph, BRAND_OURO } from './Brand';
 import { Cerveja, Cruz, Haltere, Hamburguer, Pata, Tesoura, Xicara } from './BrandItems';
-
-const G = 'sp-g';
-const GI = 'sp-gi';
-const BG = '#0b1b3a';
 
 /** As letras de "idelize" e o item em que cada uma vira (larguras em em: letra e item). */
 const SLOTS: { ch: string; wl: number; wi: number; icon: ReactNode }[] = [
-  { ch: 'i', wl: 0.27, wi: 0.7, icon: <Tesoura g={GI} bg={BG} /> },
-  { ch: 'd', wl: 0.6, wi: 0.7, icon: <Xicara g={GI} bg={BG} /> },
-  { ch: 'e', wl: 0.58, wi: 0.78, icon: <Cerveja g={GI} bg={BG} /> },
-  { ch: 'l', wl: 0.26, wi: 0.7, icon: <Pata g={GI} bg={BG} /> },
-  { ch: 'i', wl: 0.27, wi: 0.64, icon: <Haltere g={GI} bg={BG} /> },
-  { ch: 'z', wl: 0.5, wi: 0.7, icon: <Cruz g={GI} bg={BG} /> },
-  { ch: 'e', wl: 0.58, wi: 0.7, icon: <Hamburguer g={GI} bg={BG} /> },
+  { ch: 'i', wl: 0.27, wi: 0.7, icon: <Tesoura /> },
+  { ch: 'd', wl: 0.6, wi: 0.7, icon: <Xicara /> },
+  { ch: 'e', wl: 0.58, wi: 0.78, icon: <Cerveja /> },
+  { ch: 'l', wl: 0.26, wi: 0.7, icon: <Pata /> },
+  { ch: 'i', wl: 0.27, wi: 0.64, icon: <Haltere /> },
+  { ch: 'z', wl: 0.5, wi: 0.7, icon: <Cruz /> },
+  { ch: 'e', wl: 0.58, wi: 0.7, icon: <Hamburguer /> },
 ];
 
 /**
- * Abertura do app (~6 s): fundo marinho; o F com degradê aparece sozinho no meio, vai para o lado e as outras letras saem de dentro dele;
- * cada letra vira um item de um tipo de lugar que o Fidelize atende (tesoura, xícara de café, copo de cerveja, patinha, haltere, cruz de farmácia e hambúrguer) e volta a ser letra,
- * formando "Fidelize"; então o fundo se dissolve para mostrar o app (animação em globals.css). Não bloqueia cliques.
- * Toca uma vez por sessão, só no app (não na landing nem nos textos legais) e nunca com "reduzir movimento" ou navegador automatizado;
+ * Abertura do app (~6,5 s): fundo verde-floresta, tudo numa cor só (sem degradê).
+ * O F dourado aparece sozinho no meio, vai para o lado e as outras letras saem de dentro dele; cada letra vira um item de um tipo de lugar
+ * que o Fidelize atende (em contorno fino) e, na volta, tudo recolhe para dentro do F, que já vai para o meio enquanto isso.
+ * Então quatro cantos de escaneamento se fecham em volta dele e o nome "FIDELIZE" aparece embaixo; por fim o fundo se dissolve e mostra o app (animação em globals.css).
+ * Não bloqueia cliques. Toca uma vez por sessão, só no app (não na landing nem nos textos legais) e nunca com "reduzir movimento" ou navegador automatizado;
  * `?splash=1` força (para testar). A decisão de pular é tomada antes da primeira pintura por SPLASH_GATE (no <head>), que marca <html data-splash="off">.
  */
 export function Splash() {
@@ -34,24 +31,15 @@ export function Splash() {
       return;
     }
     try { sessionStorage.setItem('fz_splash', '1'); } catch { /* sem armazenamento: toca de novo na próxima abertura */ }
-    const t = window.setTimeout(() => setDone(true), 6300);
+    const t = window.setTimeout(() => setDone(true), 6900);
     return () => window.clearTimeout(t);
   }, []);
   if (done) return null;
   return (
     <div className="splash" aria-hidden>
-      <svg width="0" height="0" style={{ position: 'absolute' }}>
-        <defs>
-          <FGradient id={G} />
-          <linearGradient id={GI} gradientUnits="userSpaceOnUse" x1="2" y1="2" x2="38" y2="50">
-            <stop offset="0" stopColor={BRAND_BLUE} />
-            <stop offset="1" stopColor={BRAND_GREEN} />
-          </linearGradient>
-        </defs>
-      </svg>
       <div className="sp-lockup">
         <svg className="sp-f" viewBox="17 11 32 42">
-          <FGlyph fill={`url(#${G})`} topClass="sp-top" midClass="sp-mid" />
+          <FGlyph fill={BRAND_OURO} topClass="sp-top" midClass="sp-mid" />
         </svg>
         <span className="sp-letters">
           {SLOTS.map((s, i) => (
@@ -62,6 +50,10 @@ export function Splash() {
           ))}
         </span>
       </div>
+      <svg className="sp-frame" viewBox="0 0 100 100">
+        <path d="M4 22V4H22M78 4H96V22M96 78V96H78M22 96H4V78" fill="none" stroke={BRAND_OURO} strokeWidth="2.4" />
+      </svg>
+      <p className="sp-name">FIDELIZE</p>
     </div>
   );
 }

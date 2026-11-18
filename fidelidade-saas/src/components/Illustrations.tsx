@@ -10,7 +10,7 @@ export function Illustration({ variant, size = 120 }: { variant: Variant; size?:
   return (
     <span
       aria-hidden
-      className="inline-flex items-center justify-center rounded-xl border border-[#E5E7EB] bg-[#F6F7F9] text-electric-500"
+      className="inline-flex items-center justify-center rounded-xl border border-[#E5E7EB] bg-[#F6F7F9] text-acao-500"
       style={{ width: box, height: box }}
     >
       <Icon name={ICON[variant]} size={Math.round(box * 0.46)} />

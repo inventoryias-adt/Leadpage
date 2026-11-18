@@ -26,7 +26,7 @@ export function BirthdayCard({ initial, giftPoints = 0, placeName }: { initial: 
     <section aria-label="Aniversário" className="glass-panel-sm p-4" data-testid="birthday-card">
       {!open ? (
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#E8EEFB] text-electric-600"><Icon name="gift" size={22} /></span>
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#E6EDE8] text-acao-600"><Icon name="gift" size={22} /></span>
           <div className="min-w-0 flex-1">
             {current ? (
               <>

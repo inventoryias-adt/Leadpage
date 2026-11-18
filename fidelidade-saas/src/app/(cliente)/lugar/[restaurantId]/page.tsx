@@ -151,8 +151,8 @@ export default async function LugarPage({
   const kinds = new Set(rules.map((r) => actionKind(r.label)));
   const actionBadges = kinds.has('google') || kinds.has('instagram') ? (
     <span className="flex shrink-0 items-center -space-x-1.5" aria-hidden data-testid="acoes-icones">
-      {kinds.has('google') && <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#EAF0FF]"><GoogleG size={16} /></span>}
-      {kinds.has('instagram') && <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#EAF0FF]"><InstagramGlyph size={16} /></span>}
+      {kinds.has('google') && <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#E6EDE8]"><GoogleG size={16} /></span>}
+      {kinds.has('instagram') && <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#E6EDE8]"><InstagramGlyph size={16} /></span>}
     </span>
   ) : undefined;
   const shownPromos = promotions.filter((p) => promoStatus(p, nowDate) !== 'ended');
@@ -179,7 +179,7 @@ export default async function LugarPage({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={cover} alt="" className="h-full w-full object-cover" />
         ) : (
-          <div className="h-full w-full" style={{ background: `linear-gradient(135deg, ${brand.hex} 0%, ${brand.deep} 100%)` }} />
+          <div className="h-full w-full" style={{ background: brand.hex }} />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/35 to-transparent" />
         <Link href="/lugares" aria-label="Voltar para Lugares" className="absolute left-4 top-4 btn-icon !bg-white/95 shadow-sm hover:!bg-slate-100">
@@ -200,7 +200,7 @@ export default async function LugarPage({
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
             {open != null && (
-              <span className={open ? 'chip-verde' : 'glass-chip !bg-slate-100 !text-slate-600'}>
+              <span className={open ? 'chip-ouro' : 'glass-chip !bg-slate-100 !text-slate-600'}>
                 {open ? 'Aberto agora' : 'Fechado agora'}
               </span>
             )}
@@ -283,10 +283,10 @@ export default async function LugarPage({
         {/* Saldo / entrar */}
         {customer ? (
           <section className="relative flex items-center justify-between gap-3 overflow-hidden rounded-xl bg-primary p-5">
-            <div aria-hidden className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-verde/20 blur-2xl" />
+            <div aria-hidden className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-ouro/20 blur-2xl" />
             <div className="relative">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Seu saldo aqui</p>
-              <p className="text-4xl font-extrabold text-verde">{formatPoints(balance)} <span className="text-base font-semibold text-slate-200">pts</span></p>
+              <p className="text-4xl font-extrabold text-ouro">{formatPoints(balance)} <span className="text-base font-semibold text-slate-200">pts</span></p>
             </div>
             <Link href={`${here}/premios`} className="glass-button-light btn-sm relative">
               <Icon name="gift" size={16} /> Escolher prêmio
@@ -336,7 +336,7 @@ export default async function LugarPage({
                         const cooldownOver = last?.status === 'APPROVED' && Date.now() - last.createdAt.getTime() > INTERACTION_COOLDOWN_DAYS * 24 * 3_600_000;
                         if (r.approval === 'COUNTER') return <p className="text-sm text-slate-500">Faça e mostre ao caixa para receber os pontos.</p>;
                         if (last?.status === 'PENDING') return <p className="mt-1"><span className="glass-chip" data-testid="claim-pending">Em análise{last.autoAt ? ` · ${releaseText(last.autoAt)}` : ''}</span></p>;
-                        if (last?.status === 'APPROVED' && !cooldownOver) return <p className="mt-1"><span className="chip-verde">Pontos recebidos</span></p>;
+                        if (last?.status === 'APPROVED' && !cooldownOver) return <p className="mt-1"><span className="chip-ouro">Pontos recebidos</span></p>;
                         if (flowRow(r)) return <p className="text-sm text-slate-500">Avalie no Google e volte aqui. {googleLinked ? 'Conferimos sozinhos em poucos minutos.' : r.approval === 'AUTO' ? 'Os pontos entram sozinhos em até 24 h.' : 'O lugar confere e libera os seus pontos.'}</p>;
                         return (
                           <>
@@ -424,14 +424,14 @@ export default async function LugarPage({
                       <RewardImage src={imageUrl(r.imageId)} name={r.name} className="h-16 w-16 shrink-0 rounded-2xl" />
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-bold text-slate-800">{r.name}</p>
-                        <p className="text-sm font-semibold text-electric-600">{formatPrice(r.pointsCost, r.cashCents)}</p>
+                        <p className="text-sm font-semibold text-acao-600">{formatPrice(r.pointsCost, r.cashCents)}</p>
                         {customer && (missing > 0 ? (
                           <div className="mt-1.5">
                             <ProgressBar value={balance} max={r.pointsCost} label={`Progresso para ${r.name}`} />
                             <p className="mt-1 text-xs text-slate-500">{formatPoints(balance)} / {formatPoints(r.pointsCost)} pts · faltam {formatPoints(missing)}</p>
                           </div>
                         ) : (
-                          <span className="chip-verde mt-1.5">Você já pode resgatar</span>
+                          <span className="chip-ouro mt-1.5">Você já pode resgatar</span>
                         ))}
                       </div>
                       <Icon name="chevron" size={18} className="shrink-0 text-slate-400" />

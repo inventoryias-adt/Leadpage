@@ -12,6 +12,6 @@ for (const et of ['negocio','premios','conta']) {
   await p.waitForTimeout(500);
   const info = await p.evaluate(() => { const a=document.querySelector('nav.chip-row[aria-label="Seções"] [aria-current]'); const n=a.parentElement; const cs=getComputedStyle(a); const ar=a.getBoundingClientRect(), nr=n.getBoundingClientRect(); return { bg: cs.backgroundColor, color: cs.color, weight: cs.fontWeight, visible: ar.left>=nr.left-1 && ar.right<=nr.right+1, text:a.textContent }; });
   console.log(et, JSON.stringify(info));
-  assert.equal(info.bg, 'rgb(15, 31, 61)'); assert.ok(info.visible, 'ativo visível'); assert.ok(Number(info.weight)>=600);
+  assert.equal(info.bg, 'rgb(18, 36, 28)'); assert.ok(info.visible, 'ativo visível'); assert.ok(Number(info.weight)>=600);
   }
 await b.close(); console.log('Passos de Regras no celular: item ativo marinho, em negrito e visível na faixa OK');

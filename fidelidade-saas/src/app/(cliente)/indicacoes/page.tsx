@@ -44,7 +44,7 @@ export default async function IndicacoesPage({ searchParams }: { searchParams: P
 
       {data.length === 0 ? (
         <div className="glass-panel flex flex-col items-center gap-3 !rounded-[22px] p-8 text-center" data-testid="feed-empty">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#E8EEFB] text-electric-600"><Icon name="camera" size={26} /></span>
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#E6EDE8] text-acao-600"><Icon name="camera" size={26} /></span>
           <p className="text-lg font-extrabold text-primary">{mine ? 'Você ainda não indicou nenhum lugar' : 'Ainda não há indicações'}</p>
           <p className="max-w-xs text-sm text-slate-600">Poste a foto de um prato, de um corte ou do que você gostou, com a sua nota. Vale para os lugares onde você já tem carteira.</p>
           <Link href="/indicacoes/nova" className="glass-button-primary !w-auto">Fazer a primeira indicação</Link>

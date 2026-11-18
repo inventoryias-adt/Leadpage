@@ -42,7 +42,7 @@ export function NewPostForm({ places, defaultPlace }: { places: { id: string; na
         <label htmlFor={photoId} className="glass-label">Foto</label>
         <label
           htmlFor={photoId}
-          className="relative flex aspect-[4/5] w-full cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 text-slate-500 transition-colors hover:border-electric-500"
+          className="relative flex aspect-[4/5] w-full cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 text-slate-500 transition-colors hover:border-acao-500"
           data-testid="photo-drop"
         >
           {photo ? (
@@ -50,7 +50,7 @@ export function NewPostForm({ places, defaultPlace }: { places: { id: string; na
             <img src={photo} alt="Prévia da foto da indicação" className="absolute inset-0 h-full w-full object-cover" data-testid="photo-preview" />
           ) : (
             <span className="flex flex-col items-center gap-2 px-6 text-center text-sm font-semibold">
-              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#E8EEFB] text-electric-600"><Icon name="camera" size={26} /></span>
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#E6EDE8] text-acao-600"><Icon name="camera" size={26} /></span>
               {busy ? 'Preparando a foto…' : 'Toque para tirar ou escolher uma foto'}
             </span>
           )}

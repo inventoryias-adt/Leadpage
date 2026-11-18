@@ -56,7 +56,7 @@ export default async function MeusPedidosPage({ searchParams }: { searchParams: 
           {OPEN_STATUSES.includes(st) && (
             <div className="text-right">
               <p className="text-[11px] uppercase tracking-wide text-slate-500">Código</p>
-              <p className="font-mono text-2xl font-bold tracking-[0.25em] text-electric-600">{o.code}</p>
+              <p className="font-mono text-2xl font-bold tracking-[0.25em] text-acao-600">{o.code}</p>
             </div>
           )}
         </div>

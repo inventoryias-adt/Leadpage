@@ -60,14 +60,14 @@ export function PostCard({ post, highlight = false, viewerInstagram = null }: { 
   }
 
   return (
-    <article className={`glass-panel overflow-hidden !rounded-[22px] ${highlight ? 'ring-2 ring-verde' : ''}`} data-testid="post-card" data-post-id={post.id}>
+    <article className={`glass-panel overflow-hidden !rounded-[22px] ${highlight ? 'ring-2 ring-ouro' : ''}`} data-testid="post-card" data-post-id={post.id}>
       <header className="flex items-center gap-3 px-4 py-3">
         <Link href={`/lugar/${post.place.id}`} aria-label={post.place.name}><PlaceAvatar name={post.place.name} src={post.place.logoImageId ? `/api/imagem/${post.place.logoImageId}` : null} size={40} /></Link>
         <div className="min-w-0 flex-1">
           <Link href={`/lugar/${post.place.id}`} className="block truncate font-bold text-slate-900">{post.place.name}</Link>
           <p className="truncate text-xs text-slate-500">
             {post.mine ? 'Você' : authorName(post.author.name)}
-            {post.author.instagram && <> · <a href={instagramUrl(post.author.instagram)} target="_blank" rel="noopener noreferrer" className="font-semibold text-electric-600">@{post.author.instagram}</a></>}
+            {post.author.instagram && <> · <a href={instagramUrl(post.author.instagram)} target="_blank" rel="noopener noreferrer" className="font-semibold text-acao-600">@{post.author.instagram}</a></>}
             {' · '}{when}
           </p>
         </div>
@@ -87,7 +87,7 @@ export function PostCard({ post, highlight = false, viewerInstagram = null }: { 
         {post.comment && <p className="whitespace-pre-line text-sm text-slate-700" data-testid="post-comment">{post.comment}</p>}
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-xs font-semibold">
-          <button type="button" onClick={share} className="flex items-center gap-1 text-electric-600" data-testid="share-instagram"><Icon name="share" size={14} /> {viewerInstagram ? 'Publicar no meu story' : 'Publicar no Instagram'}</button>
+          <button type="button" onClick={share} className="flex items-center gap-1 text-acao-600" data-testid="share-instagram"><Icon name="share" size={14} /> {viewerInstagram ? 'Publicar no meu story' : 'Publicar no Instagram'}</button>
           {post.mine ? (
             <button type="button" onClick={() => { if (confirm('Apagar esta indicação?')) start(async () => { await removePost(post.id); setGone(true); }); }} className="text-slate-500" data-testid="delete-post">Apagar</button>
           ) : (

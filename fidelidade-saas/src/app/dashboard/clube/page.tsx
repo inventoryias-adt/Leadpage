@@ -82,7 +82,7 @@ export default async function ClubePage({ searchParams }: { searchParams: Promis
                   <form action={toggleClubPlan}><input type="hidden" name="id" value={p.id} /><input type="hidden" name="active" value={p.active ? '0' : '1'} /><button className="text-xs font-semibold text-slate-500 underline" data-testid="plan-toggle">{p.active ? 'Pausar novas assinaturas' : 'Reativar'}</button></form>
                 </div>
                 <details className="mt-2 text-sm">
-                  <summary className="cursor-pointer font-semibold text-electric-600">Editar plano</summary>
+                  <summary className="cursor-pointer font-semibold text-acao-600">Editar plano</summary>
                   <div className="mt-3"><ClubPlanForm uid={`p-${p.id}`} services={svcs} plan={{ id: p.id, name: p.name, description: p.description ?? '', price: (p.priceCents / 100).toFixed(2).replace('.', ','), items: Object.fromEntries(p.items.map((i) => [i.serviceId, i.quantity])) }} /></div>
                 </details>
               </li>
@@ -90,7 +90,7 @@ export default async function ClubePage({ searchParams }: { searchParams: Promis
           </ul>
         )}
         <details className="mt-4 rounded-2xl border border-slate-200 bg-white p-3" open={plans.length === 0}>
-          <summary className="cursor-pointer text-sm font-bold text-electric-600" data-testid="plan-new">+ Criar plano</summary>
+          <summary className="cursor-pointer text-sm font-bold text-acao-600" data-testid="plan-new">+ Criar plano</summary>
           <div className="mt-3"><ClubPlanForm uid="novo" services={svcs} /></div>
         </details>
       </section>
@@ -111,7 +111,7 @@ export default async function ClubePage({ searchParams }: { searchParams: Promis
         )}
         {subs.length === 0 && <p className="mt-2 text-sm text-slate-500" data-testid="no-subs">Ninguém assina ainda. Quando um cliente pedir um plano pelo app, ele aparece aqui; você também pode cadastrar pelo CPF.</p>}
         <details className="mt-4 rounded-2xl border border-slate-200 bg-white p-3">
-          <summary className="cursor-pointer text-sm font-bold text-electric-600" data-testid="sub-new">+ Cadastrar assinante pelo CPF</summary>
+          <summary className="cursor-pointer text-sm font-bold text-acao-600" data-testid="sub-new">+ Cadastrar assinante pelo CPF</summary>
           <div className="mt-3"><AddSubscriberForm plans={plans.filter((p) => p.active).map((p) => ({ id: p.id, name: p.name }))} /></div>
         </details>
       </section>

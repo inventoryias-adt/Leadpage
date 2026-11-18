@@ -25,7 +25,7 @@ export function BookingPolicyForm({ defaults }: { defaults: { auto: boolean; min
   return (
     <form action={action} className="space-y-4">
       <label className="flex items-start gap-3">
-        <input type="checkbox" name="bookingAutoConfirm" defaultChecked={defaults.auto} className="mt-0.5 h-5 w-5 rounded accent-electric-500" />
+        <input type="checkbox" name="bookingAutoConfirm" defaultChecked={defaults.auto} className="mt-0.5 h-5 w-5 rounded accent-acao-500" />
         <span className="text-sm text-slate-700">
           <span className="font-semibold">Confirmar os agendamentos automaticamente</span>
           <span className="block text-xs text-slate-500">Desmarcado: cada pedido chega como “aguardando” e só vale depois que você confirmar na Agenda.</span>
@@ -150,7 +150,7 @@ export function StaffForm({
       <fieldset className="space-y-2">
         <legend className="glass-label">Dias e horários de trabalho</legend>
         <label className="flex items-center gap-2 text-sm text-slate-700">
-          <input type="checkbox" name="followUnit" checked={follow} onChange={(e) => setFollow(e.target.checked)} className="h-4 w-4 rounded accent-electric-500" />
+          <input type="checkbox" name="followUnit" checked={follow} onChange={(e) => setFollow(e.target.checked)} className="h-4 w-4 rounded accent-acao-500" />
           Segue o horário de funcionamento da unidade
         </label>
         {!follow && <HoursGrid days={days} setDays={setDays} idPrefix={`${uid}-h`} />}
@@ -163,7 +163,7 @@ export function StaffForm({
             {services.map((sv) => (
               <li key={sv.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
                 <label className="flex min-w-0 flex-1 items-center gap-2 text-sm text-slate-800">
-                  <input type="checkbox" name="svc" value={sv.id} checked={!!checked[sv.id]} onChange={(e) => setChecked((c) => ({ ...c, [sv.id]: e.target.checked }))} className="h-4 w-4 shrink-0 rounded accent-electric-500" />
+                  <input type="checkbox" name="svc" value={sv.id} checked={!!checked[sv.id]} onChange={(e) => setChecked((c) => ({ ...c, [sv.id]: e.target.checked }))} className="h-4 w-4 shrink-0 rounded accent-acao-500" />
                   <span className="truncate">{sv.name}</span>
                 </label>
                 {checked[sv.id] && (
@@ -197,7 +197,7 @@ export function StaffForm({
           )}
           {staff?.photoUrl && (
             <label className="flex items-center gap-2 text-sm text-slate-700 sm:col-span-2">
-              <input type="checkbox" name="removePhoto" className="h-4 w-4 rounded accent-electric-500" /> Remover a foto
+              <input type="checkbox" name="removePhoto" className="h-4 w-4 rounded accent-acao-500" /> Remover a foto
             </label>
           )}
         </div>
@@ -239,7 +239,7 @@ export function AddServiceForm() {
         </div>
       </div>
       <label className="flex items-start gap-3">
-        <input type="checkbox" name="askPartySize" defaultChecked={state.values?.askPartySize === 'on'} className="mt-0.5 h-5 w-5 rounded accent-electric-500" />
+        <input type="checkbox" name="askPartySize" defaultChecked={state.values?.askPartySize === 'on'} className="mt-0.5 h-5 w-5 rounded accent-acao-500" />
         <span className="text-sm text-slate-700">
           <span className="font-semibold">É reserva de mesa</span>
           <span className="block text-xs text-slate-500">Pergunta quantas pessoas vão. Use com uma vaga “Mesas” que atenda vários ao mesmo tempo.</span>

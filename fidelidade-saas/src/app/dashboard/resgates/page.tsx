@@ -164,7 +164,7 @@ export default async function ResgatesPage({ searchParams }: { searchParams: Pro
                   <span className="block truncate text-xs text-slate-500">CPF {maskCpf(r.customer.cpf)}</span>
                 </p>
                 <p className="col-span-2 text-xs text-slate-600 md:col-span-1">
-                  {r.status === 'USED' ? <><span className="chip-verde mr-1.5">Entregue</span>{r.usedAt ? when(r.usedAt) : ''}{r.usedUnit ? ` · ${r.usedUnit.name}` : ''}</> : <><span className="glass-chip mr-1.5 !bg-amber-100 !text-amber-800">A entregar</span>{when(r.createdAt)}</>}
+                  {r.status === 'USED' ? <><span className="chip-ouro mr-1.5">Entregue</span>{r.usedAt ? when(r.usedAt) : ''}{r.usedUnit ? ` · ${r.usedUnit.name}` : ''}</> : <><span className="glass-chip mr-1.5 !bg-amber-100 !text-amber-800">A entregar</span>{when(r.createdAt)}</>}
                 </p>
                 <p className="text-sm font-bold text-slate-700">−{formatPoints(r.pointsCost)} pts{r.cashCents > 0 && <span className="block text-xs font-medium text-slate-500">+ {formatBRL(r.cashCents)}</span>}</p>
                 <div className="text-right">

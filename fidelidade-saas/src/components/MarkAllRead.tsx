@@ -14,7 +14,7 @@ export function MarkAllRead({ restaurantId }: { restaurantId?: string }) {
         setBusy(true);
         void markNotificationsRead(restaurantId).finally(() => setBusy(false));
       }}
-      className="!bg-transparent !p-0 text-sm font-semibold text-electric-600 !shadow-none hover:underline disabled:opacity-50"
+      className="!bg-transparent !p-0 text-sm font-semibold text-acao-600 !shadow-none hover:underline disabled:opacity-50"
       data-testid="mark-all-read"
     >
       Marcar tudo como lido

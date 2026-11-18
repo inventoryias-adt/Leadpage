@@ -38,14 +38,14 @@ await p.click('button:has-text("Minha localização")');
 await p.waitForSelector('[role=alert]:has-text("marque no mapa"), [role=alert]:has-text("no mapa")', { timeout: 25000 }); // sem permissão: orienta a liberar ou marcar no mapa
 await ctx.grantPermissions(['geolocation'], { origin: BASE }); await p.reload(); // já liberou antes → a vitrine usa o GPS sozinha
 await p.waitForFunction(() => document.querySelector('[data-testid=loc-title]')?.textContent === 'Minha localização');
-await p.waitForSelector('a[href^="/lugar/"]:has-text("Burger do Zé") span.shrink-0.text-electric-600');
-const km = await p.locator('a[href^="/lugar/"]:has-text("Burger do Zé") span.shrink-0.text-electric-600').first().innerText();
+await p.waitForSelector('a[href^="/lugar/"]:has-text("Burger do Zé") span.shrink-0.text-acao-600');
+const km = await p.locator('a[href^="/lugar/"]:has-text("Burger do Zé") span.shrink-0.text-acao-600').first().innerText();
 assert.match(km, /2[,.]\d km/, 'distância da Paulista até a Sé: ' + km);
 console.log('1. anônimo: Minha localização ordena e mostra a distância (' + km + ') OK');
 
 // 2. marcar no mapa: arrastar, endereço, usar CEP
 await p.reload();
-await p.waitForSelector('a[href^="/lugar/"]:has-text("Burger do Zé") span.shrink-0.text-electric-600'); // lembrou a escolha
+await p.waitForSelector('a[href^="/lugar/"]:has-text("Burger do Zé") span.shrink-0.text-acao-600'); // lembrou a escolha
 await p.click('[data-testid=loc-title]'); await p.click('button:has-text("Marcar no mapa")');
 await p.waitForSelector('.leaflet-container');
 await p.waitForFunction(() => /Avenida Paulista/.test(document.querySelector('[data-testid=guess]')?.textContent ?? ''));
@@ -65,7 +65,7 @@ await p.fill('#loc-number', '100');
 await p.click('button:has-text("Usar sem salvar")');
 await p.waitForFunction(() => document.querySelector('[data-testid=loc-title]')?.textContent === 'Praça da Sé');
 assert.equal(sql(`select count(*) from "CustomerAddress"`), '0');
-const km2 = await p.locator('a[href^="/lugar/"]:has-text("Burger do Zé") span.shrink-0.text-electric-600').first().innerText();
+const km2 = await p.locator('a[href^="/lugar/"]:has-text("Burger do Zé") span.shrink-0.text-acao-600').first().innerText();
 assert.match(km2, /^(10|20|30|40|50|60) m$|^[0-9]{2,3} m$/, 'agora a distância é de poucos metros: ' + km2);
 console.log('3. sem login: "Usar sem salvar" muda a vitrine (' + km2 + ') e não grava OK');
 

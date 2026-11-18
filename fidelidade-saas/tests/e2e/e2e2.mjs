@@ -85,7 +85,7 @@ await shot(l, 'cli-inicio');
 
 await l.goto(BASE + '/lugares'); await wait(l, 2500);
 // permissão já concedida: a localização é usada sozinha, sem botão
-await l.waitForSelector('a[href^="/lugar/"]:has-text("Burger do Zé") span.shrink-0.text-electric-600');
+await l.waitForSelector('a[href^="/lugar/"]:has-text("Burger do Zé") span.shrink-0.text-acao-600');
 await l.waitForSelector('li:has-text("Burger do Zé") >> text=/\\d+ m$/');
 await shot(l, 'cli-lugares');
 await l.click('button:has-text("Buscar lugar ou categoria")'); // a busca abre em tela própria

@@ -5,7 +5,7 @@ import { Icon } from './Icons';
 const CHIP: Record<HubStatus, [string, string]> = {
   ok: ['Pronto', 'bg-emerald-100 text-emerald-700'],
   todo: ['Falta fazer', 'bg-amber-100 text-amber-800'],
-  on: ['Ligado', 'bg-[#E8EEFB] text-electric-600'],
+  on: ['Ligado', 'bg-[#E6EDE8] text-acao-600'],
   off: ['Desligado', 'bg-slate-100 text-slate-600'],
   opt: ['Opcional', 'bg-slate-100 text-slate-500'],
 };
@@ -15,7 +15,7 @@ function Row({ x }: { x: HubItem }) {
   return (
     <li>
       <Link href={x.href} data-testid={`hub-${x.id}`} className="card-link flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3.5">
-        <span aria-hidden className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${x.status === 'todo' ? 'bg-amber-50 text-amber-700' : 'bg-[#E8EEFB] text-electric-600'}`}><Icon name={x.icon} size={20} /></span>
+        <span aria-hidden className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${x.status === 'todo' ? 'bg-amber-50 text-amber-700' : 'bg-[#E6EDE8] text-acao-600'}`}><Icon name={x.icon} size={20} /></span>
         <span className="min-w-0 flex-1">
           <span className="flex items-start justify-between gap-2">
             <span className="font-bold leading-snug text-slate-800">{x.title}</span>
@@ -43,7 +43,7 @@ export function RegrasHub({ hub, placeName, placeHref }: { hub: Hub; placeName: 
       <section aria-labelledby="pronto" className="glass-panel space-y-3 !rounded-[22px] p-4 sm:p-5" data-testid="hub-progress">
         <div className="flex items-center justify-between gap-3">
           <h2 id="pronto" className="font-bold text-primary">{done === total ? 'Seu clube está pronto para o cliente' : 'Falta pouco para o clube ficar pronto'}</h2>
-          <span className="shrink-0 rounded-full bg-[#E8EEFB] px-3 py-1 text-xs font-bold text-electric-600" data-testid="hub-count">{done} de {total}</span>
+          <span className="shrink-0 rounded-full bg-[#E6EDE8] px-3 py-1 text-xs font-bold text-acao-600" data-testid="hub-count">{done} de {total}</span>
         </div>
         <div className="h-2.5 overflow-hidden rounded-full bg-slate-200" role="progressbar" aria-valuenow={done} aria-valuemin={0} aria-valuemax={total} aria-label="Itens essenciais prontos">
           <div className="h-full rounded-full bar-grad transition-all" style={{ width: `${pct}%` }} />
@@ -59,8 +59,8 @@ export function RegrasHub({ hub, placeName, placeHref }: { hub: Hub; placeName: 
       </section>
 
       {hub.ideas.length > 0 && (
-        <section aria-labelledby="ideias" className="rounded-2xl border border-[#d9e1f2] bg-[#f3f6fd] p-4" data-testid="hub-ideas">
-          <h2 id="ideias" className="mb-1.5 flex items-center gap-2 text-sm font-bold text-primary"><Icon name="spark" size={16} className="text-electric-600" /> Ideias para o cliente voltar mais</h2>
+        <section aria-labelledby="ideias" className="rounded-2xl border border-[#DCE5DE] bg-[#F3F5F0] p-4" data-testid="hub-ideas">
+          <h2 id="ideias" className="mb-1.5 flex items-center gap-2 text-sm font-bold text-primary"><Icon name="spark" size={16} className="text-acao-600" /> Ideias para o cliente voltar mais</h2>
           <ul className="space-y-1 text-sm text-slate-700">{hub.ideas.map((t) => <li key={t}>{t}</li>)}</ul>
         </section>
       )}

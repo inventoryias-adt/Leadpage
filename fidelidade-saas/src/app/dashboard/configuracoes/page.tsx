@@ -50,12 +50,12 @@ function Section({ id, n, title, hint, where, flat, children }: { id: string; n:
   return (
     <section id={id} data-testid={`etapa-${id}`} className="glass-panel scroll-mt-4 p-5 sm:p-7">
       <div className="mb-5 flex items-start gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0f1f3d] text-sm font-bold text-verde">{n}</span>
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#12241C] text-sm font-bold text-ouro">{n}</span>
         <div className="min-w-0">
           <h2 className="text-lg font-bold text-primary">{title}</h2>
           {hint && <p className="text-sm text-slate-500">{hint}</p>}
-          <p className="mt-2 inline-flex max-w-full items-start gap-1.5 rounded-full bg-[#f3f6fd] px-3 py-1 text-xs font-semibold text-slate-600">
-            <Icon name="phone" size={14} className="mt-px shrink-0 text-[#0f1f3d]" />
+          <p className="mt-2 inline-flex max-w-full items-start gap-1.5 rounded-full bg-[#F3F5F0] px-3 py-1 text-xs font-semibold text-slate-600">
+            <Icon name="phone" size={14} className="mt-px shrink-0 text-[#12241C]" />
             <span>{where}</span>
           </p>
         </div>
@@ -88,7 +88,7 @@ function Optional({ id, title, hint, status, open, hide, flat, children }: { id:
       <summary className="cursor-pointer list-none">
         <span className="flex items-center gap-3">
           <span className="min-w-0 flex-1 text-base font-bold leading-snug text-slate-800">{title}</span>
-          <span className="shrink-0 whitespace-nowrap rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 group-open:bg-[#E8EEFB] group-open:text-electric-600">{status}</span>
+          <span className="shrink-0 whitespace-nowrap rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 group-open:bg-[#E6EDE8] group-open:text-acao-600">{status}</span>
           <Icon name="down" size={18} className="shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
         </span>
         {hint && <span className="mt-1 block pr-8 text-sm text-slate-500">{hint}</span>}
@@ -198,7 +198,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
             const on = !abrirTudo && id === etapa;
             return (
               <Link key={id} href={hrefOf(id)} aria-current={on ? 'step' : undefined} className={`nav-tab ${on ? 'nav-tab-active' : ''} flex items-center gap-2.5 !px-3 !py-2 !text-sm`}>
-                <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold ${on ? 'bg-white/20 text-white' : 'bg-[#0f1f3d]/10 text-[#0f1f3d]'}`}>{i + 1}</span>
+                <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold ${on ? 'bg-white/20 text-white' : 'bg-[#12241C]/10 text-[#12241C]'}`}>{i + 1}</span>
                 {label}
               </Link>
             );
@@ -225,8 +225,8 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
           </div>
           <h1 className="text-2xl font-extrabold tracking-tight text-primary">{topic!.title}</h1>
           <p className="text-sm text-slate-600">{topic!.hint}</p>
-          <p className="inline-flex max-w-full items-start gap-1.5 rounded-full bg-[#f3f6fd] px-3 py-1 text-xs font-semibold text-slate-600">
-            <Icon name="phone" size={14} className="mt-px shrink-0 text-[#0f1f3d]" />
+          <p className="inline-flex max-w-full items-start gap-1.5 rounded-full bg-[#F3F5F0] px-3 py-1 text-xs font-semibold text-slate-600">
+            <Icon name="phone" size={14} className="mt-px shrink-0 text-[#12241C]" />
             <span>Aparece em: {topic!.where}</span>
           </p>
         </header>
@@ -268,12 +268,12 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
           <section aria-labelledby="comece" className="glass-panel p-5">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 id="comece" className="text-base font-bold text-primary">Comece por aqui</h2>
-              <span className="rounded-full bg-[#E8EEFB] px-3 py-1 text-xs font-bold text-electric-600">{ready} de {steps.length} prontos</span>
+              <span className="rounded-full bg-[#E6EDE8] px-3 py-1 text-xs font-bold text-acao-600">{ready} de {steps.length} prontos</span>
             </div>
             <ul className="space-y-2">
               {steps.map((x) => (
                 <li key={x.href}>
-                  <Link href={x.href} className="flex items-center gap-3 rounded-xl px-2 py-1.5 text-sm hover:bg-[#eaf0ff]">
+                  <Link href={x.href} className="flex items-center gap-3 rounded-xl px-2 py-1.5 text-sm hover:bg-[#E6EDE8]">
                     <span aria-hidden className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${x.done ? 'bg-emerald-100 text-emerald-700' : 'border border-slate-300 text-slate-400'}`}>{x.done ? '✓' : ''}</span>
                     <span className={x.done ? 'text-slate-500 line-through' : 'font-semibold text-slate-800'}>{x.label}</span>
                   </Link>
@@ -458,7 +458,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
           )}
           {promotions.map((p) => {
             const status = promoStatus(p, nowDate);
-            const look = { now: ['Valendo agora', 'bg-emerald-100 text-emerald-700'], scheduled: ['Agendada', 'bg-blue-100 text-electric-600'], paused: ['Pausada', 'bg-slate-200 text-slate-600'], ended: ['Encerrada', 'bg-slate-200 text-slate-500'] }[status];
+            const look = { now: ['Valendo agora', 'bg-emerald-100 text-emerald-700'], scheduled: ['Agendada', 'bg-blue-100 text-acao-600'], paused: ['Pausada', 'bg-slate-200 text-slate-600'], ended: ['Encerrada', 'bg-slate-200 text-slate-500'] }[status];
             const color = promoColor(p);
             const init: PromoInit = {
               id: p.id,
@@ -486,7 +486,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
                   <div className="flex items-start gap-3">
                     <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold text-white" style={{ background: color.hex }}>{promoBig(p)}</span>
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-slate-800">{p.title}{p.appCampaignId && <span className="ml-2 rounded-full bg-[#E8EEFB] px-2 py-0.5 text-[11px] font-semibold text-electric-600">Campanha do app</span>}</p>
+                      <p className="font-semibold text-slate-800">{p.title}{p.appCampaignId && <span className="ml-2 rounded-full bg-[#E6EDE8] px-2 py-0.5 text-[11px] font-semibold text-acao-600">Campanha do app</span>}</p>
                       <p className="text-xs text-slate-500">{promoWhen(p, formatBRL)}</p>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1.5">
@@ -600,7 +600,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
                       <RemoveButton action={removeResource} id={r.id} label={r.name} />
                     </div>
                     <details className="mt-3">
-                      <summary className="cursor-pointer text-sm font-semibold text-electric-600">Editar</summary>
+                      <summary className="cursor-pointer text-sm font-semibold text-acao-600">Editar</summary>
                       <div className="mt-3">
                         <StaffForm
                           uid={`st-${r.id.slice(0, 8)}`}
@@ -626,7 +626,7 @@ export default async function ConfiguracoesPage({ searchParams }: { searchParams
               })}
             </ul>
             <details className="rounded-lg border border-dashed border-slate-300 p-3" open={resources.length === 0}>
-              <summary className="cursor-pointer text-sm font-semibold text-electric-600">+ Adicionar profissional ou vaga</summary>
+              <summary className="cursor-pointer text-sm font-semibold text-acao-600">+ Adicionar profissional ou vaga</summary>
               <div className="mt-3">
                 <StaffForm uid="st-novo" services={services.map((sv) => ({ id: sv.id, name: sv.name, durationMin: sv.durationMin }))} units={units.filter((u) => u.active).map((u) => ({ id: u.id, name: u.name }))} />
               </div>

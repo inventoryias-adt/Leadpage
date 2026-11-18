@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 const ymd = (d: Date | null) => (d ? new Date(d.getTime() - 3 * 3_600_000).toISOString().slice(0, 10) : '');
 const endYmd = (d: Date | null) => (d ? ymd(new Date(d.getTime() - 1)) : '');
 
-const LOOK = { now: ['Valendo agora', 'bg-emerald-100 text-emerald-700'], scheduled: ['Agendada', 'bg-blue-100 text-electric-600'], paused: ['Desligada', 'bg-slate-200 text-slate-600'], ended: ['Encerrada', 'bg-slate-200 text-slate-500'] } as const;
+const LOOK = { now: ['Valendo agora', 'bg-emerald-100 text-emerald-700'], scheduled: ['Agendada', 'bg-blue-100 text-acao-600'], paused: ['Desligada', 'bg-slate-200 text-slate-600'], ended: ['Encerrada', 'bg-slate-200 text-slate-500'] } as const;
 
 export default async function Campanhas() {
   const campaigns = await prisma.appCampaign.findMany({ orderBy: { createdAt: 'desc' }, include: { _count: { select: { promotions: true } } } });

@@ -35,20 +35,20 @@ export function AssistantFab({ role }: { role: keyof typeof EXAMPLES }) {
         onClick={() => setOpen(true)}
         aria-label="Assistente Fidelize (em breve)"
         data-testid="assistant-fab"
-        className="fixed bottom-[6.75rem] right-4 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-[#0F1F3D] text-verde shadow-[0_8px_20px_rgba(15,31,61,.35)] transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-500 md:bottom-6 md:right-6"
+        className="fixed bottom-[6.75rem] right-4 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-[#12241C] text-ouro shadow-[0_8px_20px_rgba(18, 36, 28,.35)] transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acao-500 md:bottom-6 md:right-6"
       >
         <Icon name="spark" size={22} />
-        <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-verde" aria-hidden />
+        <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-ouro" aria-hidden />
       </button>
       {open && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 md:items-center md:p-6" onClick={() => setOpen(false)}>
           <div role="dialog" aria-modal="true" aria-labelledby="assistant-title" onClick={(e) => e.stopPropagation()} className="max-h-[90vh] w-full max-w-md animate-fade-in overflow-y-auto rounded-t-[28px] bg-white p-5 shadow-2xl md:rounded-[28px]">
             <div className="flex items-start justify-between gap-3">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#0F1F3D] text-verde"><Icon name="spark" size={24} /></span>
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#12241C] text-ouro"><Icon name="spark" size={24} /></span>
               <button ref={closeRef} type="button" onClick={() => setOpen(false)} className="btn-icon" aria-label="Fechar">✕</button>
             </div>
-            <p className="mt-3"><span className="chip-verde">Em breve</span></p>
-            <h2 id="assistant-title" className="mt-2 text-2xl font-extrabold tracking-tight text-primary">Assistente Fidelize<span className="text-electric-500">.</span></h2>
+            <p className="mt-3"><span className="chip-ouro">Em breve</span></p>
+            <h2 id="assistant-title" className="mt-2 text-2xl font-extrabold tracking-tight text-primary">Assistente Fidelize<span className="text-acao-500">.</span></h2>
             <p className="mt-1 text-sm text-slate-600">
               Estamos desenvolvendo um assistente para você conversar, tirar dúvidas e pedir informações, em vez de procurar nas telas.
               {role === 'dono' ? ' Ele também vai preparar os relatórios para você.' : ' Ele vai buscar o que você precisa usando a sua localização, se você permitir.'}
@@ -56,7 +56,7 @@ export function AssistantFab({ role }: { role: keyof typeof EXAMPLES }) {
             <p className="mb-2 mt-4 text-xs font-bold uppercase tracking-wider text-slate-500">Você vai poder perguntar, por exemplo</p>
             <ul className="space-y-2">
               {EXAMPLES[role].map((q) => (
-                <li key={q} className="rounded-2xl bg-[#EAF0FF] px-4 py-2.5 text-sm font-medium text-primary">“{q}”</li>
+                <li key={q} className="rounded-2xl bg-[#E6EDE8] px-4 py-2.5 text-sm font-medium text-primary">“{q}”</li>
               ))}
             </ul>
             <p className="mt-4 text-xs text-slate-500">Avisamos aqui no app quando estiver disponível.</p>

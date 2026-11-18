@@ -38,7 +38,7 @@ function ChallengePreview({ kind, period, target, bonus, min }: { kind: 'PURCHAS
             <span className="icon-tile !bg-[#F1EAFE] !text-[#7C3AED]"><Icon name="trophy" /></span>
             <span className="pt-2">{text}</span>
           </span>
-          <span className="chip-verde shrink-0">+{formatPoints(parseInt(bonus, 10) || 0)} pts</span>
+          <span className="chip-ouro shrink-0">+{formatPoints(parseInt(bonus, 10) || 0)} pts</span>
         </div>
         <ProgressBar value={0} max={goal} label="Progresso do cliente" />
         <p className="text-xs font-semibold text-slate-500">0 de {goal} {period === 'WEEK' ? 'nesta semana' : 'neste mês'}</p>
@@ -119,7 +119,7 @@ export function ChallengeRow({ init, text, points, active, toggle, remove }: { i
   return (
     <li className="py-3" data-testid="challenge-row">
       <div className="flex items-start gap-3">
-        <span className="flex h-10 min-w-[3.5rem] shrink-0 items-center justify-center rounded-lg bg-[#E8EEFB] px-2 text-sm font-bold tabular-nums text-electric-600">+{formatPoints(points)}</span>
+        <span className="flex h-10 min-w-[3.5rem] shrink-0 items-center justify-center rounded-lg bg-[#E6EDE8] px-2 text-sm font-bold tabular-nums text-acao-600">+{formatPoints(points)}</span>
         <div className="min-w-0 flex-1">
           <p className="text-sm leading-snug text-slate-800">{text}</p>
           <span className={`mt-1 inline-block rounded-md px-2 py-0.5 text-xs font-semibold ${active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>{active ? 'Ativo' : 'Pausado'}</span>
@@ -273,7 +273,7 @@ export function PromotionForm({ init = EMPTY_PROMO, onDone }: { init?: PromoInit
         <legend className="glass-label">Dias da semana <span className="font-normal text-slate-500">— nenhum marcado = todos os dias</span></legend>
         <div className="flex flex-wrap gap-2">
           {WEEKDAY_LABELS.map((d, i) => (
-            <label key={d} className="inline-flex items-center gap-2 rounded-md border border-[#D5DAE3] bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 has-[:checked]:border-electric-500 has-[:checked]:bg-electric-500 has-[:checked]:text-white">
+            <label key={d} className="inline-flex items-center gap-2 rounded-md border border-[#D5DAE3] bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 has-[:checked]:border-acao-500 has-[:checked]:bg-acao-500 has-[:checked]:text-white">
               <input type="checkbox" name="weekdays" value={i} defaultChecked={init.days.includes(i)} className="sr-only" />
               {d}
             </label>

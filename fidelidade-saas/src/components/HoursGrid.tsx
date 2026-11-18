@@ -49,7 +49,7 @@ export function HoursGrid({ days, setDays, idPrefix }: { days: Schedule; setDays
               <span className="order-1 truncate text-[15px] font-semibold text-slate-800 sm:w-[7rem] sm:shrink-0 sm:text-sm">{name}</span>
 
               <label className="order-2 flex min-h-[36px] cursor-pointer items-center gap-2 whitespace-nowrap text-sm text-slate-600 sm:order-3">
-                <input type="checkbox" className="h-4 w-4 rounded accent-electric-500" checked={d.closed} onChange={(e) => update(dayNumber, { closed: e.target.checked })} />
+                <input type="checkbox" className="h-4 w-4 rounded accent-acao-500" checked={d.closed} onChange={(e) => update(dayNumber, { closed: e.target.checked })} />
                 Fechado
               </label>
 
@@ -68,7 +68,7 @@ export function HoursGrid({ days, setDays, idPrefix }: { days: Schedule; setDays
               <button
                 type="button"
                 onClick={() => applyToAll(dayNumber)}
-                className="order-4 col-span-2 inline-flex min-h-[32px] items-center gap-1.5 justify-self-start whitespace-nowrap rounded-md px-1 text-[13px] font-semibold text-electric-600 hover:bg-[#F3F6FD] sm:col-span-1 sm:shrink-0 sm:border sm:border-[#C3D2F4] sm:bg-[#F3F6FD] sm:px-2.5 sm:text-xs"
+                className="order-4 col-span-2 inline-flex min-h-[32px] items-center gap-1.5 justify-self-start whitespace-nowrap rounded-md px-1 text-[13px] font-semibold text-acao-600 hover:bg-[#F3F5F0] sm:col-span-1 sm:shrink-0 sm:border sm:border-[#C3D2F4] sm:bg-[#F3F5F0] sm:px-2.5 sm:text-xs"
                 aria-label={`Repetir o horário de ${name} em todos os dias da semana`}
               >
                 <Icon name="copy" size={14} /> <span className="sm:hidden">Repetir este horário em todos os dias</span><span className="hidden sm:inline">Repetir em todos</span>

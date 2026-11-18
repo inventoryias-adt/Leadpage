@@ -78,7 +78,7 @@ export default async function CarteiraPage() {
         <h1 className="mt-5 text-2xl font-extrabold md:mt-0 md:text-3xl tracking-tight text-primary">Olá, {customer.name.split(' ')[0]}</h1>
         {wallets.length > 0 && (
           <p className="text-sm text-slate-600">
-            <span className="mark-grad font-bold text-primary">{formatPoints(total)} pontos</span> em {wallets.length} {wallets.length === 1 ? 'lugar' : 'lugares'}
+            <span className="mark-ouro font-bold text-primary">{formatPoints(total)} pontos</span> em {wallets.length} {wallets.length === 1 ? 'lugar' : 'lugares'}
           </p>
         )}
       </Reveal>
@@ -88,13 +88,13 @@ export default async function CarteiraPage() {
       {wallets.length > 0 && (
         <Reveal from="zoom">
           <section aria-label="Resumo" className="grid grid-cols-2 gap-3" data-testid="home-summary">
-            <Link href="/perfil/pontos" className="card-link col-span-2 flex items-center gap-4 rounded-[22px] bg-[#0F1F3D] p-4 text-white shadow-[0_10px_26px_rgba(15,31,61,.25)]">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-verde text-primary"><Icon name="star" size={24} /></span>
+            <Link href="/perfil/pontos" className="card-link col-span-2 flex items-center gap-4 rounded-[22px] bg-[#12241C] p-4 text-white shadow-[0_10px_26px_rgba(18, 36, 28,.25)]">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-ouro text-primary"><Icon name="star" size={24} /></span>
               <span className="min-w-0 flex-1">
                 <span className="block text-[11px] font-bold uppercase tracking-[0.16em] text-white/70">Saldo total</span>
-                <span className="block text-3xl font-extrabold leading-tight text-verde">{formatPoints(total)} <span className="text-sm font-semibold text-white/70">pontos</span></span>
+                <span className="block text-3xl font-extrabold leading-tight text-ouro">{formatPoints(total)} <span className="text-sm font-semibold text-white/70">pontos</span></span>
               </span>
-              <span className="chip-verde shrink-0">+{formatPoints(earnedMonth?._sum.points ?? 0)} no mês</span>
+              <span className="chip-ouro shrink-0">+{formatPoints(earnedMonth?._sum.points ?? 0)} no mês</span>
             </Link>
             {[
               { href: '/perfil/premios?aba=disponiveis', icon: 'gift' as const, n: affordable.length, label: affordable.length === 1 ? 'Prêmio ao alcance' : 'Prêmios ao alcance' },
@@ -139,7 +139,7 @@ export default async function CarteiraPage() {
                       {(pick > 0 || can) && (
                         <span className="mt-1 flex flex-wrap gap-1.5">
                           {pick > 0 && <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-bold text-amber-800">{pick} para retirar</span>}
-                          {can && <span className="rounded-full bg-verde px-2.5 py-0.5 text-[11px] font-bold text-primary">Pode resgatar</span>}
+                          {can && <span className="rounded-full bg-ouro px-2.5 py-0.5 text-[11px] font-bold text-primary">Pode resgatar</span>}
                         </span>
                       )}
                     </span>
@@ -163,7 +163,7 @@ export default async function CarteiraPage() {
           <section aria-labelledby="alcance">
             <div className="mb-3 flex items-baseline justify-between gap-3">
               <h2 id="alcance" className="text-xs font-bold uppercase tracking-wider text-slate-500">Prêmios ao seu alcance</h2>
-              <Link href="/perfil/premios?aba=disponiveis" className="text-xs font-bold text-electric-600">Ver todos</Link>
+              <Link href="/perfil/premios?aba=disponiveis" className="text-xs font-bold text-acao-600">Ver todos</Link>
             </div>
             <ul className="glass-panel divide-y divide-slate-100 !rounded-[20px]">
               {affordable.slice(0, 3).map((r) => (
@@ -174,7 +174,7 @@ export default async function CarteiraPage() {
                       <span className="block truncate font-bold text-slate-800">{r.name}</span>
                       <span className="block truncate text-xs text-slate-500">{r.place.name}</span>
                     </span>
-                    <span className="chip-verde shrink-0">{formatPoints(r.pointsCost)} pts</span>
+                    <span className="chip-ouro shrink-0">{formatPoints(r.pointsCost)} pts</span>
                   </Link>
                 </li>
               ))}
@@ -190,7 +190,7 @@ export default async function CarteiraPage() {
           <section aria-labelledby="atividade-recente">
             <div className="mb-3 flex items-baseline justify-between gap-3">
               <h2 id="atividade-recente" className="text-xs font-bold uppercase tracking-wider text-slate-500">Atividade recente</h2>
-              <Link href="/perfil/pontos" className="text-xs font-bold text-electric-600">Ver histórico</Link>
+              <Link href="/perfil/pontos" className="text-xs font-bold text-acao-600">Ver histórico</Link>
             </div>
             <ul className="glass-panel divide-y divide-slate-100 !rounded-[20px]">
               {recent.map((t) => (
@@ -214,7 +214,7 @@ export default async function CarteiraPage() {
 
       <Reveal from="zoom">
       <Link href="/lugares" className="glass-panel-sm card-link flex items-center gap-3 !rounded-full px-5 py-3">
-        <Icon name="compass" size={20} className="shrink-0 text-electric-600" />
+        <Icon name="compass" size={20} className="shrink-0 text-acao-600" />
         <span className="min-w-0 flex-1 text-sm font-bold text-slate-800">Explorar lugares perto de você</span>
         <Icon name="chevron" size={18} className="text-slate-400" />
       </Link>
