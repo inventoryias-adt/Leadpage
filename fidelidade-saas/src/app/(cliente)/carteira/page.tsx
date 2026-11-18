@@ -195,14 +195,14 @@ export default async function CarteiraPage() {
             <ul className="glass-panel divide-y divide-slate-100 !rounded-[20px]">
               {recent.map((t) => (
                 <li key={t.id} className="flex items-center gap-3 px-4 py-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={t.type === 'EARN' ? { background: '#E6F7EC', color: '#15803D' } : { background: '#FFEFE3', color: '#C2410C' }}>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={t.type === 'EARN' ? { background: '#E6EDE8', color: '#1E5B43' } : { background: '#F6EBC8', color: '#8A6A12' }}>
                     <Icon name={t.type === 'EARN' ? 'star' : 'gift'} size={20} />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-semibold text-slate-800">{t.description}</span>
                     <span className="block truncate text-xs text-slate-500">{t.wallet.restaurant.name} · {agoText(t.createdAt)}</span>
                   </span>
-                  <span className={`shrink-0 text-sm font-extrabold ${t.type === 'EARN' ? 'text-emerald-700' : 'text-orange-700'}`}>{t.type === 'EARN' ? '+' : '−'}{formatPoints(t.points)}</span>
+                  <span className={`shrink-0 text-sm font-extrabold ${t.type === 'EARN' ? 'text-acao-600' : 'text-[#8A6A12]'}`}>{t.type === 'EARN' ? '+' : '−'}{formatPoints(t.points)}</span>
                 </li>
               ))}
             </ul>
